@@ -9,6 +9,8 @@ services:
       - 4000:4000
     networks:
       - app
+    volumes:
+      - ./gateway/src:/app/src
 
   ### Rabbitmq ###
   rabbitmq: 

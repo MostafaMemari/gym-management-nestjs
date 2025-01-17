@@ -2,8 +2,10 @@ import { Controller, Inject, InternalServerErrorException } from "@nestjs/common
 import { Services } from "../../common/enums/services.enum";
 import { ClientProxy } from "@nestjs/microservices";
 import { lastValueFrom, timeout } from "rxjs";
+import { ApiTags } from "@nestjs/swagger";
 
 @Controller('auth')
+@ApiTags('Auth')
 export class AuthController {
     constructor(@Inject(Services.AUTH) private readonly authServiceClient: ClientProxy) { }
 
