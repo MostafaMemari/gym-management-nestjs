@@ -7,9 +7,9 @@ import { lastValueFrom, timeout } from "rxjs";
 export class AuthController {
     constructor(@Inject(Services.AUTH) private readonly authServiceClient: ClientProxy) { }
 
-    checkConnection(): Promise<boolean> {
+   async checkConnection(): Promise<boolean> {
         try {
-            return lastValueFrom(
+            return await lastValueFrom(
                 this.authServiceClient
                     .send("check-connection", {})
                     .pipe(timeout(5000))
