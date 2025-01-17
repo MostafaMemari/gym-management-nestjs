@@ -1,4 +1,5 @@
 services:
+  ### Gateway ###
   gateway: 
     container_name: gateway
     build: 
@@ -6,4 +7,27 @@ services:
       dockerfile: Dockerfile
     ports:
       - 4000:4000
+    networks:
+      - app
+
+  ### Rabbitmq ###
+  rabbitmq: 
+    container_name: rabbitmq
+    image: rabbitmq:management-alpine
+    ports:
+      - 5672:5672
+      - 15672:15672
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    networks:
+      - app
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
     
+volumes:
+  rabbitmq_data:
+
+networks:
+  app:
+   driver: bridge
