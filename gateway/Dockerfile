@@ -12,7 +12,7 @@ RUN chown -R gateway_user:gateway /app
 
 USER gateway_user
 
-RUN pnpm install
+RUN npx pnpm install
 
 COPY --chown=gateway_user:gateway . .
 
