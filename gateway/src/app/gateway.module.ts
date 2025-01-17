@@ -1,15 +1,28 @@
 import { Module } from '@nestjs/common';
-import { ClientsModule } from '@nestjs/microservices';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { Services } from '../common/enums/services.enum';
 
 @Module({
   imports: [
     ClientsModule.register([
       {
-        name: ""
+        name: Services.AUTH,
+        transport: Transport.RMQ,
+        options: {
+          urls: [process.env.RABBITMQ_URL],
+          queue: process.env.RABBITMQ_AUTH_SERVICE_QUEUE,
+          prefetchCount: 2,
+          isGlobalPrefetchCount: true,
+          noAck: true,
+          persistent: false,
+          queueOptions:{
+            durable: false,
+          }
+        }
       }
-   ])
-],
+    ])
+  ],
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule { }
