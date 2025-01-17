@@ -2,9 +2,12 @@ import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { Services } from '../common/enums/services.enum';
 import { AuthController } from './controllers/auth.controller';
+import { ConfigModule } from '@nestjs/config';
+import envConfig from 'src/configs/env.config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot(envConfig()),
     ClientsModule.register([
       {
         name: Services.AUTH,
