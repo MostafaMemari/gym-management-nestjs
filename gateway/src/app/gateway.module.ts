@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { Services } from '../common/enums/services.enum';
+import { AuthController } from './controllers/auth.controller';
 
 @Module({
   imports: [
@@ -15,14 +16,14 @@ import { Services } from '../common/enums/services.enum';
           isGlobalPrefetchCount: true,
           noAck: true,
           persistent: false,
-          queueOptions:{
+          queueOptions: {
             durable: false,
           }
         }
       }
     ])
   ],
-  controllers: [],
+  controllers: [AuthController],
   providers: [],
 })
 export class AppModule { }
