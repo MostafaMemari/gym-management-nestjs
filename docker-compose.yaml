@@ -16,14 +16,14 @@ services:
   auth_service:
     container_name: auth_service
     build: 
-      context: ./
+      context: ./auth
       dockerfile: Dockerfile
     networks:
       - app
     depends_on:
       - rabbitmq
     env_file:
-      - /.env
+      - auth/.env
     volumes:
       - ./auth/src:/app/src
 

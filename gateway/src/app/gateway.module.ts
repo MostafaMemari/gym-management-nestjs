@@ -3,7 +3,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { Services } from '../common/enums/services.enum';
 import { AuthController } from './controllers/auth.controller';
 import { ConfigModule } from '@nestjs/config';
-import envConfig from 'src/configs/env.config';
+import envConfig from '../configs/env.config';
 
 @Module({
   imports: [
@@ -19,9 +19,6 @@ import envConfig from 'src/configs/env.config';
           isGlobalPrefetchCount: true,
           noAck: true,
           persistent: false,
-          queueOptions: {
-            durable: false,
-          }
         }
       }
     ])
@@ -29,4 +26,4 @@ import envConfig from 'src/configs/env.config';
   controllers: [AuthController],
   providers: [],
 })
-export class AppModule { }
+export class GatewayModule { }
