@@ -3,7 +3,8 @@ import { Services } from "../../common/enums/services.enum";
 import { ClientProxy } from "@nestjs/microservices";
 import { lastValueFrom, timeout } from "rxjs";
 import { ApiTags } from "@nestjs/swagger";
-import { AuthPattern } from "src/common/enums/auth.events";
+import { AuthPattern } from "../../common/enums/auth.events";
+import { ServiceResponse } from "../../common/interfaces/serviceResponse.interface";
 
 @Controller('auth')
 @ApiTags('Auth')
@@ -28,10 +29,10 @@ export class AuthController {
     async getHello() {
         await this.checkConnection()
 
-        const data = await lastValueFrom(this.authServiceClient.send(AuthPattern.getHello, {}).pipe(timeout(5000)))
+        const data: ServiceResponse = await lastValueFrom(this.authServiceClient.send(AuthPattern.getHello, {}).pipe(timeout(5000)))
 
         if (data.error)
-            throw new HttpException(data.message, data.statusCode)
+            throw new HttpException(data.message, data.status)
 
         return data
     }
