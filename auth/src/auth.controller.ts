@@ -1,17 +1,18 @@
 import { Controller } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { MessagePattern } from '@nestjs/microservices';
+import { AuthPatterns } from './enums/auth.events';
 
 @Controller()
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
-  @MessagePattern('get_hello')
+  @MessagePattern(AuthPatterns.getHello)
   getHello(): string {
     return this.authService.getHello();
   }
 
-  @MessagePattern("check_connection")
+  @MessagePattern(AuthPatterns.checkConnection)
   checkConnection() {
     return true
   }
