@@ -4,6 +4,7 @@ import { Services } from '../common/enums/services.enum';
 import { AuthController } from './controllers/auth.controller';
 import { ConfigModule } from '@nestjs/config';
 import envConfig from '../configs/env.config';
+import { UserController } from './controllers/user.controller';
 
 @Module({
   imports: [
@@ -35,7 +36,7 @@ import envConfig from '../configs/env.config';
       }
     ])
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, UserController],
   providers: [],
 })
 export class GatewayModule { }
