@@ -8,7 +8,8 @@ export default (): ConfigModuleOptions => {
         validate: (config: Record<string, any>) => {
             const schema = Joi.object({
                 RABBITMQ_URL: Joi.string().required(),
-                RABBITMQ_QUEUE_NAME: Joi.string().required()
+                RABBITMQ_QUEUE_NAME: Joi.string().required(),
+                DATABASE_URL: Joi.string().required()
             }).unknown(true)
 
             const { error, value } = schema.validate(config)
