@@ -20,6 +20,18 @@ import envConfig from '../configs/env.config';
           noAck: true,
           persistent: false,
         }
+      },
+      {
+        name: Services.USER,
+        transport: Transport.RMQ,
+        options: {
+          urls: [process.env.RABBITMQ_URL],
+          queue: process.env.RABBITMQ_AUTH_SERVICE_QUEUE,
+          prefetchCount: 2,
+          isGlobalPrefetchCount: true,
+          noAck: true,
+          persistent: false,
+        }
       }
     ])
   ],
