@@ -5,6 +5,7 @@ import { AuthController } from './controllers/auth.controller';
 import { ConfigModule } from '@nestjs/config';
 import envConfig from '../configs/env.config';
 import { UserController } from './controllers/user.controller';
+import { PermissionController } from './controllers/permission.controller';
 
 @Module({
   imports: [
@@ -48,7 +49,7 @@ import { UserController } from './controllers/user.controller';
       }
     ])
   ],
-  controllers: [AuthController, UserController],
+  controllers: [AuthController, UserController , PermissionController],
   providers: [],
 })
 export class GatewayModule { }
