@@ -1,3 +1,4 @@
-export enum AuthPattern {
-    getHello = 'get_hello'
+export enum AuthPatterns {
+    getHello = 'get_hello',
+    checkConnection = "check_connection"
 }
