@@ -37,9 +37,9 @@ export class AuthService {
     }
   }
 
-  async generateTokens(user: any): Promise<GenerateTokens> {
+  async generateTokens(user: { id: number }): Promise<GenerateTokens> {
     const payload = { id: user.id };
-  
+
     const parseDays: number = Number.parseInt(process.env.REFRESH_TOKEN_EXPIRE_TIME)
     const refreshTokenMsExpireTime: number = dateFns.milliseconds({ days: parseDays })
 
