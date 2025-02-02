@@ -8,13 +8,18 @@ import { ICreateUser } from './interfaces/user.interface';
 export class UserController {
   constructor(private readonly userService: UserService) { }
 
-  @MessagePattern(UserPatterns.CreateUser)
-  create(@Payload() data: ICreateUser){
-    return this.userService.create(data)
-  }
-
   @MessagePattern(UserPatterns.CheckConnection)
   checkConnection() {
     return true
+  }
+
+  @MessagePattern(UserPatterns.CreateUser)
+  create(@Payload() data: ICreateUser) {
+    return this.userService.create(data)
+  }
+
+  @MessagePattern(UserPatterns.GetUsers)
+  getAll(){
+    return this.userService.findAll()
   }
 }

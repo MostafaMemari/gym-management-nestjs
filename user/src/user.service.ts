@@ -44,10 +44,22 @@ export class UserService {
 
 
     return {
-      data: { ...user },
+      data: { user },
       error: false,
       message: UserMessages.CreatedUser,
       status: HttpStatus.CREATED
+    }
+  }
+
+  async findAll(): Promise<ServiceResponse> {
+    const users = await this.prisma.user.findMany()
+
+    return {
+      data: { users },
+      error: false,
+      message: "",
+      status: HttpStatus.OK
+
     }
   }
 
