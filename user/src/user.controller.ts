@@ -19,7 +19,12 @@ export class UserController {
   }
 
   @MessagePattern(UserPatterns.GetUsers)
-  getAll(){
+  getAll() {
     return this.userService.findAll()
+  }
+
+  @MessagePattern(UserPatterns.GetUserById)
+  getById(@Payload() data: { userId: number }) {
+    return this.userService.findById(data)
   }
 }

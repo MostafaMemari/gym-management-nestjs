@@ -1,4 +1,4 @@
-import { Controller, Get, HttpException, Inject, InternalServerErrorException } from "@nestjs/common";
+import { Controller, Get, HttpException, Inject, InternalServerErrorException, Param, ParseIntPipe } from "@nestjs/common";
 import { Services } from "../../common/enums/services.enum";
 import { ClientProxy } from "@nestjs/microservices";
 import { lastValueFrom, timeout } from "rxjs";
@@ -28,6 +28,18 @@ export class UserController {
         await this.checkConnection()
 
         const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.GetUsers, {}).pipe(timeout(5000)))
+
+        if (data.error)
+            throw new HttpException(data.message, data.status)
+
+        return data
+    }
+
+    @Get(":id")
+    async getUserById(@Param('id', ParseIntPipe) id: number) {
+        await this.checkConnection()
+
+        const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.GetUserById, { userId: id }).pipe(timeout(5000)))
 
         if (data.error)
             throw new HttpException(data.message, data.status)

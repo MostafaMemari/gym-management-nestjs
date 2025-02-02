@@ -62,4 +62,28 @@ export class UserService {
     }
   }
 
+  async findById(userDto: { userId: number }): Promise<ServiceResponse> {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userDto.userId },
+      omit: { password: true }
+    })
+
+    if (!user) {
+      return {
+        data: {},
+        error: true,
+        message: UserMessages.NotFoundUser,
+        status: HttpStatus.NOT_FOUND
+      }
+    }
+
+    return {
+      data: { user },
+      error: false,
+      message: "",
+      status: HttpStatus.OK
+    }
+
+  }
+
 }

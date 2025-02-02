@@ -1,5 +1,6 @@
 export enum UserPatterns {
     CheckConnection = "check_connection",
     CreateUser = "create_user",
-    GetUsers = 'get_users'
+    GetUsers = 'get_users',
+    GetUserById = "get_user_by_id"
 }
