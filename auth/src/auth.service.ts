@@ -19,9 +19,9 @@ export class AuthService {
   private readonly timeout: number = 4500
 
   constructor(
+    @Inject(CACHE_MANAGER) private readonly redisCache: RedisCache,
     @Inject(forwardRef(() => JwtService)) private readonly jwtService: JwtService,
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
-    @Inject(CACHE_MANAGER) private readonly redisCache: RedisCache
   ) { }
 
   async checkConnection(): Promise<ServiceResponse | void> {
@@ -53,11 +53,12 @@ export class AuthService {
       secret: process.env.REFRESH_TOKEN_SECRET,
     });
 
-    await this.redisCache.set(
-      `refreshToken_${user.id}_${refreshToken}`,
-      refreshToken,
-      refreshTokenMsExpireTime
-    );
+    //TODO: Set refresh token in redis 
+    // await this.redisCache.set(
+    //   `refreshToken_${user.id}_${refreshToken}`,
+    //   refreshToken,
+    //   refreshTokenMsExpireTime
+    // );
 
     return { accessToken, refreshToken };
   }

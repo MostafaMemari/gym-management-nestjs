@@ -11,7 +11,7 @@ export default (): ConfigModuleOptions => {
                 RABBITMQ_QUEUE_NAME: Joi.string().required(),
                 REDIS_PORT: Joi.string().required(),
                 REDIS_HOST: Joi.string().required(),
-                REDIS_PASSWORD: Joi.string().required(),
+                REDIS_PASSWORD: Joi.string().optional().allow(''),
                 ACCESS_TOKEN_SECRET: Joi.string().required(),
                 ACCESS_TOKEN_EXPIRE_TIME: Joi.string().required(),
                 REFRESH_TOKEN_EXPIRE_TIME: Joi.string().required(),
