@@ -7,3 +7,8 @@ export interface ISignup {
 
     mobile: string
 }
+
+export interface GenerateTokens {
+    accessToken: string
+    refreshToken: string
+}

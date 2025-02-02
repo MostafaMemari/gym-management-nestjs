@@ -1,5 +1,5 @@
-import { HttpStatus, Inject, Injectable } from '@nestjs/common';
-import { ISignup } from './interfaces/auth.interface';
+import { forwardRef, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { GenerateTokens, ISignup } from './interfaces/auth.interface';
 import { Services } from './enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
 import { UserPatterns } from './enums/user.events';
@@ -8,13 +8,21 @@ import { ServiceResponse } from './interfaces/serviceResponse.interface';
 import { AuthMessages } from './enums/auth.messages';
 import * as bcrypt from 'bcrypt'
 import { sendError } from './common/utils/sendError.utils';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { RedisCache } from 'cache-manager-redis-yet';
+import { JwtService } from '@nestjs/jwt';
+import * as dateFns from 'date-fns'
 
 @Injectable()
 export class AuthService {
 
   private readonly timeout: number = 4500
 
-  constructor(@Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy) { }
+  constructor(
+    @Inject(forwardRef(() => JwtService)) private readonly jwtService: JwtService,
+    @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
+    @Inject(CACHE_MANAGER) private readonly redisCache: RedisCache
+  ) { }
 
   async checkConnection(): Promise<ServiceResponse | void> {
     try {
@@ -27,6 +35,31 @@ export class AuthService {
         data: {}
       }
     }
+  }
+
+  async generateTokens(user: any): Promise<GenerateTokens> {
+    const payload = { id: user.id };
+  
+    const parseDays: number = Number.parseInt(process.env.REFRESH_TOKEN_EXPIRE_TIME)
+    const refreshTokenMsExpireTime: number = dateFns.milliseconds({ days: parseDays })
+
+    const accessToken = this.jwtService.sign(payload, {
+      secret: process.env.ACCESS_TOKEN_SECRET,
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRE_TIME,
+    });
+
+    const refreshToken = this.jwtService.sign(payload, {
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRE_TIME,
+      secret: process.env.REFRESH_TOKEN_SECRET,
+    });
+
+    await this.redisCache.set(
+      `refreshToken_${user.id}_${refreshToken}`,
+      refreshToken,
+      refreshTokenMsExpireTime
+    );
+
+    return { accessToken, refreshToken };
   }
 
   async signup(data: ISignup): Promise<ServiceResponse> {

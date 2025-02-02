@@ -7,11 +7,13 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { Services } from './enums/services.enum';
 import { CacheModule } from '@nestjs/cache-manager';
 import { cacheConfig } from './configs/cache.config';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
     ConfigModule.forRoot(envConfig()),
     CacheModule.registerAsync(cacheConfig()),
+    JwtModule.register({ global: true }),
     ClientsModule.register([
       {
         name: Services.USER,
