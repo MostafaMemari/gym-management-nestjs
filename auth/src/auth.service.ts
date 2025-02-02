@@ -62,15 +62,16 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async signup(data: ISignup): Promise<ServiceResponse> {
+  async signup(signupDto: ISignup): Promise<ServiceResponse> {
     try {
       const isConnected = await this.checkConnection()
 
       if (typeof isConnected == "object" && isConnected?.error) return isConnected
 
-      const hashedPassword = await bcrypt.hash(data.password, 10)
-      data = {
-        ...data,
+      const hashedPassword = await bcrypt.hash(signupDto.password, 10)
+
+      const data = {
+        ...signupDto,
         password: hashedPassword
       }
 
@@ -78,11 +79,13 @@ export class AuthService {
 
       if (result.error) return result
 
+      const tokens = await this.generateTokens(result.data)
+
       return {
         message: AuthMessages.SignupSuccess,
         status: HttpStatus.CREATED,
         error: false,
-        data: result.data
+        data: { ...tokens }
       }
     } catch (error) {
       return sendError(error)
