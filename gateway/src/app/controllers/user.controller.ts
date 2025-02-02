@@ -15,21 +15,19 @@ export class UserController {
         try {
             return await lastValueFrom(
                 this.userServiceClient
-                    .send(UserPatterns.checkConnection, {})
+                    .send(UserPatterns.CheckConnection, {})
                     .pipe(timeout(5000))
             );
         } catch (error) {
-            throw new InternalServerErrorException(
-                "User service is not connected"
-            );
+            throw new InternalServerErrorException("User service is not connected");
         }
     }
 
-    @Get("hello")
-    async getHello() {
+    @Get()
+    async getUsers() {
         await this.checkConnection()
 
-        const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.getHello, {}).pipe(timeout(5000)))
+        const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.GetUsers, {}).pipe(timeout(5000)))
 
         if (data.error)
             throw new HttpException(data.message, data.status)

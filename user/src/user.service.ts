@@ -52,14 +52,13 @@ export class UserService {
   }
 
   async findAll(): Promise<ServiceResponse> {
-    const users = await this.prisma.user.findMany()
+    const users = await this.prisma.user.findMany({ omit: { password: true } })
 
     return {
       data: { users },
       error: false,
       message: "",
       status: HttpStatus.OK
-
     }
   }
 

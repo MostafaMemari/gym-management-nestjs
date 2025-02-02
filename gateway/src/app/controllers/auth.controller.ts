@@ -22,7 +22,7 @@ export class AuthController {
                     .pipe(timeout(this.timeout))
             );
         } catch (error) {
-            throw new InternalServerErrorException(AuthPatterns.NotConnected);
+            throw new InternalServerErrorException("Auth service is not connected");
         }
     }
 
