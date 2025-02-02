@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, ValidationPipe } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { Services } from '../common/enums/services.enum';
 import { AuthController } from './controllers/auth.controller';
@@ -6,6 +6,7 @@ import { ConfigModule } from '@nestjs/config';
 import envConfig from '../configs/env.config';
 import { UserController } from './controllers/user.controller';
 import { PermissionController } from './controllers/permission.controller';
+import { APP_PIPE } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -49,7 +50,12 @@ import { PermissionController } from './controllers/permission.controller';
       }
     ])
   ],
-  controllers: [AuthController, UserController , PermissionController],
-  providers: [],
+  controllers: [AuthController, UserController, PermissionController],
+  providers: [
+    {
+      provide: APP_PIPE,
+      useValue: new ValidationPipe({ whitelist: true })
+    }
+  ],
 })
 export class GatewayModule { }

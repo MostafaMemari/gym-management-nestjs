@@ -1,4 +1,5 @@
 export enum AuthPatterns {
-    getHello = 'get_hello',
-    checkConnection = "check_connection"
+    CheckConnection = "check_connection",
+    NotConnected = "Auth service is not connected",
+    Signup = "signup"
 }
