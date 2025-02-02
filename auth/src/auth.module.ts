@@ -5,10 +5,13 @@ import { ConfigModule } from '@nestjs/config';
 import envConfig from './configs/env.config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { Services } from './enums/services.enum';
+import { CacheModule } from '@nestjs/cache-manager';
+import { cacheConfig } from './configs/cache.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot(envConfig()),
+    CacheModule.registerAsync(cacheConfig()),
     ClientsModule.register([
       {
         name: Services.USER,

@@ -1,19 +1,18 @@
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { ISignup } from './interfaces/auth.interface';
 import { Services } from './enums/services.enum';
-import { ClientGrpcProxy, ClientProxy } from '@nestjs/microservices';
+import { ClientProxy } from '@nestjs/microservices';
 import { UserPatterns } from './enums/user.events';
 import { lastValueFrom, timeout } from 'rxjs';
 import { ServiceResponse } from './interfaces/serviceResponse.interface';
 import { AuthMessages } from './enums/auth.messages';
-import { AuthPatterns } from './enums/auth.events';
 import * as bcrypt from 'bcrypt'
 import { sendError } from './common/utils/sendError.utils';
 
 @Injectable()
 export class AuthService {
 
-  private readonly timeout: number = 45000
+  private readonly timeout: number = 4500
 
   constructor(@Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy) { }
 
