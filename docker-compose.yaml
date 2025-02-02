@@ -27,6 +27,36 @@ services:
     volumes:
       - ./auth/src:/app/src
 
+    ### User Service ###
+  user_service:
+    container_name: user_service
+    build: 
+      context: ./user
+      dockerfile: Dockerfile
+    networks:
+      - app
+    depends_on:
+      - rabbitmq
+    env_file:
+      - user/.env
+    volumes:
+      - ./user/src:/app/src
+
+    ### Permission Service ###
+  permission_service:
+    container_name: permission_service
+    build: 
+      context: ./permission
+      dockerfile: Dockerfile
+    networks:
+      - app
+    depends_on:
+      - rabbitmq
+    env_file:
+      - permission/.env
+    volumes:
+      - ./permission/src:/app/src
+
   ### Rabbitmq ###
   rabbitmq: 
     container_name: rabbitmq
