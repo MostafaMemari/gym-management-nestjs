@@ -9,9 +9,6 @@ export default (): ConfigModuleOptions => {
             const schema = Joi.object({
                 RABBITMQ_URL: Joi.string().required(),
                 RABBITMQ_QUEUE_NAME: Joi.string().required(),
-                REDIS_PORT: Joi.string().required(),
-                REDIS_HOST: Joi.string().required(),
-                REDIS_PASSWORD: Joi.string().optional().allow(''),
                 ACCESS_TOKEN_SECRET: Joi.string().required(),
                 ACCESS_TOKEN_EXPIRE_TIME: Joi.string().required(),
                 REFRESH_TOKEN_EXPIRE_TIME: Joi.string().required(),

@@ -60,3 +60,15 @@ export class SignupDto {
     @ConfirmPassword()
     confirmPassword: string
 }
+
+export class SigninDto {
+    @IsNotEmpty()
+    @IsString()
+    @ApiProperty()
+    identifier: string
+
+    @IsNotEmpty()
+    @IsString()
+    @ApiProperty()
+    password: string
+}

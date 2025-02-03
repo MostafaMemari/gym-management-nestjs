@@ -5,7 +5,7 @@ import { lastValueFrom, timeout } from "rxjs";
 import { ApiConsumes, ApiTags } from "@nestjs/swagger";
 import { AuthPatterns } from "../../common/enums/auth.events";
 import { ServiceResponse } from "../../common/interfaces/serviceResponse.interface";
-import { SignupDto } from "../../common/dtos/auth.dto";
+import { SigninDto, SignupDto } from "../../common/dtos/auth.dto";
 
 @Controller('auth')
 @ApiTags('Auth')
@@ -32,6 +32,19 @@ export class AuthController {
         await this.checkConnection()
 
         const data: ServiceResponse = await lastValueFrom(this.authServiceClient.send(AuthPatterns.Signup, signupDto).pipe(timeout(this.timeout)))
+
+        if (data.error)
+            throw new HttpException(data.message, data.status)
+
+        return data
+    }
+
+    @Post("signin")
+    @ApiConsumes('application/json', "application/x-www-form-urlencoded")
+    async signin(@Body() signinDto: SigninDto) {
+        await this.checkConnection()
+
+        const data: ServiceResponse = await lastValueFrom(this.authServiceClient.send(AuthPatterns.Signin, signinDto).pipe(timeout(this.timeout)))
 
         if (data.error)
             throw new HttpException(data.message, data.status)
