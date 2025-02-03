@@ -47,6 +47,18 @@ import { APP_PIPE } from '@nestjs/core';
           noAck: true,
           persistent: false,
         }
+      },
+      {
+        name: Services.REDIS,
+        transport: Transport.RMQ,
+        options: {
+          urls: [process.env.RABBITMQ_URL],
+          queue: process.env.RABBITMQ_REDIS_SERVICE_QUEUE,
+          prefetchCount: 2,
+          isGlobalPrefetchCount: true,
+          noAck: true,
+          persistent: false,
+        }
       }
     ])
   ],
