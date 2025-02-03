@@ -13,11 +13,12 @@ const extractErrorMessage = (error: any, defaultMessage?: string) => {
 export const sendError = (error: any): ServiceResponse => {
     const authServiceMessage = "Auth Service Internal Server Error !!"
     const errorMessage = extractErrorMessage(error, authServiceMessage)
+    const status = error.status || error.statusCode || HttpStatus.INTERNAL_SERVER_ERROR
 
     return {
         error: true,
         data: {},
         message: errorMessage,
-        status: HttpStatus.INTERNAL_SERVER_ERROR
+        status
     }
 }

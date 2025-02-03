@@ -1,5 +1,5 @@
-import { forwardRef, HttpStatus, Inject, Injectable } from '@nestjs/common';
-import { GenerateTokens, ISignup } from './interfaces/auth.interface';
+import { forwardRef, HttpStatus, Inject, Injectable, OnModuleInit, UnauthorizedException } from '@nestjs/common';
+import { GenerateTokens, ISignin, ISignup } from './interfaces/auth.interface';
 import { Services } from './enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
 import { UserPatterns } from './enums/user.events';
@@ -26,7 +26,7 @@ export class AuthService {
       await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CheckConnection, {}).pipe(timeout(this.timeout)))
     } catch (error) {
       return {
-        message: UserPatterns.NotConnected,
+        message: "User service is not connected",
         error: true,
         status: HttpStatus.INTERNAL_SERVER_ERROR,
         data: {}
@@ -79,6 +79,37 @@ export class AuthService {
         status: HttpStatus.CREATED,
         error: false,
         data: { ...tokens }
+      }
+    } catch (error) {
+      return sendError(error)
+    }
+  }
+
+  async signin(signinDto: ISignin): Promise<ServiceResponse> {
+    try {
+
+      const isConnected = await this.checkConnection()
+
+      if (typeof isConnected == 'object' && isConnected?.error) return isConnected
+
+      const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.GetUserByIdentifier, signinDto).pipe(timeout(this.timeout)))
+
+
+      if (result.error) return result
+
+      const isValidPassword = await bcrypt.compare(signinDto.password, result.data?.user?.password)
+
+      if (!isValidPassword) {
+        throw new UnauthorizedException(AuthMessages.Unauthorized)
+      }
+
+      const tokens = await this.generateTokens(result.data?.user)
+
+      return {
+        data: { ...tokens },
+        error: false,
+        message: AuthMessages.SigninSuccess,
+        status: HttpStatus.OK
       }
     } catch (error) {
       return sendError(error)

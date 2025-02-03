@@ -2,7 +2,7 @@ import { Controller } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { AuthPatterns } from './enums/auth.events';
-import { ISignup } from './interfaces/auth.interface';
+import { ISignin, ISignup } from './interfaces/auth.interface';
 
 @Controller()
 export class AuthController {
@@ -16,6 +16,11 @@ export class AuthController {
   @MessagePattern(AuthPatterns.Signup)
   signup(@Payload() data: ISignup) {
     return this.authService.signup(data);
+  }
+
+  @MessagePattern(AuthPatterns.Signin)
+  signin(@Payload() data: ISignin) {
+    return this.authService.signin(data)
   }
 
 }
