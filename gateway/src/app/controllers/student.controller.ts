@@ -3,19 +3,19 @@ import { Services } from "../../common/enums/services.enum";
 import { ClientProxy } from "@nestjs/microservices";
 import { lastValueFrom, timeout } from "rxjs";
 import { ApiTags } from "@nestjs/swagger";
-import { PermissionPatterns } from "../../common/enums/permission.events";
+import { StudentPatterns } from "../../common/enums/student.events";
 import { ServiceResponse } from "../../common/interfaces/serviceResponse.interface";
 
-@Controller("permission")
-@ApiTags("Permission")
-export class PermissionController {
-  constructor(@Inject(Services.PERMISSION) private readonly permissionServiceClient: ClientProxy) {}
+@Controller("student")
+@ApiTags("Student")
+export class StudentController {
+  constructor(@Inject(Services.STUDENT) private readonly studentServiceClient: ClientProxy) {}
 
   async checkConnection(): Promise<boolean> {
     try {
-      return await lastValueFrom(this.permissionServiceClient.send(PermissionPatterns.checkConnection, {}).pipe(timeout(5000)));
+      return await lastValueFrom(this.studentServiceClient.send(StudentPatterns.checkConnection, {}).pipe(timeout(5000)));
     } catch (error) {
-      throw new InternalServerErrorException("Permission service is not connected");
+      throw new InternalServerErrorException("Student service is not connected");
     }
   }
 
@@ -23,9 +23,7 @@ export class PermissionController {
   async getHello() {
     await this.checkConnection();
 
-    const data: ServiceResponse = await lastValueFrom(
-      this.permissionServiceClient.send(PermissionPatterns.getHello, {}).pipe(timeout(5000))
-    );
+    const data: ServiceResponse = await lastValueFrom(this.studentServiceClient.send(StudentPatterns.getHello, {}).pipe(timeout(5000)));
 
     if (data.error) throw new HttpException(data.message, data.status);
 

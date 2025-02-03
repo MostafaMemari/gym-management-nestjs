@@ -7,6 +7,7 @@ import envConfig from "../configs/env.config";
 import { UserController } from "./controllers/user.controller";
 import { PermissionController } from "./controllers/permission.controller";
 import { APP_PIPE } from "@nestjs/core";
+import { StudentController } from "./controllers/student.controller";
 
 @Module({
   imports: [
@@ -66,7 +67,7 @@ import { APP_PIPE } from "@nestjs/core";
         transport: Transport.RMQ,
         options: {
           urls: [process.env.RABBITMQ_URL],
-          queue: process.env.RABBITMQ_REDIS_SERVICE_QUEUE,
+          queue: process.env.RABBITMQ_STUDENT_SERVICE_QUEUE,
           prefetchCount: 2,
           isGlobalPrefetchCount: true,
           noAck: true,
@@ -75,7 +76,7 @@ import { APP_PIPE } from "@nestjs/core";
       },
     ]),
   ],
-  controllers: [AuthController, UserController, PermissionController],
+  controllers: [AuthController, UserController, PermissionController, StudentController],
   providers: [
     {
       provide: APP_PIPE,
