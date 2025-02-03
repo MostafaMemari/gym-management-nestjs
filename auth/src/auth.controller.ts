@@ -8,13 +8,14 @@ import { ISignup } from './interfaces/auth.interface';
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
+  @MessagePattern(AuthPatterns.CheckConnection)
+  checkConnection() {
+    return true
+  }
+
   @MessagePattern(AuthPatterns.Signup)
   signup(@Payload() data: ISignup) {
     return this.authService.signup(data);
   }
 
-  @MessagePattern(AuthPatterns.CheckConnection)
-  checkConnection() {
-    return true
-  }
 }

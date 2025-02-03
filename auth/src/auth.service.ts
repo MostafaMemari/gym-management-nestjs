@@ -8,8 +8,6 @@ import { ServiceResponse } from './interfaces/serviceResponse.interface';
 import { AuthMessages } from './enums/auth.messages';
 import * as bcrypt from 'bcrypt'
 import { sendError } from './common/utils/sendError.utils';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { RedisCache } from 'cache-manager-redis-yet';
 import { JwtService } from '@nestjs/jwt';
 import * as dateFns from 'date-fns'
 
@@ -19,7 +17,6 @@ export class AuthService {
   private readonly timeout: number = 4500
 
   constructor(
-    @Inject(CACHE_MANAGER) private readonly redisCache: RedisCache,
     @Inject(forwardRef(() => JwtService)) private readonly jwtService: JwtService,
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
   ) { }
@@ -53,12 +50,7 @@ export class AuthService {
       secret: process.env.REFRESH_TOKEN_SECRET,
     });
 
-    //TODO: Set refresh token in redis 
-    // await this.redisCache.set(
-    //   `refreshToken_${user.id}_${refreshToken}`,
-    //   refreshToken,
-    //   refreshTokenMsExpireTime
-    // );
+    //TODO: Set refresh token in redis
 
     return { accessToken, refreshToken };
   }
@@ -80,7 +72,7 @@ export class AuthService {
 
       if (result.error) return result
 
-      const tokens = await this.generateTokens(result.data)
+      const tokens = await this.generateTokens(result.data?.user)
 
       return {
         message: AuthMessages.SignupSuccess,
