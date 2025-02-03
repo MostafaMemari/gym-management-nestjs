@@ -79,7 +79,13 @@ export class AuthService {
       secret: process.env.REFRESH_TOKEN_SECRET,
     });
 
-    //TODO: Set refresh token in redis
+    const redisData = {
+      value: refreshToken,
+      key: `refreshToken_${user.id}_${refreshToken}`,
+      expireTime: refreshTokenMsExpireTime
+    }
+
+   await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.Set, redisData))
 
     return { accessToken, refreshToken };
   }
