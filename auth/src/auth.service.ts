@@ -10,6 +10,7 @@ import * as bcrypt from 'bcrypt'
 import { sendError } from './common/utils/sendError.utils';
 import { JwtService } from '@nestjs/jwt';
 import * as dateFns from 'date-fns'
+import { RedisPatterns } from './enums/redis.events';
 
 @Injectable()
 export class AuthService {
@@ -19,9 +20,10 @@ export class AuthService {
   constructor(
     @Inject(forwardRef(() => JwtService)) private readonly jwtService: JwtService,
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
+    @Inject(Services.REDIS) private readonly redisServiceClientProxy: ClientProxy
   ) { }
 
-  async checkConnection(): Promise<ServiceResponse | void> {
+  async checkUserServiceConnection(): Promise<ServiceResponse | void> {
     try {
       await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CheckConnection, {}).pipe(timeout(this.timeout)))
     } catch (error) {
@@ -32,6 +34,33 @@ export class AuthService {
         data: {}
       }
     }
+  }
+
+  async checkRedisServiceConnection(): Promise<ServiceResponse | void> {
+    try {
+      await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.CheckConnection, {}).pipe(timeout(this.timeout)))
+    } catch (error) {
+      return {
+        message: "Redis service is not connected",
+        error: true,
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        data: {}
+      }
+    }
+  }
+
+  async checkConnections(): Promise<void | ServiceResponse> {
+    const isRedisServiceConnected = this.checkRedisServiceConnection()
+    const isUserServiceConnected = this.checkUserServiceConnection()
+
+    const connections = await Promise.all([isRedisServiceConnected, isUserServiceConnected])
+
+    for (let i = 0; i < connections.length; i++) {
+      if (typeof connections[i] == 'object') {
+        return connections[i]
+      }
+    }
+
   }
 
   async generateTokens(user: { id: number }): Promise<GenerateTokens> {
@@ -57,9 +86,9 @@ export class AuthService {
 
   async signup(signupDto: ISignup): Promise<ServiceResponse> {
     try {
-      const isConnected = await this.checkConnection()
+      const connectionResult = await this.checkConnections()
 
-      if (typeof isConnected == "object" && isConnected?.error) return isConnected
+      if (typeof connectionResult == "object" && connectionResult?.error) return connectionResult
 
       const hashedPassword = await bcrypt.hash(signupDto.password, 10)
 
@@ -88,7 +117,7 @@ export class AuthService {
   async signin(signinDto: ISignin): Promise<ServiceResponse> {
     try {
 
-      const isConnected = await this.checkConnection()
+      const isConnected = await this.checkUserServiceConnection()
 
       if (typeof isConnected == 'object' && isConnected?.error) return isConnected
 
