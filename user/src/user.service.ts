@@ -86,4 +86,32 @@ export class UserService {
 
   }
 
+
+  async findByIdentifier({ identifier }: { identifier: string }): Promise<ServiceResponse> {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: identifier },
+          { mobile: identifier }
+        ]
+      }
+    })
+
+    if (!user) {
+      return {
+        data: {},
+        error: true,
+        message: UserMessages.NotFoundUser,
+        status: HttpStatus.NOT_FOUND
+      }
+    }
+
+    return {
+      data: { user },
+      error: false,
+      message: "",
+      status: HttpStatus.OK
+    }
+  }
+
 }

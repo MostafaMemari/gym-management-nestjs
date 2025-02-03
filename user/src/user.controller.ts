@@ -27,4 +27,9 @@ export class UserController {
   getById(@Payload() data: { userId: number }) {
     return this.userService.findById(data)
   }
+
+  @MessagePattern(UserPatterns.GetUserByIdentifier)
+  getByIdentifier(@Payload() data: { identifier: string }) {
+    return this.userService.findByIdentifier(data)
+  }
 }
