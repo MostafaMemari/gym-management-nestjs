@@ -1,5 +1,5 @@
 export enum UserPatterns {
-    NotConnected = "User service is not connected",
     CreateUser = "create_user",
-    CheckConnection = "check_connection"
+    CheckConnection = "check_connection",
+    GetUserByIdentifier = "get_user_by_identifier"
 }

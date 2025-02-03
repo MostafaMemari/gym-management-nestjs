@@ -1,5 +1,5 @@
-import { forwardRef, HttpStatus, Inject, Injectable } from '@nestjs/common';
-import { GenerateTokens, ISignup } from './interfaces/auth.interface';
+import { forwardRef, HttpStatus, Inject, Injectable, OnModuleInit, UnauthorizedException } from '@nestjs/common';
+import { GenerateTokens, ISignin, ISignup } from './interfaces/auth.interface';
 import { Services } from './enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
 import { UserPatterns } from './enums/user.events';
@@ -10,6 +10,7 @@ import * as bcrypt from 'bcrypt'
 import { sendError } from './common/utils/sendError.utils';
 import { JwtService } from '@nestjs/jwt';
 import * as dateFns from 'date-fns'
+import { RedisPatterns } from './enums/redis.events';
 
 @Injectable()
 export class AuthService {
@@ -19,19 +20,47 @@ export class AuthService {
   constructor(
     @Inject(forwardRef(() => JwtService)) private readonly jwtService: JwtService,
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
+    @Inject(Services.REDIS) private readonly redisServiceClientProxy: ClientProxy
   ) { }
 
-  async checkConnection(): Promise<ServiceResponse | void> {
+  async checkUserServiceConnection(): Promise<ServiceResponse | void> {
     try {
       await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CheckConnection, {}).pipe(timeout(this.timeout)))
     } catch (error) {
       return {
-        message: UserPatterns.NotConnected,
+        message: "User service is not connected",
         error: true,
         status: HttpStatus.INTERNAL_SERVER_ERROR,
         data: {}
       }
     }
+  }
+
+  async checkRedisServiceConnection(): Promise<ServiceResponse | void> {
+    try {
+      await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.CheckConnection, {}).pipe(timeout(this.timeout)))
+    } catch (error) {
+      return {
+        message: "Redis service is not connected",
+        error: true,
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        data: {}
+      }
+    }
+  }
+
+  async checkConnections(): Promise<void | ServiceResponse> {
+    const isRedisServiceConnected = this.checkRedisServiceConnection()
+    const isUserServiceConnected = this.checkUserServiceConnection()
+
+    const connections = await Promise.all([isRedisServiceConnected, isUserServiceConnected])
+
+    for (let i = 0; i < connections.length; i++) {
+      if (typeof connections[i] == 'object') {
+        return connections[i]
+      }
+    }
+
   }
 
   async generateTokens(user: { id: number }): Promise<GenerateTokens> {
@@ -50,16 +79,22 @@ export class AuthService {
       secret: process.env.REFRESH_TOKEN_SECRET,
     });
 
-    //TODO: Set refresh token in redis
+    const redisData = {
+      value: refreshToken,
+      key: `refreshToken_${user.id}_${refreshToken}`,
+      expireTime: refreshTokenMsExpireTime
+    }
+
+   await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.Set, redisData))
 
     return { accessToken, refreshToken };
   }
 
   async signup(signupDto: ISignup): Promise<ServiceResponse> {
     try {
-      const isConnected = await this.checkConnection()
+      const connectionResult = await this.checkConnections()
 
-      if (typeof isConnected == "object" && isConnected?.error) return isConnected
+      if (typeof connectionResult == "object" && connectionResult?.error) return connectionResult
 
       const hashedPassword = await bcrypt.hash(signupDto.password, 10)
 
@@ -79,6 +114,37 @@ export class AuthService {
         status: HttpStatus.CREATED,
         error: false,
         data: { ...tokens }
+      }
+    } catch (error) {
+      return sendError(error)
+    }
+  }
+
+  async signin(signinDto: ISignin): Promise<ServiceResponse> {
+    try {
+
+      const isConnected = await this.checkUserServiceConnection()
+
+      if (typeof isConnected == 'object' && isConnected?.error) return isConnected
+
+      const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.GetUserByIdentifier, signinDto).pipe(timeout(this.timeout)))
+
+
+      if (result.error) return result
+
+      const isValidPassword = await bcrypt.compare(signinDto.password, result.data?.user?.password)
+
+      if (!isValidPassword) {
+        throw new UnauthorizedException(AuthMessages.Unauthorized)
+      }
+
+      const tokens = await this.generateTokens(result.data?.user)
+
+      return {
+        data: { ...tokens },
+        error: false,
+        message: AuthMessages.SigninSuccess,
+        status: HttpStatus.OK
       }
     } catch (error) {
       return sendError(error)

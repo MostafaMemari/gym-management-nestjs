@@ -19,6 +19,14 @@ import { JwtModule } from '@nestjs/jwt';
           urls: [process.env.RABBITMQ_URL],
           queue: process.env.RABBITMQ_USER_QUEUE_NAME,
         }
+      },
+      {
+        name: Services.REDIS,
+        transport: Transport.RMQ,
+        options: {
+          urls: [process.env.RABBITMQ_URL],
+          queue: process.env.RABBITMQ_REDIS_QUEUE_NAME,
+        }
       }
     ])
   ],
