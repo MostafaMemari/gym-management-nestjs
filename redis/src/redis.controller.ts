@@ -18,6 +18,11 @@ export class RedisController {
     return this.redisService.set(data)
   }
 
+  @MessagePattern(RedisPatterns.Del)
+  del(@Payload() data: { key: string }) {
+    return this.redisService.del(data)
+  }
+
   @MessagePattern(RedisPatterns.CheckConnection)
   checkConnection() {
     return true

@@ -1,5 +1,5 @@
 import { InjectRedis } from '@nestjs-modules/ioredis';
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, OnModuleInit } from '@nestjs/common';
 import Redis from 'ioredis';
 import { RedisMessages } from './enums/redis.messages';
 import { ISet } from './interfaces/redis.interface';
@@ -37,6 +37,26 @@ export class RedisService {
             error: false,
             message: value,
             status: HttpStatus.CREATED
+        }
+    }
+
+    async del(data: { key: string }): Promise<ServiceResponse> {
+        const value = await this.redis.del(data.key);
+
+        if (value == 0) {
+            return {
+                data: {},
+                error: true,
+                message: RedisMessages.NotFound,
+                status: HttpStatus.NOT_FOUND
+            }
+        }
+
+        return {
+            data: {},
+            error: false,
+            message: RedisMessages.DeletedValueSuccess,
+            status: HttpStatus.OK
         }
     }
 
