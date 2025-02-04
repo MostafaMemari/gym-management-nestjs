@@ -1,7 +1,7 @@
 import { Controller } from "@nestjs/common";
 import { StudentService } from "./student.service";
 import { MessagePattern } from "@nestjs/microservices";
-import { StudentPatterns } from "./enums/student.events";
+import { StudentPatterns } from "./common/validation/enums/student.events";
 
 @Controller()
 export class StudentController {

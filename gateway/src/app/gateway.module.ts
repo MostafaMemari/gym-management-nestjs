@@ -1,6 +1,6 @@
 import { Module, ValidationPipe } from "@nestjs/common";
 import { ClientsModule, Transport } from "@nestjs/microservices";
-import { Services } from "../common/enums/services.enum";
+
 import { AuthController } from "./controllers/auth.controller";
 import { ConfigModule } from "@nestjs/config";
 import envConfig from "../configs/env.config";
@@ -8,11 +8,11 @@ import { UserController } from "./controllers/user.controller";
 import { PermissionController } from "./controllers/permission.controller";
 import { APP_PIPE } from "@nestjs/core";
 import { StudentController } from "./controllers/student.controller";
+import { Services } from "../common/enums/services.enum";
 
 @Module({
   imports: [
     ConfigModule.forRoot(envConfig()),
-
     ClientsModule.register([
       {
         name: Services.AUTH,
