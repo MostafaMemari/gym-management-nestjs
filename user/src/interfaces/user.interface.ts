@@ -1,9 +1,16 @@
+import { Role } from "@prisma/client"
+
 export interface ICreateUser {
-    name: string
+    username: string
 
-    email: string
+    email?: string
 
-    password: string
+    password?: string
 
-    mobile: string
+    mobile?: string
+}
+
+export interface ICreateUserStudent {
+    username: string
+    role?: Role
 }

@@ -6,7 +6,6 @@ import { UserMessages } from './enums/user.messages';
 
 @Injectable()
 export class UserService {
-
   constructor(private readonly prisma: PrismaService) { }
 
   async create(userDto: Prisma.UserCreateInput): Promise<ServiceResponse> {
@@ -45,6 +44,34 @@ export class UserService {
 
     return {
       data: { user },
+      error: false,
+      message: UserMessages.CreatedUser,
+      status: HttpStatus.CREATED
+    }
+  }
+
+  async createUserStudent(userStudentDot: Prisma.UserCreateInput): Promise<ServiceResponse> {
+    const { username, role } = userStudentDot
+
+    const existingUser = await this.prisma.user.findFirst({
+      where: {
+        username
+      }
+    })
+
+    if (existingUser) {
+      return {
+        data: {},
+        error: true,
+        message: UserMessages.AlreadyExistsUserWithUsername,
+        status: HttpStatus.CONFLICT
+      }
+    }
+
+    const newUser = await this.prisma.user.create({ data: { username, role: role || Role.STUDENT } })
+
+    return {
+      data: { user: newUser },
       error: false,
       message: UserMessages.CreatedUser,
       status: HttpStatus.CREATED
