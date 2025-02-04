@@ -1,9 +1,9 @@
 services:
   ### Gateway ###
-  gateway: 
+  gateway:
     container_name: gateway
-    build: 
-      context: './gateway'
+    build:
+      context: "./gateway"
       dockerfile: Dockerfile
     ports:
       - 4000:4000
@@ -15,7 +15,7 @@ services:
   ### Auth Service ###
   auth_service:
     container_name: auth_service
-    build: 
+    build:
       context: ./auth
       dockerfile: Dockerfile
     networks:
@@ -30,7 +30,7 @@ services:
     ### User Service ###
   user_service:
     container_name: user_service
-    build: 
+    build:
       context: ./user
       dockerfile: Dockerfile
     networks:
@@ -45,7 +45,7 @@ services:
     ### Permission Service ###
   permission_service:
     container_name: permission_service
-    build: 
+    build:
       context: ./permission
       dockerfile: Dockerfile
     networks:
@@ -58,7 +58,7 @@ services:
       - ./permission/src:/app/src
 
   ### Rabbitmq ###
-  rabbitmq: 
+  rabbitmq:
     container_name: rabbitmq
     image: rabbitmq:management-alpine
     ports:
@@ -71,10 +71,10 @@ services:
       - app
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
-    
+
 volumes:
   rabbitmq_data:
 
 networks:
   app:
-   driver: bridge
+    driver: bridge

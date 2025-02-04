@@ -113,7 +113,6 @@ export class UserService {
 
   }
 
-
   async findByIdentifier({ identifier }: { identifier: string }): Promise<ServiceResponse> {
     const user = await this.prisma.user.findFirst({
       where: {
