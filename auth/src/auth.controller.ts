@@ -6,11 +6,11 @@ import { ISignin, ISignup } from './interfaces/auth.interface';
 
 @Controller()
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
 
   @MessagePattern(AuthPatterns.CheckConnection)
   checkConnection() {
-    return true
+    return true;
   }
 
   @MessagePattern(AuthPatterns.Signup)
@@ -20,12 +20,11 @@ export class AuthController {
 
   @MessagePattern(AuthPatterns.Signin)
   signin(@Payload() data: ISignin) {
-    return this.authService.signin(data)
+    return this.authService.signin(data);
   }
 
   @MessagePattern(AuthPatterns.Signout)
   signout(@Payload() data: { refreshToken: string }) {
     return this.authService.signout(data);
   }
-
 }

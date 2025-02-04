@@ -23,11 +23,11 @@ export class StudentController {
 
   @Post()
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
-  async createStudent(@Body() studentDto: CreateStudentDto) {
+  async createStudent(@Body() { ...studentDto }: CreateStudentDto) {
     await this.checkConnection();
 
     const data: ServiceResponse = await lastValueFrom(
-      this.studentServiceClient.send(StudentPatterns.CreateStudent, { studentDto }).pipe(timeout(5000)),
+      this.studentServiceClient.send(StudentPatterns.CreateUserStudent, studentDto).pipe(timeout(5000)),
     );
 
     if (data.error) throw new HttpException(data.message, data.status);

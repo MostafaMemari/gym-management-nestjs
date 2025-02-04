@@ -13,9 +13,8 @@ export class StudentController {
     return true;
   }
 
-  @MessagePattern(StudentPatterns.CreateStudent)
-  createStudent(@Payload() data: ICreateStudent) {
-    return this.studentService.createStudent(data);
-    // return true;
+  @MessagePattern(StudentPatterns.CreateUserStudent)
+  createStudent(@Payload() createStudentDto: ICreateStudent) {
+    return this.studentService.createStudent(createStudentDto);
   }
 }
