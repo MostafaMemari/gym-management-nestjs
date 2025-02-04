@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger"
-import { IsAlpha, IsEmail, IsNotEmpty, IsPhoneNumber, IsString, MaxLength, MinLength } from "class-validator"
+import { IsAlpha, IsEmail, IsJWT, IsNotEmpty, IsPhoneNumber, IsString, MaxLength, MinLength } from "class-validator"
 import { ConfirmPassword } from "../decorators/confirmPassword.decorator"
 
 export class SignupDto {
@@ -71,4 +71,12 @@ export class SigninDto {
     @IsString()
     @ApiProperty()
     password: string
+}
+
+export class SignoutDto {
+    @IsNotEmpty()
+    @IsString()
+    @ApiProperty()
+    @IsJWT()
+    refreshToken: string
 }

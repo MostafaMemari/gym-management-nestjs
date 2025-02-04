@@ -1,5 +1,6 @@
 export enum AuthPatterns {
     CheckConnection = "check_connection",
     Signup = "signup",
-    Signin = "signin"
+    Signin = "signin",
+    Signout = "signout"
 }
