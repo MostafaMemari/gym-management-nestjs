@@ -95,16 +95,12 @@ export class AuthService {
         throw new BadRequestException(AuthMessages.InvalidTokenPayload)
       }
 
-      const result: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.GetUserById, { userId: verifiedToken.id }))
-
-      if (result.error) return result
-
-        return {
-          data: { userId: verifiedToken.id },
-          error: false,
-          message: AuthMessages.VerifiedTokenSuccess,
-          status: HttpStatus.OK
-        }
+      return {
+        data: { userId: verifiedToken.id },
+        error: false,
+        message: AuthMessages.VerifiedTokenSuccess,
+        status: HttpStatus.OK
+      }
     } catch (error) {
       return sendError(error)
     }

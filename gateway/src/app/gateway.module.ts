@@ -9,6 +9,7 @@ import { PermissionController } from "./controllers/permission.controller";
 import { APP_PIPE } from "@nestjs/core";
 import { StudentController } from "./controllers/student.controller";
 import { Services } from "../common/enums/services.enum";
+import { AuthGuard } from "../common/guards/auth.guard";
 
 @Module({
   imports: [
@@ -82,6 +83,9 @@ import { Services } from "../common/enums/services.enum";
       provide: APP_PIPE,
       useValue: new ValidationPipe({ whitelist: true }),
     },
+    AuthGuard,
+    AuthController,
+    UserController
   ],
 })
-export class GatewayModule {}
+export class GatewayModule { }

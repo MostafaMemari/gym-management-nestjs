@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpException, Inject, InternalServerErrorException, Post } from "@nestjs/common";
+import { Body, Controller, Get, HttpException, Inject, InternalServerErrorException, Post, UseGuards } from "@nestjs/common";
 import { Services } from "../../common/enums/services.enum";
 import { ClientProxy } from "@nestjs/microservices";
 import { lastValueFrom, timeout } from "rxjs";
@@ -6,6 +6,7 @@ import { ApiConsumes, ApiTags } from "@nestjs/swagger";
 import { AuthPatterns } from "../../common/enums/auth.events";
 import { ServiceResponse } from "../../common/interfaces/serviceResponse.interface";
 import { SigninDto, SignoutDto, SignupDto } from "../../common/dtos/auth.dto";
+import { AuthGuard } from "src/common/guards/auth.guard";
 
 @Controller('auth')
 @ApiTags('Auth')
