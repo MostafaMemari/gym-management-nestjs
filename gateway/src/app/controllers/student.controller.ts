@@ -15,7 +15,7 @@ export class StudentController {
 
   async checkConnection(): Promise<boolean> {
     try {
-      return await lastValueFrom(this.studentServiceClient.send(StudentPatterns.checkConnection, {}).pipe(timeout(5000)));
+      return await lastValueFrom(this.studentServiceClient.send(StudentPatterns.CheckConnection, {}).pipe(timeout(5000)));
     } catch (error) {
       throw new InternalServerErrorException('Student service is not connected');
     }
@@ -27,18 +27,8 @@ export class StudentController {
     await this.checkConnection();
 
     const data: ServiceResponse = await lastValueFrom(
-      this.studentServiceClient.send(StudentPatterns.createStudent, {}).pipe(timeout(5000)),
+      this.studentServiceClient.send(StudentPatterns.CreateStudent, { studentDto }).pipe(timeout(5000)),
     );
-
-    if (data.error) throw new HttpException(data.message, data.status);
-
-    return data;
-  }
-  @Get('hello')
-  async getHello() {
-    await this.checkConnection();
-
-    const data: ServiceResponse = await lastValueFrom(this.studentServiceClient.send(StudentPatterns.getHello, {}).pipe(timeout(5000)));
 
     if (data.error) throw new HttpException(data.message, data.status);
 
