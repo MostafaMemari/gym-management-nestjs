@@ -1,126 +1,82 @@
-import { IsNotEmpty, IsOptional, IsString, IsEnum, IsBoolean, IsUUID, IsDate, IsPhoneNumber, IsDateString } from "class-validator";
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { Gender } from "../enums/gender.enum";
+import { IsNotEmpty, IsOptional, IsString, IsEnum, IsPhoneNumber, IsDateString, Length, MinLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Gender } from '../enums/gender.enum';
+import { ToBoolean } from '../decorators/toBoolean.decodator';
 
 export class CreateStudentDto {
-  @ApiProperty({
-    example: "",
-    type: String,
-  })
   @IsNotEmpty()
   @IsString()
+  @Length(5, 80)
+  @ApiProperty({ type: String, minLength: 5, maxLength: 80, required: true, example: 'مصطفی معماری' })
   full_name: string;
 
-  @ApiProperty({
-    example: "",
-    enum: Gender,
-  })
   @IsNotEmpty()
   @IsEnum(Gender)
+  @ApiProperty({ example: 'male', enum: Gender })
   gender: Gender;
 
-  @ApiPropertyOptional({
-    example: "",
-    default: true,
-    type: Boolean,
-  })
-  @IsBoolean()
   @IsOptional()
-  is_active: boolean = true;
+  @ToBoolean()
+  @ApiPropertyOptional({ type: Boolean, example: true })
+  is_active?: boolean;
 
-  @ApiPropertyOptional({
-    example: "",
-    type: String,
-  })
   @IsOptional()
   @IsString()
+  @ApiPropertyOptional({ type: String, example: '' })
   image_url?: string;
 
-  @ApiPropertyOptional({
-    example: "",
-    type: String,
-  })
   @IsOptional()
   @IsString()
+  @Length(2, 80)
+  @ApiPropertyOptional({ type: String, maxLength: 80, minLength: 2, required: true, example: '' })
   father_name?: string;
 
-  @ApiProperty({
-    example: "",
-    type: String,
-  })
   @IsNotEmpty()
   @IsString()
+  @MinLength(10)
+  @ApiProperty({ type: String, example: '4900782343', minLength: 10, maxLength: 10 })
   national_code: string;
 
-  @ApiProperty({
-    example: "",
-    type: String,
-  })
-  @IsNotEmpty()
-  @IsPhoneNumber(null)
+  @IsOptional()
+  @IsPhoneNumber('IR')
+  @ApiPropertyOptional({ type: String, example: '09388366510' })
   phone_number: string;
 
-  @ApiPropertyOptional({
-    example: "",
-    type: String,
-  })
   @IsOptional()
-  @IsPhoneNumber(null)
+  @Length(9, 12)
+  @ApiPropertyOptional({ type: String, example: '' })
   landline_number?: string;
 
-  @ApiPropertyOptional({
-    example: "",
-    type: String,
-  })
   @IsOptional()
   @IsString()
+  @Length(10, 200)
+  @ApiPropertyOptional({ type: String, maxLength: 100, minLength: 10, required: true, example: '' })
   address?: string;
 
-  @ApiProperty({
-    example: "",
-    type: String,
-  })
   @IsNotEmpty()
   @IsDateString()
-  birth_date: string;
+  @ApiProperty({ type: Date, example: '2025-01-25' })
+  birth_date: Date;
 
-  @ApiPropertyOptional({
-    example: "",
-    type: String,
-  })
   @IsOptional()
   @IsDateString()
-  sports_insurance_date?: string;
+  @ApiPropertyOptional({ type: Date, example: '' })
+  sports_insurance_date?: Date;
 
-  @ApiPropertyOptional({
-    example: "",
-    type: String,
-  })
   @IsOptional()
   @IsDateString()
-  expire_image_date?: string;
+  @ApiPropertyOptional({ type: String, example: '' })
+  expire_image_date?: Date;
 
-  @ApiProperty({
-    example: "",
-    type: String,
-  })
-  @IsNotEmpty()
-  @IsUUID()
+  @IsOptional()
+  @ApiPropertyOptional({ type: String, example: '' })
   coach_id: string;
 
-  @ApiProperty({
-    example: "",
-    type: String,
-  })
-  @IsNotEmpty()
-  @IsUUID()
+  @IsOptional()
+  @ApiPropertyOptional({ type: String, example: '' })
   club_id: string;
 
-  @ApiProperty({
-    example: "",
-    type: String,
-  })
-  @IsNotEmpty()
-  @IsUUID()
+  @IsOptional()
+  @ApiPropertyOptional({ type: String, example: '' })
   age_category_id: string;
 }
