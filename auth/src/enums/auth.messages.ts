@@ -4,5 +4,7 @@ export enum AuthMessages {
     Unauthorized = "Invalid identifier or password",
     SignoutSuccess = 'User signout success',
     InvalidRefreshToken = 'Refresh token is invalid',
-    NotFoundRefreshToken = "Refresh token not found"
+    NotFoundRefreshToken = "Refresh token not found",
+    InvalidTokenPayload = 'Access token payload is invalid',
+    VerifiedTokenSuccess = "Verified token successfully"
 }

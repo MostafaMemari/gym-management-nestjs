@@ -28,4 +28,8 @@ export class AuthController {
     return this.authService.signout(data);
   }
 
+  @MessagePattern(AuthPatterns.verifyAccessToken)
+  verifyAccessToken(@Payload() data: { accessToken: string }) {
+    return this.authService.verifyAccessToken(data)
+  }
 }
