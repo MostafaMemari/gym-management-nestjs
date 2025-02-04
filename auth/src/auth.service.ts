@@ -228,4 +228,29 @@ export class AuthService {
       return sendError(error)
     }
   }
+
+  async refreshToken({ refreshToken }: { refreshToken: string }): Promise<ServiceResponse> {
+    try {
+      const isConnected = await this.checkRedisServiceConnection()
+
+      if (typeof isConnected == 'object' && isConnected?.error) return isConnected
+
+      await this.validateRefreshToken(refreshToken)
+
+      const { REFRESH_TOKEN_SECRET, ACCESS_TOKEN_SECRET, ACCESS_TOKEN_EXPIRE_TIME } = process.env
+
+      const { id } = this.jwtService.verify<{ id: number }>(refreshToken, { secret: REFRESH_TOKEN_SECRET })
+
+      const newAccessToken = this.jwtService.sign({ id }, { secret: ACCESS_TOKEN_SECRET, expiresIn: ACCESS_TOKEN_EXPIRE_TIME })
+
+      return {
+        data: { accessToken: newAccessToken },
+        error: false,
+        message: AuthMessages.RefreshedTokenSuccess,
+        status: HttpStatus.OK
+      }
+    } catch (error) {
+      return sendError(error)
+    }
+  }
 }

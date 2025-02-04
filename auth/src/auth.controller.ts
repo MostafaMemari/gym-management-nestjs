@@ -6,7 +6,7 @@ import { ISignin, ISignup } from './interfaces/auth.interface';
 
 @Controller()
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @MessagePattern(AuthPatterns.CheckConnection)
   checkConnection() {
@@ -31,5 +31,10 @@ export class AuthController {
   @MessagePattern(AuthPatterns.VerifyAccessToken)
   verifyAccessToken(@Payload() data: { accessToken: string }) {
     return this.authService.verifyAccessToken(data)
+  }
+
+  @MessagePattern(AuthPatterns.RefreshToken)
+  refreshToken(@Payload() data: { refreshToken: string }) {
+    return this.authService.refreshToken(data)
   }
 }
