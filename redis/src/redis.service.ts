@@ -30,7 +30,7 @@ export class RedisService {
     }
 
     async set(data: ISet): Promise<ServiceResponse> {
-        const value = await this.redis.set(data.key, data.value, "EX", data.expireTime)
+        const value = await this.redis.set(data.key, data.value, "EX", data.expireTime || -1)
 
         return {
             data: {},

@@ -23,4 +23,9 @@ export class AuthController {
     return this.authService.signin(data)
   }
 
+  @MessagePattern(AuthPatterns.Signout)
+  signout(@Payload() data: { refreshToken: string }) {
+    return this.authService.signout(data);
+  }
+
 }
