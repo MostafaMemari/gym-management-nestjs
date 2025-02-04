@@ -63,6 +63,24 @@ export class AuthService {
 
   }
 
+  async validateRefreshToken(refreshToken: string): Promise<boolean | { refreshToken: string }> {
+    const { id } = this.jwtService.decode<{ id: number }>(refreshToken)
+
+    const redisData = {
+      key: `refreshToken_${id}_${refreshToken}`
+    }
+
+    const storedToken: ServiceResponse = await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.Get, redisData))
+
+    if (storedToken.error) return false
+
+    if (storedToken.data.value !== refreshToken) return false
+
+    return {
+      refreshToken: redisData.key
+    }
+  }
+
   async generateTokens(user: { id: number }): Promise<GenerateTokens> {
     const payload = { id: user.id };
 
@@ -157,9 +175,23 @@ export class AuthService {
 
       if (typeof isConnected == "object" && isConnected?.error) return isConnected
 
-      const result: ServiceResponse = await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.Del, signoutDto))
+      const validateRefreshToken = await this.validateRefreshToken(signoutDto.refreshToken)
 
-      if (result.error) return result
+      if (!validateRefreshToken) {
+        return {
+          data: {},
+          error: true,
+          message: AuthMessages.InvalidRefreshToken,
+          status: HttpStatus.BAD_REQUEST
+        }
+      }
+
+      let refreshTokenKey = ''
+      if (typeof validateRefreshToken == 'object') refreshTokenKey = validateRefreshToken.refreshToken
+
+      const result: ServiceResponse = await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.Del, { key: refreshTokenKey }))
+
+      if (result.error) return { ...result, message: AuthMessages.NotFoundRefreshToken }
 
       return {
         data: {},
