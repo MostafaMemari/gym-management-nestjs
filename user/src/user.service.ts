@@ -141,4 +141,25 @@ export class UserService {
     }
   }
 
+  async removeUserById(userDto: { userId: number }): Promise<ServiceResponse> {
+    const existingUser = await this.prisma.user.findFirst({ where: { id: userDto.userId } })
+
+    if (!existingUser) {
+      return {
+        data: {},
+        error: true,
+        message: UserMessages.NotFoundUser,
+        status: HttpStatus.CONFLICT
+      }
+    }
+
+    const removedUser = await this.prisma.user.delete({ where: { id: userDto.userId }, omit: { password: true } })
+
+    return {
+      data: { removedUser },
+      error: false,
+      message: UserMessages.RemovedUserSuccess,
+      status: HttpStatus.OK
+    }
+  }
 }

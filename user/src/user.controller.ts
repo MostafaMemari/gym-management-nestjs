@@ -37,4 +37,9 @@ export class UserController {
   createUserStudent(@Payload() data: ICreateUserStudent) {
     return this.userService.createUserStudent(data)
   }
+
+  @MessagePattern(UserPatterns.RemoveUser)
+  removeById(@Payload() data: { userId: number }) {
+    return this.userService.removeUserById(data)
+  }
 }
