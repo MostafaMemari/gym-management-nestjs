@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger"
-import { IsAlpha, IsEmail, IsJWT, IsNotEmpty, IsPhoneNumber, IsString, MaxLength, MinLength } from "class-validator"
+import { IsEmail, IsJWT, IsNotEmpty, IsPhoneNumber, IsString, Matches, MaxLength, MinLength } from "class-validator"
 import { ConfirmPassword } from "../decorators/confirmPassword.decorator"
 
 export class SignupDto {
@@ -7,14 +7,17 @@ export class SignupDto {
     @IsString()
     @MaxLength(100)
     @MinLength(3)
+    @Matches(/^(?![0-9])[a-zA-Z0-9_-]{3,20}$/, {
+        message: "username is invalid"
+    })
     @ApiProperty({
         maxLength: 100,
         minLength: 3,
         type: "string",
         nullable: false,
-        example: "Ali Ahmadi",
+        example: "ali_ahmadi",
     })
-    name: string
+    username: string
 
     @IsNotEmpty()
     @IsString()

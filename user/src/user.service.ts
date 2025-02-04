@@ -9,7 +9,6 @@ export class UserService {
   constructor(private readonly prisma: PrismaService) { }
 
   async create(userDto: Prisma.UserCreateInput): Promise<ServiceResponse> {
-
     const existingUser = await this.prisma.user.findFirst({
       where: {
         OR: [
@@ -18,6 +17,9 @@ export class UserService {
           },
           {
             mobile: userDto.mobile
+          },
+          {
+            username: userDto.username
           }
         ]
       }
@@ -38,7 +40,8 @@ export class UserService {
       data: {
         ...userDto,
         role: isFirstUser ? Role.SUPER_ADMIN : Role.STUDENT
-      }
+      },
+      omit: { password: true }
     })
 
 
