@@ -85,7 +85,7 @@ export class AuthService {
       expireTime: refreshTokenMsExpireTime
     }
 
-   await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.Set, redisData))
+    await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.Set, redisData).pipe(timeout(this.timeout)))
 
     return { accessToken, refreshToken };
   }
@@ -127,7 +127,7 @@ export class AuthService {
 
       if (typeof isConnected == 'object' && isConnected?.error) return isConnected
 
-      const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.GetUserByIdentifier, signinDto).pipe(timeout(this.timeout)))
+      const result: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.GetUserByIdentifier, signinDto).pipe(timeout(this.timeout)))
 
 
       if (result.error) return result
@@ -144,6 +144,27 @@ export class AuthService {
         data: { ...tokens },
         error: false,
         message: AuthMessages.SigninSuccess,
+        status: HttpStatus.OK
+      }
+    } catch (error) {
+      return sendError(error)
+    }
+  }
+
+  async signout(signoutDto: { refreshToken: string }): Promise<ServiceResponse> {
+    try {
+      const isConnected = await this.checkRedisServiceConnection()
+
+      if (typeof isConnected == "object" && isConnected?.error) return isConnected
+
+      const result: ServiceResponse = await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.Del, signoutDto))
+
+      if (result.error) return result
+
+      return {
+        data: {},
+        error: false,
+        message: AuthMessages.SignoutSuccess,
         status: HttpStatus.OK
       }
     } catch (error) {

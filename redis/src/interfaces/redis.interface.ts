@@ -3,5 +3,5 @@ export interface ISet {
 
     value: string
 
-    expireTime: number
+    expireTime?: number
 }
