@@ -2,7 +2,7 @@ import { Controller } from '@nestjs/common';
 import { UserService } from './user.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { UserPatterns } from './enums/user.events';
-import { ICreateUser } from './interfaces/user.interface';
+import { ICreateUser, ICreateUserStudent } from './interfaces/user.interface';
 
 @Controller()
 export class UserController {
@@ -31,5 +31,10 @@ export class UserController {
   @MessagePattern(UserPatterns.GetUserByIdentifier)
   getByIdentifier(@Payload() data: { identifier: string }) {
     return this.userService.findByIdentifier(data)
+  }
+
+  @MessagePattern(UserPatterns.CreateUserStudent)
+  createUserStudent(@Payload() data: ICreateUserStudent) {
+    return this.userService.createUserStudent(data)
   }
 }
