@@ -5,7 +5,7 @@ import { lastValueFrom, timeout } from "rxjs";
 import { ApiConsumes, ApiTags } from "@nestjs/swagger";
 import { AuthPatterns } from "../../common/enums/auth.events";
 import { ServiceResponse } from "../../common/interfaces/serviceResponse.interface";
-import { SigninDto, SignoutDto, SignupDto } from "../../common/dtos/auth.dto";
+import { RefreshTokenDto, SigninDto, SignoutDto, SignupDto } from "../../common/dtos/auth.dto";
 import { AuthGuard } from "src/common/guards/auth.guard";
 
 @Controller('auth')
@@ -59,6 +59,19 @@ export class AuthController {
         await this.checkConnection()
 
         const data: ServiceResponse = await lastValueFrom(this.authServiceClient.send(AuthPatterns.Signout, signoutDto).pipe(timeout(this.timeout)))
+
+        if (data.error)
+            throw new HttpException(data.message, data.status)
+
+        return data
+    }
+
+    @Post("refreshToken")
+    @ApiConsumes('application/json', "application/x-www-form-urlencoded")
+    async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
+        await this.checkConnection()
+
+        const data: ServiceResponse = await lastValueFrom(this.authServiceClient.send(AuthPatterns.RefreshToken, refreshTokenDto).pipe(timeout(this.timeout)))
 
         if (data.error)
             throw new HttpException(data.message, data.status)
