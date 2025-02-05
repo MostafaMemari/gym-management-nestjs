@@ -6,7 +6,7 @@ import { ICreateUser, ICreateUserStudent } from './interfaces/user.interface';
 
 @Controller()
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) { }
 
   @MessagePattern(UserPatterns.CheckConnection)
   checkConnection() {
@@ -41,5 +41,10 @@ export class UserController {
   @MessagePattern(UserPatterns.RemoveUser)
   removeById(@Payload() data: { userId: number }) {
     return this.userService.removeUserById(data);
+  }
+
+  @MessagePattern(UserPatterns.FindOrCreate)
+  findOrCreate(@Payload() data: ICreateUser) {
+    return this.userService.findOrCreate(data)
   }
 }

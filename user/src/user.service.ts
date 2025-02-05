@@ -6,10 +6,10 @@ import { UserMessages } from './enums/user.messages';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
-  async create(userDto: Prisma.UserCreateInput): Promise<ServiceResponse> {
-    const existingUser = await this.prisma.user.findFirst({
+  async isExistingUser(userDto: Prisma.UserCreateInput) {
+    const user = await this.prisma.user.findFirst({
       where: {
         OR: [
           {
@@ -24,6 +24,15 @@ export class UserService {
         ]
       }
     })
+
+
+    if (user) return true
+
+    return false
+  }
+
+  async create(userDto: Prisma.UserCreateInput): Promise<ServiceResponse> {
+    const existingUser = await this.isExistingUser(userDto)
 
     if (existingUser) {
       return {
@@ -160,4 +169,20 @@ export class UserService {
       status: HttpStatus.OK,
     };
   }
+
+  async findOrCreate(userDto: Prisma.UserCreateInput): Promise<ServiceResponse> {
+    const existingUser = await this.isExistingUser(userDto)
+
+    if (existingUser) {
+      return {
+        data: { user: existingUser },
+        error: false,
+        message: "",
+        status: HttpStatus.OK
+      }
+    }
+
+    return await this.create(userDto)
+  }
+
 }

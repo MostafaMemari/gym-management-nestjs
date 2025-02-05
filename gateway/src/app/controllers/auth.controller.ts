@@ -91,7 +91,7 @@ export class AuthController {
     async googleRedirect(@Req() req: Request) {
         await this.checkConnection()
 
-        const data: ServiceResponse = await lastValueFrom(this.authServiceClient.send(AuthPatterns.GoogleOauth, { user: req.user }))
+        const data: ServiceResponse = await lastValueFrom(this.authServiceClient.send(AuthPatterns.GoogleOauth, { ...req.user }))
 
         if (data.error)
             throw new HttpException(data.message, data.status)
