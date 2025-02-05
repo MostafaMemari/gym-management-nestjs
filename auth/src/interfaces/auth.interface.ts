@@ -17,3 +17,8 @@ export interface ISignin {
     identifier: string
     password: string
 }
+
+export interface IGoogleOauth {
+    username: string
+    email: string
+}

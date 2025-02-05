@@ -2,7 +2,7 @@ import { Controller } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { AuthPatterns } from './enums/auth.events';
-import { ISignin, ISignup } from './interfaces/auth.interface';
+import { IGoogleOauth, ISignin, ISignup } from './interfaces/auth.interface';
 
 @Controller()
 export class AuthController {
@@ -36,5 +36,10 @@ export class AuthController {
   @MessagePattern(AuthPatterns.RefreshToken)
   refreshToken(@Payload() data: { refreshToken: string }) {
     return this.authService.refreshToken(data)
+  }
+
+  @MessagePattern(AuthPatterns.GoogleOauth)
+  googleOauth(@Payload() data: IGoogleOauth) {
+    return this.authService.googleOauth(data)
   }
 }
