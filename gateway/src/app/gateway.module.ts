@@ -1,15 +1,15 @@
-import { Injectable, MiddlewareConsumer, Module, NestMiddleware, NestModule, RequestMethod, ValidationPipe } from "@nestjs/common";
+import { Module, ValidationPipe } from "@nestjs/common";
 import { ClientsModule, Transport } from "@nestjs/microservices";
 import { AuthController } from "./controllers/auth.controller";
 import { ConfigModule } from "@nestjs/config";
 import envConfig from "../configs/env.config";
 import { UserController } from "./controllers/user.controller";
 import { PermissionController } from "./controllers/permission.controller";
-import { APP_PIPE, NestApplication } from "@nestjs/core";
+import { APP_PIPE } from "@nestjs/core";
 import { StudentController } from "./controllers/student.controller";
 import { Services } from "../common/enums/services.enum";
 import { AuthGuard } from "../common/guards/auth.guard";
-import { BasicAuthMiddleware } from "../common/middlewares/basicAuth.middleware";
+import { GoogleStrategy } from "../common/strategies/google.strategy";
 
 @Module({
   imports: [
@@ -85,8 +85,9 @@ import { BasicAuthMiddleware } from "../common/middlewares/basicAuth.middleware"
     },
     AuthGuard,
     AuthController,
-    UserController
+    UserController,
+    GoogleStrategy
   ],
 })
-export class GatewayModule {}
+export class GatewayModule { }
 
