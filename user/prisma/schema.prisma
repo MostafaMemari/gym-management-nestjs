@@ -25,8 +25,8 @@ model User {
   username String @db.VarChar(100) @unique
   role Role @default(STUDENT)
   email String?
-  mobile String? 
+  mobile String?
+  password String? 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
-  password String?
 }
