@@ -127,7 +127,7 @@ export class UserService {
   async findByIdentifier({ identifier }: { identifier: string }): Promise<ServiceResponse> {
     const user = await this.prisma.user.findFirst({
       where: {
-        OR: [{ email: identifier }, { mobile: identifier }],
+        OR: [{ email: identifier }, { mobile: identifier }, { username: identifier }],
       },
     });
 

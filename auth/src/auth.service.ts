@@ -175,7 +175,7 @@ export class AuthService {
 
       if (result.error) return result
 
-      const isValidPassword = await bcrypt.compare(signinDto.password, result.data?.user?.password)
+      const isValidPassword = await bcrypt.compare(signinDto.password, result.data?.user?.password || "")
 
       if (!isValidPassword) {
         throw new UnauthorizedException(AuthMessages.Unauthorized)
