@@ -70,7 +70,7 @@ export class AuthController {
     @ApiConsumes('application/json', "application/x-www-form-urlencoded")
     async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
         await this.checkConnection()
-
+        
         const data: ServiceResponse = await lastValueFrom(this.authServiceClient.send(AuthPatterns.RefreshToken, refreshTokenDto).pipe(timeout(this.timeout)))
 
         if (data.error)
