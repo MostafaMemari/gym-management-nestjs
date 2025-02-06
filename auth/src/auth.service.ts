@@ -6,7 +6,7 @@ import { UserPatterns } from './enums/user.events';
 import { lastValueFrom, timeout } from 'rxjs';
 import { ServiceResponse } from './interfaces/serviceResponse.interface';
 import { AuthMessages } from './enums/auth.messages';
-import * as bcrypt from 'bcrypt'
+import * as bcrypt from 'bcryptjs'
 import { sendError } from './common/utils/sendError.utils';
 import { JwtService } from '@nestjs/jwt';
 import * as dateFns from 'date-fns'

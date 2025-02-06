@@ -6,7 +6,6 @@ import { ApiConsumes, ApiTags } from "@nestjs/swagger";
 import { AuthPatterns } from "../../common/enums/auth.events";
 import { ServiceResponse } from "../../common/interfaces/serviceResponse.interface";
 import { RefreshTokenDto, SigninDto, SignoutDto, SignupDto } from "../../common/dtos/auth.dto";
-import { AuthGuard } from "src/common/guards/auth.guard";
 import { Request } from "express";
 import { AuthGuard as PassportAuthGuard } from "@nestjs/passport";
 
