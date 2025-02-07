@@ -4,6 +4,7 @@ import { Prisma, Role } from '@prisma/client';
 import { ServiceResponse } from './common/interfaces/serviceResponse.interface';
 import { UserMessages } from './common/enums/user.messages';
 import { IPagination } from './common/interfaces/user.interface';
+import { pagination } from './common/utils/pagination.utils';
 
 @Injectable()
 export class UserService {
@@ -92,10 +93,15 @@ export class UserService {
   }
 
   async findAll(paginationDto?: IPagination): Promise<ServiceResponse> {
-    const users = await this.prisma.user.findMany({ omit: { password: true } });
+    const userExtraQuery: Prisma.UserFindManyArgs = {
+      orderBy: { createdAt: `desc` },
+      omit: { password: true }
+    }
+
+    const paginatedUsers = await pagination('User', this.prisma, paginationDto, userExtraQuery)
 
     return {
-      data: { users },
+      data: { ...paginatedUsers },
       error: false,
       message: '',
       status: HttpStatus.OK,
