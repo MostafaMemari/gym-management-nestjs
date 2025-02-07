@@ -1,8 +1,9 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from './prisma/prisma.service';
 import { Prisma, Role } from '@prisma/client';
-import { ServiceResponse } from './interfaces/serviceResponse.interface';
-import { UserMessages } from './enums/user.messages';
+import { ServiceResponse } from './common/interfaces/serviceResponse.interface';
+import { UserMessages } from './common/enums/user.messages';
+import { IPagination } from './common/interfaces/user.interface';
 
 @Injectable()
 export class UserService {
@@ -90,7 +91,7 @@ export class UserService {
     };
   }
 
-  async findAll(): Promise<ServiceResponse> {
+  async findAll(paginationDto?: IPagination): Promise<ServiceResponse> {
     const users = await this.prisma.user.findMany({ omit: { password: true } });
 
     return {

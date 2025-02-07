@@ -14,3 +14,9 @@ export interface ICreateUserStudent {
   username: string;
   role?: Role;
 }
+
+
+export interface IPagination {
+  count?: number
+  page?: number
+}

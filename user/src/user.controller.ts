@@ -1,8 +1,8 @@
 import { Controller } from '@nestjs/common';
 import { UserService } from './user.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { UserPatterns } from './enums/user.events';
-import { ICreateUser, ICreateUserStudent } from './interfaces/user.interface';
+import { UserPatterns } from './common/enums/user.events';
+import { ICreateUser, ICreateUserStudent, IPagination } from './common/interfaces/user.interface';
 
 @Controller()
 export class UserController {
@@ -19,8 +19,8 @@ export class UserController {
   }
 
   @MessagePattern(UserPatterns.GetUsers)
-  getAll() {
-    return this.userService.findAll();
+  getAll(@Payload() data?: IPagination) {
+    return this.userService.findAll(data);
   }
 
   @MessagePattern(UserPatterns.GetUserById)
