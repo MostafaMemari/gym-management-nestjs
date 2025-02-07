@@ -1,14 +1,37 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from './prisma/prisma.service';
 import { Prisma, Role } from '@prisma/client';
 import { ServiceResponse } from './common/interfaces/serviceResponse.interface';
 import { UserMessages } from './common/enums/user.messages';
 import { IPagination } from './common/interfaces/user.interface';
 import { pagination } from './common/utils/pagination.utils';
+import { Services } from './common/enums/services.enum';
+import { ClientProxy } from '@nestjs/microservices';
+import { lastValueFrom, timeout } from 'rxjs';
+import { RedisPatterns } from './common/enums/redis.events';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaService) { }
+
+  private readonly timeout = 4500
+
+  constructor(
+    @Inject(Services.REDIS) private readonly redisServiceClientProxy: ClientProxy,
+    private readonly prisma: PrismaService
+  ) { }
+
+  async redisCheckConnection(): Promise<void | ServiceResponse> {
+    try {
+      await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.CheckConnection, {}).pipe(timeout(this.timeout)))
+    } catch (error) {
+      return {
+        data: {},
+        error: true,
+        message: 'Redis service is not connected',
+        status: HttpStatus.INTERNAL_SERVER_ERROR
+      }
+    }
+  }
 
   async isExistingUser(userDto: Prisma.UserCreateInput) {
     const user = await this.prisma.user.findFirst({
@@ -93,15 +116,40 @@ export class UserService {
   }
 
   async findAll(paginationDto?: IPagination): Promise<ServiceResponse> {
+    const isConnected = await this.redisCheckConnection()
+
+    if (typeof isConnected == 'object' && isConnected.error) return isConnected
+
+    const cacheKey = 'users_cache'
+
+    const usersCache = await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.Get, { key: cacheKey }).pipe(timeout(this.timeout)))
+
+    if (!usersCache.error && usersCache.status == HttpStatus.OK) {
+      return {
+        data: { ...pagination(paginationDto, JSON.parse(usersCache.data.value)) },
+        error: false,
+        message: "",
+        status: HttpStatus.OK
+      }
+    }
+
     const userExtraQuery: Prisma.UserFindManyArgs = {
       orderBy: { createdAt: `desc` },
       omit: { password: true }
     }
 
-    const paginatedUsers = await pagination('User', this.prisma, paginationDto, userExtraQuery)
+    const users = await this.prisma.user.findMany(userExtraQuery)
+
+    const redisKeys = {
+      key: cacheKey,
+      value: JSON.stringify(users),
+      expireTime: 30 //* Seconds
+    }
+
+    await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.Set, redisKeys).pipe(timeout(this.timeout)))
 
     return {
-      data: { ...paginatedUsers },
+      data: { ...pagination(paginationDto, users) },
       error: false,
       message: '',
       status: HttpStatus.OK,

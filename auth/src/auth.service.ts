@@ -110,7 +110,12 @@ export class AuthService {
     const payload = { id: user.id };
 
     const parseDays: number = Number.parseInt(process.env.REFRESH_TOKEN_EXPIRE_TIME)
-    const refreshTokenMsExpireTime: number = dateFns.milliseconds({ days: parseDays })
+
+    const now = new Date()
+
+    const futureDate = dateFns.addDays(now, parseDays)
+
+    const refreshTokenExpireTime: number = dateFns.differenceInSeconds(futureDate, now)
 
     const accessToken = this.jwtService.sign(payload, {
       secret: process.env.ACCESS_TOKEN_SECRET,
@@ -125,7 +130,7 @@ export class AuthService {
     const redisData = {
       value: refreshToken,
       key: `refreshToken_${user.id}_${refreshToken}`,
-      expireTime: refreshTokenMsExpireTime
+      expireTime: refreshTokenExpireTime
     }
 
     await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.Set, redisData).pipe(timeout(this.timeout)))
