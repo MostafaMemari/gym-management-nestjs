@@ -1,11 +1,11 @@
-import { Body, Controller, Get, HttpException, Inject, InternalServerErrorException, Param, ParseIntPipe, Query } from "@nestjs/common";
+import { Controller, Get, HttpException, Inject, InternalServerErrorException, Param, ParseIntPipe, Query } from "@nestjs/common";
 import { Services } from "../../common/enums/services.enum";
 import { ClientProxy } from "@nestjs/microservices";
 import { lastValueFrom, timeout } from "rxjs";
 import { ApiTags } from "@nestjs/swagger";
 import { UserPatterns } from "../../common/enums/user.events";
 import { ServiceResponse } from "../../common/interfaces/serviceResponse.interface";
-import { PaginationDto } from "../../common/dtos/user.dto";
+import { PaginationDto, SearchDto } from "../../common/dtos/user.dto";
 
 @Controller('user')
 @ApiTags('User')
@@ -29,6 +29,18 @@ export class UserController {
         await this.checkConnection()
 
         const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.GetUsers, { ...paginationDto }).pipe(timeout(5000)))
+
+        if (data.error)
+            throw new HttpException(data.message, data.status)
+
+        return data
+    }
+
+    @Get("search")
+    async searchUser(@Query() searchDto: SearchDto) {
+        await this.checkConnection()
+
+        const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.SearchUser, { ...searchDto }).pipe(timeout(5000)))
 
         if (data.error)
             throw new HttpException(data.message, data.status)
