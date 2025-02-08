@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpException, Inject, InternalServerErrorException, Post, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, HttpException, Inject, InternalServerErrorException, Post } from "@nestjs/common";
 import { Services } from "../../common/enums/services.enum";
 import { ClientProxy } from "@nestjs/microservices";
 import { lastValueFrom, timeout } from "rxjs";
@@ -6,8 +6,6 @@ import { ApiConsumes, ApiTags } from "@nestjs/swagger";
 import { AuthPatterns } from "../../common/enums/auth.events";
 import { ServiceResponse } from "../../common/interfaces/serviceResponse.interface";
 import { RefreshTokenDto, SigninDto, SignoutDto, SignupDto } from "../../common/dtos/auth.dto";
-import { Request } from "express";
-import { AuthGuard as PassportAuthGuard } from "@nestjs/passport";
 
 @Controller('auth')
 @ApiTags('Auth')
@@ -73,24 +71,6 @@ export class AuthController {
         await this.checkConnection()
 
         const data: ServiceResponse = await lastValueFrom(this.authServiceClient.send(AuthPatterns.RefreshToken, refreshTokenDto).pipe(timeout(this.timeout)))
-
-        if (data.error)
-            throw new HttpException(data.message, data.status)
-
-        return data
-    }
-
-
-    @Get("google/login")
-    @UseGuards(PassportAuthGuard('google'))
-    googleAuth() { }
-
-    @Get('google/redirect')
-    @UseGuards(PassportAuthGuard('google'))
-    async googleRedirect(@Req() req: Request) {
-        await this.checkConnection()
-
-        const data: ServiceResponse = await lastValueFrom(this.authServiceClient.send(AuthPatterns.GoogleOauth, { ...req.user }))
 
         if (data.error)
             throw new HttpException(data.message, data.status)

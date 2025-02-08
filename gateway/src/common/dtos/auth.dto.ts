@@ -21,16 +21,6 @@ export class SignupDto {
 
     @IsNotEmpty()
     @IsString()
-    @IsEmail()
-    @ApiProperty({
-        type: "string",
-        nullable: false,
-        example: "ali_ahmadi@gmail.com",
-    })
-    email: string
-
-    @IsNotEmpty()
-    @IsString()
     @IsPhoneNumber('IR')
     @ApiProperty({
         type: "string",
