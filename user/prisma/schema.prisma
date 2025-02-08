@@ -24,7 +24,6 @@ model User {
   id Int @id() @default(autoincrement()) @db.Integer()
   username String @db.VarChar(100) @unique
   role Role @default(STUDENT)
-  email String?
   mobile String?
   password String? 
   createdAt DateTime @default(now())
