@@ -3,8 +3,6 @@ import { Role } from "@prisma/client";
 export interface ICreateUser {
   username: string;
 
-  email?: string;
-
   password?: string;
 
   mobile?: string;

@@ -7,6 +7,5 @@ export enum AuthMessages {
     NotFoundRefreshToken = "Refresh token not found",
     InvalidTokenPayload = 'Access token payload is invalid',
     VerifiedTokenSuccess = "Verified token successfully",
-    RefreshedTokenSuccess = "Token refreshed successfully",
-    AuthorizedSuccess = "Authorized success"
+    RefreshedTokenSuccess = "Token refreshed successfully"
 }
