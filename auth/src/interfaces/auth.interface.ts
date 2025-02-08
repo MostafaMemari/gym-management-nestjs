@@ -1,8 +1,6 @@
 export interface ISignup {
     name: string
 
-    email: string
-
     password: string
 
     mobile: string
@@ -16,9 +14,4 @@ export interface GenerateTokens {
 export interface ISignin {
     identifier: string
     password: string
-}
-
-export interface IGoogleOauth {
-    username: string
-    email: string
 }

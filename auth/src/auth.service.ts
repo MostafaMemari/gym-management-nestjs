@@ -1,5 +1,5 @@
 import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { GenerateTokens, IGoogleOauth, ISignin, ISignup } from './interfaces/auth.interface';
+import { GenerateTokens, ISignin, ISignup } from './interfaces/auth.interface';
 import { Services } from './enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
 import { UserPatterns } from './enums/user.events';
@@ -256,25 +256,6 @@ export class AuthService {
       }
     } catch (error) {
       return sendError(error)
-    }
-  }
-
-  async googleOauth(googleOauthDto: IGoogleOauth): Promise<ServiceResponse> {
-    const isConnected = await this.checkConnections()
-
-    if (typeof isConnected == 'object' && isConnected?.error) return isConnected
-
-    const result: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.FindOrCreate, { ...googleOauthDto }))
-
-    if (result.error) return result
-
-    const tokens = await this.generateTokens(result.data.user)
-
-    return {
-      data: { ...tokens },
-      error: false,
-      message: AuthMessages.AuthorizedSuccess,
-      status: result.status
     }
   }
 
