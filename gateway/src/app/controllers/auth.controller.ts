@@ -1,4 +1,4 @@
-import { Body, Controller, HttpException, Inject, InternalServerErrorException, Post } from "@nestjs/common";
+import { Body, Controller, HttpException, Inject, InternalServerErrorException, Post, UseGuards } from "@nestjs/common";
 import { Services } from "../../common/enums/services.enum";
 import { ClientProxy } from "@nestjs/microservices";
 import { lastValueFrom, timeout } from "rxjs";
@@ -6,6 +6,8 @@ import { ApiConsumes, ApiTags } from "@nestjs/swagger";
 import { AuthPatterns } from "../../common/enums/auth.events";
 import { ServiceResponse } from "../../common/interfaces/serviceResponse.interface";
 import { RefreshTokenDto, SigninDto, SignoutDto, SignupDto } from "../../common/dtos/auth.dto";
+import { AuthGuard } from "../../common/guards/auth.guard";
+import { SwaggerConsumes } from "../../common/enums/swagger-consumes.enum";
 
 @Controller('auth')
 @ApiTags('Auth')
@@ -27,7 +29,7 @@ export class AuthController {
     }
 
     @Post("signup")
-    @ApiConsumes('application/json', "application/x-www-form-urlencoded")
+    @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
     async signup(@Body() { confirmPassword, ...signupDto }: SignupDto) {
         await this.checkConnection()
 
@@ -40,7 +42,7 @@ export class AuthController {
     }
 
     @Post("signin")
-    @ApiConsumes('application/json', "application/x-www-form-urlencoded")
+    @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
     async signin(@Body() signinDto: SigninDto) {
         await this.checkConnection()
 
@@ -53,7 +55,8 @@ export class AuthController {
     }
 
     @Post("signout")
-    @ApiConsumes('application/json', "application/x-www-form-urlencoded")
+    @UseGuards(AuthGuard)
+    @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
     async signout(@Body() signoutDto: SignoutDto) {
         await this.checkConnection()
 
@@ -66,7 +69,7 @@ export class AuthController {
     }
 
     @Post("refreshToken")
-    @ApiConsumes('application/json', "application/x-www-form-urlencoded")
+    @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
     async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
         await this.checkConnection()
 

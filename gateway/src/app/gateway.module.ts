@@ -9,7 +9,6 @@ import { APP_PIPE } from "@nestjs/core";
 import { StudentController } from "./controllers/student.controller";
 import { Services } from "../common/enums/services.enum";
 import { AuthGuard } from "../common/guards/auth.guard";
-import { GoogleStrategy } from "../common/strategies/google.strategy";
 
 @Module({
   imports: [
@@ -85,8 +84,7 @@ import { GoogleStrategy } from "../common/strategies/google.strategy";
     },
     AuthGuard,
     AuthController,
-    UserController,
-    GoogleStrategy
+    UserController
   ],
 })
 export class GatewayModule { }
