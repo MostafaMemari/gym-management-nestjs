@@ -18,3 +18,7 @@ export interface IPagination {
   count?: number
   page?: number
 }
+
+export interface ISearchUser extends IPagination {
+  query: string
+}

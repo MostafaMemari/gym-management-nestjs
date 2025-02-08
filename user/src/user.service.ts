@@ -3,7 +3,7 @@ import { PrismaService } from './prisma/prisma.service';
 import { Prisma, Role } from '@prisma/client';
 import { ServiceResponse } from './common/interfaces/serviceResponse.interface';
 import { UserMessages } from './common/enums/user.messages';
-import { IPagination } from './common/interfaces/user.interface';
+import { IPagination, ISearchUser } from './common/interfaces/user.interface';
 import { pagination } from './common/utils/pagination.utils';
 import { Services } from './common/enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
@@ -238,6 +238,58 @@ export class UserService {
     }
 
     return await this.create(userDto)
+  }
+
+  async search({ query, ...paginationDto }: ISearchUser): Promise<ServiceResponse> {
+    const isConnected = await this.redisCheckConnection()
+
+    if (typeof isConnected == 'object' && isConnected.error) return isConnected
+
+    const cacheKey = `searchUser_${query}`
+
+    const cacheUsers: ServiceResponse = await lastValueFrom(this.redisServiceClientProxy.send(cacheKey, { value: cacheKey }).pipe(timeout(this.timeout)))
+
+    if (!cacheUsers.error && cacheUsers.status == HttpStatus.OK) {
+      return {
+        data: { ...pagination(paginationDto, JSON.parse(cacheUsers.data)) },
+        error: false,
+        message: "",
+        status: HttpStatus.OK
+      }
+    }
+
+    const userExtraQuery: Prisma.UserFindManyArgs = {
+      omit: { password: true },
+      orderBy: { createdAt: "desc" },
+      where: {
+        OR: [
+          {
+            username: `%${query}%`
+          },
+          {
+            mobile: `%${query}%`
+          }
+        ]
+      }
+    }
+
+    const users = await this.prisma.user.findMany(userExtraQuery)
+
+    const redisKeys = {
+      key: cacheKey,
+      value: JSON.stringify(users),
+      expireTime: 30 //* Seconds
+    }
+
+    await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.Set, redisKeys).pipe(timeout(this.timeout)))
+
+
+    return {
+      data: { ...pagination(paginationDto, users) },
+      error: false,
+      message: "",
+      status: HttpStatus.OK
+    }
   }
 
 }

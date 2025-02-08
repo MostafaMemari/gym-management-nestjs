@@ -6,5 +6,6 @@ export enum UserPatterns {
     GetUserByIdentifier = "get_user_by_identifier",
     CreateUserStudent = "create_user_student",
     RemoveUser = 'remove_user',
-    FindOrCreate = 'find_or_create'
+    FindOrCreate = 'find_or_create',
+    SearchUser = "search_user"
 }
