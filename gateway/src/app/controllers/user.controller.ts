@@ -1,10 +1,11 @@
-import { Controller, Get, HttpException, Inject, InternalServerErrorException, Param, ParseIntPipe } from "@nestjs/common";
+import { Controller, Get, HttpException, Inject, InternalServerErrorException, Param, ParseIntPipe, Query } from "@nestjs/common";
 import { Services } from "../../common/enums/services.enum";
 import { ClientProxy } from "@nestjs/microservices";
 import { lastValueFrom, timeout } from "rxjs";
 import { ApiTags } from "@nestjs/swagger";
 import { UserPatterns } from "../../common/enums/user.events";
 import { ServiceResponse } from "../../common/interfaces/serviceResponse.interface";
+import { PaginationDto, SearchDto } from "../../common/dtos/user.dto";
 
 @Controller('user')
 @ApiTags('User')
@@ -24,10 +25,22 @@ export class UserController {
     }
 
     @Get()
-    async getUsers() {
+    async getUsers(@Query() paginationDto: PaginationDto) {
         await this.checkConnection()
 
-        const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.GetUsers, {}).pipe(timeout(5000)))
+        const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.GetUsers, { ...paginationDto }).pipe(timeout(5000)))
+
+        if (data.error)
+            throw new HttpException(data.message, data.status)
+
+        return data
+    }
+
+    @Get("search")
+    async searchUser(@Query() searchDto: SearchDto) {
+        await this.checkConnection()
+
+        const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.SearchUser, { ...searchDto }).pipe(timeout(5000)))
 
         if (data.error)
             throw new HttpException(data.message, data.status)
@@ -40,7 +53,7 @@ export class UserController {
         await this.checkConnection()
 
         const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.GetUserById, { userId: id }).pipe(timeout(5000)))
-
+        console.log(data)
         if (data.error)
             throw new HttpException(data.message, data.status)
 

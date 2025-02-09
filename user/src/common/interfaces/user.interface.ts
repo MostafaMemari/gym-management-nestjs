@@ -3,8 +3,6 @@ import { Role } from "@prisma/client";
 export interface ICreateUser {
   username: string;
 
-  email?: string;
-
   password?: string;
 
   mobile?: string;
@@ -13,4 +11,14 @@ export interface ICreateUser {
 export interface ICreateUserStudent {
   username: string;
   role?: Role;
+}
+
+
+export interface IPagination {
+  count?: number
+  page?: number
+}
+
+export interface ISearchUser extends IPagination {
+  query: string
 }

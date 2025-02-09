@@ -57,6 +57,36 @@ services:
     volumes:
       - ./permission/src:/app/src
 
+    ### Redis Service ###
+  redis_service:
+    container_name: redis_service
+    build:
+      context: ./redis
+      dockerfile: Dockerfile
+    networks:
+      - app
+    depends_on:
+      - rabbitmq
+    env_file:
+      - redis/.env
+    volumes:
+      - ./redis/src:/app/src
+
+    ### Student Service ###
+  student_service:
+    container_name: student_service
+    build:
+      context: ./student
+      dockerfile: Dockerfile
+    networks:
+      - app
+    depends_on:
+      - rabbitmq
+    env_file:
+      - student/.env
+    volumes:
+      - ./student/src:/app/src
+
   ### Rabbitmq ###
   rabbitmq:
     container_name: rabbitmq
