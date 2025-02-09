@@ -7,7 +7,7 @@ export const typeOrmConfig = (configService: ConfigService): TypeOrmModuleOption
   const isSynchronizeEnabled = !!Number(configService.get<string>('DB_SYNCHRONIZE'));
 
   return {
-    type: 'postgres',
+    type: 'mysql',
     host: configService.get<string>('DB_HOST'),
     port: Number(configService.get<number>('DB_PORT')),
     username: configService.get<string>('DB_USERNAME'),
