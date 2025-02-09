@@ -1,16 +1,15 @@
 import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { GenerateTokens, ISignin, ISignup } from './interfaces/auth.interface';
-import { Services } from './enums/services.enum';
-import { ClientProxy } from '@nestjs/microservices';
-import { UserPatterns } from './enums/user.events';
+import { GenerateTokens, ISignin, ISignup } from './common/interfaces/auth.interface';
+import { Services } from './common/enums/services.enum';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { UserPatterns } from './common/enums/user.events';
 import { lastValueFrom, timeout } from 'rxjs';
-import { ServiceResponse } from './interfaces/serviceResponse.interface';
-import { AuthMessages } from './enums/auth.messages';
+import { ServiceResponse } from './common/interfaces/serviceResponse.interface';
+import { AuthMessages } from './common/enums/auth.messages';
 import * as bcrypt from 'bcryptjs'
-import { sendError } from './common/utils/sendError.utils';
 import { JwtService } from '@nestjs/jwt';
 import * as dateFns from 'date-fns'
-import { RedisPatterns } from './enums/redis.events';
+import { RedisPatterns } from './common/enums/redis.events';
 
 @Injectable()
 export class AuthService {
@@ -102,7 +101,7 @@ export class AuthService {
         status: HttpStatus.OK
       }
     } catch (error) {
-      return sendError(error)
+      throw new RpcException(error)
     }
   }
 
@@ -164,7 +163,7 @@ export class AuthService {
         data: { ...tokens }
       }
     } catch (error) {
-      return sendError(error)
+      throw new RpcException(error)
     }
   }
 
@@ -195,7 +194,7 @@ export class AuthService {
         status: HttpStatus.OK
       }
     } catch (error) {
-      return sendError(error)
+      throw new RpcException(error)
     }
   }
 
@@ -230,7 +229,7 @@ export class AuthService {
         status: HttpStatus.OK
       }
     } catch (error) {
-      return sendError(error)
+      throw new RpcException(error)
     }
   }
 
@@ -255,7 +254,7 @@ export class AuthService {
         status: HttpStatus.OK
       }
     } catch (error) {
-      return sendError(error)
+      throw new RpcException(error)
     }
   }
 
