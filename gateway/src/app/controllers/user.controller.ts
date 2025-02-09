@@ -53,7 +53,7 @@ export class UserController {
         await this.checkConnection()
 
         const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.GetUserById, { userId: id }).pipe(timeout(5000)))
-
+        console.log(data)
         if (data.error)
             throw new HttpException(data.message, data.status)
 

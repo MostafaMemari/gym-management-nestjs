@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { UserModule } from './user.module';
 import { Logger } from '@nestjs/common';
 import { RmqOptions, Transport } from '@nestjs/microservices';
+import { CustomRpcExceptionFilter } from './common/filters/rpcException.filter';
 
 async function bootstrap() {
   const app = await NestFactory.createMicroservice(UserModule, {
@@ -13,6 +14,8 @@ async function bootstrap() {
   } as RmqOptions);
 
   const logger = new Logger("NestApplication")
+
+  app.useGlobalFilters(new CustomRpcExceptionFilter())
 
   await app.listen()
   logger.log("User service is running....")
