@@ -10,7 +10,8 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main"
+    "start:prod": "node dist/main",
+    "prisma:migrate": "prisma migrate dev --name init"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
