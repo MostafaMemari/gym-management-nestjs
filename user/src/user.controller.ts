@@ -6,7 +6,7 @@ import { ICreateUser, ICreateUserStudent, IPagination, ISearchUser } from './com
 
 @Controller()
 export class UserController {
-  constructor(private readonly userService: UserService) { }
+  constructor(private readonly userService: UserService) {}
 
   @MessagePattern(UserPatterns.CheckConnection)
   checkConnection() {
@@ -45,11 +45,11 @@ export class UserController {
 
   @MessagePattern(UserPatterns.FindOrCreate)
   findOrCreate(@Payload() data: ICreateUser) {
-    return this.userService.findOrCreate(data)
+    return this.userService.findOrCreate(data);
   }
 
   @MessagePattern(UserPatterns.SearchUser)
   search(@Payload() data: ISearchUser) {
-    return this.userService.search(data)
+    return this.userService.search(data);
   }
 }

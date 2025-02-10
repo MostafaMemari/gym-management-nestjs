@@ -17,4 +17,14 @@ export class StudentController {
   createStudent(@Payload() createStudentDto: ICreateStudent) {
     return this.studentService.createStudent(createStudentDto);
   }
+
+  @MessagePattern(StudentPatterns.RemoveUserStudent)
+  removeById(@Payload() data: { studentId: number }) {
+    return this.studentService.removeStudentById(data);
+  }
+
+  @MessagePattern(StudentPatterns.checkExistStudentById)
+  checkExistStudent(@Payload() data: { studentId: number }) {
+    return this.studentService.checkExistStudentById(data.studentId);
+  }
 }
