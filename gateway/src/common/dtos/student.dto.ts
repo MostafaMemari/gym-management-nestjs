@@ -21,9 +21,8 @@ export class CreateStudentDto {
   is_active?: boolean;
 
   @IsOptional()
-  @IsString()
-  @ApiPropertyOptional({ type: String, example: '' })
-  image_url?: string;
+  @ApiPropertyOptional({ type: 'string', format: 'binary' })
+  image?: string;
 
   @IsOptional()
   @IsString()

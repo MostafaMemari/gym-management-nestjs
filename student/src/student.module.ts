@@ -9,6 +9,7 @@ import { typeOrmConfigAsync } from './configs/typeorm.config';
 import { StudentEntity } from './entities/student.entity';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { Services } from './common/enums/services.enum';
+import { AwsModule } from './modules/s3AWS/s3AWS.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { Services } from './common/enums/services.enum';
     ]),
     TypeOrmModule.forRootAsync(typeOrmConfigAsync),
     TypeOrmModule.forFeature([StudentEntity]),
+    AwsModule,
   ],
   controllers: [StudentController],
   providers: [StudentService],

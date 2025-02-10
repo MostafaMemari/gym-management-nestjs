@@ -13,6 +13,8 @@
     "start:prod": "node dist/main"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.744.0",
+    "@aws-sdk/s3-request-presigner": "^3.744.0",
     "@hapi/joi": "^17.1.1",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^4.0.0",
@@ -22,17 +24,25 @@
     "@nestjs/typeorm": "^11.0.0",
     "amqp-connection-manager": "^4.1.14",
     "amqplib": "^0.10.5",
+    "axios": "^1.7.9",
     "joi": "^17.13.3",
+    "mime-types": "^2.1.35",
+    "multer": "1.4.5-lts.1",
     "mysql2": "^3.12.0",
+    "nest-aws-sdk": "^3.1.0",
+    "nestjs-pino": "^4.3.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.20"
+    "sharp": "^0.33.5",
+    "typeorm": "^0.3.20",
+    "uuid": "^11.0.5"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@types/express": "^5.0.0",
     "@types/joi": "^17.2.3",
+    "@types/multer": "^1.4.12",
     "@types/node": "^20.3.1",
     "@types/supertest": "^6.0.0",
     "source-map-support": "^0.5.21",

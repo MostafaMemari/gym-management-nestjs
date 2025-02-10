@@ -11,6 +11,7 @@ import { StudentPatterns } from './common/enums/student.events';
 import { UserPatterns } from './common/enums/user.events';
 import { ServiceResponse } from './common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from './common/utils/response';
+import { AwsService } from './modules/s3AWS/s3AWS.service';
 
 @Injectable()
 export class StudentService {
@@ -19,6 +20,7 @@ export class StudentService {
   constructor(
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
     @InjectRepository(StudentEntity) private studentRepo: Repository<StudentEntity>,
+    private readonly awsService: AwsService,
   ) {}
   async createStudent(createStudentDto: ICreateStudent) {
     const queryRunner = this.studentRepo.manager.connection.createQueryRunner();
@@ -27,8 +29,15 @@ export class StudentService {
     const data = { username: `STU_${Date.now()}_${Math.floor(Math.random() * 1000)}` };
 
     let userId: number;
+    let uploadedImageKey: string | null = null;
 
     try {
+      const existingStudent = await this.checkExistStudentByNationalCode(createStudentDto.national_code);
+      if (existingStudent) {
+        await queryRunner.rollbackTransaction();
+        return ResponseUtil.error(StudentMessages.DuplicateNationalCode, HttpStatus.CONFLICT);
+      }
+
       const result = await lastValueFrom(
         this.userServiceClientProxy.send(UserPatterns.CreateUserStudent, data).pipe(timeout(this.timeout)),
       );
@@ -38,14 +47,22 @@ export class StudentService {
         return result;
       }
 
-      const existingStudent = await this.checkExistStudentByNationalCode(createStudentDto.national_code);
-      if (existingStudent) {
-        await queryRunner.rollbackTransaction();
-        return ResponseUtil.error(StudentMessages.DuplicateNationalCode, HttpStatus.CONFLICT);
+      if (createStudentDto?.image) {
+        const updatedImage = await this.awsService.uploadSingleFile({
+          file: createStudentDto.image,
+          folderName: 'students',
+        });
+
+        if (updatedImage?.error) {
+          await queryRunner.rollbackTransaction();
+          return ResponseUtil.error(StudentMessages.FailedToUploadImage);
+        }
+
+        uploadedImageKey = updatedImage.key;
       }
 
       userId = result?.data?.user?.id;
-      const student = this.studentRepo.create({ ...createStudentDto, user_id: userId });
+      const student = this.studentRepo.create({ ...createStudentDto, image_url: uploadedImageKey, user_id: userId });
 
       await queryRunner.manager.save(student);
       await queryRunner.commitTransaction();
@@ -56,6 +73,14 @@ export class StudentService {
 
       if (userId) {
         await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.RemoveUser, { userId }).pipe(timeout(this.timeout)));
+      }
+
+      if (uploadedImageKey) {
+        try {
+          await this.awsService.deleteFile(uploadedImageKey);
+        } catch (deleteError) {
+          console.error('Failed to delete uploaded image:', deleteError);
+        }
       }
 
       return ResponseUtil.error(StudentMessages.FailedToCreateStudent);
