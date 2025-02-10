@@ -14,4 +14,6 @@ export enum StudentMessages {
   DuplicateStudentEntry = 'This student is already registered',
   DuplicateNationalCode = 'A student with this national code already exists',
   FailedToUploadImage = 'Failed to upload image. Please try again',
+
+  FailedToCreateUser = 'Failed to create user Please try again later',
 }

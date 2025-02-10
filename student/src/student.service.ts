@@ -22,47 +22,31 @@ export class StudentService {
     @InjectRepository(StudentEntity) private studentRepo: Repository<StudentEntity>,
     private readonly awsService: AwsService,
   ) {}
+
+  async checkUserServiceConnection(): Promise<ServiceResponse | void> {
+    try {
+      await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CheckConnection, {}).pipe(timeout(this.timeout)));
+    } catch (error) {
+      throw new RpcException({ message: 'User service is not connected', status: HttpStatus.INTERNAL_SERVER_ERROR });
+    }
+  }
+
   async createStudent(createStudentDto: ICreateStudent) {
     const queryRunner = this.studentRepo.manager.connection.createQueryRunner();
     await queryRunner.startTransaction();
 
-    const data = { username: `STU_${Date.now()}_${Math.floor(Math.random() * 1000)}` };
-
-    let userId: number;
-    let uploadedImageKey: string | null = null;
-
     try {
-      const existingStudent = await this.checkExistStudentByNationalCode(createStudentDto.national_code);
-      if (existingStudent) {
-        await queryRunner.rollbackTransaction();
-        return ResponseUtil.error(StudentMessages.DuplicateNationalCode, HttpStatus.CONFLICT);
-      }
+      await this.checkExistStudentByNationalCode(createStudentDto.national_code);
 
-      const result = await lastValueFrom(
-        this.userServiceClientProxy.send(UserPatterns.CreateUserStudent, data).pipe(timeout(this.timeout)),
-      );
+      const userId = await this.createUser();
 
-      if (result?.error) {
-        await queryRunner.rollbackTransaction();
-        return result;
-      }
+      const uploadedImageKey = await this.uploadStudentImage(createStudentDto.image);
 
-      if (createStudentDto?.image) {
-        const updatedImage = await this.awsService.uploadSingleFile({
-          file: createStudentDto.image,
-          folderName: 'students',
-        });
-
-        if (updatedImage?.error) {
-          await queryRunner.rollbackTransaction();
-          return ResponseUtil.error(StudentMessages.FailedToUploadImage);
-        }
-
-        uploadedImageKey = updatedImage.key;
-      }
-
-      userId = result?.data?.user?.id;
-      const student = this.studentRepo.create({ ...createStudentDto, image_url: uploadedImageKey, user_id: userId });
+      const student = this.studentRepo.create({
+        ...createStudentDto,
+        image_url: uploadedImageKey,
+        user_id: userId,
+      });
 
       await queryRunner.manager.save(student);
       await queryRunner.commitTransaction();
@@ -70,22 +54,36 @@ export class StudentService {
       return ResponseUtil.success({ ...student, user_id: userId }, StudentMessages.CreatedStudent);
     } catch (error) {
       await queryRunner.rollbackTransaction();
-
-      if (userId) {
-        await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.RemoveUser, { userId }).pipe(timeout(this.timeout)));
-      }
-
-      if (uploadedImageKey) {
-        try {
-          await this.awsService.deleteFile(uploadedImageKey);
-        } catch (deleteError) {
-          console.error('Failed to delete uploaded image:', deleteError);
-        }
-      }
-
-      return ResponseUtil.error(StudentMessages.FailedToCreateStudent);
+      return ResponseUtil.error(error?.message || StudentMessages.FailedToCreateStudent, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     } finally {
       await queryRunner.release();
+    }
+  }
+
+  private async createUser(): Promise<number | null> {
+    const data = { username: `STU_${Date.now()}_${Math.floor(Math.random() * 1000)}` };
+
+    await this.checkUserServiceConnection();
+    const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CreateUserStudent, data).pipe(timeout(this.timeout)));
+
+    if (result?.error) throw result;
+
+    return result?.data?.user?.id;
+  }
+
+  private async uploadStudentImage(image: any): Promise<string | null> {
+    if (!image) return null;
+
+    try {
+      const uploadedImage = await this.awsService.uploadSingleFile({ file: image, folderName: 'students' });
+
+      if (uploadedImage?.error) {
+        return null;
+      }
+
+      return uploadedImage.key;
+    } catch (error) {
+      return null;
     }
   }
 
@@ -124,6 +122,10 @@ export class StudentService {
     return await this.studentRepo.findOneBy({ id: studentId });
   }
   async checkExistStudentByNationalCode(nationalCode: string) {
-    return await this.studentRepo.findOneBy({ national_code: nationalCode });
+    const isExist = await this.studentRepo.existsBy({ national_code: nationalCode });
+
+    if (isExist) {
+      throw ResponseUtil.error(StudentMessages.DuplicateNationalCode, HttpStatus.CONFLICT);
+    }
   }
 }

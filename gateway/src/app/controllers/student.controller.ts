@@ -25,8 +25,8 @@ import { CreateStudentDto } from '../../common/dtos/student.dto';
 import { SwaggerConsumes } from '../../common/enums/swagger-consumes.enum';
 import { UploadFileS3 } from 'src/common/interceptors/upload-file.interceptor';
 
-@Controller('student')
-@ApiTags('Student')
+@Controller('students')
+@ApiTags('Students')
 export class StudentController {
   constructor(@Inject(Services.STUDENT) private readonly studentServiceClient: ClientProxy) {}
 
