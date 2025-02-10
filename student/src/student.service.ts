@@ -24,7 +24,7 @@ export class StudentService {
     const queryRunner = this.studentRepo.manager.connection.createQueryRunner();
     await queryRunner.startTransaction();
 
-    const data = { username: `STU_${Math.random() * 10}` };
+    const data = { username: `STU_${Date.now()}_${Math.floor(Math.random() * 1000)}` };
 
     let userId: number;
 
@@ -33,22 +33,31 @@ export class StudentService {
         this.userServiceClientProxy.send(UserPatterns.CreateUserStudent, data).pipe(timeout(this.timeout)),
       );
 
-      const existStudent = await this.checkExistStudentByNationalCode(createStudentDto.national_code);
-      if (existStudent) return ResponseUtil.error(StudentMessages.DuplicateNationalCode, HttpStatus.CONFLICT);
+      if (result?.error) {
+        await queryRunner.rollbackTransaction();
+        return result;
+      }
 
-      if (result?.error) return result;
+      const existingStudent = await this.checkExistStudentByNationalCode(createStudentDto.national_code);
+      if (existingStudent) {
+        await queryRunner.rollbackTransaction();
+        return ResponseUtil.error(StudentMessages.DuplicateNationalCode, HttpStatus.CONFLICT);
+      }
 
       userId = result?.data?.user?.id;
-
       const student = this.studentRepo.create({ ...createStudentDto, user_id: userId });
 
       await queryRunner.manager.save(student);
       await queryRunner.commitTransaction();
 
-      return ResponseUtil.success(student, StudentMessages.CreatedStudent);
+      return ResponseUtil.success({ ...student, user_id: userId }, StudentMessages.CreatedStudent);
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      lastValueFrom(this.userServiceClientProxy.send(UserPatterns.RemoveUser, { userId }).pipe(timeout(this.timeout)));
+
+      if (userId) {
+        await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.RemoveUser, { userId }).pipe(timeout(this.timeout)));
+      }
+
       return ResponseUtil.error(StudentMessages.FailedToCreateStudent);
     } finally {
       await queryRunner.release();
@@ -87,21 +96,9 @@ export class StudentService {
   }
 
   async checkExistStudentById(studentId: number) {
-    try {
-      const existStudent = await this.studentRepo.findOneBy({ id: studentId });
-
-      return existStudent;
-    } catch (error) {
-      throw new RpcException(error);
-    }
+    return await this.studentRepo.findOneBy({ id: studentId });
   }
   async checkExistStudentByNationalCode(nationalCode: string) {
-    try {
-      const existStudent = await this.studentRepo.findOneBy({ national_code: nationalCode });
-
-      return existStudent;
-    } catch (error) {
-      throw new RpcException(error);
-    }
+    return await this.studentRepo.findOneBy({ national_code: nationalCode });
   }
 }

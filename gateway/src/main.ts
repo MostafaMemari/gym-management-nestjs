@@ -12,6 +12,8 @@ async function bootstrap() {
 
   app.use(new BasicAuthMiddleware().use);
 
+  app.setGlobalPrefix('api/v1');
+
   swaggerConfigInit(app);
 
   await app.listen(PORT);
