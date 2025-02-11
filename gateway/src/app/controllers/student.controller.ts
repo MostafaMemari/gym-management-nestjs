@@ -3,8 +3,6 @@ import {
   Controller,
   Delete,
   FileTypeValidator,
-  Get,
-  HttpException,
   Inject,
   InternalServerErrorException,
   MaxFileSizeValidator,
@@ -22,15 +20,15 @@ import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { StudentPatterns } from '../../common/enums/student.events';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { CreateStudentDto } from '../../common/dtos/student.dto';
-import { SwaggerConsumes } from '../../common/enums/swagger-consumes.enum';
-import { UploadFileS3 } from 'src/common/interceptors/upload-file.interceptor';
+import { UploadFileS3 } from '../../common/interceptors/upload-file.interceptor';
+import { handleError, handleServiceResponse } from '../../common/utils/handleError.utils';
 
 @Controller('students')
 @ApiTags('Students')
 export class StudentController {
   constructor(@Inject(Services.STUDENT) private readonly studentServiceClient: ClientProxy) {}
 
-  async checkConnection(): Promise<boolean> {
+  private async checkConnection(): Promise<boolean> {
     try {
       return await lastValueFrom(this.studentServiceClient.send(StudentPatterns.CheckConnection, {}).pipe(timeout(5000)));
     } catch (error) {
@@ -54,15 +52,17 @@ export class StudentController {
     )
     image: Express.Multer.File,
   ) {
-    await this.checkConnection();
+    try {
+      await this.checkConnection();
 
-    const data: ServiceResponse = await lastValueFrom(
-      this.studentServiceClient.send(StudentPatterns.CreateUserStudent, { ...studentDto, image }).pipe(timeout(5000)),
-    );
+      const data: ServiceResponse = await lastValueFrom(
+        this.studentServiceClient.send(StudentPatterns.CreateUserStudent, { ...studentDto, image }).pipe(timeout(5000)),
+      );
 
-    if (data.error) throw new HttpException(data.message, data.status);
-
-    return data;
+      return handleServiceResponse(data);
+    } catch (error) {
+      handleError(error, 'Failed to create student', 'StudentService');
+    }
   }
 
   @Delete(':id')
@@ -73,8 +73,6 @@ export class StudentController {
       this.studentServiceClient.send(StudentPatterns.RemoveUserStudent, { studentId: id }).pipe(timeout(5000)),
     );
 
-    if (data.error) throw new HttpException(data.message, data.status);
-
-    return data;
+    return handleServiceResponse(data);
   }
 }

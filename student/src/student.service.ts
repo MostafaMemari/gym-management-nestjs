@@ -36,15 +36,15 @@ export class StudentService {
     await queryRunner.startTransaction();
 
     try {
-      await this.checkExistStudentByNationalCode(createStudentDto.national_code);
+      await this.checkExistByNationalCode(createStudentDto.national_code);
 
       const userId = await this.createUser();
 
-      const uploadedImageKey = await this.uploadStudentImage(createStudentDto.image);
+      const updatedImage = await this.uploadStudentImage(createStudentDto.image);
 
       const student = this.studentRepo.create({
         ...createStudentDto,
-        image_url: uploadedImageKey,
+        image_url: updatedImage,
         user_id: userId,
       });
 
@@ -77,13 +77,9 @@ export class StudentService {
     try {
       const uploadedImage = await this.awsService.uploadSingleFile({ file: image, folderName: 'students' });
 
-      if (uploadedImage?.error) {
-        return null;
-      }
-
       return uploadedImage.key;
     } catch (error) {
-      return null;
+      ResponseUtil.error(error);
     }
   }
 
@@ -93,9 +89,7 @@ export class StudentService {
 
     try {
       const existingStudent = await this.checkExistStudentById(userDto.studentId);
-      if (!existingStudent) {
-        return ResponseUtil.error(StudentMessages.NotFoundStudent, HttpStatus.CONFLICT);
-      }
+      if (!existingStudent) ResponseUtil.error(StudentMessages.NotFoundStudent, HttpStatus.CONFLICT);
 
       const removedUser = await lastValueFrom(
         this.userServiceClientProxy.send(UserPatterns.RemoveUser, { userId: existingStudent.user_id }).pipe(timeout(this.timeout)),
@@ -118,14 +112,12 @@ export class StudentService {
     }
   }
 
-  async checkExistStudentById(studentId: number) {
+  async checkExistById(studentId: number) {
     return await this.studentRepo.findOneBy({ id: studentId });
   }
-  async checkExistStudentByNationalCode(nationalCode: string) {
+  async checkExistByNationalCode(nationalCode: string) {
     const isExist = await this.studentRepo.existsBy({ national_code: nationalCode });
 
-    if (isExist) {
-      throw ResponseUtil.error(StudentMessages.DuplicateNationalCode, HttpStatus.CONFLICT);
-    }
+    if (isExist) ResponseUtil.error(StudentMessages.DuplicateNationalCode, HttpStatus.CONFLICT);
   }
 }

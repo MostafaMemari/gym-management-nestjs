@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { HttpStatus, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -62,7 +62,7 @@ export class AwsService {
 
       const uploadResult = await this.client.send(command);
 
-      if (!uploadResult.ETag) return ResponseUtil.error(StudentMessages.FailedToUploadImage);
+      if (uploadResult.$metadata.httpStatusCode !== 201) ResponseUtil.error(StudentMessages.FailedToUploadImage, HttpStatus.BAD_REQUEST);
 
       return {
         url: isPublic ? (await this.getFileUrl(key)).url : (await this.getPresignedSignedUrl(key)).url,
@@ -70,8 +70,7 @@ export class AwsService {
         isPublic,
       };
     } catch (error) {
-      console.error(error);
-      throw new InternalServerErrorException(StudentMessages.FailedToUploadImage);
+      ResponseUtil.error(error.message, error.status);
     }
   }
 
