@@ -67,12 +67,16 @@ export class StudentController {
 
   @Delete(':id')
   async getUserById(@Param('id', ParseIntPipe) id: number) {
-    await this.checkConnection();
+    try {
+      await this.checkConnection();
 
-    const data: ServiceResponse = await lastValueFrom(
-      this.studentServiceClient.send(StudentPatterns.RemoveUserStudent, { studentId: id }).pipe(timeout(5000)),
-    );
+      const data: ServiceResponse = await lastValueFrom(
+        this.studentServiceClient.send(StudentPatterns.RemoveUserStudent, { studentId: id }).pipe(timeout(5000)),
+      );
 
-    return handleServiceResponse(data);
+      return handleServiceResponse(data);
+    } catch (error) {
+      handleError(error, 'Failed to remove student', 'StudentService');
+    }
   }
 }
