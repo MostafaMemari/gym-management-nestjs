@@ -2,13 +2,16 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
-  HttpException,
+  FileTypeValidator,
   Inject,
   InternalServerErrorException,
+  MaxFileSizeValidator,
   Param,
+  ParseFilePipe,
   ParseIntPipe,
   Post,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { Services } from '../../common/enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
@@ -17,14 +20,15 @@ import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { StudentPatterns } from '../../common/enums/student.events';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { CreateStudentDto } from '../../common/dtos/student.dto';
-import { SwaggerConsumes } from '../../common/enums/swagger-consumes.enum';
+import { UploadFileS3 } from '../../common/interceptors/upload-file.interceptor';
+import { handleError, handleServiceResponse } from '../../common/utils/handleError.utils';
 
-@Controller('student')
-@ApiTags('Student')
+@Controller('students')
+@ApiTags('Students')
 export class StudentController {
   constructor(@Inject(Services.STUDENT) private readonly studentServiceClient: ClientProxy) {}
 
-  async checkConnection(): Promise<boolean> {
+  private async checkConnection(): Promise<boolean> {
     try {
       return await lastValueFrom(this.studentServiceClient.send(StudentPatterns.CheckConnection, {}).pipe(timeout(5000)));
     } catch (error) {
@@ -33,29 +37,46 @@ export class StudentController {
   }
 
   @Post()
-  @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
-  async createStudent(@Body() { ...studentDto }: CreateStudentDto) {
-    await this.checkConnection();
+  @UseInterceptors(UploadFileS3('image'))
+  @ApiConsumes('multipart/form-data')
+  async createStudent(
+    @Body() studentDto: CreateStudentDto,
+    @UploadedFile(
+      new ParseFilePipe({
+        fileIsRequired: false,
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: 'image/(png|jpg|jpeg|webp)' }),
+        ],
+      }),
+    )
+    image: Express.Multer.File,
+  ) {
+    try {
+      await this.checkConnection();
 
-    const data: ServiceResponse = await lastValueFrom(
-      this.studentServiceClient.send(StudentPatterns.CreateUserStudent, studentDto).pipe(timeout(5000)),
-    );
+      const data: ServiceResponse = await lastValueFrom(
+        this.studentServiceClient.send(StudentPatterns.CreateUserStudent, { ...studentDto, image }).pipe(timeout(5000)),
+      );
 
-    if (data.error) throw new HttpException(data.message, data.status);
-
-    return data;
+      return handleServiceResponse(data);
+    } catch (error) {
+      handleError(error, 'Failed to create student', 'StudentService');
+    }
   }
 
   @Delete(':id')
   async getUserById(@Param('id', ParseIntPipe) id: number) {
-    await this.checkConnection();
+    try {
+      await this.checkConnection();
 
-    const data: ServiceResponse = await lastValueFrom(
-      this.studentServiceClient.send(StudentPatterns.RemoveUserStudent, { studentId: id }).pipe(timeout(5000)),
-    );
+      const data: ServiceResponse = await lastValueFrom(
+        this.studentServiceClient.send(StudentPatterns.RemoveUserStudent, { studentId: id }).pipe(timeout(5000)),
+      );
 
-    if (data.error) throw new HttpException(data.message, data.status);
-
-    return data;
+      return handleServiceResponse(data);
+    } catch (error) {
+      handleError(error, 'Failed to remove student', 'StudentService');
+    }
   }
 }

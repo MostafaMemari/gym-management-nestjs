@@ -3,7 +3,6 @@ import { StudentService } from './student.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { StudentPatterns } from './common/enums/student.events';
 import { ICreateStudent } from './common/interfaces/student.interface';
-
 @Controller()
 export class StudentController {
   constructor(private readonly studentService: StudentService) {}
@@ -25,6 +24,6 @@ export class StudentController {
 
   @MessagePattern(StudentPatterns.checkExistStudentById)
   checkExistStudent(@Payload() data: { studentId: number }) {
-    return this.studentService.checkExistStudentById(data.studentId);
+    return this.studentService.checkExistById(data.studentId);
   }
 }

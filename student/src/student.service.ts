@@ -11,6 +11,7 @@ import { StudentPatterns } from './common/enums/student.events';
 import { UserPatterns } from './common/enums/user.events';
 import { ServiceResponse } from './common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from './common/utils/response';
+import { AwsService } from './modules/s3AWS/s3AWS.service';
 
 @Injectable()
 export class StudentService {
@@ -19,33 +20,33 @@ export class StudentService {
   constructor(
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
     @InjectRepository(StudentEntity) private studentRepo: Repository<StudentEntity>,
+    private readonly awsService: AwsService,
   ) {}
+
+  async checkUserServiceConnection(): Promise<ServiceResponse | void> {
+    try {
+      await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CheckConnection, {}).pipe(timeout(this.timeout)));
+    } catch (error) {
+      throw new RpcException({ message: 'User service is not connected', status: HttpStatus.INTERNAL_SERVER_ERROR });
+    }
+  }
+
   async createStudent(createStudentDto: ICreateStudent) {
     const queryRunner = this.studentRepo.manager.connection.createQueryRunner();
     await queryRunner.startTransaction();
 
-    const data = { username: `STU_${Date.now()}_${Math.floor(Math.random() * 1000)}` };
-
-    let userId: number;
-
     try {
-      const result = await lastValueFrom(
-        this.userServiceClientProxy.send(UserPatterns.CreateUserStudent, data).pipe(timeout(this.timeout)),
-      );
+      await this.checkExistByNationalCode(createStudentDto.national_code);
 
-      if (result?.error) {
-        await queryRunner.rollbackTransaction();
-        return result;
-      }
+      const userId = await this.createUser();
 
-      const existingStudent = await this.checkExistStudentByNationalCode(createStudentDto.national_code);
-      if (existingStudent) {
-        await queryRunner.rollbackTransaction();
-        return ResponseUtil.error(StudentMessages.DuplicateNationalCode, HttpStatus.CONFLICT);
-      }
+      const updatedImage = await this.uploadStudentImage(createStudentDto.image);
 
-      userId = result?.data?.user?.id;
-      const student = this.studentRepo.create({ ...createStudentDto, user_id: userId });
+      const student = this.studentRepo.create({
+        ...createStudentDto,
+        image_url: updatedImage,
+        user_id: userId,
+      });
 
       await queryRunner.manager.save(student);
       await queryRunner.commitTransaction();
@@ -53,14 +54,32 @@ export class StudentService {
       return ResponseUtil.success({ ...student, user_id: userId }, StudentMessages.CreatedStudent);
     } catch (error) {
       await queryRunner.rollbackTransaction();
-
-      if (userId) {
-        await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.RemoveUser, { userId }).pipe(timeout(this.timeout)));
-      }
-
-      return ResponseUtil.error(StudentMessages.FailedToCreateStudent);
+      return ResponseUtil.error(error?.message || StudentMessages.FailedToCreateStudent, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     } finally {
       await queryRunner.release();
+    }
+  }
+
+  private async createUser(): Promise<number | null> {
+    const data = { username: `STU_${Date.now()}_${Math.floor(Math.random() * 1000)}` };
+
+    await this.checkUserServiceConnection();
+    const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CreateUserStudent, data).pipe(timeout(this.timeout)));
+
+    if (result?.error) throw result;
+
+    return result?.data?.user?.id;
+  }
+
+  private async uploadStudentImage(image: any): Promise<string | null> {
+    if (!image) return null;
+
+    try {
+      const uploadedImage = await this.awsService.uploadSingleFile({ file: image, folderName: 'students' });
+
+      return uploadedImage.key;
+    } catch (error) {
+      ResponseUtil.error(error);
     }
   }
 
@@ -69,10 +88,8 @@ export class StudentService {
     await queryRunner.startTransaction();
 
     try {
-      const existingStudent = await this.checkExistStudentById(userDto.studentId);
-      if (!existingStudent) {
-        return ResponseUtil.error(StudentMessages.NotFoundStudent, HttpStatus.CONFLICT);
-      }
+      const existingStudent = await this.checkExistById(userDto.studentId);
+      if (!existingStudent) ResponseUtil.error(StudentMessages.NotFoundStudent, HttpStatus.CONFLICT);
 
       const removedUser = await lastValueFrom(
         this.userServiceClientProxy.send(UserPatterns.RemoveUser, { userId: existingStudent.user_id }).pipe(timeout(this.timeout)),
@@ -95,10 +112,12 @@ export class StudentService {
     }
   }
 
-  async checkExistStudentById(studentId: number) {
+  async checkExistById(studentId: number) {
     return await this.studentRepo.findOneBy({ id: studentId });
   }
-  async checkExistStudentByNationalCode(nationalCode: string) {
-    return await this.studentRepo.findOneBy({ national_code: nationalCode });
+  async checkExistByNationalCode(nationalCode: string) {
+    const isExist = await this.studentRepo.existsBy({ national_code: nationalCode });
+
+    if (isExist) ResponseUtil.error(StudentMessages.DuplicateNationalCode, HttpStatus.CONFLICT);
   }
 }

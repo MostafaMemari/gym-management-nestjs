@@ -4,7 +4,7 @@ export interface ICreateStudent {
   full_name: string;
   gender: Gender;
   is_active?: boolean;
-  image_url?: string;
+  image?: Express.Multer.File;
   father_name?: string;
   national_code: string;
   phone_number?: string;
