@@ -9,8 +9,6 @@ export class CustomRpcExceptionFilter implements RpcExceptionFilter<RpcException
     const errorMessage = extractErrorMessage(errorResponse, 'Internal user service error');
     const errorStatus = errorResponse.status || HttpStatus.INTERNAL_SERVER_ERROR;
 
-    console.log(errorResponse);
-
     return {
       error: true,
       message: errorMessage,

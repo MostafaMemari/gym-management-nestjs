@@ -1,7 +1,9 @@
-import { HttpStatus } from '@nestjs/common';
+import { HttpStatus, Logger } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 
 export class ResponseUtil {
+  private static readonly logger = new Logger(ResponseUtil.name);
+
   static success<T>(data: T, message = 'Operation completed successfully', status = HttpStatus.OK) {
     return {
       data,
@@ -11,22 +13,14 @@ export class ResponseUtil {
     };
   }
 
-  static error(message = 'Internal service error occurred', status = HttpStatus.INTERNAL_SERVER_ERROR) {
-    // console.log(message);
-    // try {
-    throw new RpcException({
+  static error(message = 'Internal service error occurred', status = HttpStatus.INTERNAL_SERVER_ERROR, originalError?: any) {
+    const errorResponse = {
       message,
       status,
-    });
-    // } catch (error) {
-    //   throw new RpcException({
-    //     message: error.message || 'Unknown error occurred',
-    //     status: error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-    //     errorDetails: {
-    //       message: error.message || 'Unknown error occurred',
-    //       status: error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-    //     },
-    //   });
-    // }
+    };
+
+    this.logger.error(`[RPC ERROR] Status: ${status}, Message: ${message}`, originalError?.stack || '');
+
+    throw new RpcException(errorResponse);
   }
 }

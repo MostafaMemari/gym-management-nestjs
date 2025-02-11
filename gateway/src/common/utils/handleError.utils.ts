@@ -16,9 +16,11 @@ export function handleError(error: any, defaultMessage: string = '', service: st
 
   throw new HttpException(
     {
+      statusCode: error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       message: error.message || defaultMessage,
-      status: HttpStatus.INTERNAL_SERVER_ERROR,
+      error: true,
+      data: {},
     },
-    HttpStatus.INTERNAL_SERVER_ERROR,
+    error.status || HttpStatus.INTERNAL_SERVER_ERROR,
   );
 }

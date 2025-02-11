@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -6,9 +6,6 @@ import { v4 as uuidv4 } from 'uuid';
 import * as sharp from 'sharp';
 import { lookup } from 'mime-types';
 import * as path from 'path';
-import { Readable } from 'stream';
-import { ResponseUtil } from '../../common/utils/response';
-import { StudentMessages } from '../../common/enums/student.messages';
 
 @Injectable()
 export class AwsService {
@@ -43,35 +40,31 @@ export class AwsService {
     folderName?: string;
     isPublic?: boolean;
   }): Promise<any> {
-    try {
-      const ext = path.extname(file.originalname);
-      const contentType = lookup(ext) || 'application/octet-stream';
+    const ext = path.extname(file.originalname);
+    const contentType = lookup(ext) || 'application/octet-stream';
 
-      const bufferFile = Buffer.from(file.buffer);
-      const processedImage = await sharp(bufferFile).resize({ width: 150 }).jpeg({ quality: 80 }).toBuffer();
-      const key = `${folderName}/${Date.now()}${ext}`;
+    const bufferFile = Buffer.from(file.buffer);
+    const processedImage = await sharp(bufferFile).resize({ width: 150 }).jpeg({ quality: 80 }).toBuffer();
+    const key = `${folderName}/${Date.now()}${ext}`;
 
-      const command = new PutObjectCommand({
-        Bucket: this.bucketName,
-        Key: key,
-        Body: processedImage,
-        ContentType: contentType,
-        ACL: isPublic ? 'public-read' : 'private',
-        ContentLength: processedImage.length,
-      });
+    const command = new PutObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+      Body: processedImage,
+      ContentType: contentType,
+      ACL: isPublic ? 'public-read' : 'private',
+      ContentLength: processedImage.length,
+    });
 
-      const uploadResult = await this.client.send(command);
+    const uploadResult = await this.client.send(command);
 
-      if (uploadResult.$metadata.httpStatusCode !== 201) ResponseUtil.error(StudentMessages.FailedToUploadImage, HttpStatus.BAD_REQUEST);
+    if (uploadResult.$metadata.httpStatusCode !== 200) throw new BadRequestException('Image upload failed');
 
-      return {
-        url: isPublic ? (await this.getFileUrl(key)).url : (await this.getPresignedSignedUrl(key)).url,
-        key,
-        isPublic,
-      };
-    } catch (error) {
-      ResponseUtil.error(error.message, error.status);
-    }
+    return {
+      url: isPublic ? (await this.getFileUrl(key)).url : (await this.getPresignedSignedUrl(key)).url,
+      key,
+      isPublic,
+    };
   }
 
   async getFileUrl(key: string) {

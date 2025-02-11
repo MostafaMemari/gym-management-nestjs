@@ -1,4 +1,4 @@
-import { HttpStatus, Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ICreateStudent } from './common/interfaces/student.interface';
 import { StudentMessages } from './common/enums/student.messages';
 import { Services } from './common/enums/services.enum';
@@ -34,27 +34,30 @@ export class StudentService {
   async createStudent(createStudentDto: ICreateStudent) {
     const queryRunner = this.studentRepo.manager.connection.createQueryRunner();
     await queryRunner.startTransaction();
+    let userId = null;
+    let imageKey = null;
 
     try {
       await this.checkExistByNationalCode(createStudentDto.national_code);
+      userId = await this.createUser();
 
-      const userId = await this.createUser();
-
-      const updatedImage = await this.uploadStudentImage(createStudentDto.image);
+      imageKey = await this.uploadStudentImage(createStudentDto.image);
 
       const student = this.studentRepo.create({
         ...createStudentDto,
-        image_url: updatedImage,
+        image_url: imageKey,
         user_id: userId,
       });
 
       await queryRunner.manager.save(student);
-      await queryRunner.commitTransaction();
+      throw new Error('شبیه‌سازی خطا در ذخیره دانش‌آموز');
 
       return ResponseUtil.success({ ...student, user_id: userId }, StudentMessages.CreatedStudent);
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      return ResponseUtil.error(error?.message || StudentMessages.FailedToCreateStudent, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
+      await this.removeUser(userId);
+      await this.removeStudentImage(imageKey);
+      ResponseUtil.error(error?.message || StudentMessages.FailedToCreateStudent, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     } finally {
       await queryRunner.release();
     }
@@ -71,16 +74,24 @@ export class StudentService {
     return result?.data?.user?.id;
   }
 
+  private async removeUser(userId: number) {
+    await this.checkUserServiceConnection();
+    const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.RemoveUser, { userId }).pipe(timeout(this.timeout)));
+    if (result?.error) throw result;
+  }
+
   private async uploadStudentImage(image: any): Promise<string | null> {
     if (!image) return null;
 
-    try {
-      const uploadedImage = await this.awsService.uploadSingleFile({ file: image, folderName: 'students' });
+    const uploadedImage = await this.awsService.uploadSingleFile({ file: image, folderName: 'students' });
 
-      return uploadedImage.key;
-    } catch (error) {
-      ResponseUtil.error(error);
-    }
+    return uploadedImage.key;
+  }
+  private async removeStudentImage(imageKey: any): Promise<string | null> {
+    if (!imageKey) return null;
+
+    const uploadedImage = await this.awsService.deleteFile(imageKey);
+    console.log(uploadedImage);
   }
 
   async removeStudentById(userDto: { studentId: number }): Promise<ServiceResponse> {
