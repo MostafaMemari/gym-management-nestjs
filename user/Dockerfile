@@ -14,4 +14,4 @@ RUN npx pnpm install
 
 COPY --chown=user_group:user . .
 
-CMD [ "npx" , "pnpm" , "start:dev" ]
+CMD npx pnpm prisma generate && npx pnpm prisma migrate deploy && npx pnpm start:dev

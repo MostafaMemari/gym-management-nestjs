@@ -1,17 +1,17 @@
 FROM node:alpine
 
-RUN addgroup -g 1001 user
-RUN adduser -D -u 1001 -G user user_group
+RUN addgroup -g 1001 redis
+RUN adduser -D -u 1001 -G redis redis_group
 
 WORKDIR /app
 
 COPY package*.json ./
 
-RUN chown -R user_group:user /app
+RUN chown -R redis_group:redis /app
 
-USER user_group
+USER redis_group
 RUN npx pnpm install
 
-COPY --chown=user_group:user . .
+COPY --chown=redis_group:redis . .
 
 CMD [ "npx" , "pnpm" , "start:dev" ]

@@ -22,6 +22,7 @@ services:
       - app
     depends_on:
       - rabbitmq
+      - redis_service
     env_file:
       - auth/.env
     volumes:
@@ -37,25 +38,11 @@ services:
       - app
     depends_on:
       - rabbitmq
+      - redis_service
     env_file:
       - user/.env
     volumes:
       - ./user/src:/app/src
-
-    ### Permission Service ###
-  permission_service:
-    container_name: permission_service
-    build:
-      context: ./permission
-      dockerfile: Dockerfile
-    networks:
-      - app
-    depends_on:
-      - rabbitmq
-    env_file:
-      - permission/.env
-    volumes:
-      - ./permission/src:/app/src
 
     ### Redis Service ###
   redis_service:
@@ -67,12 +54,38 @@ services:
       - app
     depends_on:
       - rabbitmq
+      - redis
     env_file:
       - redis/.env
     volumes:
       - ./redis/src:/app/src
+    
+    ### Redis Insight ###
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: redisinsight
+    ports:
+      - 5540:5540
+    depends_on:
+      - redis_service
+      - redis
+    networks:
+      - app
+    volumes:
+      - redisinsight_data:/data
 
-    ### Student Service ###
+    ### Redis ###
+  redis: 
+    container_name: redis
+    image: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - app  
+    volumes:
+      - redis_data:/data
+
+   ### Student Service ###
   student_service:
     container_name: student_service
     build:
@@ -82,6 +95,7 @@ services:
       - app
     depends_on:
       - rabbitmq
+      - student_service_db
     env_file:
       - student/.env
     volumes:
@@ -102,8 +116,56 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
 
+  ### User Service DB ###
+  user_service_db: 
+    container_name: user_service_db
+    image: postgres:14.15-alpine3.21
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+    networks:
+      - app
+    volumes:
+      - user_service_db_data:/var/lib/postgresql/data
+
+  # ### Student Service DB ###
+  student_service_db: 
+    container_name: student_service_db
+    image: postgres:14.15-alpine3.21
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+    networks:
+      - app
+    volumes:
+      - student_service_db_data:/var/lib/postgresql/data
+
+  ### PG ADMIN ###
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:
+      - 4020:80
+    depends_on:
+      - user_service_db
+    networks:
+      - app
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+
 volumes:
   rabbitmq_data:
+  user_service_db_data:
+  pgadmin_data:
+  redisinsight_data:
+  redis_data:
+  student_service_db_data:
 
 networks:
   app:

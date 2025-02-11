@@ -1,17 +1,17 @@
 FROM node:alpine
 
-RUN addgroup -g 1001 user
-RUN adduser -D -u 1001 -G user user_group
+RUN addgroup -g 1001 permission
+RUN adduser -D -u 1001 -G permission permission_group
 
 WORKDIR /app
 
 COPY package*.json ./
 
-RUN chown -R user_group:user /app
+RUN chown -R permission_group:permission /app
 
-USER user_group
+USER permission_group
 RUN npx pnpm install
 
-COPY --chown=user_group:user . .
+COPY --chown=permission_group:permission . .
 
 CMD [ "npx" , "pnpm" , "start:dev" ]
