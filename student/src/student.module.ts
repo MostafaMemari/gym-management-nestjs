@@ -6,9 +6,10 @@ import { ConfigModule } from '@nestjs/config';
 import { envValidationSchema } from './common/validation/env.validation';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeOrmConfigAsync } from './configs/typeorm.config';
-import { Student } from './entities/student.entity';
+import { StudentEntity } from './entities/student.entity';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { Services } from './common/enums/services.enum';
+import { AwsModule } from './modules/s3AWS/s3AWS.module';
 
 @Module({
   imports: [
@@ -28,7 +29,8 @@ import { Services } from './common/enums/services.enum';
       },
     ]),
     TypeOrmModule.forRootAsync(typeOrmConfigAsync),
-    TypeOrmModule.forFeature([Student]),
+    TypeOrmModule.forFeature([StudentEntity]),
+    AwsModule,
   ],
   controllers: [StudentController],
   providers: [StudentService],

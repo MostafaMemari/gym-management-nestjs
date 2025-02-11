@@ -1,26 +1,28 @@
-// import { Injectable, InternalServerErrorException } from '@nestjs/common';
-// import { DataSource, Repository } from 'typeorm';
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { StudentEntity } from '../entities/student.entity';
 
-// @Injectable()
-// export class ProductSettingsRepository extends Repository<ProductSettings> {
-//   constructor(dataSource: DataSource) {
-//     super(ProductSettings, dataSource.createEntityManager());
-//   }
+@Injectable()
+export class StudentRepository {
+  constructor(
+    @InjectRepository(StudentEntity)
+    private readonly studentRepo: Repository<StudentEntity>,
+  ) {}
 
-//   async createAndUpdateProductSettings(id: number, product: Product, productSettingsDto: productSettingsDto) {
-//     try {
-//       if (product.product_settings) {
-//         this.merge(product.product_settings, productSettingsDto);
+  async findById(studentId: number): Promise<StudentEntity | null> {
+    return this.studentRepo.findOne({ where: { id: studentId } });
+  }
 
-//         await this.save(product.product_settings);
-//       } else {
-//         const newSetting = this.create({ ...productSettingsDto, product: { id } });
-//         product.product_settings = newSetting;
-//         await this.save(newSetting);
-//       }
-//     } catch (error) {
-//       console.log(error.message);
-//       throw new InternalServerErrorException('Failed to create product settings');
-//     }
-//   }
-// }
+  async findByNationalCode(nationalCode: string): Promise<StudentEntity | null> {
+    return this.studentRepo.findOne({ where: { national_code: nationalCode } });
+  }
+
+  async saveStudent(student: Partial<StudentEntity>): Promise<StudentEntity> {
+    return this.studentRepo.save(student);
+  }
+
+  async deleteStudentById(studentId: number): Promise<void> {
+    await this.studentRepo.delete(studentId);
+  }
+}

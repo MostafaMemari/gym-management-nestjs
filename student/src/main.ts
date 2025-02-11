@@ -2,6 +2,7 @@ import { NestFactory } from "@nestjs/core";
 import { StudentModule } from "./student.module";
 import { Logger } from "@nestjs/common";
 import { RmqOptions, Transport } from "@nestjs/microservices";
+import { CustomRpcExceptionFilter } from "./common/filters/rpcException.filter";
 
 async function bootstrap() {
   const app = await NestFactory.createMicroservice(StudentModule, {
@@ -11,6 +12,8 @@ async function bootstrap() {
       queue: process.env.RABBITMQ_QUEUE_NAME,
     },
   } as RmqOptions);
+
+  app.useGlobalFilters(new CustomRpcExceptionFilter())
 
   const logger = new Logger("NestApplication");
 

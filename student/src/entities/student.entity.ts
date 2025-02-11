@@ -3,7 +3,7 @@ import { EntityName } from '../common/enums/entity.enum';
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity(EntityName.Students)
-export class Student {
+export class StudentEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
