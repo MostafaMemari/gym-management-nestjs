@@ -88,7 +88,7 @@ export class StudentService {
     await queryRunner.startTransaction();
 
     try {
-      const existingStudent = await this.checkExistStudentById(userDto.studentId);
+      const existingStudent = await this.checkExistById(userDto.studentId);
       if (!existingStudent) ResponseUtil.error(StudentMessages.NotFoundStudent, HttpStatus.CONFLICT);
 
       const removedUser = await lastValueFrom(
