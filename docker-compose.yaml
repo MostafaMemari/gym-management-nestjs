@@ -132,15 +132,15 @@ services:
   # ### Student Service DB ###
   student_service_db: 
     container_name: student_service_db
-    image: postgres:14.15-alpine3.21
+    image: "mysql/mysql-server:8.0"
     environment:
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_DB=postgres
+      - MYSQL_DATABASE=gym-student
+      - MYSQL_USER=student
+      - MYSQL_PASSWORD=123456
     networks:
       - app
     volumes:
-      - student_service_db_data:/var/lib/postgresql/data
+      - student_service_db_data:/var/lib/mysql
 
   ### PG ADMIN ###
   pgadmin:
@@ -158,6 +158,20 @@ services:
     volumes:
       - pgadmin_data:/var/lib/pgadmin
 
+  ### Php My Admin ###
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    environment:
+      PMA_HOSTS: student_service_db
+    ports:
+      - "8080:80"
+    depends_on:
+      - student_service_db
+      - user_service_db
+    networks:
+      - app
 
 volumes:
   rabbitmq_data:
