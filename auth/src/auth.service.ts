@@ -22,7 +22,7 @@ export class AuthService {
     @Inject(Services.REDIS) private readonly redisServiceClientProxy: ClientProxy
   ) { }
 
-  async checkUserServiceConnection(): Promise<ServiceResponse | void> {
+  async checkUserServiceConnection(): Promise<never | void> {
     try {
       await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CheckConnection, {}).pipe(timeout(this.timeout)))
     } catch (error) {
@@ -30,7 +30,7 @@ export class AuthService {
     }
   }
 
-  async checkRedisServiceConnection(): Promise<ServiceResponse | void> {
+  async checkRedisServiceConnection(): Promise<never | void> {
     try {
       await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.CheckConnection, {}).pipe(timeout(this.timeout)))
     } catch (error) {
@@ -38,7 +38,7 @@ export class AuthService {
     }
   }
 
-  async checkConnections(): Promise<void | ServiceResponse> {
+  async checkConnections(): Promise<void | never> {
     const isRedisServiceConnected = this.checkRedisServiceConnection()
     const isUserServiceConnected = this.checkUserServiceConnection()
 
