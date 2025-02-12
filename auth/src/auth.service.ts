@@ -26,12 +26,7 @@ export class AuthService {
     try {
       await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CheckConnection, {}).pipe(timeout(this.timeout)))
     } catch (error) {
-      return {
-        message: "User service is not connected",
-        error: true,
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
-        data: {}
-      }
+      throw new RpcException({ message: "User service is not connected", status: error.status })
     }
   }
 
@@ -39,12 +34,7 @@ export class AuthService {
     try {
       await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.CheckConnection, {}).pipe(timeout(this.timeout)))
     } catch (error) {
-      return {
-        message: "Redis service is not connected",
-        error: true,
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
-        data: {}
-      }
+      throw new RpcException({ message: "Redis service is not connected", status: error.status })
     }
   }
 
@@ -52,14 +42,7 @@ export class AuthService {
     const isRedisServiceConnected = this.checkRedisServiceConnection()
     const isUserServiceConnected = this.checkUserServiceConnection()
 
-    const connections = await Promise.all([isRedisServiceConnected, isUserServiceConnected])
-
-    for (let i = 0; i < connections.length; i++) {
-      if (typeof connections[i] == 'object') {
-        return connections[i]
-      }
-    }
-
+    await Promise.all([isRedisServiceConnected, isUserServiceConnected])
   }
 
   async validateRefreshToken(refreshToken: string): Promise<boolean | { refreshToken: string }> {
@@ -84,9 +67,7 @@ export class AuthService {
     try {
       const { ACCESS_TOKEN_SECRET } = process.env
 
-      const isConnected = await this.checkUserServiceConnection()
-
-      if (typeof isConnected == 'object' && isConnected.error) return isConnected
+      await this.checkUserServiceConnection()
 
       const verifiedToken = this.jwtService.verify<{ id: number }>(verifyTokenDto.accessToken, { secret: ACCESS_TOKEN_SECRET })
 
@@ -139,9 +120,7 @@ export class AuthService {
 
   async signup(signupDto: ISignup): Promise<ServiceResponse> {
     try {
-      const connectionResult = await this.checkConnections()
-
-      if (typeof connectionResult == "object" && connectionResult?.error) return connectionResult
+      await this.checkConnections()
 
       const hashedPassword = await bcrypt.hash(signupDto.password, 10)
 
@@ -170,9 +149,7 @@ export class AuthService {
   async signin(signinDto: ISignin): Promise<ServiceResponse> {
     try {
 
-      const isConnected = await this.checkUserServiceConnection()
-
-      if (typeof isConnected == 'object' && isConnected?.error) return isConnected
+      await this.checkUserServiceConnection()
 
       const result: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.GetUserByIdentifier, signinDto).pipe(timeout(this.timeout)))
 
@@ -200,9 +177,7 @@ export class AuthService {
 
   async signout(signoutDto: { refreshToken: string }): Promise<ServiceResponse> {
     try {
-      const isConnected = await this.checkRedisServiceConnection()
-
-      if (typeof isConnected == "object" && isConnected?.error) return isConnected
+      await this.checkRedisServiceConnection()
 
       const validateRefreshToken = await this.validateRefreshToken(signoutDto.refreshToken)
 
@@ -235,9 +210,7 @@ export class AuthService {
 
   async refreshToken({ refreshToken }: { refreshToken: string }): Promise<ServiceResponse> {
     try {
-      const isConnected = await this.checkRedisServiceConnection()
-
-      if (typeof isConnected == 'object' && isConnected?.error) return isConnected
+      await this.checkRedisServiceConnection()
 
       await this.validateRefreshToken(refreshToken)
 
