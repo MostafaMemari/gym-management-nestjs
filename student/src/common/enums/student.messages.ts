@@ -16,4 +16,5 @@ export enum StudentMessages {
   FailedToUploadImage = 'Failed to upload image. Please try again',
 
   FailedToCreateUser = 'Failed to create user Please try again later',
+  StudentNotFound = 'Student not found',
 }

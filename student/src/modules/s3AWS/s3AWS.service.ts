@@ -16,7 +16,6 @@ export class AwsService {
     const s3_region = this.configService.get('S3_REGION');
 
     if (!s3_region) {
-      console.warn('S3_REGION not found in environment variables');
       throw new Error('S3_REGION not found in environment variables');
     }
 
@@ -80,18 +79,12 @@ export class AwsService {
 
       const deleteResult = await this.client.send(command);
 
-      console.info(`File deleted from S3: ${key}`);
-
       return deleteResult;
     } catch (error) {
-      console.error(error);
       throw new InternalServerErrorException(error);
     }
   }
 
-  /**
-   * @description Get a signed URL for a file in S3, its not being used in the project, just added for reference
-   */
   async getPresignedSignedUrl(key: string) {
     try {
       const command = new GetObjectCommand({
@@ -100,12 +93,11 @@ export class AwsService {
       });
 
       const url = await getSignedUrl(this.client, command, {
-        expiresIn: 60 * 60 * 24, // 24 hours
+        expiresIn: 60 * 60 * 24,
       });
 
       return { url };
     } catch (error) {
-      console.error(error);
       throw new InternalServerErrorException(error);
     }
   }
@@ -125,8 +117,6 @@ export class AwsService {
 
         const uploadResult = await this.client.send(command);
 
-        console.debug(`File uploaded to S3: ${file.originalname} - ${uploadResult.ETag}`);
-
         return {
           url: (await this.getFileUrl(key)).url,
         };
@@ -134,7 +124,6 @@ export class AwsService {
 
       return Promise.all(uploadPromises);
     } catch (error) {
-      console.error(error);
       throw new InternalServerErrorException(error);
     }
   }

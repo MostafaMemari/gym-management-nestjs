@@ -1,4 +1,12 @@
-import { BadRequestException, HttpStatus, Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { ICreateStudent } from './common/interfaces/student.interface';
 import { StudentMessages } from './common/enums/student.messages';
 import { Services } from './common/enums/services.enum';
@@ -38,7 +46,8 @@ export class StudentService {
     let imageKey = null;
 
     try {
-      await this.checkExistByNationalCode(createStudentDto.national_code);
+      await this.findStudentByNationalCode(createStudentDto.national_code, { duplicateError: true });
+
       userId = await this.createUser();
 
       imageKey = await this.uploadStudentImage(createStudentDto.image);
@@ -50,14 +59,36 @@ export class StudentService {
       });
 
       await queryRunner.manager.save(student);
-      throw new Error('شبیه‌سازی خطا در ذخیره دانش‌آموز');
+      await queryRunner.commitTransaction();
 
       return ResponseUtil.success({ ...student, user_id: userId }, StudentMessages.CreatedStudent);
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      await this.removeUser(userId);
+      await this.removeUserById(userId);
       await this.removeStudentImage(imageKey);
       ResponseUtil.error(error?.message || StudentMessages.FailedToCreateStudent, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
+    } finally {
+      await queryRunner.release();
+    }
+  }
+  async removeStudentById(userDto: { studentId: number }): Promise<ServiceResponse> {
+    const queryRunner = this.studentRepo.manager.connection.createQueryRunner();
+    await queryRunner.startTransaction();
+
+    try {
+      const student = await this.findStudentById(userDto.studentId, { notFoundError: true });
+
+      await this.removeUserById(Number(student?.user_id));
+
+      const removedStudent = await queryRunner.manager.delete(StudentEntity, student.id);
+      await queryRunner.commitTransaction();
+
+      if (removedStudent.affected) this.removeStudentImage(student?.image_url);
+
+      return ResponseUtil.success(student, StudentMessages.RemovedStudentSuccess);
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw new RpcException(error);
     } finally {
       await queryRunner.release();
     }
@@ -70,11 +101,11 @@ export class StudentService {
     const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CreateUserStudent, data).pipe(timeout(this.timeout)));
 
     if (result?.error) throw result;
-
     return result?.data?.user?.id;
   }
+  private async removeUserById(userId: number) {
+    if (!userId) return null;
 
-  private async removeUser(userId: number) {
     await this.checkUserServiceConnection();
     const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.RemoveUser, { userId }).pipe(timeout(this.timeout)));
     if (result?.error) throw result;
@@ -84,51 +115,26 @@ export class StudentService {
     if (!image) return null;
 
     const uploadedImage = await this.awsService.uploadSingleFile({ file: image, folderName: 'students' });
-
     return uploadedImage.key;
   }
-  private async removeStudentImage(imageKey: any): Promise<string | null> {
+  private async removeStudentImage(imageKey: string): Promise<string | null> {
     if (!imageKey) return null;
 
-    const uploadedImage = await this.awsService.deleteFile(imageKey);
-    console.log(uploadedImage);
+    await this.awsService.deleteFile(imageKey);
   }
 
-  async removeStudentById(userDto: { studentId: number }): Promise<ServiceResponse> {
-    const queryRunner = this.studentRepo.manager.connection.createQueryRunner();
-    await queryRunner.startTransaction();
+  async findStudent(field: keyof StudentEntity, value: any, notFoundError = false, duplicateError = false) {
+    const student = await this.studentRepo.findOneBy({ [field]: value });
 
-    try {
-      const existingStudent = await this.checkExistById(userDto.studentId);
-      if (!existingStudent) ResponseUtil.error(StudentMessages.NotFoundStudent, HttpStatus.CONFLICT);
+    if (!student && notFoundError) throw new NotFoundException(StudentMessages.NotFoundStudent);
+    if (student && duplicateError) throw new ConflictException(StudentMessages.DuplicateNationalCode);
 
-      const removedUser = await lastValueFrom(
-        this.userServiceClientProxy.send(UserPatterns.RemoveUser, { userId: existingStudent.user_id }).pipe(timeout(this.timeout)),
-      );
-
-      if (removedUser.error) {
-        await queryRunner.rollbackTransaction();
-        return removedUser;
-      }
-
-      await queryRunner.manager.delete(StudentEntity, existingStudent.id);
-      await queryRunner.commitTransaction();
-
-      return ResponseUtil.success(existingStudent, StudentMessages.RemovedStudentSuccess);
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw new RpcException(error);
-    } finally {
-      await queryRunner.release();
-    }
+    return student;
   }
-
-  async checkExistById(studentId: number) {
-    return await this.studentRepo.findOneBy({ id: studentId });
+  async findStudentById(studentId: number, { notFoundError = false }) {
+    return this.findStudent('id', studentId, notFoundError);
   }
-  async checkExistByNationalCode(nationalCode: string) {
-    const isExist = await this.studentRepo.existsBy({ national_code: nationalCode });
-
-    if (isExist) ResponseUtil.error(StudentMessages.DuplicateNationalCode, HttpStatus.CONFLICT);
+  async findStudentByNationalCode(nationalCode: string, { duplicateError = false, notFoundError = false }) {
+    return this.findStudent('national_code', nationalCode, notFoundError, duplicateError);
   }
 }

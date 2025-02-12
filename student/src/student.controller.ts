@@ -24,6 +24,6 @@ export class StudentController {
 
   @MessagePattern(StudentPatterns.checkExistStudentById)
   checkExistStudent(@Payload() data: { studentId: number }) {
-    return this.studentService.checkExistById(data.studentId);
+    return this.studentService.findStudentById(data.studentId, {});
   }
 }
