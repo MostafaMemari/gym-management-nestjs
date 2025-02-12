@@ -6,6 +6,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import envConfig from './configs/env.config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { Services } from './common/enums/services.enum';
+import { UserRepository } from './user.repository';
 
 @Module({
   imports: [
@@ -23,6 +24,6 @@ import { Services } from './common/enums/services.enum';
     ])
   ],
   controllers: [UserController],
-  providers: [UserService],
+  providers: [UserService, UserRepository],
 })
 export class UserModule { }
