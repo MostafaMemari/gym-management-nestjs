@@ -1,12 +1,10 @@
 import { Gender } from '../common/enums/gender.enum';
 import { EntityName } from '../common/enums/entity.enum';
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity } from 'typeorm';
+import { AbstractEntity } from './abstract.entity';
 
 @Entity(EntityName.Students)
-export class StudentEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
-
+export class StudentEntity extends AbstractEntity {
   @Column({ type: 'varchar', length: 80 })
   full_name: string;
 

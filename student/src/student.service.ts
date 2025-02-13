@@ -7,7 +7,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { ICreateStudent } from './common/interfaces/student.interface';
+import { ICreateStudent, IPagination } from './common/interfaces/student.interface';
 import { StudentMessages } from './common/enums/student.messages';
 import { Services } from './common/enums/services.enum';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
@@ -39,7 +39,7 @@ export class StudentService {
     }
   }
 
-  async createStudent(createStudentDto: ICreateStudent) {
+  async create(createStudentDto: ICreateStudent) {
     const queryRunner = this.studentRepo.manager.connection.createQueryRunner();
     await queryRunner.startTransaction();
     let userId = null;
@@ -71,7 +71,10 @@ export class StudentService {
       await queryRunner.release();
     }
   }
-  async removeStudentById(userDto: { studentId: number }): Promise<ServiceResponse> {
+  async findAll(query: IPagination) {
+    return query;
+  }
+  async removeById(userDto: { studentId: number }): Promise<ServiceResponse> {
     const queryRunner = this.studentRepo.manager.connection.createQueryRunner();
     await queryRunner.startTransaction();
 

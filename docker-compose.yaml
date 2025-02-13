@@ -169,7 +169,6 @@ services:
       - "8080:80"
     depends_on:
       - student_service_db
-      - user_service_db
     networks:
       - app
 

@@ -17,3 +17,12 @@ export interface ICreateStudent {
   club_id?: string;
   age_category_id?: string;
 }
+
+export interface IPagination {
+  count?: number;
+  page?: number;
+}
+
+export interface ISearchStudent extends IPagination {
+  query: string;
+}
