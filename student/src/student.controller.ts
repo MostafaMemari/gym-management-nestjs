@@ -2,7 +2,7 @@ import { Controller } from '@nestjs/common';
 import { StudentService } from './student.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { StudentPatterns } from './common/enums/student.events';
-import { ICreateStudent, IPagination } from './common/interfaces/student.interface';
+import { ICreateStudent, IQuery } from './common/interfaces/student.interface';
 @Controller()
 export class StudentController {
   constructor(private readonly studentService: StudentService) {}
@@ -18,7 +18,7 @@ export class StudentController {
   }
 
   @MessagePattern(StudentPatterns.GetStudents)
-  getAll(@Payload() query: IPagination) {
+  getAll(@Payload() query: IQuery) {
     return this.studentService.findAll(query);
   }
 
