@@ -1,32 +1,23 @@
 import { ConflictException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from './prisma/prisma.service';
-import { Prisma, Role } from '@prisma/client';
+import { Prisma, Role, User } from '@prisma/client';
 import { ServiceResponse } from './common/interfaces/serviceResponse.interface';
 import { UserMessages } from './common/enums/user.messages';
 import { IPagination, ISearchUser } from './common/interfaces/user.interface';
 import { pagination } from './common/utils/pagination.utils';
-import { Services } from './common/enums/services.enum';
-import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { lastValueFrom, timeout } from 'rxjs';
-import { RedisPatterns } from './common/enums/redis.events';
+import { RpcException } from '@nestjs/microservices';
 import { UserRepository } from './user.repository';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { RedisCache } from 'cache-manager-redis-yet'
 
 @Injectable()
 export class UserService {
-
-  private readonly timeout = 4500
-
   constructor(
-    @Inject(Services.REDIS) private readonly redisServiceClientProxy: ClientProxy,
-    private readonly userRepository: UserRepository
+    private readonly userRepository: UserRepository,
+    @Inject(CACHE_MANAGER) private readonly redisCache: RedisCache
   ) { }
 
-  async redisCheckConnection(): Promise<void | never> {
-    try {
-      await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.CheckConnection, {}).pipe(timeout(this.timeout)))
-    } catch (error) {
-      throw new RpcException({ message: "User service is not connected", status: error.status })
-    }
+  onModuleInit(){
+    console.log('hello')
   }
 
   async create(userDto: Prisma.UserCreateInput): Promise<ServiceResponse> {
@@ -91,15 +82,13 @@ export class UserService {
 
   async findAll(paginationDto?: IPagination): Promise<ServiceResponse> {
     try {
-      await this.redisCheckConnection()
-
       const cacheKey = 'users_cache'
 
-      const usersCache = await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.Get, { key: cacheKey }).pipe(timeout(this.timeout)))
+      const usersCache = await this.redisCache.get<User[] | null>(cacheKey)
 
-      if (!usersCache.error && usersCache.status == HttpStatus.OK) {
+      if (usersCache) {
         return {
-          data: { ...pagination(paginationDto, JSON.parse(usersCache.data.value)) },
+          data: { ...pagination(paginationDto, usersCache) },
           error: false,
           message: "",
           status: HttpStatus.OK
@@ -115,11 +104,11 @@ export class UserService {
 
       const redisKeys = {
         key: cacheKey,
-        value: JSON.stringify(users),
-        expireTime: 30 //* Seconds
+        value: users,
+        expireTime: 30_000 //* MilliSeconds
       }
 
-      await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.Set, redisKeys).pipe(timeout(this.timeout)))
+      await this.redisCache.set(redisKeys.key, redisKeys.value, redisKeys.expireTime)
 
       return {
         data: { ...pagination(paginationDto, users) },
@@ -217,15 +206,13 @@ export class UserService {
 
   async search({ query, ...paginationDto }: ISearchUser): Promise<ServiceResponse> {
     try {
-      await this.redisCheckConnection()
-
       const cacheKey = `searchUser_${query}`
 
-      const cacheUsers: ServiceResponse = await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.Get, { key: cacheKey }).pipe(timeout(this.timeout)))
+      const cacheUsers = await this.redisCache.get<User[] | null>(cacheKey)
 
-      if (!cacheUsers.error && cacheUsers.status == HttpStatus.OK) {
+      if (cacheUsers) {
         return {
-          data: { ...pagination(paginationDto, JSON.parse(cacheUsers.data.value)) },
+          data: { ...pagination(paginationDto, cacheUsers) },
           error: false,
           message: "",
           status: HttpStatus.OK
@@ -252,12 +239,11 @@ export class UserService {
 
       const redisKeys = {
         key: cacheKey,
-        value: JSON.stringify(users),
-        expireTime: 30 //* Seconds
+        value: users,
+        expireTime: 30_000 //* MilliSeconds
       }
 
-      await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.Set, redisKeys).pipe(timeout(this.timeout)))
-
+      await this.redisCache.set(redisKeys.key, redisKeys.value, redisKeys.expireTime)
 
       return {
         data: { ...pagination(paginationDto, users) },

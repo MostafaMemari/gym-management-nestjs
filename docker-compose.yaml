@@ -22,7 +22,6 @@ services:
       - app
     depends_on:
       - rabbitmq
-      - redis_service
     env_file:
       - auth/.env
     volumes:
@@ -43,22 +42,6 @@ services:
       - user/.env
     volumes:
       - ./user/src:/app/src
-
-  ### Redis Service ###
-  redis_service:
-    container_name: redis_service
-    build:
-      context: ./redis
-      dockerfile: Dockerfile
-    networks:
-      - app
-    depends_on:
-      - rabbitmq
-      - redis
-    env_file:
-      - redis/.env
-    volumes:
-      - ./redis/src:/app/src
     
   ### Redis Insight ###
   redisinsight:
@@ -67,7 +50,6 @@ services:
     ports:
       - 5540:5540
     depends_on:
-      - redis_service
       - redis
     networks:
       - app
