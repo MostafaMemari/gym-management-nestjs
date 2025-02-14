@@ -15,10 +15,10 @@ export class PaginationDto {
   @IsPositive()
   @IsOptional()
   @Transform(({ value }) => Number(value) || 20)
-  count: number = 20;
+  take: number = 20;
 
   @Expose()
   get skip(): number {
-    return (this.page - 1) * this.count;
+    return (this.page - 1) * this.take;
   }
 }

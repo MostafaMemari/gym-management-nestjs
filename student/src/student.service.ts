@@ -1,27 +1,18 @@
-import {
-  BadRequestException,
-  ConflictException,
-  HttpStatus,
-  Inject,
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
-import { ICreateStudent, IPagination, IQuery } from './common/interfaces/student.interface';
+import { ConflictException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ICreateStudent, IQuery } from './common/interfaces/student.interface';
 import { StudentMessages } from './common/enums/student.messages';
 import { Services } from './common/enums/services.enum';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { StudentEntity } from './entities/student.entity';
-import { DataSource, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { lastValueFrom, timeout } from 'rxjs';
-import { StudentPatterns } from './common/enums/student.events';
 import { UserPatterns } from './common/enums/user.events';
 import { ServiceResponse } from './common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from './common/utils/response';
 import { AwsService } from './modules/s3AWS/s3AWS.service';
 import { EntityName } from './common/enums/entity.enum';
-import { PageMetaDto } from './common/dtos/pagination.dto';
+import { PageDto, PageMetaDto } from './common/dtos/pagination.dto';
 
 @Injectable()
 export class StudentService {
@@ -50,9 +41,9 @@ export class StudentService {
     try {
       await this.findStudentByNationalCode(createStudentDto.national_code, { duplicateError: true });
 
-      userId = await this.createUser();
-
       imageKey = await this.uploadStudentImage(createStudentDto.image);
+
+      userId = await this.createUser();
 
       const student = this.studentRepository.create({
         ...createStudentDto,
@@ -73,24 +64,14 @@ export class StudentService {
       await queryRunner.release();
     }
   }
-  async findAll(query: IQuery) {
-    const { page, limit, skip } = query.paginationDto;
+  async findAll(query: IQuery): Promise<PageDto<StudentEntity>> {
+    const { take, skip } = query.paginationDto;
     const queryBuilder = this.studentRepository.createQueryBuilder(EntityName.Students);
 
-    queryBuilder.orderBy('students.created_at', 'ASC').skip(skip).take(limit);
+    const [students, count] = await queryBuilder.skip(skip).take(take).getManyAndCount();
 
-    const itemCount = await queryBuilder.getCount();
-
-    const { entities } = await queryBuilder.getRawAndEntities();
-
-    console.log(entities);
-
-    // const pageMetaDto = new PageMetaDto({ itemCount, pageOptionsDto: query.paginationDto });
-    // console.log(pageMetaDto);
-
-    // return new PageDto(entities, pageMetaDto);
-
-    return true;
+    const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
+    return new PageDto(students, pageMetaDto);
   }
   async removeById(userDto: { studentId: number }): Promise<ServiceResponse> {
     const queryRunner = this.studentRepository.manager.connection.createQueryRunner();

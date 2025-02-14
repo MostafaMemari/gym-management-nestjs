@@ -21,7 +21,7 @@ export interface ICreateStudent {
 export interface IPagination {
   paginationDto: {
     page?: number;
-    limit?: number;
+    take?: number;
     skip?: number;
   };
 }

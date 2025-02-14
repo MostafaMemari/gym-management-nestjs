@@ -59,7 +59,7 @@ export class StudentController {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.studentServiceClient.send(StudentPatterns.CreateStudent, { ...studentDto, image }).pipe(timeout(5000)),
+        this.studentServiceClient.send(StudentPatterns.CreateStudent, { ...studentDto, image }).pipe(timeout(10000)),
       );
 
       return handleServiceResponse(data);
@@ -76,6 +76,8 @@ export class StudentController {
       const data: ServiceResponse = await lastValueFrom(
         this.studentServiceClient.send(StudentPatterns.GetStudents, { paginationDto }).pipe(timeout(5000)),
       );
+
+      return handleServiceResponse(data);
     } catch (error) {}
   }
 
