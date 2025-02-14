@@ -4,7 +4,7 @@ import { AuthService } from './auth.service';
 import { ConfigModule } from '@nestjs/config';
 import envConfig from './configs/env.config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { Services } from './enums/services.enum';
+import { Services } from './common/enums/services.enum';
 import { JwtModule } from '@nestjs/jwt';
 
 @Module({

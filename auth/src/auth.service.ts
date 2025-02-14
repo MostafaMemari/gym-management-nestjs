@@ -1,16 +1,15 @@
 import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { GenerateTokens, ISignin, ISignup } from './interfaces/auth.interface';
-import { Services } from './enums/services.enum';
-import { ClientProxy } from '@nestjs/microservices';
-import { UserPatterns } from './enums/user.events';
+import { GenerateTokens, ISignin, ISignup } from './common/interfaces/auth.interface';
+import { Services } from './common/enums/services.enum';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { UserPatterns } from './common/enums/user.events';
 import { lastValueFrom, timeout } from 'rxjs';
-import { ServiceResponse } from './interfaces/serviceResponse.interface';
-import { AuthMessages } from './enums/auth.messages';
+import { ServiceResponse } from './common/interfaces/serviceResponse.interface';
+import { AuthMessages } from './common/enums/auth.messages';
 import * as bcrypt from 'bcryptjs'
-import { sendError } from './common/utils/sendError.utils';
 import { JwtService } from '@nestjs/jwt';
 import * as dateFns from 'date-fns'
-import { RedisPatterns } from './enums/redis.events';
+import { RedisPatterns } from './common/enums/redis.events';
 
 @Injectable()
 export class AuthService {
@@ -23,44 +22,27 @@ export class AuthService {
     @Inject(Services.REDIS) private readonly redisServiceClientProxy: ClientProxy
   ) { }
 
-  async checkUserServiceConnection(): Promise<ServiceResponse | void> {
+  async checkUserServiceConnection(): Promise<never | void> {
     try {
       await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CheckConnection, {}).pipe(timeout(this.timeout)))
     } catch (error) {
-      return {
-        message: "User service is not connected",
-        error: true,
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
-        data: {}
-      }
+      throw new RpcException({ message: "User service is not connected", status: error.status })
     }
   }
 
-  async checkRedisServiceConnection(): Promise<ServiceResponse | void> {
+  async checkRedisServiceConnection(): Promise<never | void> {
     try {
       await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.CheckConnection, {}).pipe(timeout(this.timeout)))
     } catch (error) {
-      return {
-        message: "Redis service is not connected",
-        error: true,
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
-        data: {}
-      }
+      throw new RpcException({ message: "Redis service is not connected", status: error.status })
     }
   }
 
-  async checkConnections(): Promise<void | ServiceResponse> {
+  async checkConnections(): Promise<void | never> {
     const isRedisServiceConnected = this.checkRedisServiceConnection()
     const isUserServiceConnected = this.checkUserServiceConnection()
 
-    const connections = await Promise.all([isRedisServiceConnected, isUserServiceConnected])
-
-    for (let i = 0; i < connections.length; i++) {
-      if (typeof connections[i] == 'object') {
-        return connections[i]
-      }
-    }
-
+    await Promise.all([isRedisServiceConnected, isUserServiceConnected])
   }
 
   async validateRefreshToken(refreshToken: string): Promise<boolean | { refreshToken: string }> {
@@ -85,9 +67,7 @@ export class AuthService {
     try {
       const { ACCESS_TOKEN_SECRET } = process.env
 
-      const isConnected = await this.checkUserServiceConnection()
-
-      if (typeof isConnected == 'object' && isConnected.error) return isConnected
+      await this.checkUserServiceConnection()
 
       const verifiedToken = this.jwtService.verify<{ id: number }>(verifyTokenDto.accessToken, { secret: ACCESS_TOKEN_SECRET })
 
@@ -102,7 +82,7 @@ export class AuthService {
         status: HttpStatus.OK
       }
     } catch (error) {
-      return sendError(error)
+      throw new RpcException(error)
     }
   }
 
@@ -140,9 +120,7 @@ export class AuthService {
 
   async signup(signupDto: ISignup): Promise<ServiceResponse> {
     try {
-      const connectionResult = await this.checkConnections()
-
-      if (typeof connectionResult == "object" && connectionResult?.error) return connectionResult
+      await this.checkConnections()
 
       const hashedPassword = await bcrypt.hash(signupDto.password, 10)
 
@@ -164,16 +142,14 @@ export class AuthService {
         data: { ...tokens }
       }
     } catch (error) {
-      return sendError(error)
+      throw new RpcException(error)
     }
   }
 
   async signin(signinDto: ISignin): Promise<ServiceResponse> {
     try {
 
-      const isConnected = await this.checkUserServiceConnection()
-
-      if (typeof isConnected == 'object' && isConnected?.error) return isConnected
+      await this.checkUserServiceConnection()
 
       const result: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.GetUserByIdentifier, signinDto).pipe(timeout(this.timeout)))
 
@@ -195,15 +171,13 @@ export class AuthService {
         status: HttpStatus.OK
       }
     } catch (error) {
-      return sendError(error)
+      throw new RpcException(error)
     }
   }
 
   async signout(signoutDto: { refreshToken: string }): Promise<ServiceResponse> {
     try {
-      const isConnected = await this.checkRedisServiceConnection()
-
-      if (typeof isConnected == "object" && isConnected?.error) return isConnected
+      await this.checkRedisServiceConnection()
 
       const validateRefreshToken = await this.validateRefreshToken(signoutDto.refreshToken)
 
@@ -230,15 +204,13 @@ export class AuthService {
         status: HttpStatus.OK
       }
     } catch (error) {
-      return sendError(error)
+      throw new RpcException(error)
     }
   }
 
   async refreshToken({ refreshToken }: { refreshToken: string }): Promise<ServiceResponse> {
     try {
-      const isConnected = await this.checkRedisServiceConnection()
-
-      if (typeof isConnected == 'object' && isConnected?.error) return isConnected
+      await this.checkRedisServiceConnection()
 
       await this.validateRefreshToken(refreshToken)
 
@@ -255,7 +227,7 @@ export class AuthService {
         status: HttpStatus.OK
       }
     } catch (error) {
-      return sendError(error)
+      throw new RpcException(error)
     }
   }
 

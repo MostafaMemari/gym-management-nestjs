@@ -1,4 +1,4 @@
-import { HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { ConflictException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from './prisma/prisma.service';
 import { Prisma, Role } from '@prisma/client';
 import { ServiceResponse } from './common/interfaces/serviceResponse.interface';
@@ -9,6 +9,7 @@ import { Services } from './common/enums/services.enum';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 import { RedisPatterns } from './common/enums/redis.events';
+import { UserRepository } from './user.repository';
 
 @Injectable()
 export class UserService {
@@ -17,59 +18,29 @@ export class UserService {
 
   constructor(
     @Inject(Services.REDIS) private readonly redisServiceClientProxy: ClientProxy,
-    private readonly prisma: PrismaService
+    private readonly userRepository: UserRepository
   ) { }
 
-  async redisCheckConnection(): Promise<void | ServiceResponse> {
+  async redisCheckConnection(): Promise<void | never> {
     try {
       await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.CheckConnection, {}).pipe(timeout(this.timeout)))
     } catch (error) {
-      return {
-        data: {},
-        error: true,
-        message: 'Redis service is not connected',
-        status: HttpStatus.INTERNAL_SERVER_ERROR
-      }
+      throw new RpcException({ message: "User service is not connected", status: error.status })
     }
-  }
-
-  async isExistingUser(userDto: Prisma.UserCreateInput) {
-    const user = await this.prisma.user.findFirst({
-      where: {
-        OR: [
-          {
-            mobile: userDto.mobile
-          },
-          {
-            username: userDto.username
-          }
-        ]
-      }
-    })
-
-
-    if (user) return true
-
-    return false
   }
 
   async create(userDto: Prisma.UserCreateInput): Promise<ServiceResponse> {
     try {
 
-      const existingUser = await this.isExistingUser(userDto)
+      const existingUser = await this.userRepository.isExistingUser(userDto)
 
       if (existingUser) {
-        return {
-          data: {},
-          error: true,
-          message: UserMessages.AlreadyExistsUser,
-          status: HttpStatus.CONFLICT,
-        };
+        throw new ConflictException(UserMessages.AlreadyExistsUser)
       }
 
-      const isFirstUser = (await this.prisma.user.count()) == 0;
+      const isFirstUser = (await this.userRepository.count()) == 0;
 
-      const user = await this.prisma.user.create({
+      const user = await this.userRepository.create({
         data: {
           ...userDto,
           role: isFirstUser ? Role.SUPER_ADMIN : Role.STUDENT
@@ -95,22 +66,16 @@ export class UserService {
 
       const { username, role } = userStudentDot;
 
-      const existingUser = await this.prisma.user.findFirst({
-        where: {
-          username,
-        },
-      });
+      const existingUser = await this.userRepository.findOneByUsername(username)
 
       if (existingUser) {
-        return {
-          data: {},
-          error: true,
-          message: UserMessages.AlreadyExistsUserWithUsername,
-          status: HttpStatus.CONFLICT,
-        };
+        throw new ConflictException(UserMessages.AlreadyExistsUserWithUsername)
       }
 
-      const newUser = await this.prisma.user.create({ data: { username, role: role || Role.STUDENT } });
+      const newUser = await this.userRepository.create({
+        data: { username, role: role || Role.STUDENT },
+        omit: { password: true }
+      });
 
       return {
         data: { user: newUser },
@@ -126,9 +91,7 @@ export class UserService {
 
   async findAll(paginationDto?: IPagination): Promise<ServiceResponse> {
     try {
-      const isConnected = await this.redisCheckConnection()
-
-      if (typeof isConnected == 'object' && isConnected.error) return isConnected
+      await this.redisCheckConnection()
 
       const cacheKey = 'users_cache'
 
@@ -148,7 +111,7 @@ export class UserService {
         omit: { password: true }
       }
 
-      const users = await this.prisma.user.findMany(userExtraQuery)
+      const users = await this.userRepository.findAll(userExtraQuery)
 
       const redisKeys = {
         key: cacheKey,
@@ -172,18 +135,10 @@ export class UserService {
 
   async findById(userDto: { userId: number }): Promise<ServiceResponse> {
     try {
-      const user = await this.prisma.user.findFirst({
-        where: { id: userDto.userId },
-        omit: { password: true },
-      });
+      const user = await this.userRepository.findById(userDto.userId, { omit: { password: true } })
 
       if (!user) {
-        return {
-          data: {},
-          error: true,
-          message: UserMessages.NotFoundUser,
-          status: HttpStatus.NOT_FOUND,
-        };
+        throw new NotFoundException(UserMessages.NotFoundUser)
       }
 
       return {
@@ -200,22 +155,10 @@ export class UserService {
 
   async findByIdentifier({ identifier }: { identifier: string }): Promise<ServiceResponse> {
     try {
-      const user = await this.prisma.user.findFirst({
-        where: {
-          OR: [
-            { mobile: identifier },
-            { username: identifier }
-          ],
-        },
-      });
+      const user = await this.userRepository.findOneByIdentifier(identifier, { omit: { password: true } })
 
       if (!user) {
-        return {
-          data: {},
-          error: true,
-          message: UserMessages.NotFoundUser,
-          status: HttpStatus.NOT_FOUND,
-        };
+        throw new NotFoundException(UserMessages.NotFoundUser)
       }
 
       return {
@@ -232,18 +175,13 @@ export class UserService {
 
   async removeUserById(userDto: { userId: number }): Promise<ServiceResponse> {
     try {
-      const existingUser = await this.prisma.user.findFirst({ where: { id: userDto.userId } });
+      const existingUser = await this.userRepository.findById(userDto.userId, { omit: { password: true } })
 
       if (!existingUser) {
-        return {
-          data: {},
-          error: true,
-          message: UserMessages.NotFoundUser,
-          status: HttpStatus.CONFLICT,
-        };
+        throw new NotFoundException(UserMessages.NotFoundUser)
       }
 
-      const removedUser = await this.prisma.user.delete({ where: { id: userDto.userId }, omit: { password: true } });
+      const removedUser = await this.userRepository.delete(userDto.userId, { omit: { password: true } })
 
       return {
         data: { removedUser },
@@ -259,7 +197,7 @@ export class UserService {
 
   async findOrCreate(userDto: Prisma.UserCreateInput): Promise<ServiceResponse> {
     try {
-      const existingUser = await this.isExistingUser(userDto)
+      const existingUser = await this.userRepository.isExistingUser(userDto)
 
       if (existingUser) {
         return {
@@ -279,10 +217,7 @@ export class UserService {
 
   async search({ query, ...paginationDto }: ISearchUser): Promise<ServiceResponse> {
     try {
-      const isConnected = await this.redisCheckConnection()
-
-      if (typeof isConnected == 'object' && isConnected.error) return isConnected
-
+      await this.redisCheckConnection()
 
       const cacheKey = `searchUser_${query}`
 
@@ -313,7 +248,7 @@ export class UserService {
         }
       }
 
-      const users = await this.prisma.user.findMany(userExtraQuery)
+      const users = await this.userRepository.findAll(userExtraQuery)
 
       const redisKeys = {
         key: cacheKey,

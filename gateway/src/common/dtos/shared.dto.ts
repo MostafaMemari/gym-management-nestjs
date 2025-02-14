@@ -15,16 +15,10 @@ export class PaginationDto {
   @IsPositive()
   @IsOptional()
   @Transform(({ value }) => Number(value) || 20)
-  limit: number = 20;
+  count: number = 20;
 
   @Expose()
   get skip(): number {
-    return (this.page - 1) * this.limit;
+    return (this.page - 1) * this.count;
   }
-}
-export class SearchDto extends PaginationDto {
-  @IsNotEmpty()
-  @IsString()
-  @ApiProperty()
-  query: string;
 }

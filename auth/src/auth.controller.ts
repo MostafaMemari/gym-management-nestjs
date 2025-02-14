@@ -1,8 +1,8 @@
 import { Controller } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { AuthPatterns } from './enums/auth.events';
-import { ISignin, ISignup } from './interfaces/auth.interface';
+import { AuthPatterns } from './common/enums/auth.events';
+import { ISignin, ISignup } from './common/interfaces/auth.interface';
 
 @Controller()
 export class AuthController {
