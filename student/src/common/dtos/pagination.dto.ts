@@ -1,17 +1,29 @@
+import { IPagination } from '../interfaces/student.interface';
+
 export class PageMetaDto {
-  readonly page: number;
-  readonly limit: number;
-  readonly itemCount: number;
-  readonly pageCount: number;
+  readonly currentPage: number;
+  readonly perPage: number;
+  readonly totalCount: number;
+  readonly totalPages: number;
   readonly hasPreviousPage: boolean;
   readonly hasNextPage: boolean;
 
-  constructor({ pageOptionsDto, itemCount }) {
-    this.page = pageOptionsDto.page;
-    this.limit = pageOptionsDto.limit;
-    this.itemCount = itemCount;
-    this.pageCount = Math.ceil(this.itemCount / this.limit);
-    this.hasPreviousPage = this.page > 1;
-    this.hasNextPage = this.page < this.pageCount;
+  constructor(itemCount: number, pageOptionsDto: { page?: number; take?: number; skip?: number }) {
+    this.currentPage = pageOptionsDto.page;
+    this.totalCount = itemCount;
+    this.perPage = pageOptionsDto.take;
+    this.totalPages = Math.ceil(this.totalCount / this.perPage);
+    this.hasNextPage = this.currentPage < this.totalPages;
+    this.hasPreviousPage = this.currentPage > 1;
+  }
+}
+
+export class PageDto<T> {
+  readonly data: T[];
+  readonly pager: PageMetaDto;
+
+  constructor(data: T[], meta: PageMetaDto) {
+    this.pager = meta;
+    this.data = data;
   }
 }
