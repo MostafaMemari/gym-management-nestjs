@@ -19,10 +19,15 @@ export interface ICreateStudent {
 }
 
 export interface IPagination {
-  count?: number;
-  page?: number;
+  paginationDto: {
+    page?: number;
+    limit?: number;
+    skip?: number;
+  };
 }
 
-export interface ISearchStudent extends IPagination {
+export interface ISearchQuery {
   query: string;
 }
+
+export interface IQuery extends IPagination, ISearchQuery {}

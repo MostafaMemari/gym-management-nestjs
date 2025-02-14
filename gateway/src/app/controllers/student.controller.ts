@@ -24,7 +24,7 @@ import { ServiceResponse } from '../../common/interfaces/serviceResponse.interfa
 import { CreateStudentDto } from '../../common/dtos/student.dto';
 import { UploadFileS3 } from '../../common/interceptors/upload-file.interceptor';
 import { handleError, handleServiceResponse } from '../../common/utils/handleError.utils';
-import { PaginationDto } from 'src/common/dtos/user.dto';
+import { PaginationDto } from 'src/common/dtos/query.dto';
 
 @Controller('students')
 @ApiTags('Students')
@@ -74,10 +74,8 @@ export class StudentController {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.studentServiceClient.send(StudentPatterns.GetStudents, { ...paginationDto }).pipe(timeout(5000)),
+        this.studentServiceClient.send(StudentPatterns.GetStudents, { paginationDto }).pipe(timeout(5000)),
       );
-
-      console.log(data);
     } catch (error) {}
   }
 

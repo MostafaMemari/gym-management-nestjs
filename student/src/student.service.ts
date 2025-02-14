@@ -7,7 +7,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { ICreateStudent, IPagination } from './common/interfaces/student.interface';
+import { ICreateStudent, IPagination, IQuery } from './common/interfaces/student.interface';
 import { StudentMessages } from './common/enums/student.messages';
 import { Services } from './common/enums/services.enum';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
@@ -20,6 +20,8 @@ import { UserPatterns } from './common/enums/user.events';
 import { ServiceResponse } from './common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from './common/utils/response';
 import { AwsService } from './modules/s3AWS/s3AWS.service';
+import { EntityName } from './common/enums/entity.enum';
+import { PageMetaDto } from './common/dtos/pagination.dto';
 
 @Injectable()
 export class StudentService {
@@ -27,7 +29,7 @@ export class StudentService {
 
   constructor(
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
-    @InjectRepository(StudentEntity) private studentRepo: Repository<StudentEntity>,
+    @InjectRepository(StudentEntity) private studentRepository: Repository<StudentEntity>,
     private readonly awsService: AwsService,
   ) {}
 
@@ -40,7 +42,7 @@ export class StudentService {
   }
 
   async create(createStudentDto: ICreateStudent) {
-    const queryRunner = this.studentRepo.manager.connection.createQueryRunner();
+    const queryRunner = this.studentRepository.manager.connection.createQueryRunner();
     await queryRunner.startTransaction();
     let userId = null;
     let imageKey = null;
@@ -52,7 +54,7 @@ export class StudentService {
 
       imageKey = await this.uploadStudentImage(createStudentDto.image);
 
-      const student = this.studentRepo.create({
+      const student = this.studentRepository.create({
         ...createStudentDto,
         image_url: imageKey,
         user_id: userId,
@@ -71,11 +73,27 @@ export class StudentService {
       await queryRunner.release();
     }
   }
-  async findAll(query: IPagination) {
-    return query;
+  async findAll(query: IQuery) {
+    const { page, limit, skip } = query.paginationDto;
+    const queryBuilder = this.studentRepository.createQueryBuilder(EntityName.Students);
+
+    queryBuilder.orderBy('students.created_at', 'ASC').skip(skip).take(limit);
+
+    const itemCount = await queryBuilder.getCount();
+
+    const { entities } = await queryBuilder.getRawAndEntities();
+
+    console.log(entities);
+
+    // const pageMetaDto = new PageMetaDto({ itemCount, pageOptionsDto: query.paginationDto });
+    // console.log(pageMetaDto);
+
+    // return new PageDto(entities, pageMetaDto);
+
+    return true;
   }
   async removeById(userDto: { studentId: number }): Promise<ServiceResponse> {
-    const queryRunner = this.studentRepo.manager.connection.createQueryRunner();
+    const queryRunner = this.studentRepository.manager.connection.createQueryRunner();
     await queryRunner.startTransaction();
 
     try {
@@ -127,7 +145,7 @@ export class StudentService {
   }
 
   async findStudent(field: keyof StudentEntity, value: any, notFoundError = false, duplicateError = false) {
-    const student = await this.studentRepo.findOneBy({ [field]: value });
+    const student = await this.studentRepository.findOneBy({ [field]: value });
 
     if (!student && notFoundError) throw new NotFoundException(StudentMessages.NotFoundStudent);
     if (student && duplicateError) throw new ConflictException(StudentMessages.DuplicateNationalCode);
