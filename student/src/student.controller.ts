@@ -2,7 +2,7 @@ import { Controller } from '@nestjs/common';
 import { StudentService } from './student.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { StudentPatterns } from './common/enums/student.events';
-import { ICreateStudent } from './common/interfaces/student.interface';
+import { ICreateStudent, IPagination } from './common/interfaces/student.interface';
 @Controller()
 export class StudentController {
   constructor(private readonly studentService: StudentService) {}
@@ -12,18 +12,23 @@ export class StudentController {
     return true;
   }
 
-  @MessagePattern(StudentPatterns.CreateUserStudent)
-  createStudent(@Payload() createStudentDto: ICreateStudent) {
-    return this.studentService.createStudent(createStudentDto);
+  @MessagePattern(StudentPatterns.CreateStudent)
+  create(@Payload() createStudentDto: ICreateStudent) {
+    return this.studentService.create(createStudentDto);
+  }
+
+  @MessagePattern(StudentPatterns.GetStudents)
+  getAll(@Payload() query: IPagination) {
+    return this.studentService.findAll(query);
   }
 
   @MessagePattern(StudentPatterns.RemoveUserStudent)
   removeById(@Payload() data: { studentId: number }) {
-    return this.studentService.removeStudentById(data);
+    return this.studentService.removeById(data);
   }
 
   @MessagePattern(StudentPatterns.checkExistStudentById)
-  checkExistStudent(@Payload() data: { studentId: number }) {
-    return this.studentService.checkExistById(data.studentId);
+  checkExistById(@Payload() data: { studentId: number }) {
+    return this.studentService.findStudentById(data.studentId, {});
   }
 }

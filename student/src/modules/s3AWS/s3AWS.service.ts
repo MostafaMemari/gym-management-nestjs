@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -6,9 +6,6 @@ import { v4 as uuidv4 } from 'uuid';
 import * as sharp from 'sharp';
 import { lookup } from 'mime-types';
 import * as path from 'path';
-import { Readable } from 'stream';
-import { ResponseUtil } from '../../common/utils/response';
-import { StudentMessages } from '../../common/enums/student.messages';
 
 @Injectable()
 export class AwsService {
@@ -19,7 +16,6 @@ export class AwsService {
     const s3_region = this.configService.get('S3_REGION');
 
     if (!s3_region) {
-      console.warn('S3_REGION not found in environment variables');
       throw new Error('S3_REGION not found in environment variables');
     }
 
@@ -43,35 +39,31 @@ export class AwsService {
     folderName?: string;
     isPublic?: boolean;
   }): Promise<any> {
-    try {
-      const ext = path.extname(file.originalname);
-      const contentType = lookup(ext) || 'application/octet-stream';
+    const ext = path.extname(file.originalname);
+    const contentType = lookup(ext) || 'application/octet-stream';
 
-      const bufferFile = Buffer.from(file.buffer);
-      const processedImage = await sharp(bufferFile).resize({ width: 150 }).jpeg({ quality: 80 }).toBuffer();
-      const key = `${folderName}/${Date.now()}${ext}`;
+    const bufferFile = Buffer.from(file.buffer);
+    const processedImage = await sharp(bufferFile).resize({ width: 150 }).jpeg({ quality: 80 }).toBuffer();
+    const key = `${folderName}/${Date.now()}${ext}`;
 
-      const command = new PutObjectCommand({
-        Bucket: this.bucketName,
-        Key: key,
-        Body: processedImage,
-        ContentType: contentType,
-        ACL: isPublic ? 'public-read' : 'private',
-        ContentLength: processedImage.length,
-      });
+    const command = new PutObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+      Body: processedImage,
+      ContentType: contentType,
+      ACL: isPublic ? 'public-read' : 'private',
+      ContentLength: processedImage.length,
+    });
 
-      const uploadResult = await this.client.send(command);
+    const uploadResult = await this.client.send(command);
 
-      if (uploadResult.$metadata.httpStatusCode !== 201) ResponseUtil.error(StudentMessages.FailedToUploadImage, HttpStatus.BAD_REQUEST);
+    if (uploadResult.$metadata.httpStatusCode !== 200) throw new BadRequestException('Image upload failed');
 
-      return {
-        url: isPublic ? (await this.getFileUrl(key)).url : (await this.getPresignedSignedUrl(key)).url,
-        key,
-        isPublic,
-      };
-    } catch (error) {
-      ResponseUtil.error(error.message, error.status);
-    }
+    return {
+      url: isPublic ? (await this.getFileUrl(key)).url : (await this.getPresignedSignedUrl(key)).url,
+      key,
+      isPublic,
+    };
   }
 
   async getFileUrl(key: string) {
@@ -87,18 +79,12 @@ export class AwsService {
 
       const deleteResult = await this.client.send(command);
 
-      console.info(`File deleted from S3: ${key}`);
-
       return deleteResult;
     } catch (error) {
-      console.error(error);
       throw new InternalServerErrorException(error);
     }
   }
 
-  /**
-   * @description Get a signed URL for a file in S3, its not being used in the project, just added for reference
-   */
   async getPresignedSignedUrl(key: string) {
     try {
       const command = new GetObjectCommand({
@@ -107,12 +93,11 @@ export class AwsService {
       });
 
       const url = await getSignedUrl(this.client, command, {
-        expiresIn: 60 * 60 * 24, // 24 hours
+        expiresIn: 60 * 60 * 24,
       });
 
       return { url };
     } catch (error) {
-      console.error(error);
       throw new InternalServerErrorException(error);
     }
   }
@@ -132,8 +117,6 @@ export class AwsService {
 
         const uploadResult = await this.client.send(command);
 
-        console.debug(`File uploaded to S3: ${file.originalname} - ${uploadResult.ETag}`);
-
         return {
           url: (await this.getFileUrl(key)).url,
         };
@@ -141,7 +124,6 @@ export class AwsService {
 
       return Promise.all(uploadPromises);
     } catch (error) {
-      console.error(error);
       throw new InternalServerErrorException(error);
     }
   }
