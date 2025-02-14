@@ -9,7 +9,8 @@ import { AuthMessages } from './common/enums/auth.messages';
 import * as bcrypt from 'bcryptjs'
 import { JwtService } from '@nestjs/jwt';
 import * as dateFns from 'date-fns'
-import { RedisPatterns } from './common/enums/redis.events';
+import { InjectRedis } from '@nestjs-modules/ioredis';
+import { Redis } from 'ioredis'
 
 @Injectable()
 export class AuthService {
@@ -19,7 +20,7 @@ export class AuthService {
   constructor(
     @Inject(forwardRef(() => JwtService)) private readonly jwtService: JwtService,
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
-    @Inject(Services.REDIS) private readonly redisServiceClientProxy: ClientProxy
+    @InjectRedis() private readonly redis: Redis
   ) { }
 
   async checkUserServiceConnection(): Promise<never | void> {
@@ -30,37 +31,20 @@ export class AuthService {
     }
   }
 
-  async checkRedisServiceConnection(): Promise<never | void> {
-    try {
-      await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.CheckConnection, {}).pipe(timeout(this.timeout)))
-    } catch (error) {
-      throw new RpcException({ message: "Redis service is not connected", status: error.status })
-    }
-  }
+  async validateRefreshToken(refreshToken: string): Promise<never | { refreshTokenKey: string }> {
+    const jwtResult = this.jwtService.decode<{ id: number } | undefined>(refreshToken)
 
-  async checkConnections(): Promise<void | never> {
-    const isRedisServiceConnected = this.checkRedisServiceConnection()
-    const isUserServiceConnected = this.checkUserServiceConnection()
+    if (!jwtResult?.id)
+      throw new RpcException({ message: AuthMessages.InvalidRefreshToken, status: HttpStatus.BAD_REQUEST })
 
-    await Promise.all([isRedisServiceConnected, isUserServiceConnected])
-  }
+    const refreshTokenKey = `refreshToken_${jwtResult.id}_${refreshToken}`
 
-  async validateRefreshToken(refreshToken: string): Promise<boolean | { refreshToken: string }> {
-    const { id } = this.jwtService.decode<{ id: number }>(refreshToken)
+    const storedToken = await this.redis.get(refreshTokenKey)
 
-    const redisData = {
-      key: `refreshToken_${id}_${refreshToken}`
-    }
+    if (storedToken !== refreshToken || !storedToken)
+      throw new RpcException({ message: AuthMessages.NotFoundRefreshToken, status: HttpStatus.NOT_FOUND })
 
-    const storedToken: ServiceResponse = await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.Get, redisData))
-
-    if (storedToken.error) return false
-
-    if (storedToken.data.value !== refreshToken) return false
-
-    return {
-      refreshToken: redisData.key
-    }
+    return { refreshTokenKey }
   }
 
   async verifyAccessToken(verifyTokenDto: { accessToken: string }): Promise<ServiceResponse> {
@@ -72,7 +56,7 @@ export class AuthService {
       const verifiedToken = this.jwtService.verify<{ id: number }>(verifyTokenDto.accessToken, { secret: ACCESS_TOKEN_SECRET })
 
       if (!verifiedToken.id) {
-        throw new BadRequestException(AuthMessages.InvalidTokenPayload)
+        throw new BadRequestException(AuthMessages.InvalidAccessTokenPayload)
       }
 
       return {
@@ -113,14 +97,14 @@ export class AuthService {
       expireTime: refreshTokenExpireTime
     }
 
-    await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.Set, redisData).pipe(timeout(this.timeout)))
+    await this.redis.set(redisData.key, redisData.value, "EX", redisData.expireTime)
 
     return { accessToken, refreshToken };
   }
 
   async signup(signupDto: ISignup): Promise<ServiceResponse> {
     try {
-      await this.checkConnections()
+      await this.checkUserServiceConnection()
 
       const hashedPassword = await bcrypt.hash(signupDto.password, 10)
 
@@ -148,7 +132,6 @@ export class AuthService {
 
   async signin(signinDto: ISignin): Promise<ServiceResponse> {
     try {
-
       await this.checkUserServiceConnection()
 
       const result: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.GetUserByIdentifier, signinDto).pipe(timeout(this.timeout)))
@@ -177,25 +160,9 @@ export class AuthService {
 
   async signout(signoutDto: { refreshToken: string }): Promise<ServiceResponse> {
     try {
-      await this.checkRedisServiceConnection()
+      const { refreshTokenKey } = await this.validateRefreshToken(signoutDto.refreshToken)
 
-      const validateRefreshToken = await this.validateRefreshToken(signoutDto.refreshToken)
-
-      if (!validateRefreshToken) {
-        return {
-          data: {},
-          error: true,
-          message: AuthMessages.InvalidRefreshToken,
-          status: HttpStatus.BAD_REQUEST
-        }
-      }
-
-      let refreshTokenKey = ''
-      if (typeof validateRefreshToken == 'object') refreshTokenKey = validateRefreshToken.refreshToken
-
-      const result: ServiceResponse = await lastValueFrom(this.redisServiceClientProxy.send(RedisPatterns.Del, { key: refreshTokenKey }))
-
-      if (result.error) return { ...result, message: AuthMessages.NotFoundRefreshToken }
+      await this.redis.del(refreshTokenKey)
 
       return {
         data: {},
@@ -210,7 +177,7 @@ export class AuthService {
 
   async refreshToken({ refreshToken }: { refreshToken: string }): Promise<ServiceResponse> {
     try {
-      await this.checkRedisServiceConnection()
+      await this.checkUserServiceConnection()
 
       await this.validateRefreshToken(refreshToken)
 

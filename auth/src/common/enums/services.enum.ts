@@ -1,4 +1,3 @@
 export enum Services {
-    USER = "USER_SERVICE",
-    REDIS = "REDIS_SERVICE"
+    USER = "USER_SERVICE"
 }
