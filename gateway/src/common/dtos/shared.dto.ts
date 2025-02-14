@@ -1,19 +1,24 @@
-import { ApiPropertyOptional } from "@nestjs/swagger"
-import { Transform } from "class-transformer"
-import { IsNumber, IsOptional, IsPositive } from "class-validator"
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Expose, Transform } from 'class-transformer';
+import { IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
 
 export class PaginationDto {
-    @ApiPropertyOptional()
-    @IsNumber()
-    @IsPositive()
-    @IsOptional()
-    @Transform(({ value }) => +value)
-    page: number = 1
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsPositive()
+  @IsOptional()
+  @Transform(({ value }) => Number(value) || 1)
+  page: number = 1;
 
-    @ApiPropertyOptional()
-    @IsNumber()
-    @IsPositive()
-    @IsOptional()
-    @Transform(({ value }) => +value)
-    count: number = 20
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsPositive()
+  @IsOptional()
+  @Transform(({ value }) => Number(value) || 20)
+  count: number = 20;
+
+  @Expose()
+  get skip(): number {
+    return (this.page - 1) * this.count;
+  }
 }
