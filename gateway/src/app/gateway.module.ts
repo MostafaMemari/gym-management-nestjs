@@ -39,18 +39,6 @@ import { AuthGuard } from "../common/guards/auth.guard";
         },
       },
       {
-        name: Services.REDIS,
-        transport: Transport.RMQ,
-        options: {
-          urls: [process.env.RABBITMQ_URL],
-          queue: process.env.RABBITMQ_REDIS_SERVICE_QUEUE,
-          prefetchCount: 2,
-          isGlobalPrefetchCount: true,
-          noAck: true,
-          persistent: false,
-        },
-      },
-      {
         name: Services.PERMISSION,
         transport: Transport.RMQ,
         options: {
