@@ -84,7 +84,7 @@ import { AuthGuard } from "../common/guards/auth.guard";
     },
     AuthGuard,
     AuthController,
-    UserController
+    UserController,
   ],
 })
 export class GatewayModule { }

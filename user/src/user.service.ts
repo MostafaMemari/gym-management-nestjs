@@ -155,7 +155,7 @@ export class UserService {
 
   async findByIdentifier({ identifier }: { identifier: string }): Promise<ServiceResponse> {
     try {
-      const user = await this.userRepository.findOneByIdentifier(identifier, { omit: { password: true } })
+      const user = await this.userRepository.findOneByIdentifier(identifier)
 
       if (!user) {
         throw new NotFoundException(UserMessages.NotFoundUser)
