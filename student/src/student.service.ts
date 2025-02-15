@@ -13,6 +13,8 @@ import { ResponseUtil } from './common/utils/response';
 import { AwsService } from './modules/s3AWS/s3AWS.service';
 import { EntityName } from './common/enums/entity.enum';
 import { PageDto, PageMetaDto } from './common/dtos/pagination.dto';
+import { CacheService } from './modules/cache/cache.service';
+import { CacheKeys } from './modules/cache/enums/cache.enum';
 
 @Injectable()
 export class StudentService {
@@ -22,6 +24,7 @@ export class StudentService {
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
     @InjectRepository(StudentEntity) private studentRepository: Repository<StudentEntity>,
     private readonly awsService: AwsService,
+    private readonly cacheService: CacheService,
   ) {}
 
   async checkUserServiceConnection(): Promise<ServiceResponse | void> {
@@ -66,6 +69,12 @@ export class StudentService {
   }
   async findAll(query: IQuery): Promise<PageDto<StudentEntity>> {
     const { take, page } = query.paginationDto;
+    const cacheKey = `${CacheKeys.STUDENT_LIST}-${page}-${take}`;
+
+    const cachedData = await this.cacheService.get<PageDto<StudentEntity>>(cacheKey);
+
+    if (cachedData) return cachedData;
+
     const queryBuilder = this.studentRepository.createQueryBuilder(EntityName.Students);
 
     const [students, count] = await queryBuilder
@@ -74,7 +83,11 @@ export class StudentService {
       .getManyAndCount();
 
     const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
-    return new PageDto(students, pageMetaDto);
+    const result = new PageDto(students, pageMetaDto);
+
+    await this.cacheService.set(cacheKey, result);
+
+    return result;
   }
   async removeById(userDto: { studentId: number }): Promise<ServiceResponse> {
     const queryRunner = this.studentRepository.manager.connection.createQueryRunner();

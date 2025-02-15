@@ -37,7 +37,6 @@ services:
       - app
     depends_on:
       - rabbitmq
-      - redis_service
     env_file:
       - user/.env
     volumes:
@@ -79,7 +78,7 @@ services:
       - rabbitmq
       - student_service_db
     env_file:
-      - student/.env.docker
+      - student/.env
     volumes:
       - ./student/src:/app/src
 
