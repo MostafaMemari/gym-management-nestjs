@@ -1,7 +1,7 @@
 import { IPagination } from "../interfaces/user.interface";
 
 interface OutputPagination<T> {
-    paginatedData: T[]
+    items: T[]
     pager: {
         totalCount: number
         totalPages: number
@@ -33,6 +33,6 @@ export const pagination = <T>(
             hasNextPage: page * take < total,
             hasPreviousPage: page > 1
         },
-        paginatedData: filteredData,
+        items: filteredData,
     }
 };
