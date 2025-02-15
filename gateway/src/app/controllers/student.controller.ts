@@ -74,7 +74,6 @@ export class StudentController {
   ) {
     try {
       await this.checkConnection();
-      console.log(updateStudentDto);
       const data: ServiceResponse = await lastValueFrom(
         this.studentServiceClient
           .send(StudentPatterns.UpdateStudent, { studentId: id, updateStudentDto: { ...updateStudentDto, image } })
@@ -83,7 +82,7 @@ export class StudentController {
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to remove student', 'StudentService');
+      handleError(error, 'Failed to updated student', 'StudentService');
     }
   }
 
@@ -98,6 +97,21 @@ export class StudentController {
 
       return handleServiceResponse(data);
     } catch (error) {}
+  }
+
+  @Get(':id')
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    try {
+      await this.checkConnection();
+
+      const data: ServiceResponse = await lastValueFrom(
+        this.studentServiceClient.send(StudentPatterns.GetStudent, { studentId: id }).pipe(timeout(5000)),
+      );
+
+      return handleServiceResponse(data);
+    } catch (error) {
+      handleError(error, 'Failed to get student', 'StudentService');
+    }
   }
 
   @Delete(':id')

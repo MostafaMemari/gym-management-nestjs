@@ -68,12 +68,12 @@ export class StudentService {
     }
   }
   async updateById(studentId: number, updateStudentDto: IUpdateStudent) {
-    const student = await this.findStudentById(studentId, { notFoundError: true });
-
-    let imageKey = null;
+    let imageKey: string | null = null;
     let updateData: Partial<StudentEntity> = {};
 
     try {
+      const student = await this.findStudentById(studentId, { notFoundError: true });
+
       Object.keys(updateStudentDto).forEach((key) => {
         if (updateStudentDto[key] !== undefined && updateStudentDto[key] !== student[key]) {
           updateData[key] = updateStudentDto[key];
@@ -92,10 +92,11 @@ export class StudentService {
       if (updateStudentDto.image && student.image_url) {
         await this.awsService.deleteFile(student.image_url);
       }
+      await this.cacheService.clearStudentCache();
 
       return ResponseUtil.success({ ...student, ...updateData }, StudentMessages.UpdatedStudent);
     } catch (error) {
-      if (imageKey) await this.removeStudentImage(imageKey);
+      await this.removeStudentImage(imageKey);
 
       return ResponseUtil.error(error?.message || StudentMessages.FailedToUpdateStudent, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -122,6 +123,15 @@ export class StudentService {
     await this.cacheService.set(cacheKey, result);
 
     return result;
+  }
+  async findOneById(studentId: number): Promise<ServiceResponse> {
+    try {
+      const student = await this.findStudentById(studentId, { notFoundError: true });
+
+      return ResponseUtil.success(student, StudentMessages.RemovedStudentSuccess);
+    } catch (error) {
+      throw new RpcException(error);
+    }
   }
   async removeById(studentId: number): Promise<ServiceResponse> {
     const queryRunner = this.studentRepository.manager.connection.createQueryRunner();

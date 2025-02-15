@@ -1,6 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { CacheKeys } from './enums/cache.enum';
 
 @Injectable()
 export class CacheService {
@@ -20,5 +21,18 @@ export class CacheService {
 
   async reset(): Promise<void> {
     await this.cacheManager.clear();
+  }
+
+  async clearStudentCache(): Promise<void> {
+    const store = (this.cacheManager as any).stores;
+
+    console.log(store.key());
+
+    if (store?.keys) {
+      const keys = await store.keys(`${CacheKeys.STUDENT_LIST}-*`);
+      if (keys.length > 0) {
+        await store.del(keys);
+      }
+    }
   }
 }

@@ -29,6 +29,12 @@ export class StudentController {
   }
 
   @MessagePattern(StudentPatterns.RemoveUserStudent)
+  findOne(@Payload() data: { studentId: number }) {
+    const { studentId } = data;
+    return this.studentService.findOneById(studentId);
+  }
+
+  @MessagePattern(StudentPatterns.GetStudent)
   remove(@Payload() data: { studentId: number }) {
     const { studentId } = data;
     return this.studentService.removeById(studentId);
