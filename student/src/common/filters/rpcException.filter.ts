@@ -13,6 +13,7 @@ export class CustomRpcExceptionFilter implements RpcExceptionFilter<RpcException
       error: true,
       message: errorMessage,
       status: errorStatus,
+      data: {},
     };
   }
 }

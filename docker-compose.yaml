@@ -79,7 +79,7 @@ services:
       - rabbitmq
       - student_service_db
     env_file:
-      - student/.env
+      - student/.env.docker
     volumes:
       - ./student/src:/app/src
 
