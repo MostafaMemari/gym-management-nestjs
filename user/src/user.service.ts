@@ -7,18 +7,14 @@ import { pagination } from './common/utils/pagination.utils';
 import { RpcException } from '@nestjs/microservices';
 import { UserRepository } from './user.repository';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { RedisCache } from 'cache-manager-redis-yet'
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly userRepository: UserRepository,
-    @Inject(CACHE_MANAGER) private readonly redisCache: RedisCache
+    @Inject(CACHE_MANAGER) private readonly redisCache: Cache
   ) { }
-
-  onModuleInit(){
-    console.log('hello')
-  }
 
   async create(userDto: Prisma.UserCreateInput): Promise<ServiceResponse> {
     try {

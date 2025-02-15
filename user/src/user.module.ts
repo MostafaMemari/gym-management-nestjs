@@ -8,11 +8,12 @@ import { UserRepository } from './user.repository';
 import { CacheModule } from '@nestjs/cache-manager'
 import { cacheConfig } from './configs/cache.config';
 
+
 @Module({
   imports: [
     ConfigModule.forRoot(envConfig()),
     PrismaModule,
-    CacheModule.registerAsync(cacheConfig()),
+    CacheModule.register(cacheConfig()),
   ],
   controllers: [UserController],
   providers: [UserService, UserRepository],
