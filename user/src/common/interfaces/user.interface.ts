@@ -15,7 +15,7 @@ export interface ICreateUserStudent {
 
 
 export interface IPagination {
-  count?: number
+  take?: number
   page?: number
 }
 
