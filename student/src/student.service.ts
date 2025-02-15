@@ -65,10 +65,13 @@ export class StudentService {
     }
   }
   async findAll(query: IQuery): Promise<PageDto<StudentEntity>> {
-    const { take, skip } = query.paginationDto;
+    const { take, page } = query.paginationDto;
     const queryBuilder = this.studentRepository.createQueryBuilder(EntityName.Students);
 
-    const [students, count] = await queryBuilder.skip(skip).take(take).getManyAndCount();
+    const [students, count] = await queryBuilder
+      .skip((page - 1) * take)
+      .take(take)
+      .getManyAndCount();
 
     const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
     return new PageDto(students, pageMetaDto);
