@@ -22,3 +22,10 @@ export class PaginationDto {
     return (this.page - 1) * this.take;
   }
 }
+
+export class SearchDto extends PaginationDto {
+  @IsNotEmpty()
+  @IsString()
+  @ApiProperty()
+  query: string;
+}
