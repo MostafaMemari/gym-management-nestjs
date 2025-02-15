@@ -11,6 +11,7 @@ import {
   ParseFilePipe,
   ParseIntPipe,
   Post,
+  Put,
   Query,
   UploadedFile,
   UseInterceptors,
@@ -25,6 +26,7 @@ import { CreateStudentDto } from '../../common/dtos/student.dto';
 import { UploadFileS3 } from '../../common/interceptors/upload-file.interceptor';
 import { handleError, handleServiceResponse } from '../../common/utils/handleError.utils';
 import { PaginationDto } from 'src/common/dtos/shared.dto';
+import { UploadFileValidationPipe } from 'src/common/pipes/upload-file.pipe';
 
 @Controller('students')
 @ApiTags('Students')
@@ -42,18 +44,9 @@ export class StudentController {
   @Post()
   @UseInterceptors(UploadFileS3('image'))
   @ApiConsumes('multipart/form-data')
-  async createStudent(
+  async create(
     @Body() studentDto: CreateStudentDto,
-    @UploadedFile(
-      new ParseFilePipe({
-        fileIsRequired: false,
-        validators: [
-          new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }),
-          new FileTypeValidator({ fileType: 'image/(png|jpg|jpeg|webp)' }),
-        ],
-      }),
-    )
-    image: Express.Multer.File,
+    @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)')) image: Express.Multer.File,
   ) {
     try {
       await this.checkConnection();
@@ -68,8 +61,26 @@ export class StudentController {
     }
   }
 
+  @Put(':id')
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)')) image: Express.Multer.File,
+  ) {
+    try {
+      await this.checkConnection();
+
+      const data: ServiceResponse = await lastValueFrom(
+        this.studentServiceClient.send(StudentPatterns.UpdateStudent, { studentId: id }).pipe(timeout(5000)),
+      );
+
+      return handleServiceResponse(data);
+    } catch (error) {
+      handleError(error, 'Failed to remove student', 'StudentService');
+    }
+  }
+
   @Get()
-  public async getStudents(@Query() paginationDto: PaginationDto): Promise<any> {
+  async findAll(@Query() paginationDto: PaginationDto): Promise<any> {
     try {
       await this.checkConnection();
 
@@ -82,7 +93,7 @@ export class StudentController {
   }
 
   @Delete(':id')
-  async getStudentById(@Param('id', ParseIntPipe) id: number) {
+  async remove(@Param('id', ParseIntPipe) id: number) {
     try {
       await this.checkConnection();
 

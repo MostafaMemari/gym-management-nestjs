@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsOptional, IsString, IsEnum, IsPhoneNumber, IsDateString, Length, MinLength } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Gender } from '../enums/gender.enum';
 import { ToBoolean } from '../decorators/toBoolean.decodator';
 
@@ -79,3 +79,5 @@ export class CreateStudentDto {
   @ApiPropertyOptional({ type: String, example: '' })
   age_category_id: string;
 }
+
+export class UpdateStudentDto extends PartialType(CreateStudentDto) {}

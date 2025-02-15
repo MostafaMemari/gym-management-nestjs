@@ -16,14 +16,18 @@ export class StudentController {
   create(@Payload() createStudentDto: ICreateStudent) {
     return this.studentService.create(createStudentDto);
   }
+  @MessagePattern(StudentPatterns.UpdateStudent)
+  update(@Payload() createStudentDto: ICreateStudent) {
+    return this.studentService.updateById(createStudentDto);
+  }
 
   @MessagePattern(StudentPatterns.GetStudents)
-  getAll(@Payload() query: IQuery) {
-    return this.studentService.findAll(query);
+  findAll(@Payload() query: IQuery) {
+    return this.studentService.getAll(query);
   }
 
   @MessagePattern(StudentPatterns.RemoveUserStudent)
-  removeById(@Payload() data: { studentId: number }) {
+  remove(@Payload() data: { studentId: number }) {
     return this.studentService.removeById(data);
   }
 

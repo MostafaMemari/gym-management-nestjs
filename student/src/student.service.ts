@@ -67,7 +67,39 @@ export class StudentService {
       await queryRunner.release();
     }
   }
-  async findAll(query: IQuery): Promise<PageDto<StudentEntity>> {
+  async updateById(createStudentDto: ICreateStudent) {
+    const queryRunner = this.studentRepository.manager.connection.createQueryRunner();
+    await queryRunner.startTransaction();
+    let userId = null;
+    let imageKey = null;
+
+    try {
+      await this.findStudentByNationalCode(createStudentDto.national_code, { duplicateError: true });
+
+      imageKey = await this.uploadStudentImage(createStudentDto.image);
+
+      userId = await this.createUser();
+
+      const student = this.studentRepository.create({
+        ...createStudentDto,
+        image_url: imageKey,
+        user_id: userId,
+      });
+
+      await queryRunner.manager.save(student);
+      await queryRunner.commitTransaction();
+
+      return ResponseUtil.success({ ...student, user_id: userId }, StudentMessages.CreatedStudent);
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      await this.removeUserById(userId);
+      await this.removeStudentImage(imageKey);
+      ResponseUtil.error(error?.message || StudentMessages.FailedToCreateStudent, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
+    } finally {
+      await queryRunner.release();
+    }
+  }
+  async getAll(query: IQuery): Promise<PageDto<StudentEntity>> {
     const { take, page } = query.paginationDto;
     const cacheKey = `${CacheKeys.STUDENT_LIST}-${page}-${take}`;
 
