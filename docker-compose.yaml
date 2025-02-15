@@ -7,6 +7,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - ${GATEWAY_PORT}:${GATEWAY_PORT}
+    env_file:
+      - gateway/.env.docker
     networks:
       - app
     volumes:
@@ -23,7 +25,7 @@ services:
     depends_on:
       - rabbitmq
     env_file:
-      - auth/.env
+      - auth/.env.docker
     volumes:
       - ./auth/src:/app/src
 
@@ -37,7 +39,6 @@ services:
       - app
     depends_on:
       - rabbitmq
-      - redis_service
     env_file:
       - user/.env
     volumes:
