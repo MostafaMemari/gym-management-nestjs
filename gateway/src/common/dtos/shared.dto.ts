@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose, Transform } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
 
 export class PaginationDto {
@@ -16,11 +16,6 @@ export class PaginationDto {
   @IsOptional()
   @Transform(({ value }) => Number(value) || 20)
   take: number = 20;
-
-  @Expose()
-  get skip(): number {
-    return (this.page - 1) * this.take;
-  }
 }
 
 export class SearchDto extends PaginationDto {

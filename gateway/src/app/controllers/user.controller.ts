@@ -5,13 +5,12 @@ import { lastValueFrom, timeout } from "rxjs";
 import { ApiTags } from "@nestjs/swagger";
 import { UserPatterns } from "../../common/enums/user.events";
 import { ServiceResponse } from "../../common/interfaces/serviceResponse.interface";
-import { SearchDto } from "../../common/dtos/user.dto";
-import { PaginationDto } from "../../common/dtos/shared.dto";
+import { PaginationDto, SearchDto } from "../../common/dtos/shared.dto";
 
 @Controller('user')
 @ApiTags('User')
 export class UserController {
-  constructor(@Inject(Services.USER) private readonly userServiceClient: ClientProxy) {}
+  constructor(@Inject(Services.USER) private readonly userServiceClient: ClientProxy) { }
 
   async checkConnection(): Promise<boolean> {
     try {
