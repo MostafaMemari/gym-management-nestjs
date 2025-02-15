@@ -22,11 +22,12 @@ import { lastValueFrom, timeout } from 'rxjs';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { StudentPatterns } from '../../common/enums/student.events';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
-import { CreateStudentDto } from '../../common/dtos/student.dto';
+import { CreateStudentDto, UpdateStudentDto } from '../../common/dtos/student.dto';
 import { UploadFileS3 } from '../../common/interceptors/upload-file.interceptor';
 import { handleError, handleServiceResponse } from '../../common/utils/handleError.utils';
 import { PaginationDto } from 'src/common/dtos/shared.dto';
 import { UploadFileValidationPipe } from 'src/common/pipes/upload-file.pipe';
+import { SwaggerConsumes } from 'src/common/enums/swagger-consumes.enum';
 
 @Controller('students')
 @ApiTags('Students')
@@ -43,16 +44,18 @@ export class StudentController {
 
   @Post()
   @UseInterceptors(UploadFileS3('image'))
-  @ApiConsumes('multipart/form-data')
+  @ApiConsumes(SwaggerConsumes.MultipartData)
   async create(
-    @Body() studentDto: CreateStudentDto,
+    @Body() createStudentDto: CreateStudentDto,
     @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)')) image: Express.Multer.File,
   ) {
     try {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.studentServiceClient.send(StudentPatterns.CreateStudent, { ...studentDto, image }).pipe(timeout(10000)),
+        this.studentServiceClient
+          .send(StudentPatterns.CreateStudent, { createStudentDto: { ...createStudentDto, image } })
+          .pipe(timeout(10000)),
       );
 
       return handleServiceResponse(data);
@@ -62,15 +65,20 @@ export class StudentController {
   }
 
   @Put(':id')
+  @UseInterceptors(UploadFileS3('image'))
+  @ApiConsumes(SwaggerConsumes.MultipartData)
   async update(
     @Param('id', ParseIntPipe) id: number,
+    @Body() updateStudentDto: UpdateStudentDto,
     @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)')) image: Express.Multer.File,
   ) {
     try {
       await this.checkConnection();
-
+      console.log(updateStudentDto);
       const data: ServiceResponse = await lastValueFrom(
-        this.studentServiceClient.send(StudentPatterns.UpdateStudent, { studentId: id }).pipe(timeout(5000)),
+        this.studentServiceClient
+          .send(StudentPatterns.UpdateStudent, { studentId: id, updateStudentDto: { ...updateStudentDto, image } })
+          .pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
