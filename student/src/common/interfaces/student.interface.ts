@@ -18,6 +18,8 @@ export interface ICreateStudent {
   age_category_id?: string;
 }
 
+export type IUpdateStudent = Partial<ICreateStudent>;
+
 export interface IPagination {
   paginationDto: {
     page?: number;

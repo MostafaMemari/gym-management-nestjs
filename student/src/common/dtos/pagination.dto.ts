@@ -19,11 +19,12 @@ export class PageMetaDto {
 }
 
 export class PageDto<T> {
-  readonly data: T[];
-  readonly pager: PageMetaDto;
+  readonly data: { items: T[]; pager: PageMetaDto };
 
-  constructor(data: T[], meta: PageMetaDto) {
-    this.pager = meta;
-    this.data = data;
+  constructor(items: T[], meta: PageMetaDto) {
+    this.data = {
+      pager: meta,
+      items: items,
+    };
   }
 }

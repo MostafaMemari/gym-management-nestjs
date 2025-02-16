@@ -7,12 +7,13 @@ export class CustomRpcExceptionFilter implements RpcExceptionFilter<RpcException
   catch(exception: RpcException, host: ArgumentsHost): any {
     const errorResponse: any = exception.getError();
     const errorMessage = extractErrorMessage(errorResponse, 'Internal user service error');
-    const errorStatus = errorResponse.status || HttpStatus.INTERNAL_SERVER_ERROR;
+    const errorStatus = errorResponse.status ?? HttpStatus.INTERNAL_SERVER_ERROR;
 
     return {
       error: true,
       message: errorMessage,
       status: errorStatus,
+      data: {},
     };
   }
 }
