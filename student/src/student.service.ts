@@ -1,5 +1,5 @@
 import { ConflictException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { ICreateStudent, IQuery } from './common/interfaces/student.interface';
+import { ICreateStudent, IQuery, IUpdateStudent } from './common/interfaces/student.interface';
 import { StudentMessages } from './common/enums/student.messages';
 import { Services } from './common/enums/services.enum';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
@@ -13,6 +13,8 @@ import { ResponseUtil } from './common/utils/response';
 import { AwsService } from './modules/s3AWS/s3AWS.service';
 import { EntityName } from './common/enums/entity.enum';
 import { PageDto, PageMetaDto } from './common/dtos/pagination.dto';
+import { CacheService } from './modules/cache/cache.service';
+import { CacheKeys } from './modules/cache/enums/cache.enum';
 
 @Injectable()
 export class StudentService {
@@ -22,6 +24,7 @@ export class StudentService {
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
     @InjectRepository(StudentEntity) private studentRepository: Repository<StudentEntity>,
     private readonly awsService: AwsService,
+    private readonly cacheService: CacheService,
   ) {}
 
   async checkUserServiceConnection(): Promise<ServiceResponse | void> {
@@ -64,8 +67,49 @@ export class StudentService {
       await queryRunner.release();
     }
   }
-  async findAll(query: IQuery): Promise<PageDto<StudentEntity>> {
+  async updateById(studentId: number, updateStudentDto: IUpdateStudent) {
+    let imageKey: string | null = null;
+    let updateData: Partial<StudentEntity> = {};
+
+    try {
+      const student = await this.findStudentById(studentId, { notFoundError: true });
+
+      Object.keys(updateStudentDto).forEach((key) => {
+        if (updateStudentDto[key] !== undefined && updateStudentDto[key] !== student[key]) {
+          updateData[key] = updateStudentDto[key];
+        }
+      });
+
+      if (updateStudentDto.image) {
+        imageKey = await this.uploadStudentImage(updateStudentDto.image);
+        updateData.image_url = imageKey;
+      }
+
+      if (Object.keys(updateData).length > 0) {
+        await this.studentRepository.update(studentId, updateData);
+      }
+
+      if (updateStudentDto.image && student.image_url) {
+        await this.awsService.deleteFile(student.image_url);
+      }
+      await this.cacheService.clearStudentCache();
+
+      return ResponseUtil.success({ ...student, ...updateData }, StudentMessages.UpdatedStudent);
+    } catch (error) {
+      await this.removeStudentImage(imageKey);
+
+      return ResponseUtil.error(error?.message || StudentMessages.FailedToUpdateStudent, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async getAll(query: IQuery): Promise<PageDto<StudentEntity>> {
     const { take, page } = query.paginationDto;
+    const cacheKey = `${CacheKeys.STUDENT_LIST}-${page}-${take}`;
+
+    const cachedData = await this.cacheService.get<PageDto<StudentEntity>>(cacheKey);
+
+    if (cachedData) return cachedData;
+
     const queryBuilder = this.studentRepository.createQueryBuilder(EntityName.Students);
 
     const [students, count] = await queryBuilder
@@ -74,14 +118,27 @@ export class StudentService {
       .getManyAndCount();
 
     const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
-    return new PageDto(students, pageMetaDto);
+    const result = new PageDto(students, pageMetaDto);
+
+    await this.cacheService.set(cacheKey, result);
+
+    return result;
   }
-  async removeById(userDto: { studentId: number }): Promise<ServiceResponse> {
+  async findOneById(studentId: number): Promise<ServiceResponse> {
+    try {
+      const student = await this.findStudentById(studentId, { notFoundError: true });
+
+      return ResponseUtil.success(student, StudentMessages.RemovedStudentSuccess);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+  async removeById(studentId: number): Promise<ServiceResponse> {
     const queryRunner = this.studentRepository.manager.connection.createQueryRunner();
     await queryRunner.startTransaction();
 
     try {
-      const student = await this.findStudentById(userDto.studentId, { notFoundError: true });
+      const student = await this.findStudentById(studentId, { notFoundError: true });
 
       await this.removeUserById(Number(student?.user_id));
 

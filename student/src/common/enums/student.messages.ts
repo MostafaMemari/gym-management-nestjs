@@ -1,5 +1,6 @@
 export enum StudentMessages {
   CreatedStudent = 'Student created successfully',
+  UpdatedStudent = 'Student updated successfully',
   NotFoundStudent = 'Student not found',
   AlreadyExistsStudentWithUsername = 'A student with this username already exists',
   RemovedStudentSuccess = 'Student removed successfully',

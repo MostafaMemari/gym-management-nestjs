@@ -11,6 +11,10 @@ export const envValidationSchema = Joi.object({
   DB_SYNCHRONIZE: Joi.number().integer().valid(0, 1).default(0),
   DB_SSL: Joi.number().integer().valid(0, 1).default(0),
 
+  // Redis configs
+  REDIS_HOST: Joi.string().default('localhost'),
+  REDIS_PORT: Joi.number().default(6379),
+
   // AWS
   S3_REGION: Joi.string(),
   S3_ACCESS_KEY: Joi.string(),
