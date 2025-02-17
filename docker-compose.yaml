@@ -43,6 +43,7 @@ services:
       - user/.env
     volumes:
       - ./user/src:/app/src
+      - ./user/logs:/app/logs
     
   ### Redis Insight ###
   redisinsight:

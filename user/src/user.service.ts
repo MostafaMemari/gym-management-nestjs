@@ -8,17 +8,18 @@ import { RpcException } from '@nestjs/microservices';
 import { UserRepository } from './user.repository';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { LoggerService } from 'nest-logger-plus';
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly userRepository: UserRepository,
-    @Inject(CACHE_MANAGER) private readonly redisCache: Cache
+    @Inject(CACHE_MANAGER) private readonly redisCache: Cache,
+    private readonly logger: LoggerService
   ) { }
 
   async create(userDto: Prisma.UserCreateInput): Promise<ServiceResponse> {
     try {
-
       const existingUser = await this.userRepository.isExistingUser(userDto)
 
       if (existingUser) {
@@ -79,7 +80,6 @@ export class UserService {
   async findAll(paginationDto?: IPagination): Promise<ServiceResponse> {
     try {
       const cacheKey = 'users_cache'
-
       const usersCache = await this.redisCache.get<User[] | null>(cacheKey)
 
       if (usersCache) {
