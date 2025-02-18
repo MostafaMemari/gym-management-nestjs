@@ -13,8 +13,8 @@ import { ResponseUtil } from './common/utils/response';
 import { AwsService } from './modules/s3AWS/s3AWS.service';
 import { EntityName } from './common/enums/entity.enum';
 import { PageDto, PageMetaDto } from './common/dtos/pagination.dto';
-import { CacheService } from './modules/cache/cache.service';
-import { CacheKeys } from './modules/cache/enums/cache.enum';
+import { RedisCacheService } from './modules/redis/redis.service';
+import { CacheKeys } from './modules/redis/enums/cache.enum';
 
 @Injectable()
 export class StudentService {
@@ -24,7 +24,7 @@ export class StudentService {
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
     @InjectRepository(StudentEntity) private studentRepository: Repository<StudentEntity>,
     private readonly awsService: AwsService,
-    private readonly cacheService: CacheService,
+    private readonly redisCacheService: RedisCacheService,
   ) {}
 
   async checkUserServiceConnection(): Promise<ServiceResponse | void> {
@@ -92,7 +92,6 @@ export class StudentService {
       if (updateStudentDto.image && student.image_url) {
         await this.awsService.deleteFile(student.image_url);
       }
-      await this.cacheService.clearStudentCache();
 
       return ResponseUtil.success({ ...student, ...updateData }, StudentMessages.UpdatedStudent);
     } catch (error) {
@@ -106,7 +105,7 @@ export class StudentService {
     const { take, page } = query.paginationDto;
     const cacheKey = `${CacheKeys.STUDENT_LIST}-${page}-${take}`;
 
-    const cachedData = await this.cacheService.get<PageDto<StudentEntity>>(cacheKey);
+    const cachedData = await this.redisCacheService.get<PageDto<StudentEntity>>(cacheKey);
 
     if (cachedData) return cachedData;
 
@@ -120,7 +119,7 @@ export class StudentService {
     const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
     const result = new PageDto(students, pageMetaDto);
 
-    await this.cacheService.set(cacheKey, result);
+    await this.redisCacheService.set(cacheKey, result, 30);
 
     return result;
   }
