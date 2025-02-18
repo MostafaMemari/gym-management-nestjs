@@ -28,6 +28,19 @@ export class RedisCacheService implements OnModuleDestroy {
     await this.redisClient.flushdb();
   }
 
+  async delByPattern(pattern: string): Promise<void> {
+    let cursor = '0';
+    do {
+      const result = await this.redisClient.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+      cursor = result[0];
+      const keys = result[1];
+
+      if (keys.length > 0) {
+        await this.redisClient.del(...keys);
+      }
+    } while (cursor !== '0');
+  }
+
   onModuleDestroy() {
     this.redisClient.quit();
   }

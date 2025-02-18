@@ -93,6 +93,8 @@ export class StudentService {
         await this.awsService.deleteFile(student.image_url);
       }
 
+      this.redisCacheService.delByPattern(`${CacheKeys.STUDENT_LIST}-*`);
+
       return ResponseUtil.success({ ...student, ...updateData }, StudentMessages.UpdatedStudent);
     } catch (error) {
       await this.removeStudentImage(imageKey);
