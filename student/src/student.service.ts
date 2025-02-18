@@ -13,8 +13,8 @@ import { ResponseUtil } from './common/utils/response';
 import { AwsService } from './modules/s3AWS/s3AWS.service';
 import { EntityName } from './common/enums/entity.enum';
 import { PageDto, PageMetaDto } from './common/dtos/pagination.dto';
-import { RedisCacheService } from './modules/redis/redis.service';
-import { CacheKeys } from './modules/redis/enums/cache.enum';
+import { RedisCacheService } from './modules/cache/cache.service';
+import { CacheKeys } from './modules/cache/enums/cache.enum';
 
 @Injectable()
 export class StudentService {
@@ -121,7 +121,7 @@ export class StudentService {
     const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
     const result = new PageDto(students, pageMetaDto);
 
-    await this.redisCacheService.set(cacheKey, result, 30);
+    await this.redisCacheService.set(cacheKey, result, 600);
 
     return result;
   }
