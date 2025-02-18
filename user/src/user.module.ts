@@ -6,15 +6,14 @@ import { PrismaModule } from './prisma/prisma.module';
 import envConfig from './configs/env.config';
 import { UserRepository } from './user.repository';
 import { LoggerModule, LoggerService } from 'nest-logger-plus'
-import { RedisModule } from '@nestjs-modules/ioredis';
-import { redisConfig } from './configs/redis.config';
+import { CacheModule } from './cache/cache.module';
 
 
 @Module({
   imports: [
     ConfigModule.forRoot(envConfig()),
-    RedisModule.forRoot(redisConfig()),
     LoggerModule.forRoot({ logPath: `${process.cwd()}/logs` }),
+    CacheModule,
     PrismaModule,
   ],
   controllers: [UserController],
