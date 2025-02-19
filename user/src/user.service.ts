@@ -104,7 +104,7 @@ export class UserService {
       const redisKeys = {
         key: cacheKey,
         value: users,
-        expireTime: 300 //* Seconds
+        expireTime: 600 //* Seconds
       }
 
       await this.cache.set(redisKeys.key, redisKeys.value, redisKeys.expireTime)
@@ -241,7 +241,7 @@ export class UserService {
       const redisKeys = {
         key: cacheKey,
         value: users,
-        expireTime: 300 //* Seconds
+        expireTime: 600 //* Seconds
       }
 
       await this.cache.set(redisKeys.key, redisKeys.value, redisKeys.expireTime)
