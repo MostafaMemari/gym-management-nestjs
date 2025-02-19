@@ -2,7 +2,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Redis } from 'ioredis';
-import { RedisCacheService } from './redis.service';
+import { RedisCacheService } from './cache.service';
 import { createRedisClient } from '../../configs/redis.config';
 
 @Module({

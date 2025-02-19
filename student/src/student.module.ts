@@ -10,7 +10,7 @@ import { StudentEntity } from './entities/student.entity';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { Services } from './common/enums/services.enum';
 import { AwsModule } from './modules/s3AWS/s3AWS.module';
-import { RedisCacheModule } from './modules/redis/redis.module';
+import { RedisCacheModule } from './modules/cache/cache.module';
 
 @Module({
   imports: [
