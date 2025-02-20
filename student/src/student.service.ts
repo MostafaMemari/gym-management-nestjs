@@ -14,7 +14,7 @@ import { AwsService } from './modules/s3AWS/s3AWS.service';
 import { EntityName } from './common/enums/entity.enum';
 import { PageDto, PageMetaDto } from './common/dtos/pagination.dto';
 import { RedisCacheService } from './modules/cache/cache.service';
-import { CacheKeys } from './modules/cache/enums/cache.enum';
+import { CacheKeys, CachePatterns } from './common/enums/cache.enum';
 
 @Injectable()
 export class StudentService {
@@ -24,7 +24,7 @@ export class StudentService {
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
     @InjectRepository(StudentEntity) private studentRepository: Repository<StudentEntity>,
     private readonly awsService: AwsService,
-    private readonly redisCacheService: RedisCacheService,
+    private readonly cacheService: RedisCacheService,
   ) {}
 
   async checkUserServiceConnection(): Promise<ServiceResponse | void> {
@@ -46,7 +46,9 @@ export class StudentService {
 
       imageKey = await this.uploadStudentImage(createStudentDto.image);
 
-      userId = await this.createUser();
+      // userId = await this.createUser();
+      //! TODO: Remove fake userId method
+      userId = Math.floor(10000 + Math.random() * 900000);
 
       const student = this.studentRepository.create({
         ...createStudentDto,
@@ -56,6 +58,7 @@ export class StudentService {
 
       await queryRunner.manager.save(student);
       await queryRunner.commitTransaction();
+      this.clearUsersCache();
 
       return ResponseUtil.success({ ...student, user_id: userId }, StudentMessages.CreatedStudent);
     } catch (error) {
@@ -93,8 +96,7 @@ export class StudentService {
         await this.awsService.deleteFile(student.image_url);
       }
 
-      this.redisCacheService.delByPattern(`${CacheKeys.STUDENT_LIST}-*`);
-
+      this.clearUsersCache();
       return ResponseUtil.success({ ...student, ...updateData }, StudentMessages.UpdatedStudent);
     } catch (error) {
       await this.removeStudentImage(imageKey);
@@ -107,8 +109,7 @@ export class StudentService {
     const { take, page } = query.paginationDto;
     const cacheKey = `${CacheKeys.STUDENT_LIST}-${page}-${take}`;
 
-    const cachedData = await this.redisCacheService.get<PageDto<StudentEntity>>(cacheKey);
-
+    const cachedData = await this.cacheService.get<PageDto<StudentEntity>>(cacheKey);
     if (cachedData) return cachedData;
 
     const queryBuilder = this.studentRepository.createQueryBuilder(EntityName.Students);
@@ -121,7 +122,7 @@ export class StudentService {
     const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
     const result = new PageDto(students, pageMetaDto);
 
-    await this.redisCacheService.set(cacheKey, result, 600);
+    await this.cacheService.set(cacheKey, result, 600);
 
     return result;
   }
@@ -199,5 +200,9 @@ export class StudentService {
   }
   async findStudentByNationalCode(nationalCode: string, { duplicateError = false, notFoundError = false }) {
     return this.findStudent('national_code', nationalCode, notFoundError, duplicateError);
+  }
+
+  async clearUsersCache(): Promise<void> {
+    await this.cacheService.delByPattern(CachePatterns.STUDENT_LIST);
   }
 }

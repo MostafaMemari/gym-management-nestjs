@@ -23,7 +23,7 @@ export class CreateStudentsTable1739978912710 implements MigrationInterface {
           { name: 'birth_date', type: 'date', isNullable: false },
           { name: 'sports_insurance_date', type: 'date', isNullable: true },
           { name: 'expire_image_date', type: 'date', isNullable: true },
-          { name: 'user_id', type: 'int', isNullable: true },
+          { name: 'user_id', type: 'int', isUnique: true, isNullable: false },
           { name: 'created_at', type: 'timestamp', default: 'CURRENT_TIMESTAMP' },
           { name: 'updated_at', type: 'timestamp', default: 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' },
         ],

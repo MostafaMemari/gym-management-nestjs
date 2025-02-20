@@ -41,9 +41,6 @@ export class StudentEntity extends AbstractEntity {
   @Column({ type: 'date', nullable: true })
   expire_image_date?: Date;
 
-  @Column({ type: 'integer', nullable: true })
+  @Column({ type: 'integer', unique: true, nullable: false })
   user_id: Number;
-
-  @Column({ type: 'integer', nullable: true })
-  test_column: Number;
 }
