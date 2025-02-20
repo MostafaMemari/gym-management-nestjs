@@ -1,5 +1,5 @@
-import { EntityName } from 'src/common/enums/entity.enum';
-import { Gender } from 'src/common/enums/gender.enum';
+import { EntityName } from '../common/enums/entity.enum';
+import { Gender } from '../common/enums/gender.enum';
 import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
 export class CreateStudentsTable1739978912710 implements MigrationInterface {
