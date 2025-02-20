@@ -8,7 +8,7 @@ services:
     ports:
       - ${GATEWAY_PORT}:${GATEWAY_PORT}
     env_file:
-      - gateway/.env.docker
+      - gateway/.env
     networks:
       - app
     volumes:
@@ -25,7 +25,7 @@ services:
     depends_on:
       - rabbitmq
     env_file:
-      - auth/.env.docker
+      - auth/.env
     volumes:
       - ./auth/src:/app/src
 
@@ -40,7 +40,7 @@ services:
     depends_on:
       - rabbitmq
     env_file:
-      - user/.env.docker
+      - user/.env
     volumes:
       - ./user/src:/app/src
       # - ./user/logs:/app/logs
@@ -81,7 +81,7 @@ services:
       - rabbitmq
       - student_service_db
     env_file:
-      - student/.env.docker
+      - student/.env
     volumes:
       - ./student/src:/app/src
 
