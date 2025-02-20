@@ -1,4 +1,4 @@
-import { ConflictException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Role, User } from '@prisma/client';
 import { ServiceResponse } from './common/interfaces/serviceResponse.interface';
 import { UserMessages } from './common/enums/user.messages';
@@ -6,16 +6,16 @@ import { IPagination, ISearchUser } from './common/interfaces/user.interface';
 import { pagination } from './common/utils/pagination.utils';
 import { RpcException } from '@nestjs/microservices';
 import { UserRepository } from './user.repository';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
 import { LoggerService } from 'nest-logger-plus';
+import { CacheService } from './cache/cache.service';
+import { CacheKeys, CachePatterns } from './common/enums/cache.enum';
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly userRepository: UserRepository,
-    @Inject(CACHE_MANAGER) private readonly redisCache: Cache,
-    private readonly logger: LoggerService
+    private readonly logger: LoggerService,
+    private readonly cache: CacheService
   ) { }
 
   async create(userDto: Prisma.UserCreateInput): Promise<ServiceResponse> {
@@ -36,6 +36,7 @@ export class UserService {
         omit: { password: true }
       })
 
+      await this.clearUsersCache()
 
       return {
         data: { user },
@@ -65,6 +66,8 @@ export class UserService {
         omit: { password: true }
       });
 
+      await this.clearUsersCache()
+
       return {
         data: { user: newUser },
         error: false,
@@ -79,8 +82,8 @@ export class UserService {
 
   async findAll(paginationDto?: IPagination): Promise<ServiceResponse> {
     try {
-      const cacheKey = 'users_cache'
-      const usersCache = await this.redisCache.get<User[] | null>(cacheKey)
+      const cacheKey = `${CacheKeys.Users}_${paginationDto.page || 1}_${paginationDto.take || 20}`
+      const usersCache = await this.cache.get<User[] | null>(cacheKey)
 
       if (usersCache) {
         return {
@@ -101,10 +104,10 @@ export class UserService {
       const redisKeys = {
         key: cacheKey,
         value: users,
-        expireTime: 30_000 //* MilliSeconds
+        expireTime: 300 //* Seconds
       }
 
-      await this.redisCache.set(redisKeys.key, redisKeys.value, redisKeys.expireTime)
+      await this.cache.set(redisKeys.key, redisKeys.value, redisKeys.expireTime)
 
       return {
         data: { ...pagination(paginationDto, users) },
@@ -168,6 +171,8 @@ export class UserService {
 
       const removedUser = await this.userRepository.delete(userDto.userId, { omit: { password: true } })
 
+      await this.clearUsersCache()
+
       return {
         data: { removedUser },
         error: false,
@@ -202,9 +207,9 @@ export class UserService {
 
   async search({ query, ...paginationDto }: ISearchUser): Promise<ServiceResponse> {
     try {
-      const cacheKey = `searchUser_${query}`
+      const cacheKey = `${CacheKeys.SearchUsers}_${query}_${paginationDto.page || 1}_${paginationDto.take || 20}`
 
-      const cacheUsers = await this.redisCache.get<User[] | null>(cacheKey)
+      const cacheUsers = await this.cache.get<User[] | null>(cacheKey)
 
       if (cacheUsers) {
         return {
@@ -236,10 +241,10 @@ export class UserService {
       const redisKeys = {
         key: cacheKey,
         value: users,
-        expireTime: 30_000 //* MilliSeconds
+        expireTime: 300 //* Seconds
       }
 
-      await this.redisCache.set(redisKeys.key, redisKeys.value, redisKeys.expireTime)
+      await this.cache.set(redisKeys.key, redisKeys.value, redisKeys.expireTime)
 
       return {
         data: { ...pagination(paginationDto, users) },
@@ -250,6 +255,11 @@ export class UserService {
     } catch (error) {
       throw new RpcException(error)
     }
+  }
+
+  async clearUsersCache(): Promise<void> {
+    await this.cache.delByPattern(CachePatterns.UsersList)
+    await this.cache.delByPattern(CachePatterns.SearchUsersList)
   }
 
 }
