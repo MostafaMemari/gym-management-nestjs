@@ -43,4 +43,7 @@ export class StudentEntity extends AbstractEntity {
 
   @Column({ type: 'integer', nullable: true })
   user_id: Number;
+
+  @Column({ type: 'integer', nullable: true })
+  test_column: Number;
 }
