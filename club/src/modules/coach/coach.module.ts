@@ -8,6 +8,7 @@ import { CoachService } from './coach.service';
 import { CoachEntity } from './entities/coach.entity';
 import { CacheModule } from '../cache/cache.module';
 import { Services } from '../../common/enums/services.enum';
+import { CoachSubscriber } from './subscribers/coach.subscriber';
 
 @Module({
   imports: [
@@ -26,7 +27,7 @@ import { Services } from '../../common/enums/services.enum';
     AwsModule,
   ],
   controllers: [CoachController],
-  providers: [CoachService],
+  providers: [CoachService, CoachSubscriber],
   exports: [CoachService],
 })
 export class CoachModule {}

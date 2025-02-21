@@ -12,7 +12,6 @@ export class CreateClubDto {
 
   @IsNotEmpty()
   @ApiProperty({ example: [Gender.Male, Gender.Female], enum: Gender, isArray: true })
-  // @IsArray()
   gender: Gender[];
 
   @IsOptional()

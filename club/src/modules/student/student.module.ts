@@ -1,19 +1,17 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { Services } from '../../common/enums/services.enum';
-import { CacheService } from '../cache/cache.service';
-import { AwsService } from '../s3AWS/s3AWS.service';
+import { CacheModule } from '../cache/cache.module';
+import { ClubModule } from '../club/club.module';
+import { CoachModule } from '../coach/coach.module';
+import { AwsModule } from '../s3AWS/s3AWS.module';
 import { StudentEntity } from './entities/student.entity';
 import { StudentController } from './student.controller';
 import { StudentService } from './student.service';
-import { CacheModule } from '../cache/cache.module';
-import { AwsModule } from '../s3AWS/s3AWS.module';
-import { ClubService } from '../club/club.service';
-import { CoachService } from '../coach/coach.service';
-import { CoachModule } from '../coach/coach.module';
-import { ClubModule } from '../club/club.module';
+import { StudentSubscriber } from './subscribers/student.subscriber';
+import { StudentRepository } from './repositories/student.repository';
 
 @Module({
   imports: [
@@ -34,7 +32,7 @@ import { ClubModule } from '../club/club.module';
     ClubModule,
   ],
   controllers: [StudentController],
-  providers: [StudentService],
+  providers: [StudentService, StudentRepository, StudentSubscriber],
   exports: [],
 })
 export class StudentModule {}
