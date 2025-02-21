@@ -10,7 +10,7 @@ export default (): ConfigModuleOptions => {
         PORT: Joi.string().required(),
         RABBITMQ_URL: Joi.string().required(),
         RABBITMQ_AUTH_SERVICE_QUEUE: Joi.string().required(),
-        RABBITMQ_STUDENT_SERVICE_QUEUE: Joi.string().required(),
+        RABBITMQ_CLUB_SERVICE_QUEUE: Joi.string().required(),
       }).unknown(true);
 
       const { error, value } = schema.validate(config);

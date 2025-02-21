@@ -69,7 +69,7 @@ services:
     volumes:
       - redis_data:/data
 
-  ### Student Service ###
+  ### club Service ###
   student_service:
     container_name: student_service
     build:
@@ -113,7 +113,7 @@ services:
     volumes:
       - user_service_db_data:/var/lib/postgresql/data
 
-  ### Student Service DB ###
+  ### Club Service DB ###
   student_service_db: 
     container_name: student_service_db
     image: "mysql/mysql-server:8.0"
