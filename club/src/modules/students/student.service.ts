@@ -116,6 +116,8 @@ export class StudentService {
     const queryBuilder = this.studentRepository.createQueryBuilder(EntityName.Students);
 
     const [students, count] = await queryBuilder
+      .leftJoin('students.coach', 'coach')
+      .addSelect(['coach.id', 'coach.full_name'])
       .skip((page - 1) * take)
       .take(take)
       .getManyAndCount();
@@ -123,7 +125,7 @@ export class StudentService {
     const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
     const result = new PageDto(students, pageMetaDto);
 
-    await this.cacheService.set(cacheKey, result, 600);
+    await this.cacheService.set(cacheKey, result, 1);
 
     return result;
   }

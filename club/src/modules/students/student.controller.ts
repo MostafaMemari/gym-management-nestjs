@@ -2,7 +2,7 @@ import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
 import { ICreateStudent, IStudentQuery, IUpdateStudent } from './interfaces/student.interface';
-import { StudentPatterns } from './patterns/user.pattern';
+import { StudentPatterns } from './patterns/student.pattern';
 import { StudentService } from './student.service';
 
 @Controller()

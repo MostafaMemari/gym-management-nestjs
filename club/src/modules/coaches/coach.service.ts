@@ -108,7 +108,7 @@ export class CoachService {
 
   async getAll(query: ICoachQuery): Promise<PageDto<CoachEntity>> {
     const { take, page } = query.paginationDto;
-    const cacheKey = `${CacheKeys.STUDENT_LIST}-${page}-${take}`;
+    const cacheKey = `${CacheKeys.COACH_LIST}-${page}-${take}`;
 
     const cachedData = await this.cacheService.get<PageDto<CoachEntity>>(cacheKey);
     if (cachedData) return cachedData;
@@ -204,6 +204,6 @@ export class CoachService {
   }
 
   async clearUsersCache(): Promise<void> {
-    await this.cacheService.delByPattern(CachePatterns.STUDENT_LIST);
+    await this.cacheService.delByPattern(CachePatterns.COACH_LIST);
   }
 }

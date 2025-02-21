@@ -10,6 +10,7 @@ import { StudentController } from './controllers/club/student.controller';
 import { Services } from '../common/enums/services.enum';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { CoachController } from './controllers/club/coach.controller';
+import { ClubController } from './controllers/club/club.controller';
 
 @Module({
   imports: [
@@ -65,7 +66,7 @@ import { CoachController } from './controllers/club/coach.controller';
       },
     ]),
   ],
-  controllers: [AuthController, UserController, StudentController, CoachController, PermissionController],
+  controllers: [AuthController, UserController, StudentController, CoachController, ClubController, PermissionController],
   providers: [
     {
       provide: APP_PIPE,

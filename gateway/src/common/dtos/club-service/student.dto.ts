@@ -1,4 +1,17 @@
-import { IsNotEmpty, IsOptional, IsString, IsEnum, IsPhoneNumber, IsDateString, Length, MinLength } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsEnum,
+  IsPhoneNumber,
+  IsDateString,
+  Length,
+  MinLength,
+  IsPositive,
+  IsInt,
+} from 'class-validator';
+import { Transform } from 'class-transformer';
+
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Gender } from '../../enums/gender.enum';
 import { ToBoolean } from '../../decorators/toBoolean.decodator';
@@ -67,17 +80,19 @@ export class CreateStudentDto {
   @ApiPropertyOptional({ type: String, example: '' })
   expire_image_date?: Date;
 
-  @IsOptional()
-  @ApiPropertyOptional({ type: String, example: '' })
-  coach_id: string;
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @IsPositive()
+  @IsNotEmpty()
+  @ApiProperty({ type: 'integer', required: true, example: '' })
+  coachId: string;
 
-  @IsOptional()
-  @ApiPropertyOptional({ type: String, example: '' })
-  club_id: string;
-
-  @IsOptional()
-  @ApiPropertyOptional({ type: String, example: '' })
-  age_category_id: string;
+  // @Transform(({ value }) => parseInt(value, 10))
+  // @IsInt()
+  // @IsPositive()
+  // @IsNotEmpty()
+  // @ApiProperty({ type: 'integer', required: true, example: '' })
+  // club_id: string;
 }
 
 export class UpdateStudentDto extends PartialType(CreateStudentDto) {}
