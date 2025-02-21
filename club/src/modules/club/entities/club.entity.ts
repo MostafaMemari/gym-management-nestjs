@@ -1,9 +1,10 @@
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany } from 'typeorm';
 
 import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
 import { CoachEntity } from '../../coach/entities/coach.entity';
+import { StudentEntity } from 'src/modules/student/entities/student.entity';
 
 @Entity(EntityName.Clubs)
 export class ClubEntity extends AbstractEntity {
@@ -19,14 +20,13 @@ export class ClubEntity extends AbstractEntity {
   @Column({ type: 'varchar', length: 200, nullable: true })
   address?: string;
 
-  @Column({ type: 'integer', nullable: true })
-  coachId: number;
+  @Column({ type: 'integer', unique: true, nullable: false })
+  ownerId: number;
 
-  @ManyToOne(() => CoachEntity, (coach) => coach.student, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn()
-  coach: CoachEntity;
+  @ManyToMany(() => CoachEntity, (coach) => coach.clubs)
+  @JoinTable()
+  coaches: CoachEntity[];
 
-  @ManyToOne(() => ClubEntity, (club) => club.student, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn()
-  student: ClubEntity;
+  @OneToMany(() => StudentEntity, (student) => student.club)
+  students: StudentEntity[];
 }

@@ -14,9 +14,9 @@ export interface ICreateStudent {
   birth_date: Date;
   sports_insurance_date?: Date;
   expire_image_date?: Date;
-  coach_id?: string;
-  club_id?: string;
-  age_category_id?: string;
+  userId?: number;
+  coachId?: number;
+  clubId?: number;
 }
 
 export type IUpdateStudent = Partial<ICreateStudent>;

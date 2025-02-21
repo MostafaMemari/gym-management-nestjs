@@ -1,14 +1,15 @@
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity, ManyToMany, OneToMany } from 'typeorm';
 
 import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
 import { StudentEntity } from '../../student/entities/student.entity';
+import { ClubEntity } from 'src/modules/club/entities/club.entity';
 
 @Entity(EntityName.Coaches)
 export class CoachEntity extends AbstractEntity {
   @Column({ type: 'integer', unique: true, nullable: false })
-  user_id: Number;
+  userId: Number;
 
   @Column({ type: 'varchar', length: 80 })
   full_name: string;
@@ -43,9 +44,9 @@ export class CoachEntity extends AbstractEntity {
   @Column({ type: 'date', nullable: true })
   sports_insurance_date?: Date;
 
-  @Column({ type: 'date', nullable: true })
-  expire_image_date?: Date;
-
   @OneToMany(() => StudentEntity, (student) => student.coach)
-  student: StudentEntity[];
+  students: StudentEntity[];
+
+  @ManyToMany(() => ClubEntity, (club) => club.coaches)
+  clubs: ClubEntity[];
 }

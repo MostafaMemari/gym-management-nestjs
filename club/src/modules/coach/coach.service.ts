@@ -54,14 +54,14 @@ export class CoachService {
       const coach = this.coachRepository.create({
         ...createCoachDto,
         image_url: imageKey,
-        user_id: userId,
+        userId,
       });
 
       await queryRunner.manager.save(coach);
       await queryRunner.commitTransaction();
       this.clearUsersCache();
 
-      return ResponseUtil.success({ ...coach, user_id: userId }, CoachMessages.CreatedCoach);
+      return ResponseUtil.success({ ...coach, userId: userId }, CoachMessages.CreatedCoach);
     } catch (error) {
       await queryRunner.rollbackTransaction();
       await this.removeUserById(userId);
@@ -143,7 +143,7 @@ export class CoachService {
     try {
       const coach = await this.findCoachById(coachId, { notFoundError: true });
 
-      await this.removeUserById(Number(coach?.user_id));
+      await this.removeUserById(Number(coach?.userId));
 
       const removedCoach = await queryRunner.manager.delete(CoachEntity, coach.id);
       await queryRunner.commitTransaction();

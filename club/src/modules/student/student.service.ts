@@ -52,14 +52,14 @@ export class StudentService {
       const student = this.studentRepository.create({
         ...createStudentDto,
         image_url: imageKey,
-        user_id: userId,
+        userId: userId,
       });
 
       await queryRunner.manager.save(student);
       await queryRunner.commitTransaction();
       this.clearUsersCache();
 
-      return ResponseUtil.success({ ...student, user_id: userId }, StudentMessages.CreatedStudent);
+      return ResponseUtil.success({ ...student, userId: userId }, StudentMessages.CreatedStudent);
     } catch (error) {
       await queryRunner.rollbackTransaction();
       await this.removeUserById(userId);
@@ -145,7 +145,7 @@ export class StudentService {
     try {
       const student = await this.findStudentById(studentId, { notFoundError: true });
 
-      await this.removeUserById(Number(student?.user_id));
+      await this.removeUserById(Number(student?.userId));
 
       const removedStudent = await queryRunner.manager.delete(StudentEntity, student.id);
       await queryRunner.commitTransaction();

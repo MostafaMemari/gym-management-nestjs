@@ -9,7 +9,7 @@ import { ClubEntity } from 'src/modules/club/entities/club.entity';
 @Entity(EntityName.Students)
 export class StudentEntity extends AbstractEntity {
   @Column({ type: 'integer', unique: true, nullable: false })
-  user_id: Number;
+  userId: Number;
 
   @Column({ type: 'varchar', length: 80 })
   full_name: string;
@@ -53,11 +53,11 @@ export class StudentEntity extends AbstractEntity {
   @Column({ type: 'integer', nullable: true })
   clubId: number;
 
-  @ManyToOne(() => CoachEntity, (coach) => coach.student, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => CoachEntity, (coach) => coach.students, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn()
   coach: CoachEntity;
 
-  @ManyToOne(() => ClubEntity, (club) => club.student, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => ClubEntity, (club) => club.students, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn()
   club: ClubEntity;
 }

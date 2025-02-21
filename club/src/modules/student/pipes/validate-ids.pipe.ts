@@ -1,7 +1,6 @@
 import { PipeTransform, Injectable, Scope, Inject, HttpStatus } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
-import { EntityNotFoundError } from 'typeorm';
 
 import { ClubService } from '../../../modules/club/club.service';
 import { CoachService } from '../../../modules/coach/coach.service';
