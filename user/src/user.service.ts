@@ -1,4 +1,4 @@
-import { ConflictException, HttpStatus, Injectable, NotFoundException, Res } from '@nestjs/common';
+import { ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Role, User } from '@prisma/client';
 import { ServiceResponse } from './common/interfaces/serviceResponse.interface';
 import { UserMessages } from './common/enums/user.messages';
@@ -8,7 +8,7 @@ import { RpcException } from '@nestjs/microservices';
 import { UserRepository } from './user.repository';
 import { LoggerService } from 'nest-logger-plus';
 import { CacheService } from './cache/cache.service';
-import { CacheKeys, CachePatterns } from './common/enums/cache.enum';
+import { CacheKeys } from './common/enums/cache.enum';
 import { ResponseUtil } from './common/utils/response.utils';
 
 @Injectable()
@@ -37,8 +37,6 @@ export class UserService {
         omit: { password: true }
       })
 
-      await this.clearUsersCache()
-
       return ResponseUtil.success({ user }, UserMessages.CreatedUser, HttpStatus.CREATED)
     } catch (error) {
       throw new RpcException(error)
@@ -62,8 +60,6 @@ export class UserService {
         omit: { password: true }
       });
 
-      await this.clearUsersCache()
-
       return ResponseUtil.success({ user: newUser }, UserMessages.CreatedUser, HttpStatus.CREATED)
     } catch (error) {
       throw new RpcException(error)
@@ -75,16 +71,16 @@ export class UserService {
     try {
       const cacheKey = `${CacheKeys.Users}_${paginationDto.page || 1}_${paginationDto.take || 20}`
       const usersCache = await this.cache.get<User[] | null>(cacheKey)
-
+      
       if (usersCache) {
         return ResponseUtil.success({ ...pagination(paginationDto, usersCache) }, '', HttpStatus.OK)
       }
-
+      
       const userExtraQuery: Prisma.UserFindManyArgs = {
         orderBy: { createdAt: `desc` },
         omit: { password: true }
       }
-
+      
       const users = await this.userRepository.findAll(userExtraQuery)
 
       const redisKeys = {
@@ -141,8 +137,6 @@ export class UserService {
       }
 
       const removedUser = await this.userRepository.delete(userDto.userId, { omit: { password: true } })
-
-      await this.clearUsersCache()
 
       return ResponseUtil.success({ removedUser }, UserMessages.RemovedUserSuccess, HttpStatus.OK)
     } catch (error) {
@@ -206,11 +200,6 @@ export class UserService {
     } catch (error) {
       throw new RpcException(error)
     }
-  }
-
-  async clearUsersCache(): Promise<void> {
-    await this.cache.delByPattern(CachePatterns.UsersList)
-    await this.cache.delByPattern(CachePatterns.SearchUsersList)
   }
 
 }

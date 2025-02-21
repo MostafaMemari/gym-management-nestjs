@@ -13,12 +13,4 @@ RUN npx pnpm install
 
 COPY --chown=student_group:student . .
 
-USER root 
-RUN chmod +x /app/docker-entrypoint.sh && chmod +x /app/wait-for.sh
-
-
-USER student_group
-
-CMD ["/bin/sh", "/app/docker-entrypoint.sh"]
-
-# CMD [ "npx" , "pnpm" , "start:dev" ]
+CMD [ "npx" , "pnpm" , "start:dev" ]
