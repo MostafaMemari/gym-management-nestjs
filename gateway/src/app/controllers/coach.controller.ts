@@ -13,29 +13,30 @@ import {
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
-import { Services } from '../../common/enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
-import { lastValueFrom, timeout } from 'rxjs';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
-import { StudentPatterns } from '../../common/enums/club.events';
-import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
-import { CreateStudentDto, UpdateStudentDto } from '../../common/dtos/student.dto';
-import { UploadFileS3 } from '../../common/interceptors/upload-file.interceptor';
-import { handleError, handleServiceResponse } from '../../common/utils/handleError.utils';
-import { PaginationDto } from 'src/common/dtos/shared.dto';
-import { UploadFileValidationPipe } from 'src/common/pipes/upload-file.pipe';
-import { SwaggerConsumes } from 'src/common/enums/swagger-consumes.enum';
+import { lastValueFrom, timeout } from 'rxjs';
 
-@Controller('students')
-@ApiTags('Students')
-export class StudentController {
+import { CreateCoachtDto, UpdateCoachtDto } from '../../common/dtos/coach.dto';
+import { PaginationDto } from '../../common/dtos/shared.dto';
+import { CoachPatterns } from '../../common/enums/club.events';
+import { Services } from '../../common/enums/services.enum';
+import { SwaggerConsumes } from '../../common/enums/swagger-consumes.enum';
+import { UploadFileS3 } from '../../common/interceptors/upload-file.interceptor';
+import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
+import { UploadFileValidationPipe } from '../../common/pipes/upload-file.pipe';
+import { handleError, handleServiceResponse } from '../../common/utils/handleError.utils';
+
+@Controller('coaches')
+@ApiTags('Coaches')
+export class CoachController {
   constructor(@Inject(Services.CLUB) private readonly clubServiceClient: ClientProxy) {}
 
   private async checkConnection(): Promise<boolean> {
     try {
-      return await lastValueFrom(this.clubServiceClient.send(StudentPatterns.CheckConnection, {}).pipe(timeout(5000)));
+      return await lastValueFrom(this.clubServiceClient.send(CoachPatterns.CheckConnection, {}).pipe(timeout(5000)));
     } catch (error) {
-      throw new InternalServerErrorException('Student service is not connected');
+      throw new InternalServerErrorException('Coach service is not connected');
     }
   }
 
@@ -43,21 +44,19 @@ export class StudentController {
   @UseInterceptors(UploadFileS3('image'))
   @ApiConsumes(SwaggerConsumes.MultipartData)
   async create(
-    @Body() createStudentDto: CreateStudentDto,
+    @Body() createCoachDto: CreateCoachtDto,
     @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)')) image: Express.Multer.File,
   ) {
     try {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient
-          .send(StudentPatterns.CreateStudent, { createStudentDto: { ...createStudentDto, image } })
-          .pipe(timeout(10000)),
+        this.clubServiceClient.send(CoachPatterns.CreateCoach, { createCoachDto: { ...createCoachDto, image } }).pipe(timeout(10000)),
       );
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to create student', 'StudentService');
+      handleError(error, 'Failed to create coach', 'CoachService');
     }
   }
 
@@ -66,20 +65,20 @@ export class StudentController {
   @ApiConsumes(SwaggerConsumes.MultipartData)
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateStudentDto: UpdateStudentDto,
+    @Body() updateCoachDto: UpdateCoachtDto,
     @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)')) image: Express.Multer.File,
   ) {
     try {
       await this.checkConnection();
       const data: ServiceResponse = await lastValueFrom(
         this.clubServiceClient
-          .send(StudentPatterns.UpdateStudent, { studentId: id, updateStudentDto: { ...updateStudentDto, image } })
+          .send(CoachPatterns.UpdateCoach, { coachId: id, updateCoachDto: { ...updateCoachDto, image } })
           .pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to updated student', 'StudentService');
+      handleError(error, 'Failed to updated coach', 'CoachService');
     }
   }
 
@@ -89,7 +88,7 @@ export class StudentController {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(StudentPatterns.GetStudents, { paginationDto }).pipe(timeout(5000)),
+        this.clubServiceClient.send(CoachPatterns.GetCoaches, { paginationDto }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -102,12 +101,12 @@ export class StudentController {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(StudentPatterns.GetStudent, { studentId: id }).pipe(timeout(5000)),
+        this.clubServiceClient.send(CoachPatterns.GetCoach, { coachId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to get student', 'StudentService');
+      handleError(error, 'Failed to get coach', 'CoachService');
     }
   }
 
@@ -117,12 +116,12 @@ export class StudentController {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(StudentPatterns.RemoveUserStudent, { studentId: id }).pipe(timeout(5000)),
+        this.clubServiceClient.send(CoachPatterns.RemoveUserCoach, { coachId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to remove student', 'StudentService');
+      handleError(error, 'Failed to remove coach', 'CoachService');
     }
   }
 }

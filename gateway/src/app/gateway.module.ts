@@ -1,14 +1,15 @@
-import { Module, ValidationPipe } from "@nestjs/common";
-import { ClientsModule, Transport } from "@nestjs/microservices";
-import { AuthController } from "./controllers/auth.controller";
-import { ConfigModule } from "@nestjs/config";
-import envConfig from "../configs/env.config";
-import { UserController } from "./controllers/user.controller";
-import { PermissionController } from "./controllers/permission.controller";
-import { APP_PIPE } from "@nestjs/core";
-import { StudentController } from "./controllers/student.controller";
-import { Services } from "../common/enums/services.enum";
-import { AuthGuard } from "../common/guards/auth.guard";
+import { Module, ValidationPipe } from '@nestjs/common';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { AuthController } from './controllers/auth.controller';
+import { ConfigModule } from '@nestjs/config';
+import envConfig from '../configs/env.config';
+import { UserController } from './controllers/user.controller';
+import { PermissionController } from './controllers/permission.controller';
+import { APP_PIPE } from '@nestjs/core';
+import { StudentController } from './controllers/student.controller';
+import { Services } from '../common/enums/services.enum';
+import { AuthGuard } from '../common/guards/auth.guard';
+import { CoachController } from './controllers/coach.controller';
 
 @Module({
   imports: [
@@ -62,9 +63,21 @@ import { AuthGuard } from "../common/guards/auth.guard";
           persistent: false,
         },
       },
+      {
+        name: Services.CLUB,
+        transport: Transport.RMQ,
+        options: {
+          urls: [process.env.RABBITMQ_URL],
+          queue: process.env.RABBITMQ_CLUB_SERVICE_QUEUE,
+          prefetchCount: 2,
+          isGlobalPrefetchCount: true,
+          noAck: true,
+          persistent: false,
+        },
+      },
     ]),
   ],
-  controllers: [AuthController, UserController, StudentController, PermissionController],
+  controllers: [AuthController, UserController, StudentController, CoachController, PermissionController],
   providers: [
     {
       provide: APP_PIPE,
@@ -75,5 +88,4 @@ import { AuthGuard } from "../common/guards/auth.guard";
     UserController,
   ],
 })
-export class GatewayModule { }
-
+export class GatewayModule {}
