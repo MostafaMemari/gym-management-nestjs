@@ -106,7 +106,7 @@ export class CoachService {
     }
   }
 
-  async getAll(query: ICoachQuery): Promise<PageDto<CoachEntity>> {
+  async getAll(query: any): Promise<PageDto<CoachEntity>> {
     const { take, page } = query.paginationDto;
     const cacheKey = `${CacheKeys.COACH_LIST}-${page}-${take}`;
 

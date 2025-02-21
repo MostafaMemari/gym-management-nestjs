@@ -24,3 +24,15 @@ export class SearchDto extends PaginationDto {
   @ApiProperty()
   query: string;
 }
+
+export class QueryClubDto {
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  sortBy?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  order?: 'ASC' | 'DESC';
+}

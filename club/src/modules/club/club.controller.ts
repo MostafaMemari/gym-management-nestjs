@@ -1,9 +1,11 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
-import { ICreateClub, IClubQuery, IUpdateClub } from './interfaces/club.interface';
+import { ICreateClub, IUpdateClub, IQuery } from './interfaces/club.interface';
 import { ClubPatterns } from './patterns/club.pattern';
 import { ClubService } from './club.service';
+import { IUser } from './interfaces/user.interface';
+import { IPagination } from 'src/common/interfaces/pagination.interface';
 
 @Controller()
 export class ClubController {
@@ -26,8 +28,10 @@ export class ClubController {
   }
 
   @MessagePattern(ClubPatterns.GetClubs)
-  findAll(@Payload() query: IClubQuery) {
-    return this.clubService.getAll(query);
+  findAll(@Payload() data: { user: IUser; queryDto: IQuery; paginationDto: IPagination }) {
+    const { user, queryDto, paginationDto } = data;
+
+    return this.clubService.getAll(user, { queryDto, paginationDto });
   }
 
   @MessagePattern(ClubPatterns.RemoveUserClub)

@@ -16,6 +16,10 @@ import { CacheModule } from './cache/cache.module';
     PrismaModule,
   ],
   controllers: [UserController],
-  providers: [UserService, UserRepository, LoggerService],
+  providers: [
+    UserService,
+    UserRepository,
+    // LoggerService
+  ],
 })
 export class UserModule {}

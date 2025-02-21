@@ -3,16 +3,20 @@ import { ClientProxy } from '@nestjs/microservices';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { lastValueFrom, timeout } from 'rxjs';
 
-import { PaginationDto } from '../../../common/dtos/shared.dto';
+import { PaginationDto, QueryClubDto } from '../../../common/dtos/shared.dto';
 import { ClubPatterns } from '../../../common/enums/club.events';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
 import { CreateClubDto, UpdateClubDto } from '../../../common/dtos/club-service/club.dto';
+import { AuthDecorator } from '../../../common/decorators/auth.decorator';
+import { GetUser } from '../../../common/decorators/get-user.decorator';
+import { User } from '../../../common/dtos/user.dto';
 
 @Controller('clubs')
 @ApiTags('clubs')
+@AuthDecorator()
 export class ClubController {
   constructor(@Inject(Services.CLUB) private readonly clubServiceClient: ClientProxy) {}
 
@@ -56,14 +60,12 @@ export class ClubController {
   }
 
   @Get()
-  async findAll(@Query() paginationDto: PaginationDto): Promise<any> {
+  async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto, @Query() queryDto: QueryClubDto): Promise<any> {
     try {
       await this.checkConnection();
-
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(ClubPatterns.GetClubs, { paginationDto }).pipe(timeout(5000)),
+        this.clubServiceClient.send(ClubPatterns.GetClubs, { user, queryDto, paginationDto }).pipe(timeout(5000)),
       );
-
       return handleServiceResponse(data);
     } catch (error) {}
   }
