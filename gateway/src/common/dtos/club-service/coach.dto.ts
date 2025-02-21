@@ -1,9 +1,9 @@
 import { IsNotEmpty, IsOptional, IsString, IsEnum, IsPhoneNumber, IsDateString, Length, MinLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { Gender } from '../enums/gender.enum';
-import { ToBoolean } from '../decorators/toBoolean.decodator';
+import { Gender } from '../../enums/gender.enum';
+import { ToBoolean } from '../../decorators/toBoolean.decodator';
 
-export class CreateStudentDto {
+export class CreateCoachtDto {
   @IsNotEmpty()
   @IsString()
   @Length(5, 80)
@@ -80,4 +80,4 @@ export class CreateStudentDto {
   age_category_id: string;
 }
 
-export class UpdateStudentDto extends PartialType(CreateStudentDto) {}
+export class UpdateCoachtDto extends PartialType(CreateCoachtDto) {}

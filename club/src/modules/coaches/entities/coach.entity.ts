@@ -1,11 +1,15 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
 
 import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
+import { StudentEntity } from '../../../modules/students/entities/student.entity';
 
 @Entity(EntityName.Coaches)
 export class CoachEntity extends AbstractEntity {
+  @Column({ type: 'integer', unique: true, nullable: false })
+  user_id: Number;
+
   @Column({ type: 'varchar', length: 80 })
   full_name: string;
 
@@ -42,6 +46,6 @@ export class CoachEntity extends AbstractEntity {
   @Column({ type: 'date', nullable: true })
   expire_image_date?: Date;
 
-  @Column({ type: 'integer', unique: true, nullable: false })
-  user_id: Number;
+  @OneToMany(() => StudentEntity, (student) => student.coach)
+  students: StudentEntity[];
 }

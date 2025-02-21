@@ -17,15 +17,15 @@ import { ClientProxy } from '@nestjs/microservices';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { lastValueFrom, timeout } from 'rxjs';
 
-import { CreateCoachtDto, UpdateCoachtDto } from '../../common/dtos/coach.dto';
-import { PaginationDto } from '../../common/dtos/shared.dto';
-import { CoachPatterns } from '../../common/enums/club.events';
-import { Services } from '../../common/enums/services.enum';
-import { SwaggerConsumes } from '../../common/enums/swagger-consumes.enum';
-import { UploadFileS3 } from '../../common/interceptors/upload-file.interceptor';
-import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
-import { UploadFileValidationPipe } from '../../common/pipes/upload-file.pipe';
-import { handleError, handleServiceResponse } from '../../common/utils/handleError.utils';
+import { CreateCoachtDto, UpdateCoachtDto } from '../../../common/dtos/club-service/coach.dto';
+import { PaginationDto } from '../../../common/dtos/shared.dto';
+import { CoachPatterns } from '../../../common/enums/club.events';
+import { Services } from '../../../common/enums/services.enum';
+import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
+import { UploadFileS3 } from '../../../common/interceptors/upload-file.interceptor';
+import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
+import { UploadFileValidationPipe } from '../../../common/pipes/upload-file.pipe';
+import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
 
 @Controller('coaches')
 @ApiTags('Coaches')

@@ -1,11 +1,15 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
+import { CoachEntity } from '../../../modules/coaches/entities/coach.entity';
 
 @Entity(EntityName.Students)
 export class StudentEntity extends AbstractEntity {
+  @Column({ type: 'integer', unique: true, nullable: false })
+  user_id: Number;
+
   @Column({ type: 'varchar', length: 80 })
   full_name: string;
 
@@ -42,6 +46,10 @@ export class StudentEntity extends AbstractEntity {
   @Column({ type: 'date', nullable: true })
   expire_image_date?: Date;
 
-  @Column({ type: 'integer', unique: true, nullable: false })
-  user_id: Number;
+  @Column({ type: 'integer', nullable: true })
+  coachId: number;
+
+  @ManyToOne(() => CoachEntity, (coach) => coach.students, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn()
+  coach: CoachEntity;
 }

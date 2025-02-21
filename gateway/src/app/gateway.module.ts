@@ -6,10 +6,10 @@ import envConfig from '../configs/env.config';
 import { UserController } from './controllers/user.controller';
 import { PermissionController } from './controllers/permission.controller';
 import { APP_PIPE } from '@nestjs/core';
-import { StudentController } from './controllers/student.controller';
+import { StudentController } from './controllers/club/student.controller';
 import { Services } from '../common/enums/services.enum';
 import { AuthGuard } from '../common/guards/auth.guard';
-import { CoachController } from './controllers/coach.controller';
+import { CoachController } from './controllers/club/coach.controller';
 
 @Module({
   imports: [
@@ -45,18 +45,6 @@ import { CoachController } from './controllers/coach.controller';
         options: {
           urls: [process.env.RABBITMQ_URL],
           queue: process.env.RABBITMQ_PERMISSION_SERVICE_QUEUE,
-          prefetchCount: 2,
-          isGlobalPrefetchCount: true,
-          noAck: true,
-          persistent: false,
-        },
-      },
-      {
-        name: Services.STUDENT,
-        transport: Transport.RMQ,
-        options: {
-          urls: [process.env.RABBITMQ_URL],
-          queue: process.env.RABBITMQ_STUDENT_SERVICE_QUEUE,
           prefetchCount: 2,
           isGlobalPrefetchCount: true,
           noAck: true,

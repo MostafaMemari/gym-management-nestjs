@@ -13,15 +13,15 @@ import {
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
-import { Services } from '../../common/enums/services.enum';
+import { Services } from '../../../common/enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
-import { StudentPatterns } from '../../common/enums/club.events';
-import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
-import { CreateStudentDto, UpdateStudentDto } from '../../common/dtos/student.dto';
-import { UploadFileS3 } from '../../common/interceptors/upload-file.interceptor';
-import { handleError, handleServiceResponse } from '../../common/utils/handleError.utils';
+import { StudentPatterns } from '../../../common/enums/club.events';
+import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
+import { CreateStudentDto, UpdateStudentDto } from '../../../common/dtos/club-service/student.dto';
+import { UploadFileS3 } from '../../../common/interceptors/upload-file.interceptor';
+import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
 import { PaginationDto } from 'src/common/dtos/shared.dto';
 import { UploadFileValidationPipe } from 'src/common/pipes/upload-file.pipe';
 import { SwaggerConsumes } from 'src/common/enums/swagger-consumes.enum';
