@@ -8,7 +8,8 @@ import { RpcException } from '@nestjs/microservices';
 import { UserRepository } from './user.repository';
 // import { LoggerService } from 'nest-logger-plus';
 import { CacheService } from './cache/cache.service';
-import { CacheKeys, CachePatterns } from './common/enums/cache.enum';
+import { CacheKeys } from './common/enums/cache.enum';
+import { ResponseUtil } from './common/utils/response.utils';
 
 @Injectable()
 export class UserService {
@@ -36,6 +37,9 @@ export class UserService {
         omit: { password: true },
       });
 
+<<<<<<< HEAD
+      return ResponseUtil.success({ user }, UserMessages.CreatedUser, HttpStatus.CREATED)
+=======
       await this.clearUsersCache();
 
       return {
@@ -44,6 +48,7 @@ export class UserService {
         message: UserMessages.CreatedUser,
         status: HttpStatus.CREATED,
       };
+>>>>>>> 13192ddb19ed94bc755dbe52e987a941fc5d9ef9
     } catch (error) {
       throw new RpcException(error);
     }
@@ -64,6 +69,9 @@ export class UserService {
         omit: { password: true },
       });
 
+<<<<<<< HEAD
+      return ResponseUtil.success({ user: newUser }, UserMessages.CreatedUser, HttpStatus.CREATED)
+=======
       await this.clearUsersCache();
 
       return {
@@ -72,6 +80,7 @@ export class UserService {
         message: UserMessages.CreatedUser,
         status: HttpStatus.CREATED,
       };
+>>>>>>> 13192ddb19ed94bc755dbe52e987a941fc5d9ef9
     } catch (error) {
       throw new RpcException(error);
     }
@@ -79,6 +88,13 @@ export class UserService {
 
   async findAll(paginationDto?: IPagination): Promise<ServiceResponse> {
     try {
+<<<<<<< HEAD
+      const cacheKey = `${CacheKeys.Users}_${paginationDto.page || 1}_${paginationDto.take || 20}`
+      const usersCache = await this.cache.get<User[] | null>(cacheKey)
+      
+      if (usersCache) {
+        return ResponseUtil.success({ ...pagination(paginationDto, usersCache) }, '', HttpStatus.OK)
+=======
       const cacheKey = `${CacheKeys.Users}_${paginationDto.page || 1}_${paginationDto.take || 20}`;
       const usersCache = await this.cache.get<User[] | null>(cacheKey);
 
@@ -89,29 +105,37 @@ export class UserService {
           message: '',
           status: HttpStatus.OK,
         };
+>>>>>>> 13192ddb19ed94bc755dbe52e987a941fc5d9ef9
       }
-
+      
       const userExtraQuery: Prisma.UserFindManyArgs = {
         orderBy: { createdAt: `desc` },
+<<<<<<< HEAD
+        omit: { password: true }
+      }
+      
+      const users = await this.userRepository.findAll(userExtraQuery)
+=======
         omit: { password: true },
       };
 
       const users = await this.userRepository.findAll(userExtraQuery);
+>>>>>>> 13192ddb19ed94bc755dbe52e987a941fc5d9ef9
 
       const redisKeys = {
         key: cacheKey,
         value: users,
+<<<<<<< HEAD
+        expireTime: 600 //* Seconds
+      }
+=======
         expireTime: 300, //* Seconds
       };
+>>>>>>> 13192ddb19ed94bc755dbe52e987a941fc5d9ef9
 
       await this.cache.set(redisKeys.key, redisKeys.value, redisKeys.expireTime);
 
-      return {
-        data: { ...pagination(paginationDto, users) },
-        error: false,
-        message: '',
-        status: HttpStatus.OK,
-      };
+      return ResponseUtil.success({ ...pagination(paginationDto, users) }, '', HttpStatus.OK)
     } catch (error) {
       throw new RpcException(error);
     }
@@ -125,12 +149,7 @@ export class UserService {
         throw new NotFoundException(UserMessages.NotFoundUser);
       }
 
-      return {
-        data: { user },
-        error: false,
-        message: '',
-        status: HttpStatus.OK,
-      };
+      return ResponseUtil.success({ user }, '', HttpStatus.OK)
     } catch (error) {
       throw new RpcException(error);
     }
@@ -144,12 +163,7 @@ export class UserService {
         throw new NotFoundException(UserMessages.NotFoundUser);
       }
 
-      return {
-        data: { user },
-        error: false,
-        message: '',
-        status: HttpStatus.OK,
-      };
+      return ResponseUtil.success({ user }, '', HttpStatus.OK)
     } catch (error) {
       throw new RpcException(error);
     }
@@ -165,6 +179,9 @@ export class UserService {
 
       const removedUser = await this.userRepository.delete(userDto.userId, { omit: { password: true } });
 
+<<<<<<< HEAD
+      return ResponseUtil.success({ removedUser }, UserMessages.RemovedUserSuccess, HttpStatus.OK)
+=======
       await this.clearUsersCache();
 
       return {
@@ -173,6 +190,7 @@ export class UserService {
         message: UserMessages.RemovedUserSuccess,
         status: HttpStatus.OK,
       };
+>>>>>>> 13192ddb19ed94bc755dbe52e987a941fc5d9ef9
     } catch (error) {
       throw new RpcException(error);
     }
@@ -183,12 +201,16 @@ export class UserService {
       const existingUser = await this.userRepository.isExistingUser(userDto);
 
       if (existingUser) {
+<<<<<<< HEAD
+        return ResponseUtil.success({ user: existingUser }, '', HttpStatus.OK)
+=======
         return {
           data: { user: existingUser },
           error: false,
           message: '',
           status: HttpStatus.OK,
         };
+>>>>>>> 13192ddb19ed94bc755dbe52e987a941fc5d9ef9
       }
 
       return await this.create(userDto);
@@ -204,12 +226,16 @@ export class UserService {
       const cacheUsers = await this.cache.get<User[] | null>(cacheKey);
 
       if (cacheUsers) {
+<<<<<<< HEAD
+        return ResponseUtil.success({ ...pagination(paginationDto, cacheUsers) }, '', HttpStatus.OK)
+=======
         return {
           data: { ...pagination(paginationDto, cacheUsers) },
           error: false,
           message: '',
           status: HttpStatus.OK,
         };
+>>>>>>> 13192ddb19ed94bc755dbe52e987a941fc5d9ef9
       }
 
       const userExtraQuery: Prisma.UserFindManyArgs = {
@@ -232,24 +258,36 @@ export class UserService {
       const redisKeys = {
         key: cacheKey,
         value: users,
+<<<<<<< HEAD
+        expireTime: 600 //* Seconds
+      }
+=======
         expireTime: 300, //* Seconds
       };
+>>>>>>> 13192ddb19ed94bc755dbe52e987a941fc5d9ef9
 
       await this.cache.set(redisKeys.key, redisKeys.value, redisKeys.expireTime);
 
+<<<<<<< HEAD
+      return ResponseUtil.success({ ...pagination(paginationDto, users) }, '', HttpStatus.OK)
+=======
       return {
         data: { ...pagination(paginationDto, users) },
         error: false,
         message: '',
         status: HttpStatus.OK,
       };
+>>>>>>> 13192ddb19ed94bc755dbe52e987a941fc5d9ef9
     } catch (error) {
       throw new RpcException(error);
     }
   }
 
+<<<<<<< HEAD
+=======
   async clearUsersCache(): Promise<void> {
     await this.cache.delByPattern(CachePatterns.UsersList);
     await this.cache.delByPattern(CachePatterns.SearchUsersList);
   }
+>>>>>>> 13192ddb19ed94bc755dbe52e987a941fc5d9ef9
 }

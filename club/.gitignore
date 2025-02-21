@@ -3,9 +3,6 @@
 /node_modules
 /build
 
-/docker-entrypoint.sh
-/wait-for.sh
-
 # Logs
 logs
 *.log

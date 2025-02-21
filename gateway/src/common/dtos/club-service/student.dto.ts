@@ -14,7 +14,7 @@ import { Transform } from 'class-transformer';
 
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Gender } from '../../enums/gender.enum';
-import { ToBoolean } from '../../decorators/toBoolean.decodator';
+import { ToBoolean } from 'src/common/decorators/toBoolean.decorator';
 
 export class CreateStudentDto {
   @IsNotEmpty()
