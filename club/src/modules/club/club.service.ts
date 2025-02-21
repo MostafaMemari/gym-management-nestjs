@@ -14,7 +14,9 @@ import { CacheService } from '../cache/cache.service';
 import { CacheKeys, CachePatterns } from '../cache/enums/cache.enum';
 import { ClubEntity } from './entities/club.entity';
 import { ClubMessages } from './enums/club.message';
-import { ICreateClub, IClubQuery, IUpdateClub } from './interfaces/club.interface';
+import { ICreateClub, IQuery, IUpdateClub } from './interfaces/club.interface';
+import { IUser } from './interfaces/user.interface';
+import { IPagination } from 'src/common/interfaces/pagination.interface';
 
 @Injectable()
 export class ClubService {
@@ -69,8 +71,9 @@ export class ClubService {
     }
   }
 
-  async getAll(query: IClubQuery): Promise<PageDto<ClubEntity>> {
+  async getAll(user: IUser, query: { queryDto: IQuery; paginationDto: IPagination }): Promise<PageDto<ClubEntity>> {
     const { take, page } = query.paginationDto;
+
     const cacheKey = `${CacheKeys.CLUB_LIST}-${page}-${take}`;
 
     const cachedData = await this.cacheService.get<PageDto<ClubEntity>>(cacheKey);

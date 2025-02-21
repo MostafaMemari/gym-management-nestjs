@@ -10,4 +10,4 @@ export interface ICreateClub {
 
 export type IUpdateClub = Partial<ICreateClub>;
 
-export interface IClubQuery extends IPagination {}
+export interface IQuery extends IPagination {}

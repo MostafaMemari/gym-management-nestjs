@@ -104,7 +104,7 @@ export class StudentService {
     }
   }
 
-  async getAll(query: IStudentQuery): Promise<PageDto<StudentEntity>> {
+  async getAll(query: any): Promise<PageDto<StudentEntity>> {
     const { take, page } = query.paginationDto;
     const cacheKey = `${CacheKeys.STUDENT_LIST}-${page}-${take}`;
 

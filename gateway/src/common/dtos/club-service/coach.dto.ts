@@ -1,7 +1,7 @@
 import { IsNotEmpty, IsOptional, IsString, IsEnum, IsPhoneNumber, IsDateString, Length, MinLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Gender } from '../../enums/gender.enum';
-import { ToBoolean } from '../../decorators/toBoolean.decodator';
+import { ToBoolean } from '../../../common/decorators/toBoolean.decorator';
 
 export class CreateCoachtDto {
   @IsNotEmpty()
