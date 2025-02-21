@@ -87,12 +87,12 @@ export class CreateStudentDto {
   @ApiProperty({ type: 'integer', required: true, example: '' })
   coachId: string;
 
-  // @Transform(({ value }) => parseInt(value, 10))
-  // @IsInt()
-  // @IsPositive()
-  // @IsNotEmpty()
-  // @ApiProperty({ type: 'integer', required: true, example: '' })
-  // club_id: string;
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @IsPositive()
+  @IsNotEmpty()
+  @ApiProperty({ type: 'integer', required: true, example: '' })
+  clubId: string;
 }
 
 export class UpdateStudentDto extends PartialType(CreateStudentDto) {}

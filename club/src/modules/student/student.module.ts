@@ -10,6 +10,10 @@ import { StudentController } from './student.controller';
 import { StudentService } from './student.service';
 import { CacheModule } from '../cache/cache.module';
 import { AwsModule } from '../s3AWS/s3AWS.module';
+import { ClubService } from '../club/club.service';
+import { CoachService } from '../coach/coach.service';
+import { CoachModule } from '../coach/coach.module';
+import { ClubModule } from '../club/club.module';
 
 @Module({
   imports: [
@@ -26,6 +30,8 @@ import { AwsModule } from '../s3AWS/s3AWS.module';
     TypeOrmModule.forFeature([StudentEntity]),
     CacheModule,
     AwsModule,
+    CoachModule,
+    ClubModule,
   ],
   controllers: [StudentController],
   providers: [StudentService],

@@ -1,9 +1,10 @@
-import { Controller } from '@nestjs/common';
+import { Controller, UsePipes } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
 import { ICreateStudent, IStudentQuery, IUpdateStudent } from './interfaces/student.interface';
 import { StudentPatterns } from './patterns/student.pattern';
 import { StudentService } from './student.service';
+import { ValidateIdsPipe } from './pipes/validate-ids.pipe';
 
 @Controller()
 export class StudentController {
@@ -15,6 +16,7 @@ export class StudentController {
   }
 
   @MessagePattern(StudentPatterns.CreateStudent)
+  @UsePipes(ValidateIdsPipe)
   create(@Payload() data: { createStudentDto: ICreateStudent }) {
     const { createStudentDto } = data;
     return this.studentService.create(createStudentDto);

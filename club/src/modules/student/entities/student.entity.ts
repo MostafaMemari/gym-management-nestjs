@@ -4,6 +4,7 @@ import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
 import { CoachEntity } from '../../coach/entities/coach.entity';
+import { ClubEntity } from 'src/modules/club/entities/club.entity';
 
 @Entity(EntityName.Students)
 export class StudentEntity extends AbstractEntity {
@@ -49,7 +50,14 @@ export class StudentEntity extends AbstractEntity {
   @Column({ type: 'integer', nullable: true })
   coachId: number;
 
-  @ManyToOne(() => CoachEntity, (coach) => coach.students, { nullable: true, onDelete: 'SET NULL' })
+  @Column({ type: 'integer', nullable: true })
+  clubId: number;
+
+  @ManyToOne(() => CoachEntity, (coach) => coach.student, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn()
   coach: CoachEntity;
+
+  @ManyToOne(() => ClubEntity, (club) => club.student, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn()
+  club: ClubEntity;
 }

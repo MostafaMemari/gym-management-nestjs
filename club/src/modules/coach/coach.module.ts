@@ -27,5 +27,6 @@ import { Services } from '../../common/enums/services.enum';
   ],
   controllers: [CoachController],
   providers: [CoachService],
+  exports: [CoachService],
 })
 export class CoachModule {}

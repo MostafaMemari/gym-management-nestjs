@@ -22,7 +22,11 @@ export class ClubEntity extends AbstractEntity {
   @Column({ type: 'integer', nullable: true })
   coachId: number;
 
-  @ManyToOne(() => CoachEntity, (coach) => coach.students, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => CoachEntity, (coach) => coach.student, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn()
   coach: CoachEntity;
+
+  @ManyToOne(() => ClubEntity, (club) => club.student, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn()
+  student: ClubEntity;
 }

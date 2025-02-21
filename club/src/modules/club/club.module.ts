@@ -25,6 +25,6 @@ import { CacheModule } from '../cache/cache.module';
   ],
   controllers: [ClubController],
   providers: [ClubService],
-  exports: [],
+  exports: [ClubService],
 })
 export class ClubModule {}

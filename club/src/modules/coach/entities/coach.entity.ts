@@ -47,5 +47,5 @@ export class CoachEntity extends AbstractEntity {
   expire_image_date?: Date;
 
   @OneToMany(() => StudentEntity, (student) => student.coach)
-  students: StudentEntity[];
+  student: StudentEntity[];
 }

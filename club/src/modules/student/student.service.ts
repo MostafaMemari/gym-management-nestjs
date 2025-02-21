@@ -43,8 +43,6 @@ export class StudentService {
     let imageKey = null;
 
     try {
-      await this.findStudentByNationalCode(createStudentDto.national_code, { duplicateError: true });
-
       imageKey = await this.uploadStudentImage(createStudentDto.image);
 
       // userId = await this.createUser();
@@ -118,6 +116,8 @@ export class StudentService {
     const [students, count] = await queryBuilder
       .leftJoin('students.coach', 'coach')
       .addSelect(['coach.id', 'coach.full_name'])
+      .leftJoin('students.club', 'club')
+      .addSelect(['club.id', 'club.name'])
       .skip((page - 1) * take)
       .take(take)
       .getManyAndCount();
