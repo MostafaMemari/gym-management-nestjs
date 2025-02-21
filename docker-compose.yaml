@@ -44,6 +44,22 @@ services:
     volumes:
       - ./user/src:/app/src
       # - ./user/logs:/app/logs
+
+  ### club Service ###
+  club_service:
+    container_name: club_service
+    build:
+      context: ./club
+      dockerfile: Dockerfile
+    networks:
+      - app
+    depends_on:
+      - rabbitmq
+      - club_service_db
+    env_file:
+      - club/.env
+    volumes:
+      - ./club/src:/app/src
     
   ### Redis Insight ###
   redisinsight:
@@ -69,21 +85,6 @@ services:
     volumes:
       - redis_data:/data
 
-  ### club Service ###
-  student_service:
-    container_name: student_service
-    build:
-      context: ./student
-      dockerfile: Dockerfile
-    networks:
-      - app
-    depends_on:
-      - rabbitmq
-      - student_service_db
-    env_file:
-      - student/.env
-    volumes:
-      - ./student/src:/app/src
 
   ### Rabbitmq ###
   rabbitmq:
@@ -114,8 +115,8 @@ services:
       - user_service_db_data:/var/lib/postgresql/data
 
   ### Club Service DB ###
-  student_service_db: 
-    container_name: student_service_db
+  club_service_db: 
+    container_name: club_service_db
     image: "mysql/mysql-server:8.0"
     environment:
       - MYSQL_DATABASE=${MYSQL_DATABASE}
@@ -124,7 +125,7 @@ services:
     networks:
       - app
     volumes:
-      - student_service_db_data:/var/lib/mysql
+      - club_service_db_data:/var/lib/mysql
 
   ### PG ADMIN ###
   pgadmin:
@@ -152,7 +153,7 @@ services:
     ports:
       - "8080:80"
     depends_on:
-      - student_service_db
+      - club_service_db
     networks:
       - app
 
@@ -162,7 +163,7 @@ volumes:
   pgadmin_data:
   redisinsight_data:
   redis_data:
-  student_service_db_data:
+  club_service_db_data:
 
 networks:
   app:
