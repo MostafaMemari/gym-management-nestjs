@@ -3,7 +3,7 @@ import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
-import { CoachEntity } from '../../coaches/entities/coach.entity';
+import { CoachEntity } from '../../coach/entities/coach.entity';
 
 @Entity(EntityName.Clubs)
 export class ClubEntity extends AbstractEntity {

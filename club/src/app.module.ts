@@ -4,9 +4,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import configModuleOptions from './common/validation/env.validation';
 import { typeOrmConfigAsync } from './configs/typeorm.config';
-import { CoachModule } from './modules/coaches/coach.module';
-import { StudentModule } from './modules/students/student.module';
-import { ClubModule } from './modules/clubs/club.module';
+import { CoachModule } from './modules/coach/coach.module';
+import { StudentModule } from './modules/student/student.module';
+import { ClubModule } from './modules/club/club.module';
 
 @Module({
   imports: [

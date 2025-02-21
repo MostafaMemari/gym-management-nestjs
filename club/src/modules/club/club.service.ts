@@ -35,24 +35,17 @@ export class ClubService {
   }
 
   async create(createClubDto: ICreateClub) {
-    const queryRunner = this.clubRepository.manager.connection.createQueryRunner();
-    await queryRunner.startTransaction();
-
     try {
-      const club = this.clubRepository.create({ ...createClubDto });
+      const club = this.clubRepository.create(createClubDto);
+      await this.clubRepository.save(club);
 
-      await queryRunner.manager.save(club);
-      await queryRunner.commitTransaction();
-      this.clearUsersCache();
-
-      return ResponseUtil.success({ ...club }, ClubMessages.CreatedClub);
+      this.clearClubsCache();
+      return ResponseUtil.success(club, ClubMessages.CreatedClub);
     } catch (error) {
-      await queryRunner.rollbackTransaction();
-      ResponseUtil.error(error?.message || ClubMessages.FailedToCreateClub, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
-    } finally {
-      await queryRunner.release();
+      return ResponseUtil.error(error?.message || ClubMessages.FailedToCreateClub, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
   async updateById(clubId: number, updateClubDto: IUpdateClub) {
     let updateData: Partial<ClubEntity> = {};
 
@@ -69,7 +62,7 @@ export class ClubService {
         await this.clubRepository.update(clubId, updateData);
       }
 
-      this.clearUsersCache();
+      this.clearClubsCache();
       return ResponseUtil.success({ ...club, ...updateData }, ClubMessages.UpdatedClub);
     } catch (error) {
       return ResponseUtil.error(error?.message || ClubMessages.FailedToUpdateClub, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
@@ -78,7 +71,7 @@ export class ClubService {
 
   async getAll(query: IClubQuery): Promise<PageDto<ClubEntity>> {
     const { take, page } = query.paginationDto;
-    const cacheKey = `${CacheKeys.STUDENT_LIST}-${page}-${take}`;
+    const cacheKey = `${CacheKeys.CLUB_LIST}-${page}-${take}`;
 
     const cachedData = await this.cacheService.get<PageDto<ClubEntity>>(cacheKey);
     if (cachedData) return cachedData;
@@ -107,18 +100,15 @@ export class ClubService {
     }
   }
   async removeById(clubId: number): Promise<ServiceResponse> {
-    const queryRunner = this.clubRepository.manager.connection.createQueryRunner();
-    await queryRunner.startTransaction();
-
     try {
       const club = await this.findClubById(clubId, { notFoundError: true });
 
-      const removedClub = await queryRunner.manager.delete(ClubEntity, club.id);
-      await queryRunner.commitTransaction();
+      const removedClub = await this.clubRepository.delete(club.id);
 
-      if (removedClub.affected) return ResponseUtil.success(club, ClubMessages.RemovedClubSuccess);
+      if (removedClub.affected) {
+        return ResponseUtil.success(club, ClubMessages.RemovedClubSuccess);
+      }
     } catch (error) {
-      await queryRunner.rollbackTransaction();
       throw new RpcException(error);
     }
   }
@@ -135,7 +125,7 @@ export class ClubService {
     return this.findClub('id', clubId, notFoundError);
   }
 
-  async clearUsersCache(): Promise<void> {
-    await this.cacheService.delByPattern(CachePatterns.STUDENT_LIST);
+  async clearClubsCache(): Promise<void> {
+    await this.cacheService.delByPattern(CachePatterns.CLUB_LIST);
   }
 }

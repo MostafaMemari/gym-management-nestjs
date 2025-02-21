@@ -3,7 +3,7 @@ import { Column, Entity, OneToMany } from 'typeorm';
 import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
-import { StudentEntity } from '../../../modules/students/entities/student.entity';
+import { StudentEntity } from '../../student/entities/student.entity';
 
 @Entity(EntityName.Coaches)
 export class CoachEntity extends AbstractEntity {
