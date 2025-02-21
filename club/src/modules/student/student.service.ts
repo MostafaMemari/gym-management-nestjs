@@ -9,7 +9,7 @@ import { Services } from '../../common/enums/services.enum';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from '../../common/utils/response';
 import { CacheService } from '../cache/cache.service';
-import { CacheKeys, CachePatterns } from '../cache/enums/cache.enum';
+import { CacheKeys } from '../cache/enums/cache.enum';
 import { AwsService } from '../s3AWS/s3AWS.service';
 import { StudentEntity } from './entities/student.entity';
 import { StudentMessages } from './enums/student.message';
@@ -42,6 +42,9 @@ export class StudentService {
     try {
       imageKey = createStudentDto.image ? await this.uploadStudentImage(createStudentDto.image) : null;
 
+      // userId = await this.createUser();
+
+      //! TODO: Remove fake userId method
       userId = Math.floor(10000 + Math.random() * 900000);
 
       const student = await this.studentRepository.createStudentWithTransaction({
@@ -50,7 +53,6 @@ export class StudentService {
         userId: userId,
       });
 
-      this.clearUsersCache();
       return ResponseUtil.success({ ...student, userId }, StudentMessages.CreatedStudent);
     } catch (error) {
       await this.removeUserById(userId);
@@ -83,7 +85,6 @@ export class StudentService {
         await this.awsService.deleteFile(student.image_url);
       }
 
-      this.clearUsersCache();
       return ResponseUtil.success({ ...student, ...updateData }, StudentMessages.UpdatedStudent);
     } catch (error) {
       await this.removeStudentImage(imageKey);
@@ -190,9 +191,5 @@ export class StudentService {
   }
   async findStudentByNationalCode(nationalCode: string, { duplicateError = false, notFoundError = false }) {
     return this.findStudent('national_code', nationalCode, notFoundError, duplicateError);
-  }
-
-  async clearUsersCache(): Promise<void> {
-    await this.cacheService.delByPattern(CachePatterns.STUDENT_LIST);
   }
 }
