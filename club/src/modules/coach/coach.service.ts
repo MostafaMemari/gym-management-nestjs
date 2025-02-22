@@ -1,8 +1,6 @@
 import { ConflictException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { InjectRepository } from '@nestjs/typeorm';
 import { lastValueFrom, timeout } from 'rxjs';
-import { Repository } from 'typeorm';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
 import { EntityName } from '../../common/enums/entity.enum';
@@ -11,11 +9,12 @@ import { Services } from '../../common/enums/services.enum';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from '../../common/utils/response';
 import { CacheService } from '../cache/cache.service';
-import { CacheKeys, CachePatterns } from '../cache/enums/cache.enum';
+import { CacheKeys } from '../cache/enums/cache.enum';
 import { AwsService } from '../s3AWS/s3AWS.service';
 import { CoachEntity } from './entities/coach.entity';
 import { CoachMessages } from './enums/coach.message';
-import { ICoachQuery, ICreateCoach, IUpdateCoach } from './interfaces/coach.interface';
+import { ICreateCoach, IUpdateCoach } from './interfaces/coach.interface';
+import { CoachRepository } from './repositories/coach.repository';
 
 @Injectable()
 export class CoachService {
@@ -23,7 +22,7 @@ export class CoachService {
 
   constructor(
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
-    @InjectRepository(CoachEntity) private coachRepository: Repository<CoachEntity>,
+    private readonly coachRepository: CoachRepository,
     private readonly awsService: AwsService,
     private readonly cacheService: CacheService,
   ) {}
@@ -37,38 +36,28 @@ export class CoachService {
   }
 
   async create(createCoachDto: ICreateCoach) {
-    const queryRunner = this.coachRepository.manager.connection.createQueryRunner();
-    await queryRunner.startTransaction();
     let userId = null;
     let imageKey = null;
 
     try {
-      await this.findCoachByNationalCode(createCoachDto.national_code, { duplicateError: true });
-
       imageKey = await this.uploadCoachImage(createCoachDto.image);
 
       // userId = await this.createUser();
+
       //! TODO: Remove fake userId method
       userId = Math.floor(10000 + Math.random() * 900000);
 
-      const coach = this.coachRepository.create({
+      const coach = await this.coachRepository.createCoachWithTransaction({
         ...createCoachDto,
         image_url: imageKey,
-        userId,
+        userId: userId,
       });
-
-      await queryRunner.manager.save(coach);
-      await queryRunner.commitTransaction();
-      this.clearUsersCache();
 
       return ResponseUtil.success({ ...coach, userId: userId }, CoachMessages.CreatedCoach);
     } catch (error) {
-      await queryRunner.rollbackTransaction();
       await this.removeUserById(userId);
       await this.removeCoachImage(imageKey);
       ResponseUtil.error(error?.message || CoachMessages.FailedToCreateCoach, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
-    } finally {
-      await queryRunner.release();
     }
   }
   async updateById(coachId: number, updateCoachDto: IUpdateCoach) {
@@ -97,7 +86,6 @@ export class CoachService {
         await this.awsService.deleteFile(coach.image_url);
       }
 
-      this.clearUsersCache();
       return ResponseUtil.success({ ...coach, ...updateData }, CoachMessages.UpdatedCoach);
     } catch (error) {
       await this.removeCoachImage(imageKey);
@@ -201,9 +189,5 @@ export class CoachService {
   }
   async findCoachByNationalCode(nationalCode: string, { duplicateError = false, notFoundError = false }) {
     return this.findCoach('national_code', nationalCode, notFoundError, duplicateError);
-  }
-
-  async clearUsersCache(): Promise<void> {
-    await this.cacheService.delByPattern(CachePatterns.COACH_LIST);
   }
 }

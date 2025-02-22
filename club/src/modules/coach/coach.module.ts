@@ -1,13 +1,15 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { Services } from '../../common/enums/services.enum';
+import { CacheModule } from '../cache/cache.module';
 import { AwsModule } from '../s3AWS/s3AWS.module';
 import { CoachController } from './coach.controller';
 import { CoachService } from './coach.service';
 import { CoachEntity } from './entities/coach.entity';
-import { CacheModule } from '../cache/cache.module';
-import { Services } from '../../common/enums/services.enum';
+import { CoachRepository } from './repositories/coach.repository';
+import { CoachSubscriber } from './subscribers/coach.subscriber';
 
 @Module({
   imports: [
@@ -26,7 +28,7 @@ import { Services } from '../../common/enums/services.enum';
     AwsModule,
   ],
   controllers: [CoachController],
-  providers: [CoachService],
+  providers: [CoachService, CoachRepository, CoachSubscriber],
   exports: [CoachService],
 })
 export class CoachModule {}

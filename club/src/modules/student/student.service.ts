@@ -1,8 +1,6 @@
 import { ConflictException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { InjectRepository } from '@nestjs/typeorm';
 import { lastValueFrom, timeout } from 'rxjs';
-import { Repository } from 'typeorm';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
 import { EntityName } from '../../common/enums/entity.enum';
@@ -11,11 +9,12 @@ import { Services } from '../../common/enums/services.enum';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from '../../common/utils/response';
 import { CacheService } from '../cache/cache.service';
-import { CacheKeys, CachePatterns } from '../cache/enums/cache.enum';
+import { CacheKeys } from '../cache/enums/cache.enum';
 import { AwsService } from '../s3AWS/s3AWS.service';
 import { StudentEntity } from './entities/student.entity';
 import { StudentMessages } from './enums/student.message';
-import { ICreateStudent, IStudentQuery, IUpdateStudent } from './interfaces/student.interface';
+import { ICreateStudent, IUpdateStudent } from './interfaces/student.interface';
+import { StudentRepository } from './repositories/student.repository';
 
 @Injectable()
 export class StudentService {
@@ -23,7 +22,7 @@ export class StudentService {
 
   constructor(
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
-    @InjectRepository(StudentEntity) private studentRepository: Repository<StudentEntity>,
+    private readonly studentRepository: StudentRepository,
     private readonly awsService: AwsService,
     private readonly cacheService: CacheService,
   ) {}
@@ -37,38 +36,31 @@ export class StudentService {
   }
 
   async create(createStudentDto: ICreateStudent) {
-    const queryRunner = this.studentRepository.manager.connection.createQueryRunner();
-    await queryRunner.startTransaction();
     let userId = null;
     let imageKey = null;
 
     try {
-      imageKey = await this.uploadStudentImage(createStudentDto.image);
+      imageKey = createStudentDto.image ? await this.uploadStudentImage(createStudentDto.image) : null;
 
       // userId = await this.createUser();
+
       //! TODO: Remove fake userId method
       userId = Math.floor(10000 + Math.random() * 900000);
 
-      const student = this.studentRepository.create({
+      const student = await this.studentRepository.createStudentWithTransaction({
         ...createStudentDto,
         image_url: imageKey,
         userId: userId,
       });
 
-      await queryRunner.manager.save(student);
-      await queryRunner.commitTransaction();
-      this.clearUsersCache();
-
-      return ResponseUtil.success({ ...student, userId: userId }, StudentMessages.CreatedStudent);
+      return ResponseUtil.success({ ...student, userId }, StudentMessages.CreatedStudent);
     } catch (error) {
-      await queryRunner.rollbackTransaction();
       await this.removeUserById(userId);
       await this.removeStudentImage(imageKey);
-      ResponseUtil.error(error?.message || StudentMessages.FailedToCreateStudent, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
-    } finally {
-      await queryRunner.release();
+      return ResponseUtil.error(error?.message || StudentMessages.FailedToCreateStudent, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
   async updateById(studentId: number, updateStudentDto: IUpdateStudent) {
     let imageKey: string | null = null;
     let updateData: Partial<StudentEntity> = {};
@@ -87,19 +79,15 @@ export class StudentService {
         updateData.image_url = imageKey;
       }
 
-      if (Object.keys(updateData).length > 0) {
-        await this.studentRepository.update(studentId, updateData);
-      }
+      await this.studentRepository.updateStudent(student, updateData);
 
       if (updateStudentDto.image && student.image_url) {
         await this.awsService.deleteFile(student.image_url);
       }
 
-      this.clearUsersCache();
       return ResponseUtil.success({ ...student, ...updateData }, StudentMessages.UpdatedStudent);
     } catch (error) {
       await this.removeStudentImage(imageKey);
-
       return ResponseUtil.error(error?.message || StudentMessages.FailedToUpdateStudent, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -203,9 +191,5 @@ export class StudentService {
   }
   async findStudentByNationalCode(nationalCode: string, { duplicateError = false, notFoundError = false }) {
     return this.findStudent('national_code', nationalCode, notFoundError, duplicateError);
-  }
-
-  async clearUsersCache(): Promise<void> {
-    await this.cacheService.delByPattern(CachePatterns.STUDENT_LIST);
   }
 }

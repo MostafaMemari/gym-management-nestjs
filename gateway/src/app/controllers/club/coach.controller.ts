@@ -17,7 +17,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { lastValueFrom, timeout } from 'rxjs';
 
-import { CreateCoachtDto, UpdateCoachtDto } from '../../../common/dtos/club-service/coach.dto';
+import { CreateCoachDto, UpdateCoachDto } from '../../../common/dtos/club-service/coach.dto';
 import { PaginationDto } from '../../../common/dtos/shared.dto';
 import { CoachPatterns } from '../../../common/enums/club.events';
 import { Services } from '../../../common/enums/services.enum';
@@ -44,7 +44,7 @@ export class CoachController {
   @UseInterceptors(UploadFileS3('image'))
   @ApiConsumes(SwaggerConsumes.MultipartData)
   async create(
-    @Body() createCoachDto: CreateCoachtDto,
+    @Body() createCoachDto: CreateCoachDto,
     @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)')) image: Express.Multer.File,
   ) {
     try {
@@ -65,7 +65,7 @@ export class CoachController {
   @ApiConsumes(SwaggerConsumes.MultipartData)
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateCoachDto: UpdateCoachtDto,
+    @Body() updateCoachDto: UpdateCoachDto,
     @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)')) image: Express.Multer.File,
   ) {
     try {

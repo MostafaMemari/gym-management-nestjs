@@ -3,7 +3,7 @@ import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Gender } from '../../enums/gender.enum';
 import { ToBoolean } from '../../../common/decorators/toBoolean.decorator';
 
-export class CreateCoachtDto {
+export class CreateCoachDto {
   @IsNotEmpty()
   @IsString()
   @Length(5, 80)
@@ -80,4 +80,4 @@ export class CreateCoachtDto {
   age_category_id: string;
 }
 
-export class UpdateCoachtDto extends PartialType(CreateCoachtDto) {}
+export class UpdateCoachDto extends PartialType(CreateCoachDto) {}
