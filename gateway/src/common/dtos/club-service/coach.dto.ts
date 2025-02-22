@@ -70,11 +70,7 @@ export class CreateCoachDto {
   @ToArray()
   @IsNotEmpty()
   @ApiProperty({ isArray: true, example: [1, 2] })
-  clubs: string;
-
-  // @ToArray()
-  // @ApiProperty()
-  // clubs: number;
+  clubIds: string;
 }
 
 export class UpdateCoachDto extends PartialType(CreateCoachDto) {}

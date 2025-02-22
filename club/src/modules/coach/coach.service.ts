@@ -1,4 +1,4 @@
-import { ConflictException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 
@@ -16,6 +16,8 @@ import { CoachMessages } from './enums/coach.message';
 import { ICreateCoach, IUpdateCoach } from './interfaces/coach.interface';
 import { CoachRepository } from './repositories/coach.repository';
 import { IUser } from '../club/interfaces/user.interface';
+import { In } from 'typeorm';
+import { ClubService } from '../club/club.service';
 
 @Injectable()
 export class CoachService {
@@ -25,6 +27,7 @@ export class CoachService {
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
     private readonly coachRepository: CoachRepository,
     private readonly awsService: AwsService,
+    private readonly clubService: ClubService,
     private readonly cacheService: CacheService,
   ) {}
 
@@ -38,21 +41,22 @@ export class CoachService {
   }
 
   async create(user: IUser, createCoachDto: ICreateCoach) {
+    const { clubIds } = createCoachDto;
+
     let userId = null;
     let imageKey = null;
 
     try {
       imageKey = await this.uploadCoachImage(createCoachDto.image);
-
       userId = await this.createUserCoach();
 
-      //! TODO: Remove fake userId method
-      // userId = Math.floor(10000 + Math.random() * 900000);
+      const ownedClubs = await this.clubService.findOwnedClubs(user.id, clubIds);
 
       const coach = await this.coachRepository.createCoachWithTransaction({
         ...createCoachDto,
         image_url: imageKey,
         userId: userId,
+        clubs: ownedClubs,
       });
 
       return ResponseUtil.success({ ...coach, userId: userId }, CoachMessages.CreatedCoach);

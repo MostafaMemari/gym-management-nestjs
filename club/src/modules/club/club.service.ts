@@ -1,8 +1,8 @@
-import { ConflictException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { lastValueFrom, timeout } from 'rxjs';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
 import { EntityName } from '../../common/enums/entity.enum';
@@ -132,5 +132,18 @@ export class ClubService {
 
   async clearClubsCache(): Promise<void> {
     await this.cacheService.delByPattern(CachePatterns.CLUB_LIST);
+  }
+
+  async findOwnedClubs(userId: number, clubIds: number[]): Promise<ClubEntity[]> {
+    const ownedClubs = await this.clubRepository.find({
+      where: { ownerId: userId, id: In(clubIds) },
+    });
+
+    if (ownedClubs.length !== clubIds.length) {
+      const notOwnedClubIds = clubIds.filter((id) => !ownedClubs.some((club) => club.id === id));
+      throw new BadRequestException(`${ClubMessages.UnauthorizedClubs} ${notOwnedClubIds.join(', ')}`);
+    }
+
+    return ownedClubs;
   }
 }

@@ -21,24 +21,32 @@ export function ToArray(): (target: any, key: string) => void {
     const { value } = params;
 
     if (Array.isArray(value)) {
-      return value
-        .map((item) => (typeof item === 'string' ? item.trim() : item))
-        .map((item) => {
-          const num = Number(item);
-          return isNaN(num) ? null : num;
-        })
-        .filter((item) => item !== null);
+      return Array.from(
+        new Set(
+          value
+            .map((item) => (typeof item === 'string' ? item.trim() : item))
+            .map((item) => {
+              const num = Number(item);
+              return isNaN(num) ? null : num;
+            })
+            .filter((item) => item !== null),
+        ),
+      );
     }
 
     if (typeof value === 'string') {
-      return value
-        .split(',')
-        .map((item) => item.trim())
-        .map((item) => {
-          const num = Number(item);
-          return isNaN(num) ? null : num;
-        })
-        .filter((item) => item !== null);
+      return Array.from(
+        new Set(
+          value
+            .split(',')
+            .map((item) => item.trim())
+            .map((item) => {
+              const num = Number(item);
+              return isNaN(num) ? null : num;
+            })
+            .filter((item) => item !== null),
+        ),
+      );
     }
 
     return [];

@@ -11,6 +11,8 @@ import { CoachEntity } from './entities/coach.entity';
 import { CoachRepository } from './repositories/coach.repository';
 import { CoachSubscriber } from './subscribers/coach.subscriber';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ClubService } from '../club/club.service';
+import { ClubModule } from '../club/club.module';
 
 @Module({
   imports: [
@@ -31,6 +33,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     TypeOrmModule.forFeature([CoachEntity]),
     CacheModule,
     AwsModule,
+    ClubModule,
   ],
   controllers: [CoachController],
   providers: [CoachService, CoachRepository, CoachSubscriber],

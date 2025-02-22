@@ -55,8 +55,6 @@ export class CoachController {
     try {
       await this.checkConnection();
 
-      console.log(createCoachDto);
-
       const data: ServiceResponse = await lastValueFrom(
         this.clubServiceClient.send(CoachPatterns.CreateCoach, { user, createCoachDto: { ...createCoachDto, image } }).pipe(timeout(10000)),
       );
