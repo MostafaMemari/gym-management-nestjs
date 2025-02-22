@@ -17,9 +17,10 @@ export class ClubController {
   }
 
   @MessagePattern(ClubPatterns.CreateClub)
-  create(@Payload() data: { createClubDto: ICreateClub }) {
-    const { createClubDto } = data;
-    return this.clubService.create(createClubDto);
+  create(@Payload() data: { user: IUser; createClubDto: ICreateClub }) {
+    const { user, createClubDto } = data;
+
+    return this.clubService.create(user, createClubDto);
   }
   @MessagePattern(ClubPatterns.UpdateClub)
   update(@Payload() data: { clubId: number; updateClubDto: IUpdateClub }) {

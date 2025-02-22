@@ -64,6 +64,27 @@ export class UserService {
     }
   }
 
+  async createUserCoach(userCoachDot: Prisma.UserCreateInput): Promise<ServiceResponse> {
+    try {
+      const { username, role } = userCoachDot;
+
+      const existingUser = await this.userRepository.findOneByUsername(username);
+
+      if (existingUser) {
+        throw new ConflictException(UserMessages.AlreadyExistsUserWithUsername);
+      }
+
+      const newUser = await this.userRepository.create({
+        data: { username, role: role || Role.COACH },
+        omit: { password: true },
+      });
+
+      return ResponseUtil.success({ user: newUser }, UserMessages.CreatedUser, HttpStatus.CREATED);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
   async findAll(paginationDto?: IPagination): Promise<ServiceResponse> {
     try {
       const cacheKey = `${CacheKeys.Users}_${paginationDto.page || 1}_${paginationDto.take || 20}`;

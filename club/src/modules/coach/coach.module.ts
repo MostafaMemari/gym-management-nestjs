@@ -10,17 +10,22 @@ import { CoachService } from './coach.service';
 import { CoachEntity } from './entities/coach.entity';
 import { CoachRepository } from './repositories/coach.repository';
 import { CoachSubscriber } from './subscribers/coach.subscriber';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
-    ClientsModule.register([
+    ClientsModule.registerAsync([
       {
         name: Services.USER,
-        transport: Transport.RMQ,
-        options: {
-          urls: [process.env.RABBITMQ_URL],
-          queue: process.env.RABBITMQ_USER_QUEUE_NAME,
-        },
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [configService.get<string>('RABBITMQ_URL')],
+            queue: configService.get<string>('RABBITMQ_USER_QUEUE_NAME'),
+          },
+        }),
       },
     ]),
     TypeOrmModule.forFeature([CoachEntity]),

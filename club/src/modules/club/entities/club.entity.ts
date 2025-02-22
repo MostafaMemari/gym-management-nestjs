@@ -20,7 +20,7 @@ export class ClubEntity extends AbstractEntity {
   @Column({ type: 'varchar', length: 200, nullable: true })
   address?: string;
 
-  @Column({ type: 'integer', unique: true, nullable: false })
+  @Column({ type: 'integer', nullable: false })
   ownerId: number;
 
   @ManyToMany(() => CoachEntity, (coach) => coach.clubs)

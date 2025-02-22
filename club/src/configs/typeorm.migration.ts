@@ -5,11 +5,11 @@ const configService = new ConfigService();
 
 export const AppDataSource = new DataSource({
   type: 'mysql',
-  host: configService.get('DB_HOST'),
-  port: Number(configService.get('DB_PORT')),
-  username: configService.get('DB_USERNAME'),
-  password: configService.get('DB_PASSWORD'),
-  database: configService.get('DB_NAME'),
+  host: configService.get('DB_HOST') || 'club_service_db',
+  port: Number(configService.get('DB_PORT')) || 3306,
+  username: configService.get('DB_USERNAME') || 'club_service',
+  password: configService.get('DB_PASSWORD') || '123456',
+  database: configService.get('DB_NAME') || 'gym-club',
   entities: [`./src/**/**/**/*.entity{.ts,.js}', './src/**/**/*.entity{.ts,.js}`],
   migrations: [`./src/migrations/*{.ts,.js}`],
   synchronize: false,

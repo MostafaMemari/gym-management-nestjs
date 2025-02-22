@@ -30,12 +30,12 @@ export class ClubController {
 
   @Post()
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
-  async create(@Body() createClubDto: CreateClubDto) {
+  async create(@GetUser() user: User, @Body() createClubDto: CreateClubDto) {
     try {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(ClubPatterns.CreateClub, { createClubDto: { ...createClubDto } }).pipe(timeout(10000)),
+        this.clubServiceClient.send(ClubPatterns.CreateClub, { user, createClubDto: { ...createClubDto } }).pipe(timeout(10000)),
       );
 
       return handleServiceResponse(data);

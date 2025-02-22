@@ -15,6 +15,7 @@ import { CoachEntity } from './entities/coach.entity';
 import { CoachMessages } from './enums/coach.message';
 import { ICreateCoach, IUpdateCoach } from './interfaces/coach.interface';
 import { CoachRepository } from './repositories/coach.repository';
+import { IUser } from '../club/interfaces/user.interface';
 
 @Injectable()
 export class CoachService {
@@ -31,21 +32,22 @@ export class CoachService {
     try {
       await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CheckConnection, {}).pipe(timeout(this.timeout)));
     } catch (error) {
+      console.log(error);
       throw new RpcException({ message: 'User service is not connected', status: HttpStatus.INTERNAL_SERVER_ERROR });
     }
   }
 
-  async create(createCoachDto: ICreateCoach) {
+  async create(user: IUser, createCoachDto: ICreateCoach) {
     let userId = null;
     let imageKey = null;
 
     try {
       imageKey = await this.uploadCoachImage(createCoachDto.image);
 
-      // userId = await this.createUser();
+      userId = await this.createUserCoach();
 
       //! TODO: Remove fake userId method
-      userId = Math.floor(10000 + Math.random() * 900000);
+      // userId = Math.floor(10000 + Math.random() * 900000);
 
       const coach = await this.coachRepository.createCoachWithTransaction({
         ...createCoachDto,
@@ -147,8 +149,8 @@ export class CoachService {
     }
   }
 
-  private async createUser(): Promise<number | null> {
-    const data = { username: `STU_${Date.now()}_${Math.floor(Math.random() * 1000)}` };
+  private async createUserCoach(): Promise<number | null> {
+    const data = { username: `COA_${Date.now()}_${Math.floor(Math.random() * 1000)}` };
 
     await this.checkUserServiceConnection();
     const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CreateUserCoach, data).pipe(timeout(this.timeout)));
