@@ -6,8 +6,9 @@ import { lastValueFrom } from "rxjs";
 import { AuthPatterns } from "../enums/auth.events";
 import { ServiceResponse } from "../interfaces/serviceResponse.interface";
 import { UserPatterns } from "../enums/user.events";
-import { AuthController } from "src/app/controllers/auth.controller";
-import { UserController } from "src/app/controllers/user.controller";
+import { AuthController } from "../../app/controllers/auth.controller";
+import { UserController } from "../../app/controllers/user.controller";
+import { User } from "../dtos/user.dto";
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -58,7 +59,7 @@ export class AuthGuard implements CanActivate {
             throw new UnauthorizedException(userRes.message)
         }
 
-        (req as any).user = userRes.data?.user
+        req.user = userRes.data?.user as User
 
         return true
     }
