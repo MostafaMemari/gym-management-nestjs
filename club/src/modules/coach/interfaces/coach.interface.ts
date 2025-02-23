@@ -16,7 +16,7 @@ export interface ICreateCoach {
   expire_image_date?: Date;
   userId?: number;
   coachId?: number;
-  clubId?: number;
+  clubIds?: number[];
 }
 
 export type IUpdateCoach = Partial<ICreateCoach>;

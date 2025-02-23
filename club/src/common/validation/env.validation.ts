@@ -4,13 +4,14 @@ import * as Joi from 'joi';
 export default (): ConfigModuleOptions => {
   return {
     isGlobal: true,
-    envFilePath: process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env',
+    envFilePath: ['.env', `.env.${process.env.NODE_ENV}`],
 
     validate: (config: Record<string, any>) => {
       const schema = Joi.object({
         //* Rabbitmq
         RABBITMQ_URL: Joi.string().required(),
         RABBITMQ_QUEUE_NAME: Joi.string().required(),
+        RABBITMQ_USER_QUEUE_NAME: Joi.string().required(),
 
         //* Database
         DB_TYPE: Joi.string().valid('postgres', 'mysql', 'mariadb', 'mongodb').required(),

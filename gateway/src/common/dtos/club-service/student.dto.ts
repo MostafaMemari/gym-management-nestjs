@@ -1,20 +1,20 @@
+import { Transform } from 'class-transformer';
 import {
+  IsDateString,
+  IsEnum,
+  IsInt,
   IsNotEmpty,
   IsOptional,
-  IsString,
-  IsEnum,
   IsPhoneNumber,
-  IsDateString,
+  IsPositive,
+  IsString,
   Length,
   MinLength,
-  IsPositive,
-  IsInt,
 } from 'class-validator';
-import { Transform } from 'class-transformer';
 
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { ToBoolean } from '../../../common/decorators/transformers.decorator';
 import { Gender } from '../../enums/gender.enum';
-import { ToBoolean } from 'src/common/decorators/toBoolean.decorator';
 
 export class CreateStudentDto {
   @IsNotEmpty()

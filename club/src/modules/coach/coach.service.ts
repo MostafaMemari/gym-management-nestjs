@@ -1,4 +1,4 @@
-import { ConflictException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 
@@ -15,6 +15,9 @@ import { CoachEntity } from './entities/coach.entity';
 import { CoachMessages } from './enums/coach.message';
 import { ICreateCoach, IUpdateCoach } from './interfaces/coach.interface';
 import { CoachRepository } from './repositories/coach.repository';
+import { IUser } from '../club/interfaces/user.interface';
+import { In } from 'typeorm';
+import { ClubService } from '../club/club.service';
 
 @Injectable()
 export class CoachService {
@@ -24,6 +27,7 @@ export class CoachService {
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
     private readonly coachRepository: CoachRepository,
     private readonly awsService: AwsService,
+    private readonly clubService: ClubService,
     private readonly cacheService: CacheService,
   ) {}
 
@@ -31,26 +35,28 @@ export class CoachService {
     try {
       await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CheckConnection, {}).pipe(timeout(this.timeout)));
     } catch (error) {
+      console.log(error);
       throw new RpcException({ message: 'User service is not connected', status: HttpStatus.INTERNAL_SERVER_ERROR });
     }
   }
 
-  async create(createCoachDto: ICreateCoach) {
+  async create(user: IUser, createCoachDto: ICreateCoach) {
+    const { clubIds } = createCoachDto;
+
     let userId = null;
     let imageKey = null;
 
     try {
       imageKey = await this.uploadCoachImage(createCoachDto.image);
+      userId = await this.createUserCoach();
 
-      // userId = await this.createUser();
-
-      //! TODO: Remove fake userId method
-      userId = Math.floor(10000 + Math.random() * 900000);
+      const ownedClubs = await this.clubService.findOwnedClubs(user.id, clubIds);
 
       const coach = await this.coachRepository.createCoachWithTransaction({
         ...createCoachDto,
         image_url: imageKey,
         userId: userId,
+        clubs: ownedClubs,
       });
 
       return ResponseUtil.success({ ...coach, userId: userId }, CoachMessages.CreatedCoach);
@@ -147,8 +153,8 @@ export class CoachService {
     }
   }
 
-  private async createUser(): Promise<number | null> {
-    const data = { username: `STU_${Date.now()}_${Math.floor(Math.random() * 1000)}` };
+  private async createUserCoach(): Promise<number | null> {
+    const data = { username: `COA_${Date.now()}_${Math.floor(Math.random() * 1000)}` };
 
     await this.checkUserServiceConnection();
     const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CreateUserCoach, data).pipe(timeout(this.timeout)));

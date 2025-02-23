@@ -17,8 +17,11 @@ import { ClientProxy } from '@nestjs/microservices';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { lastValueFrom, timeout } from 'rxjs';
 
+import { AuthDecorator } from '../../../common/decorators/auth.decorator';
+import { GetUser } from '../../../common/decorators/get-user.decorator';
 import { CreateCoachDto, UpdateCoachDto } from '../../../common/dtos/club-service/coach.dto';
 import { PaginationDto } from '../../../common/dtos/shared.dto';
+import { User } from '../../../common/dtos/user.dto';
 import { CoachPatterns } from '../../../common/enums/club.events';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
@@ -29,6 +32,7 @@ import { handleError, handleServiceResponse } from '../../../common/utils/handle
 
 @Controller('coaches')
 @ApiTags('Coaches')
+@AuthDecorator()
 export class CoachController {
   constructor(@Inject(Services.CLUB) private readonly clubServiceClient: ClientProxy) {}
 
@@ -44,6 +48,7 @@ export class CoachController {
   @UseInterceptors(UploadFileS3('image'))
   @ApiConsumes(SwaggerConsumes.MultipartData)
   async create(
+    @GetUser() user: User,
     @Body() createCoachDto: CreateCoachDto,
     @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)')) image: Express.Multer.File,
   ) {
@@ -51,7 +56,7 @@ export class CoachController {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(CoachPatterns.CreateCoach, { createCoachDto: { ...createCoachDto, image } }).pipe(timeout(10000)),
+        this.clubServiceClient.send(CoachPatterns.CreateCoach, { user, createCoachDto: { ...createCoachDto, image } }).pipe(timeout(10000)),
       );
 
       return handleServiceResponse(data);

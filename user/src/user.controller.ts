@@ -2,7 +2,7 @@ import { Controller } from '@nestjs/common';
 import { UserService } from './user.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { UserPatterns } from './common/enums/user.events';
-import { ICreateUser, ICreateUserStudent, IPagination, ISearchUser } from './common/interfaces/user.interface';
+import { ICreateUser, ICreateUserCoach, ICreateUserStudent, IPagination, ISearchUser } from './common/interfaces/user.interface';
 
 @Controller()
 export class UserController {
@@ -36,6 +36,11 @@ export class UserController {
   @MessagePattern(UserPatterns.CreateUserStudent)
   createUserStudent(@Payload() data: ICreateUserStudent) {
     return this.userService.createUserStudent(data);
+  }
+
+  @MessagePattern(UserPatterns.CreateUserCoach)
+  createUserCoach(@Payload() data: ICreateUserCoach) {
+    return this.userService.createUserCoach(data);
   }
 
   @MessagePattern(UserPatterns.RemoveUser)

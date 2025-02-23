@@ -1,7 +1,7 @@
 import { IsNotEmpty, IsOptional, IsString, IsEnum, IsPhoneNumber, IsDateString, Length, MinLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Gender } from '../../enums/gender.enum';
-import { ToBoolean } from '../../../common/decorators/toBoolean.decorator';
+import { ToArray, ToBoolean } from '../../../common/decorators/transformers.decorator';
 
 export class CreateCoachDto {
   @IsNotEmpty()
@@ -67,17 +67,10 @@ export class CreateCoachDto {
   @ApiPropertyOptional({ type: String, example: '' })
   expire_image_date?: Date;
 
-  @IsOptional()
-  @ApiPropertyOptional({ type: String, example: '' })
-  coach_id: string;
-
-  @IsOptional()
-  @ApiPropertyOptional({ type: String, example: '' })
-  club_id: string;
-
-  @IsOptional()
-  @ApiPropertyOptional({ type: String, example: '' })
-  age_category_id: string;
+  @ToArray()
+  @IsNotEmpty()
+  @ApiProperty({ isArray: true, example: [1, 2] })
+  clubIds: string;
 }
 
 export class UpdateCoachDto extends PartialType(CreateCoachDto) {}

@@ -18,4 +18,5 @@ export enum ClubMessages {
 
   FailedToCreateUser = 'Failed to create user Please try again later',
   ClubNotFound = 'Club not found',
+  UnauthorizedClubs = 'The following club IDs do not belong to this user:',
 }

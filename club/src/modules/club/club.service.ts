@@ -1,8 +1,8 @@
-import { ConflictException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { lastValueFrom, timeout } from 'rxjs';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
 import { EntityName } from '../../common/enums/entity.enum';
@@ -36,9 +36,9 @@ export class ClubService {
     }
   }
 
-  async create(createClubDto: ICreateClub) {
+  async create(user: IUser, createClubDto: ICreateClub) {
     try {
-      const club = this.clubRepository.create(createClubDto);
+      const club = this.clubRepository.create({ ...createClubDto, ownerId: user.id });
       await this.clubRepository.save(club);
 
       this.clearClubsCache();
@@ -73,15 +73,17 @@ export class ClubService {
 
   async getAll(user: IUser, query: { queryDto: IQuery; paginationDto: IPagination }): Promise<PageDto<ClubEntity>> {
     const { take, page } = query.paginationDto;
+    console.log(user);
 
-    const cacheKey = `${CacheKeys.CLUB_LIST}-${page}-${take}`;
+    // const cacheKey = `${CacheKeys.CLUB_LIST}:user_${user.id}:page_${page}:take_${take}`;
 
-    const cachedData = await this.cacheService.get<PageDto<ClubEntity>>(cacheKey);
-    if (cachedData) return cachedData;
+    // const cachedData = await this.cacheService.get<PageDto<ClubEntity>>(cacheKey);
+    // if (cachedData) return cachedData;
 
     const queryBuilder = this.clubRepository.createQueryBuilder(EntityName.Clubs);
 
     const [clubs, count] = await queryBuilder
+      .where('clubs.ownerId = :ownerId', { ownerId: user.id })
       .skip((page - 1) * take)
       .take(take)
       .getManyAndCount();
@@ -89,7 +91,7 @@ export class ClubService {
     const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
     const result = new PageDto(clubs, pageMetaDto);
 
-    await this.cacheService.set(cacheKey, result, 1);
+    // await this.cacheService.set(cacheKey, result, 1);
 
     return result;
   }
@@ -130,5 +132,18 @@ export class ClubService {
 
   async clearClubsCache(): Promise<void> {
     await this.cacheService.delByPattern(CachePatterns.CLUB_LIST);
+  }
+
+  async findOwnedClubs(userId: number, clubIds: number[]): Promise<ClubEntity[]> {
+    const ownedClubs = await this.clubRepository.find({
+      where: { ownerId: userId, id: In(clubIds) },
+    });
+
+    if (ownedClubs.length !== clubIds.length) {
+      const notOwnedClubIds = clubIds.filter((id) => !ownedClubs.some((club) => club.id === id));
+      throw new BadRequestException(`${ClubMessages.UnauthorizedClubs} ${notOwnedClubIds.join(', ')}`);
+    }
+
+    return ownedClubs;
   }
 }

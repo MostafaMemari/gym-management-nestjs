@@ -42,10 +42,7 @@ export class StudentService {
     try {
       imageKey = createStudentDto.image ? await this.uploadStudentImage(createStudentDto.image) : null;
 
-      // userId = await this.createUser();
-
-      //! TODO: Remove fake userId method
-      userId = Math.floor(10000 + Math.random() * 900000);
+      userId = await this.createUserCoach();
 
       const student = await this.studentRepository.createStudentWithTransaction({
         ...createStudentDto,
@@ -149,7 +146,7 @@ export class StudentService {
     }
   }
 
-  private async createUser(): Promise<number | null> {
+  private async createUserCoach(): Promise<number | null> {
     const data = { username: `STU_${Date.now()}_${Math.floor(Math.random() * 1000)}` };
 
     await this.checkUserServiceConnection();
