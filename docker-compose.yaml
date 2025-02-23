@@ -43,7 +43,7 @@ services:
       - user/.env
     volumes:
       - ./user/src:/app/src
-      # - ./user/logs:/app/logs
+      - ./user/logs:/app/logs
 
   ### club Service ###
   club_service:

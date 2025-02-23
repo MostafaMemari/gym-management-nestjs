@@ -6,7 +6,6 @@ import { IPagination, ISearchUser } from './common/interfaces/user.interface';
 import { pagination } from './common/utils/pagination.utils';
 import { RpcException } from '@nestjs/microservices';
 import { UserRepository } from './user.repository';
-// import { LoggerService } from 'nest-logger-plus';
 import { CacheService } from './cache/cache.service';
 import { CacheKeys } from './common/enums/cache.enum';
 import { ResponseUtil } from './common/utils/response.utils';
@@ -15,7 +14,6 @@ import { ResponseUtil } from './common/utils/response.utils';
 export class UserService {
   constructor(
     private readonly userRepository: UserRepository,
-    // private readonly logger: LoggerService,
     private readonly cache: CacheService,
   ) { }
 
