@@ -41,9 +41,9 @@ export class UserService {
     }
   }
 
-  async createUserStudent(userStudentDot: Prisma.UserCreateInput): Promise<ServiceResponse> {
+  async createUserStudent(userStudentDto: Prisma.UserCreateInput): Promise<ServiceResponse> {
     try {
-      const { username, role } = userStudentDot;
+      const { username, role } = userStudentDto;
 
       const existingUser = await this.userRepository.findOneByUsername(username);
 
@@ -62,9 +62,9 @@ export class UserService {
     }
   }
 
-  async createUserCoach(userCoachDot: Prisma.UserCreateInput): Promise<ServiceResponse> {
+  async createUserCoach(userCoachDto: Prisma.UserCreateInput): Promise<ServiceResponse> {
     try {
-      const { username, role } = userCoachDot;
+      const { username, role } = userCoachDto;
 
       const existingUser = await this.userRepository.findOneByUsername(username);
 
