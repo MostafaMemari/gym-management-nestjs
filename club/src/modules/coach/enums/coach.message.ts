@@ -19,4 +19,5 @@ export enum CoachMessages {
   CoachNotBelongToUser = 'This coach does not belong to the user or club',
   GetCoachSuccess = 'Coach data retrieved successfully',
   CoachGenderMismatch = 'Coach gender mismatch. Invalid Club IDs:',
+  CoachHasRelations = 'Cannot delete club relations with clubs or students',
 }

@@ -96,10 +96,9 @@ export class ClubService {
   async removeById(user: IUser, clubId: number): Promise<ServiceResponse> {
     try {
       const club = await this.checkClubOwnership(clubId, user.id);
-
       await this.ensureClubHasNoRelations(clubId);
 
-      const removedClub = await this.clubRepository.delete(club.id);
+      const removedClub = await this.clubRepository.delete(clubId);
 
       if (removedClub.affected) return ResponseUtil.success(club, ClubMessages.RemovedClubSuccess);
 

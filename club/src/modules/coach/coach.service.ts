@@ -65,7 +65,7 @@ export class CoachService {
       ResponseUtil.error(error?.message || CoachMessages.FailedToCreateCoach, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-  async updateById(coachId: number, updateCoachDto: IUpdateCoach) {
+  async updateById(user: IUser, coachId: number, updateCoachDto: IUpdateCoach) {
     let imageKey: string | null = null;
     let updateData: Partial<CoachEntity> = {};
 
@@ -122,7 +122,7 @@ export class CoachService {
 
     return result;
   }
-  async findOneById(coachId: number): Promise<ServiceResponse> {
+  async findOneById(user: IUser, coachId: number): Promise<ServiceResponse> {
     try {
       const coach = await this.findCoachById(coachId, { notFoundError: true });
 
@@ -131,26 +131,20 @@ export class CoachService {
       throw new RpcException(error);
     }
   }
-  async removeById(coachId: number): Promise<ServiceResponse> {
-    const queryRunner = this.coachRepository.manager.connection.createQueryRunner();
-    await queryRunner.startTransaction();
-
+  async removeById(user: IUser, coachId: number): Promise<ServiceResponse> {
     try {
-      const coach = await this.findCoachById(coachId, { notFoundError: true });
+      const coach = await this.checkCoachOwnership(coachId, user.id);
+      await this.ensureCoachHasNoRelations(coachId);
 
-      await this.removeUserById(Number(coach?.userId));
+      await this.removeUserById(Number(coach.userId));
 
-      const removedCoach = await queryRunner.manager.delete(CoachEntity, coach.id);
-      await queryRunner.commitTransaction();
+      if (coach.image_url) await this.removeCoachImage(coach.image_url);
 
-      if (removedCoach.affected) this.removeCoachImage(coach?.image_url);
+      const removedCoach = await this.coachRepository.removeCoachWithTransaction(coachId);
 
-      return ResponseUtil.success(coach, CoachMessages.RemovedCoachSuccess);
+      return ResponseUtil.success(removedCoach, CoachMessages.RemovedCoachSuccess);
     } catch (error) {
-      await queryRunner.rollbackTransaction();
       throw new RpcException(error);
-    } finally {
-      await queryRunner.release();
     }
   }
 
@@ -207,6 +201,20 @@ export class CoachService {
     if (!isCoachInUserClubs) throw new BadRequestException(CoachMessages.CoachNotBelongToUser);
 
     return coach;
+  }
+
+  async ensureCoachHasNoRelations(coachId: number): Promise<void> {
+    const coachWithRelations = await this.coachRepository
+      .createQueryBuilder('coach')
+      .leftJoin('coach.students', 'student')
+      .leftJoin('coach.clubs', 'club')
+      .where('coach.id = :coachId', { coachId })
+      .andWhere('(student.id IS NOT NULL OR club.id IS NOT NULL)')
+      .getOne();
+
+    if (coachWithRelations) {
+      throw new BadRequestException(CoachMessages.CoachHasRelations);
+    }
   }
 
   private validateCoachGender(createCoachDto: ICreateCoach, clubs: ICreateClub[]): void {

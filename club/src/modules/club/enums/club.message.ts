@@ -19,5 +19,5 @@ export enum ClubMessages {
   UnauthorizedClubs = 'These club IDs do not belong to this user',
   ClubNotBelongToUser = 'This club does not belong to the user',
   GetClubSuccess = 'Club data retrieved successfully',
-  ClubHasRelations = 'This club cannot be deleted because it has related coaches or students',
+  ClubHasRelations = 'Cannot delete club relations with coaches or students',
 }

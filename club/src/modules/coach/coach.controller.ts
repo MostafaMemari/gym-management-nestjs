@@ -23,9 +23,10 @@ export class CoachController {
     return this.coachService.create(user, createCoachDto);
   }
   @MessagePattern(CoachPatterns.UpdateCoach)
-  update(@Payload() data: { coachId: number; updateCoachDto: IUpdateCoach }) {
-    const { coachId, updateCoachDto } = data;
-    return this.coachService.updateById(coachId, updateCoachDto);
+  update(@Payload() data: { user: IUser; coachId: number; updateCoachDto: IUpdateCoach }) {
+    const { user, coachId, updateCoachDto } = data;
+
+    return this.coachService.updateById(user, coachId, updateCoachDto);
   }
 
   @MessagePattern(CoachPatterns.GetCoaches)
@@ -36,15 +37,17 @@ export class CoachController {
   }
 
   @MessagePattern(CoachPatterns.RemoveUserCoach)
-  findOne(@Payload() data: { coachId: number }) {
-    const { coachId } = data;
-    return this.coachService.findOneById(coachId);
+  findOne(@Payload() data: { user: IUser; coachId: number }) {
+    const { user, coachId } = data;
+
+    return this.coachService.findOneById(user, coachId);
   }
 
   @MessagePattern(CoachPatterns.GetCoach)
-  remove(@Payload() data: { coachId: number }) {
-    const { coachId } = data;
-    return this.coachService.removeById(coachId);
+  remove(@Payload() data: { user: IUser; coachId: number }) {
+    const { user, coachId } = data;
+
+    return this.coachService.removeById(user, coachId);
   }
 
   @MessagePattern(CoachPatterns.checkExistCoachById)
