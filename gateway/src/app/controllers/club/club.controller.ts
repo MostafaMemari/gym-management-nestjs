@@ -3,16 +3,16 @@ import { ClientProxy } from '@nestjs/microservices';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { lastValueFrom, timeout } from 'rxjs';
 
+import { AuthDecorator } from '../../../common/decorators/auth.decorator';
+import { GetUser } from '../../../common/decorators/get-user.decorator';
+import { CreateClubDto, UpdateClubDto } from '../../../common/dtos/club-service/club.dto';
 import { PaginationDto, QueryClubDto } from '../../../common/dtos/shared.dto';
+import { User } from '../../../common/dtos/user.dto';
 import { ClubPatterns } from '../../../common/enums/club.events';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
-import { CreateClubDto, UpdateClubDto } from '../../../common/dtos/club-service/club.dto';
-import { AuthDecorator } from '../../../common/decorators/auth.decorator';
-import { GetUser } from '../../../common/decorators/get-user.decorator';
-import { User } from '../../../common/dtos/user.dto';
 
 @Controller('clubs')
 @ApiTags('clubs')
@@ -46,11 +46,11 @@ export class ClubController {
 
   @Put(':id')
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
-  async update(@Param('id', ParseIntPipe) id: number, @Body() updateClubDto: UpdateClubDto) {
+  async update(@GetUser() user: User, @Param('id', ParseIntPipe) id: number, @Body() updateClubDto: UpdateClubDto) {
     try {
       await this.checkConnection();
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(ClubPatterns.UpdateClub, { clubId: id, updateClubDto: { ...updateClubDto } }).pipe(timeout(5000)),
+        this.clubServiceClient.send(ClubPatterns.UpdateClub, { user, clubId: id, updateClubDto: { ...updateClubDto } }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -71,12 +71,12 @@ export class ClubController {
   }
 
   @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number) {
+  async findOne(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(ClubPatterns.GetClub, { clubId: id }).pipe(timeout(5000)),
+        this.clubServiceClient.send(ClubPatterns.GetClub, { user, clubId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -86,12 +86,12 @@ export class ClubController {
   }
 
   @Delete(':id')
-  async remove(@Param('id', ParseIntPipe) id: number) {
+  async remove(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(ClubPatterns.RemoveUserClub, { clubId: id }).pipe(timeout(5000)),
+        this.clubServiceClient.send(ClubPatterns.RemoveClub, { user, clubId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);

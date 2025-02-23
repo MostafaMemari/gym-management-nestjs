@@ -4,6 +4,6 @@ export enum ClubPatterns {
   UpdateClub = 'update_club',
   GetClubs = 'get_clubs',
   GetClub = 'get_club',
-  RemoveUserClub = 'remove_club',
+  RemoveClub = 'remove_club',
   checkExistClubById = 'check_exist_club_by_id',
 }

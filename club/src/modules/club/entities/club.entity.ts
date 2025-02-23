@@ -12,7 +12,7 @@ export class ClubEntity extends AbstractEntity {
   name: string;
 
   @Column({ type: 'set', enum: Gender })
-  gender: Gender[];
+  genders: Gender[];
 
   @Column({ type: 'varchar', length: 12, nullable: true })
   landline_number?: string;

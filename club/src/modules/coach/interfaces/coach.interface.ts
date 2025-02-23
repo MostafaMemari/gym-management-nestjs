@@ -21,4 +21,4 @@ export interface ICreateCoach {
 
 export type IUpdateCoach = Partial<ICreateCoach>;
 
-export interface ICoachQuery extends IPagination {}
+export interface IQuery extends IPagination {}

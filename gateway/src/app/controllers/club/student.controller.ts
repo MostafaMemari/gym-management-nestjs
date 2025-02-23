@@ -13,21 +13,26 @@ import {
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
-import { Services } from '../../../common/enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
-import { lastValueFrom, timeout } from 'rxjs';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
-import { StudentPatterns } from '../../../common/enums/club.events';
-import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
+import { lastValueFrom, timeout } from 'rxjs';
+
+import { AuthDecorator } from '../../../common/decorators/auth.decorator';
+import { GetUser } from '../../../common/decorators/get-user.decorator';
 import { CreateStudentDto, UpdateStudentDto } from '../../../common/dtos/club-service/student.dto';
+import { PaginationDto } from '../../../common/dtos/shared.dto';
+import { User } from '../../../common/dtos/user.dto';
+import { StudentPatterns } from '../../../common/enums/club.events';
+import { Services } from '../../../common/enums/services.enum';
+import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { UploadFileS3 } from '../../../common/interceptors/upload-file.interceptor';
+import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
+import { UploadFileValidationPipe } from '../../../common/pipes/upload-file.pipe';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
-import { PaginationDto } from 'src/common/dtos/shared.dto';
-import { UploadFileValidationPipe } from 'src/common/pipes/upload-file.pipe';
-import { SwaggerConsumes } from 'src/common/enums/swagger-consumes.enum';
 
 @Controller('students')
 @ApiTags('Students')
+@AuthDecorator()
 export class StudentController {
   constructor(@Inject(Services.CLUB) private readonly clubServiceClient: ClientProxy) {}
 
@@ -43,6 +48,7 @@ export class StudentController {
   @UseInterceptors(UploadFileS3('image'))
   @ApiConsumes(SwaggerConsumes.MultipartData)
   async create(
+    @GetUser() user: User,
     @Body() createStudentDto: CreateStudentDto,
     @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)')) image: Express.Multer.File,
   ) {
@@ -51,7 +57,7 @@ export class StudentController {
 
       const data: ServiceResponse = await lastValueFrom(
         this.clubServiceClient
-          .send(StudentPatterns.CreateStudent, { createStudentDto: { ...createStudentDto, image } })
+          .send(StudentPatterns.CreateStudent, { user, createStudentDto: { ...createStudentDto, image } })
           .pipe(timeout(10000)),
       );
 
@@ -65,6 +71,7 @@ export class StudentController {
   @UseInterceptors(UploadFileS3('image'))
   @ApiConsumes(SwaggerConsumes.MultipartData)
   async update(
+    @GetUser() user: User,
     @Param('id', ParseIntPipe) id: number,
     @Body() updateStudentDto: UpdateStudentDto,
     @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)')) image: Express.Multer.File,
@@ -73,7 +80,7 @@ export class StudentController {
       await this.checkConnection();
       const data: ServiceResponse = await lastValueFrom(
         this.clubServiceClient
-          .send(StudentPatterns.UpdateStudent, { studentId: id, updateStudentDto: { ...updateStudentDto, image } })
+          .send(StudentPatterns.UpdateStudent, { user, studentId: id, updateStudentDto: { ...updateStudentDto, image } })
           .pipe(timeout(5000)),
       );
 
@@ -84,12 +91,12 @@ export class StudentController {
   }
 
   @Get()
-  async findAll(@Query() paginationDto: PaginationDto): Promise<any> {
+  async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto): Promise<any> {
     try {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(StudentPatterns.GetStudents, { paginationDto }).pipe(timeout(5000)),
+        this.clubServiceClient.send(StudentPatterns.GetStudents, { user, paginationDto }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -97,12 +104,12 @@ export class StudentController {
   }
 
   @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number) {
+  async findOne(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(StudentPatterns.GetStudent, { studentId: id }).pipe(timeout(5000)),
+        this.clubServiceClient.send(StudentPatterns.GetStudent, { user, studentId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -112,12 +119,12 @@ export class StudentController {
   }
 
   @Delete(':id')
-  async remove(@Param('id', ParseIntPipe) id: number) {
+  async remove(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(StudentPatterns.RemoveUserStudent, { studentId: id }).pipe(timeout(5000)),
+        this.clubServiceClient.send(StudentPatterns.RemoveUserStudent, { user, studentId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);

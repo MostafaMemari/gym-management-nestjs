@@ -2,8 +2,9 @@ import { IPagination } from '../../../common/interfaces/pagination.interface';
 import { Gender } from '../../../common/enums/gender.enum';
 
 export interface ICreateClub {
+  id: number;
   name: string;
-  gender: Gender[];
+  genders: Gender[];
   landline_number?: string;
   address?: string;
 }
