@@ -21,11 +21,12 @@ export class ValidateIdsPipe implements PipeTransform {
     if (!value) return value;
 
     const { clubId, coachId, national_code } = value.createStudentDto;
+    const userId = this.req?.data.user.id;
 
     try {
       if (national_code) await this.studentService.findStudentByNationalCode(national_code, { duplicateError: true });
-      if (clubId) await this.clubService.findClubById(clubId, { notFoundError: true });
-      if (coachId) await this.coachService.findCoachById(coachId, { notFoundError: true });
+      if (clubId) await this.clubService.checkClubOwnership(clubId, userId);
+      if (coachId) await this.coachService.checkCoachOwnership(coachId, userId);
     } catch (error) {
       return ResponseUtil.error(error?.message, HttpStatus.NOT_FOUND);
     }

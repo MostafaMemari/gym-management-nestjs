@@ -3,8 +3,8 @@ import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
+import { ClubEntity } from '../../../modules/club/entities/club.entity';
 import { CoachEntity } from '../../coach/entities/coach.entity';
-import { ClubEntity } from 'src/modules/club/entities/club.entity';
 
 @Entity(EntityName.Students)
 export class StudentEntity extends AbstractEntity {

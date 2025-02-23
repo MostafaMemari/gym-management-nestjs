@@ -2,9 +2,10 @@ import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
 import { CoachService } from './coach.service';
-import { ICoachQuery, ICreateCoach, IUpdateCoach } from './interfaces/coach.interface';
+import { ICreateCoach, IQuery, IUpdateCoach } from './interfaces/coach.interface';
 import { CoachPatterns } from './patterns/coach.pattern';
 import { IUser } from '../club/interfaces/user.interface';
+import { IPagination } from '../../common/interfaces/pagination.interface';
 
 @Controller()
 export class CoachController {
@@ -18,29 +19,35 @@ export class CoachController {
   @MessagePattern(CoachPatterns.CreateCoach)
   create(@Payload() data: { user: IUser; createCoachDto: ICreateCoach }) {
     const { user, createCoachDto } = data;
+
     return this.coachService.create(user, createCoachDto);
   }
   @MessagePattern(CoachPatterns.UpdateCoach)
-  update(@Payload() data: { coachId: number; updateCoachDto: IUpdateCoach }) {
-    const { coachId, updateCoachDto } = data;
-    return this.coachService.updateById(coachId, updateCoachDto);
+  update(@Payload() data: { user: IUser; coachId: number; updateCoachDto: IUpdateCoach }) {
+    const { user, coachId, updateCoachDto } = data;
+
+    return this.coachService.updateById(user, coachId, updateCoachDto);
   }
 
   @MessagePattern(CoachPatterns.GetCoaches)
-  findAll(@Payload() query: ICoachQuery) {
-    return this.coachService.getAll(query);
+  findAll(@Payload() data: { user: IUser; queryDto: IQuery; paginationDto: IPagination }) {
+    const { user, queryDto, paginationDto } = data;
+
+    return this.coachService.getAll(user, { queryDto, paginationDto });
   }
 
   @MessagePattern(CoachPatterns.RemoveUserCoach)
-  findOne(@Payload() data: { coachId: number }) {
-    const { coachId } = data;
-    return this.coachService.findOneById(coachId);
+  findOne(@Payload() data: { user: IUser; coachId: number }) {
+    const { user, coachId } = data;
+
+    return this.coachService.findOneById(user, coachId);
   }
 
   @MessagePattern(CoachPatterns.GetCoach)
-  remove(@Payload() data: { coachId: number }) {
-    const { coachId } = data;
-    return this.coachService.removeById(coachId);
+  remove(@Payload() data: { user: IUser; coachId: number }) {
+    const { user, coachId } = data;
+
+    return this.coachService.removeById(user, coachId);
   }
 
   @MessagePattern(CoachPatterns.checkExistCoachById)

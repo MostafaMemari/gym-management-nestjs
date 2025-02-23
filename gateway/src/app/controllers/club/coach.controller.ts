@@ -69,6 +69,7 @@ export class CoachController {
   @UseInterceptors(UploadFileS3('image'))
   @ApiConsumes(SwaggerConsumes.MultipartData)
   async update(
+    @GetUser() user: User,
     @Param('id', ParseIntPipe) id: number,
     @Body() updateCoachDto: UpdateCoachDto,
     @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)')) image: Express.Multer.File,
@@ -77,7 +78,7 @@ export class CoachController {
       await this.checkConnection();
       const data: ServiceResponse = await lastValueFrom(
         this.clubServiceClient
-          .send(CoachPatterns.UpdateCoach, { coachId: id, updateCoachDto: { ...updateCoachDto, image } })
+          .send(CoachPatterns.UpdateCoach, { user, coachId: id, updateCoachDto: { ...updateCoachDto, image } })
           .pipe(timeout(5000)),
       );
 
@@ -88,12 +89,12 @@ export class CoachController {
   }
 
   @Get()
-  async findAll(@Query() paginationDto: PaginationDto): Promise<any> {
+  async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto): Promise<any> {
     try {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(CoachPatterns.GetCoaches, { paginationDto }).pipe(timeout(5000)),
+        this.clubServiceClient.send(CoachPatterns.GetCoaches, { user, paginationDto }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -101,12 +102,12 @@ export class CoachController {
   }
 
   @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number) {
+  async findOne(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(CoachPatterns.GetCoach, { coachId: id }).pipe(timeout(5000)),
+        this.clubServiceClient.send(CoachPatterns.GetCoach, { user, coachId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -116,12 +117,12 @@ export class CoachController {
   }
 
   @Delete(':id')
-  async remove(@Param('id', ParseIntPipe) id: number) {
+  async remove(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(CoachPatterns.RemoveUserCoach, { coachId: id }).pipe(timeout(5000)),
+        this.clubServiceClient.send(CoachPatterns.RemoveUserCoach, { user, coachId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);

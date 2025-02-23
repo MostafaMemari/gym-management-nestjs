@@ -16,7 +16,7 @@ import { ClubEntity } from './entities/club.entity';
 import { ClubMessages } from './enums/club.message';
 import { ICreateClub, IQuery, IUpdateClub } from './interfaces/club.interface';
 import { IUser } from './interfaces/user.interface';
-import { IPagination } from 'src/common/interfaces/pagination.interface';
+import { IPagination } from '../../common/interfaces/pagination.interface';
 
 @Injectable()
 export class ClubService {
@@ -48,24 +48,14 @@ export class ClubService {
     }
   }
 
-  async updateById(clubId: number, updateClubDto: IUpdateClub) {
-    let updateData: Partial<ClubEntity> = {};
-
+  async updateById(user: IUser, clubId: number, updateClubDto: IUpdateClub) {
     try {
-      const club = await this.findClubById(clubId, { notFoundError: true });
+      const club = await this.checkClubOwnership(clubId, user.id);
 
-      Object.keys(updateClubDto).forEach((key) => {
-        if (updateClubDto[key] !== undefined && updateClubDto[key] !== club[key]) {
-          updateData[key] = updateClubDto[key];
-        }
-      });
+      const updatedClub = this.clubRepository.merge(club, { ...updateClubDto });
+      await this.clubRepository.save(updatedClub);
 
-      if (Object.keys(updateData).length > 0) {
-        await this.clubRepository.update(clubId, updateData);
-      }
-
-      this.clearClubsCache();
-      return ResponseUtil.success({ ...club, ...updateData }, ClubMessages.UpdatedClub);
+      return ResponseUtil.success({ ...updatedClub }, ClubMessages.UpdatedClub);
     } catch (error) {
       return ResponseUtil.error(error?.message || ClubMessages.FailedToUpdateClub, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -73,7 +63,6 @@ export class ClubService {
 
   async getAll(user: IUser, query: { queryDto: IQuery; paginationDto: IPagination }): Promise<PageDto<ClubEntity>> {
     const { take, page } = query.paginationDto;
-    console.log(user);
 
     // const cacheKey = `${CacheKeys.CLUB_LIST}:user_${user.id}:page_${page}:take_${take}`;
 
@@ -95,24 +84,25 @@ export class ClubService {
 
     return result;
   }
-  async findOneById(clubId: number): Promise<ServiceResponse> {
+  async findOneById(user: IUser, clubId: number): Promise<ServiceResponse> {
     try {
-      const club = await this.findClubById(clubId, { notFoundError: true });
+      const club = await this.checkClubOwnership(clubId, user.id);
 
-      return ResponseUtil.success(club, ClubMessages.RemovedClubSuccess);
+      return ResponseUtil.success(club, ClubMessages.GetClubSuccess);
     } catch (error) {
       throw new RpcException(error);
     }
   }
-  async removeById(clubId: number): Promise<ServiceResponse> {
+  async removeById(user: IUser, clubId: number): Promise<ServiceResponse> {
     try {
-      const club = await this.findClubById(clubId, { notFoundError: true });
+      const club = await this.checkClubOwnership(clubId, user.id);
+      await this.ensureClubHasNoRelations(clubId);
 
-      const removedClub = await this.clubRepository.delete(club.id);
+      const removedClub = await this.clubRepository.delete(clubId);
 
-      if (removedClub.affected) {
-        return ResponseUtil.success(club, ClubMessages.RemovedClubSuccess);
-      }
+      if (removedClub.affected) return ResponseUtil.success(club, ClubMessages.RemovedClubSuccess);
+
+      return ResponseUtil.success('club', ClubMessages.RemovedClubSuccess);
     } catch (error) {
       throw new RpcException(error);
     }
@@ -145,5 +135,23 @@ export class ClubService {
     }
 
     return ownedClubs;
+  }
+
+  async checkClubOwnership(clubId: number, userId: number): Promise<ClubEntity> {
+    const club = await this.clubRepository.findOne({ where: { id: clubId, ownerId: userId } });
+    if (!club) throw new BadRequestException(ClubMessages.ClubNotBelongToUser);
+    return club;
+  }
+
+  async ensureClubHasNoRelations(clubId: number): Promise<void> {
+    const clubWithRelations = await this.clubRepository
+      .createQueryBuilder('club')
+      .leftJoin('club.coaches', 'coach')
+      .leftJoin('club.students', 'student')
+      .where('club.id = :clubId', { clubId })
+      .andWhere('(coach.id IS NOT NULL OR student.id IS NOT NULL)')
+      .getOne();
+
+    if (clubWithRelations) throw new BadRequestException(ClubMessages.ClubHasRelations);
   }
 }
