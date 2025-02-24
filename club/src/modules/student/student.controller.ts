@@ -3,7 +3,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 
 import { ICreateStudent, IQuery, IUpdateStudent } from './interfaces/student.interface';
 import { StudentPatterns } from './patterns/student.pattern';
-import { ValidateStudentDataPipe } from './pipes/validate-data.pipe';
+import { ValidateStudentPipe } from './pipes/student-validation.pipe';
 import { StudentService } from './student.service';
 
 import { IPagination } from '../../common/interfaces/pagination.interface';
@@ -19,8 +19,7 @@ export class StudentController {
   }
 
   @MessagePattern(StudentPatterns.CreateStudent)
-  @UsePipes(ValidateStudentDataPipe)
-  // @UsePipes(ValidateNationalCodePipe)
+  @UsePipes(ValidateStudentPipe)
   create(@Payload() data: { user: IUser; createStudentDto: ICreateStudent }) {
     const { user, createStudentDto } = data;
 
@@ -40,14 +39,14 @@ export class StudentController {
     return this.studentService.getAll(user, { queryDto, paginationDto });
   }
 
-  @MessagePattern(StudentPatterns.RemoveUserStudent)
+  @MessagePattern(StudentPatterns.GetStudent)
   findOne(@Payload() data: { user: IUser; studentId: number }) {
     const { user, studentId } = data;
 
     return this.studentService.findOneById(user, studentId);
   }
 
-  @MessagePattern(StudentPatterns.GetStudent)
+  @MessagePattern(StudentPatterns.RemoveUserStudent)
   remove(@Payload() data: { user: IUser; studentId: number }) {
     const { user, studentId } = data;
 
