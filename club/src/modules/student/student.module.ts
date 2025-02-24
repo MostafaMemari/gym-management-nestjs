@@ -1,18 +1,20 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 
-import { Services } from '../../common/enums/services.enum';
-import { CacheModule } from '../cache/cache.module';
-import { ClubModule } from '../club/club.module';
-import { CoachModule } from '../coach/coach.module';
-import { AwsModule } from '../s3AWS/s3AWS.module';
 import { StudentEntity } from './entities/student.entity';
 import { StudentRepository } from './repositories/student.repository';
 import { StudentController } from './student.controller';
 import { StudentService } from './student.service';
 import { StudentSubscriber } from './subscribers/student.subscriber';
+
+import { CacheModule } from '../cache/cache.module';
+import { ClubModule } from '../club/club.module';
+import { CoachModule } from '../coach/coach.module';
+import { AwsModule } from '../s3AWS/s3AWS.module';
+
+import { Services } from '../../common/enums/services.enum';
 
 @Module({
   imports: [

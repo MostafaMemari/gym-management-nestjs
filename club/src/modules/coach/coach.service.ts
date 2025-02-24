@@ -2,21 +2,25 @@ import { BadRequestException, ConflictException, HttpStatus, Inject, Injectable,
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 
-import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
-import { EntityName } from '../../common/enums/entity.enum';
-import { UserPatterns } from '../../common/enums/patterns.events';
-import { Services } from '../../common/enums/services.enum';
-import { IPagination } from '../../common/interfaces/pagination.interface';
-import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
-import { ResponseUtil } from '../../common/utils/response';
-import { ClubService } from '../club/club.service';
-import { ICreateClub } from '../club/interfaces/club.interface';
-import { IUser } from '../../common/interfaces/user.interface';
-import { AwsService } from '../s3AWS/s3AWS.service';
 import { CoachEntity } from './entities/coach.entity';
 import { CoachMessages } from './enums/coach.message';
 import { ICreateCoach, IQuery, IUpdateCoach } from './interfaces/coach.interface';
 import { CoachRepository } from './repositories/coach.repository';
+
+import { ClubService } from '../club/club.service';
+import { ICreateClub } from '../club/interfaces/club.interface';
+import { AwsService } from '../s3AWS/s3AWS.service';
+
+import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
+import { EntityName } from '../../common/enums/entity.enum';
+import { Gender } from '../../common/enums/gender.enum';
+import { UserPatterns } from '../../common/enums/patterns.events';
+import { Services } from '../../common/enums/services.enum';
+import { IPagination } from '../../common/interfaces/pagination.interface';
+import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
+import { IUser } from '../../common/interfaces/user.interface';
+import { ResponseUtil } from '../../common/utils/response';
+import { isGenderAllowed } from '../../common/utils/functions';
 
 @Injectable()
 export class CoachService {
@@ -45,8 +49,8 @@ export class CoachService {
     let imageKey = null;
 
     try {
-      const ownedClubs = await this.clubService.findOwnedClubs(user.id, clubIds);
-      this.validateCoachGender(createCoachDto, ownedClubs);
+      // const ownedClubs = await this.clubService.findOwnedClubs(user.id, clubIds);
+      // this.validateCoachGender(createCoachDto.gender, ownedClubs);
 
       imageKey = await this.uploadCoachImage(createCoachDto.image);
       userId = await this.createUserCoach();
@@ -55,7 +59,7 @@ export class CoachService {
         ...createCoachDto,
         image_url: imageKey,
         userId: userId,
-        clubs: ownedClubs,
+        // clubs: ownedClubs,
       });
 
       return ResponseUtil.success({ ...coach, userId: userId }, CoachMessages.CreatedCoach);
@@ -217,11 +221,9 @@ export class CoachService {
     }
   }
 
-  private validateCoachGender(createCoachDto: ICreateCoach, clubs: ICreateClub[]): void {
-    const invalidClubs = clubs.filter((club) => !club.genders.includes(createCoachDto.gender)).map((club) => club.id);
+  private validateCoachGender(coachGender: Gender, clubs: ICreateClub[]): void {
+    const invalidClubs = clubs.filter((club) => !isGenderAllowed(coachGender, club.genders)).map((club) => club.id);
 
-    if (invalidClubs.length > 0) {
-      throw new BadRequestException(`${CoachMessages.CoachGenderMismatch} ${invalidClubs.join(', ')}`);
-    }
+    if (invalidClubs.length > 0) throw new BadRequestException(`${CoachMessages.CoachGenderMismatch} ${invalidClubs.join(', ')}`);
   }
 }

@@ -1,17 +1,17 @@
 FROM node:alpine
 
-RUN addgroup -g 1001 student
-RUN adduser -D -u 1001 -G student student_group
+RUN addgroup -g 1001 club
+RUN adduser -D -u 1001 -G club club_group
 
 WORKDIR /app
 
 COPY package*.json ./
 RUN mkdir logs
-RUN chown -R student_group:student /app
+RUN chown -R club_group:club /app
 
-USER student_group
+USER club_group
 RUN npx pnpm install
 
-COPY --chown=student_group:student . .
+COPY --chown=club_group:club . .
 
 CMD npx pnpm migration:run && npx pnpm start:dev

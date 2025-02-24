@@ -17,4 +17,6 @@ export enum StudentMessages {
   FailedToCreateUser = 'Failed to create user. Try again later',
   StudentNotFound = 'Student not found',
   GetStudentSuccess = 'Student data retrieved successfully',
+  ClubGenderMismatch = 'Student gender does not match club',
+  CoachGenderMismatch = 'Student gender does not match coach',
 }

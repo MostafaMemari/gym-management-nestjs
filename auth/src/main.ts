@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { AuthModule } from './auth.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { Logger } from '@nestjs/common';
 import { RmqOptions, Transport } from '@nestjs/microservices';
 import { CustomRpcException } from './common/filters/rpcException.filter';

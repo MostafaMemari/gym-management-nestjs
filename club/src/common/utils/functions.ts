@@ -1,3 +1,6 @@
+import * as os from 'os';
+import { Gender } from '../enums/gender.enum';
+
 export function formatErrorMessage(errorMessage: string): string {
   return errorMessage
     .replace(/"/g, '')
@@ -7,8 +10,6 @@ export function formatErrorMessage(errorMessage: string): string {
     .replace(/\s+/g, ' ')
     .trim();
 }
-
-import * as os from 'os';
 
 export function getServerIp() {
   const interfaces = os.networkInterfaces();
@@ -32,4 +33,12 @@ export function getPreviousMonthDate(monthsAgo: number) {
 
 export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export function isSameGender(targetGender: Gender, referenceGender: Gender): boolean {
+  return targetGender === referenceGender;
+}
+
+export function isGenderAllowed(targetGender: Gender, allowedGenders: Gender[]): boolean {
+  return allowedGenders.includes(targetGender);
 }

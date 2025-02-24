@@ -1,14 +1,16 @@
-import { HttpStatus, Inject, Injectable, PipeTransform, Scope } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Inject, Injectable, PipeTransform, Scope } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 
 import { ResponseUtil } from '../../../common/utils/response';
-import { ClubService } from '../../../modules/club/club.service';
-import { CoachService } from '../../../modules/coach/coach.service';
+import { ClubService } from '../../club/club.service';
+import { CoachService } from '../../coach/coach.service';
 import { StudentService } from '../student.service';
+import { isGenderAllowed, isSameGender } from '../../../common/utils/functions';
+import { StudentMessages } from '../enums/student.message';
 
 @Injectable({ scope: Scope.REQUEST })
-export class ValidateIdsPipe implements PipeTransform {
+export class ValidateStudentDataPipe implements PipeTransform {
   constructor(
     private readonly clubService: ClubService,
     private readonly coachService: CoachService,
@@ -20,7 +22,7 @@ export class ValidateIdsPipe implements PipeTransform {
   async transform(value: any) {
     if (!value) return value;
 
-    const { clubId, coachId, national_code } = value.createStudentDto;
+    const { clubId, coachId, national_code, gender } = value.createStudentDto;
     const userId = this.req?.data.user.id;
 
     try {
@@ -30,8 +32,10 @@ export class ValidateIdsPipe implements PipeTransform {
         const club = await this.clubService.checkClubOwnership(clubId, userId);
         const coach = await this.coachService.checkCoachOwnership(coachId, userId);
 
-        console.log(club);
-        console.log(coach);
+        if (!isSameGender(gender, coach.gender)) throw new BadRequestException(StudentMessages.CoachGenderMismatch);
+        if (!isGenderAllowed(gender, club.genders)) throw new BadRequestException(StudentMessages.ClubGenderMismatch);
+
+        return false;
       }
     } catch (error) {
       return ResponseUtil.error(error?.message, HttpStatus.NOT_FOUND);

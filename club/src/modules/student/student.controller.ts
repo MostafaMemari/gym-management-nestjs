@@ -3,10 +3,11 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 
 import { ICreateStudent, IQuery, IUpdateStudent } from './interfaces/student.interface';
 import { StudentPatterns } from './patterns/student.pattern';
+import { ValidateStudentDataPipe } from './pipes/validate-data.pipe';
 import { StudentService } from './student.service';
-import { ValidateIdsPipe } from './pipes/validate-ids.pipe';
-import { IUser } from '../../common/interfaces/user.interface';
+
 import { IPagination } from '../../common/interfaces/pagination.interface';
+import { IUser } from '../../common/interfaces/user.interface';
 
 @Controller()
 export class StudentController {
@@ -18,7 +19,8 @@ export class StudentController {
   }
 
   @MessagePattern(StudentPatterns.CreateStudent)
-  @UsePipes(ValidateIdsPipe)
+  @UsePipes(ValidateStudentDataPipe)
+  // @UsePipes(ValidateNationalCodePipe)
   create(@Payload() data: { user: IUser; createStudentDto: ICreateStudent }) {
     const { user, createStudentDto } = data;
 

@@ -1,11 +1,11 @@
 import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { GenerateTokens, ISignin, ISignup } from './common/interfaces/auth.interface';
-import { Services } from './common/enums/services.enum';
+import { GenerateTokens, ISignin, ISignup } from '../../common/interfaces/auth.interface';
+import { Services } from '../../common/enums/services.enum';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { UserPatterns } from './common/enums/user.events';
+import { UserPatterns } from '../../common/enums/user.events';
 import { lastValueFrom, timeout } from 'rxjs';
-import { ServiceResponse } from './common/interfaces/serviceResponse.interface';
-import { AuthMessages } from './common/enums/auth.messages';
+import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
+import { AuthMessages } from '../../common/enums/auth.messages';
 import * as bcrypt from 'bcryptjs'
 import { JwtService } from '@nestjs/jwt';
 import * as dateFns from 'date-fns'

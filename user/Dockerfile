@@ -7,8 +7,6 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN mkdir logs
-
 RUN chown -R user_group:user /app
 
 USER user_group

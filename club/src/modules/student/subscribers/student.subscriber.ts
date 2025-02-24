@@ -2,7 +2,7 @@ import { EventSubscriber, EntitySubscriberInterface, InsertEvent, UpdateEvent, R
 
 import { StudentEntity } from '../entities/student.entity';
 import { CacheService } from '../../cache/cache.service';
-import { CachePatterns } from '../../cache/enums/cache.enum';
+import { CachePatterns } from '../../../common/enums/cache.enum';
 
 @EventSubscriber()
 export class StudentSubscriber implements EntitySubscriberInterface<StudentEntity> {

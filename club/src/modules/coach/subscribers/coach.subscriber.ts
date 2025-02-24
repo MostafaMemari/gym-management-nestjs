@@ -1,7 +1,7 @@
 import { EntitySubscriberInterface, EventSubscriber, InsertEvent, RemoveEvent, UpdateEvent } from 'typeorm';
 
 import { CacheService } from '../../cache/cache.service';
-import { CachePatterns } from '../../cache/enums/cache.enum';
+import { CachePatterns } from '../../../common/enums/cache.enum';
 import { CoachEntity } from '../entities/coach.entity';
 
 @EventSubscriber()

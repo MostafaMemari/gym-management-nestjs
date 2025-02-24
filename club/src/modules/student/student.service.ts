@@ -2,21 +2,23 @@ import { ConflictException, HttpStatus, Inject, Injectable, NotFoundException } 
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 
-import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
-import { EntityName } from '../../common/enums/entity.enum';
-import { UserPatterns } from '../../common/enums/patterns.events';
-import { Services } from '../../common/enums/services.enum';
-import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
-import { ResponseUtil } from '../../common/utils/response';
-import { CacheService } from '../cache/cache.service';
-import { CacheKeys } from '../cache/enums/cache.enum';
-import { AwsService } from '../s3AWS/s3AWS.service';
 import { StudentEntity } from './entities/student.entity';
 import { StudentMessages } from './enums/student.message';
 import { ICreateStudent, IQuery, IUpdateStudent } from './interfaces/student.interface';
 import { StudentRepository } from './repositories/student.repository';
-import { IUser } from '../../common/interfaces/user.interface';
+
+import { AwsService } from '../s3AWS/s3AWS.service';
+import { CacheService } from '../cache/cache.service';
+
+import { CacheKeys } from '../../common/enums/cache.enum';
+import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
+import { EntityName } from '../../common/enums/entity.enum';
+import { UserPatterns } from '../../common/enums/patterns.events';
+import { Services } from '../../common/enums/services.enum';
 import { IPagination } from '../../common/interfaces/pagination.interface';
+import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
+import { IUser } from '../../common/interfaces/user.interface';
+import { ResponseUtil } from '../../common/utils/response';
 
 @Injectable()
 export class StudentService {
@@ -42,7 +44,7 @@ export class StudentService {
     let imageKey = null;
 
     try {
-      imageKey = createStudentDto.image ? await this.uploadStudentImage(createStudentDto.image) : null;
+      imageKey = createStudentDto?.image ? await this.uploadStudentImage(createStudentDto.image) : null;
 
       userId = await this.createUserCoach();
 

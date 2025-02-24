@@ -1,4 +1,4 @@
-import { Body, Controller, HttpException, Inject, InternalServerErrorException, Logger, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, HttpException, Inject, InternalServerErrorException, Logger, Post, UseGuards } from "@nestjs/common";
 import { Services } from "../../common/enums/services.enum";
 import { ClientProxy } from "@nestjs/microservices";
 import { lastValueFrom, timeout } from "rxjs";

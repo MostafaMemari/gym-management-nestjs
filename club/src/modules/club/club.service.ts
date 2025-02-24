@@ -12,7 +12,7 @@ import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from '../../common/utils/response';
 import { CacheService } from '../cache/cache.service';
-import { CachePatterns } from '../cache/enums/cache.enum';
+import { CachePatterns } from '../../common/enums/cache.enum';
 import { ClubEntity } from './entities/club.entity';
 import { ClubMessages } from './enums/club.message';
 import { ICreateClub, IQuery, IUpdateClub } from './interfaces/club.interface';
