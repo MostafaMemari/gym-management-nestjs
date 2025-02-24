@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { ConfigModule } from '@nestjs/config';
@@ -9,6 +9,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { redisConfig } from '../../configs/redis.config';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { RbacModule } from '../rbac/rbac.module';
+import { RbacController } from '../rbac/rbac.controller';
+import { RbacService } from '../rbac/rbac.service';
 
 @Module({
   imports: [
@@ -25,9 +27,10 @@ import { RbacModule } from '../rbac/rbac.module';
         }
       }
     ]),
-    RbacModule
+    forwardRef(() => RbacModule)
   ],
-  controllers: [AuthController],
-  providers: [AuthService],
+  controllers: [AuthController, RbacController],
+  providers: [AuthService, RbacService],
+  exports: [ClientsModule]
 })
 export class AuthModule { }
