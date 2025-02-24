@@ -1,13 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsJWT,
-  IsNotEmpty,
-  IsPhoneNumber,
-  IsString,
-  Matches,
-  MaxLength,
-  MinLength,
-} from 'class-validator';
+import { IsJWT, IsNotEmpty, IsPhoneNumber, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 import { ConfirmPassword } from '../../decorators/confirmPassword.decorator';
 
 export class SignupDto {

@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  HttpException,
-  Inject,
-  InternalServerErrorException,
-  Param,
-  ParseIntPipe,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, HttpException, Inject, InternalServerErrorException, Param, ParseIntPipe, Query } from '@nestjs/common';
 import { Services } from '../../common/enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
@@ -15,25 +6,16 @@ import { ApiTags } from '@nestjs/swagger';
 import { UserPatterns } from '../../common/enums/user.events';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { PaginationDto, SearchDto } from '../../common/dtos/shared.dto';
-import {
-  handleError,
-  handleServiceResponse,
-} from 'src/common/utils/handleError.utils';
+import { handleError, handleServiceResponse } from 'src/common/utils/handleError.utils';
 
 @Controller('user')
 @ApiTags('User')
 export class UserController {
-  constructor(
-    @Inject(Services.USER) private readonly userServiceClient: ClientProxy,
-  ) {}
+  constructor(@Inject(Services.USER) private readonly userServiceClient: ClientProxy) {}
 
   async checkConnection(): Promise<boolean> {
     try {
-      return await lastValueFrom(
-        this.userServiceClient
-          .send(UserPatterns.CheckConnection, {})
-          .pipe(timeout(5000)),
-      );
+      return await lastValueFrom(this.userServiceClient.send(UserPatterns.CheckConnection, {}).pipe(timeout(5000)));
     } catch (error) {
       throw new InternalServerErrorException('User service is not connected');
     }
@@ -45,9 +27,7 @@ export class UserController {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.userServiceClient
-          .send(UserPatterns.GetUsers, { ...paginationDto })
-          .pipe(timeout(5000)),
+        this.userServiceClient.send(UserPatterns.GetUsers, { ...paginationDto }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -62,9 +42,7 @@ export class UserController {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.userServiceClient
-          .send(UserPatterns.SearchUser, { ...searchDto })
-          .pipe(timeout(5000)),
+        this.userServiceClient.send(UserPatterns.SearchUser, { ...searchDto }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -79,9 +57,7 @@ export class UserController {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.userServiceClient
-          .send(UserPatterns.GetUserById, { userId: id })
-          .pipe(timeout(5000)),
+        this.userServiceClient.send(UserPatterns.GetUserById, { userId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);

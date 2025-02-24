@@ -1,11 +1,4 @@
-import {
-  Body,
-  ConflictException,
-  Controller,
-  Inject,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, ConflictException, Controller, Inject, Post, UseGuards } from '@nestjs/common';
 import { Services } from '../../../common/enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
 import { AuthGuard } from '../../../common/guards/auth.guard';
@@ -21,10 +14,7 @@ import { ApiConsumes } from '@nestjs/swagger';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { GetUser } from '../../../common/decorators/get-user.decorator';
 import { User } from '../../../common/dtos/user.dto';
-import {
-  handleError,
-  handleServiceResponse,
-} from '../../../common/utils/handleError.utils';
+import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
 import { RbacMessages } from '../../../common/enums/auth.messages';
 
 @Controller('rbac')
@@ -40,20 +30,14 @@ export class RbacController {
   @UseGuards(AuthGuard, RoleGuard)
   @Roles(Role.SUPER_ADMIN)
   @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
-  async assignRole(
-    @Body() assignRoleDto: AssignRoleDto,
-    @GetUser() user: User,
-  ): Promise<ServiceResponse> {
+  async assignRole(@Body() assignRoleDto: AssignRoleDto, @GetUser() user: User): Promise<ServiceResponse> {
     try {
       await this.authController.checkConnection();
 
-      if (user.id == assignRoleDto.userId)
-        throw new ConflictException(RbacMessages.CannotChangeRole);
+      if (user.id == assignRoleDto.userId) throw new ConflictException(RbacMessages.CannotChangeRole);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.authServiceClientProxy
-          .send(RbacPatterns.AssignRole, assignRoleDto)
-          .pipe(timeout(this.timeout)),
+        this.authServiceClientProxy.send(RbacPatterns.AssignRole, assignRoleDto).pipe(timeout(this.timeout)),
       );
 
       return handleServiceResponse(data);

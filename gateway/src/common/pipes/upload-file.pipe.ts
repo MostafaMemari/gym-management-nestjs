@@ -1,9 +1,5 @@
 import { Injectable, PipeTransform } from '@nestjs/common';
-import {
-  ParseFilePipe,
-  MaxFileSizeValidator,
-  FileTypeValidator,
-} from '@nestjs/common/pipes';
+import { ParseFilePipe, MaxFileSizeValidator, FileTypeValidator } from '@nestjs/common/pipes';
 
 @Injectable()
 export class UploadFileValidationPipe implements PipeTransform {
@@ -17,10 +13,7 @@ export class UploadFileValidationPipe implements PipeTransform {
 
     return new ParseFilePipe({
       fileIsRequired: false,
-      validators: [
-        new MaxFileSizeValidator({ maxSize: this.maxSize }),
-        new FileTypeValidator({ fileType: this.fileType }),
-      ],
+      validators: [new MaxFileSizeValidator({ maxSize: this.maxSize }), new FileTypeValidator({ fileType: this.fileType })],
     }).transform(file);
   }
 }

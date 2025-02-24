@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  HttpException,
-  Inject,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { Controller, Get, HttpException, Inject, InternalServerErrorException } from '@nestjs/common';
 import { Services } from '../../common/enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
@@ -22,15 +16,9 @@ export class PermissionController {
 
   async checkConnection(): Promise<boolean> {
     try {
-      return await lastValueFrom(
-        this.permissionServiceClient
-          .send(PermissionPatterns.checkConnection, {})
-          .pipe(timeout(5000)),
-      );
+      return await lastValueFrom(this.permissionServiceClient.send(PermissionPatterns.checkConnection, {}).pipe(timeout(5000)));
     } catch (error) {
-      throw new InternalServerErrorException(
-        'Permission service is not connected',
-      );
+      throw new InternalServerErrorException('Permission service is not connected');
     }
   }
 
@@ -39,9 +27,7 @@ export class PermissionController {
     await this.checkConnection();
 
     const data: ServiceResponse = await lastValueFrom(
-      this.permissionServiceClient
-        .send(PermissionPatterns.getHello, {})
-        .pipe(timeout(5000)),
+      this.permissionServiceClient.send(PermissionPatterns.getHello, {}).pipe(timeout(5000)),
     );
 
     if (data.error) throw new HttpException(data.message, data.status);
