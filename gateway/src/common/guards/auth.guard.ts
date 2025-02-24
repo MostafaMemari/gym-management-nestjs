@@ -6,7 +6,7 @@ import { lastValueFrom } from "rxjs";
 import { AuthPatterns } from "../enums/auth.events";
 import { ServiceResponse } from "../interfaces/serviceResponse.interface";
 import { UserPatterns } from "../enums/user.events";
-import { AuthController } from "../../app/controllers/auth.controller";
+import { AuthController } from "../../app/controllers/auth/auth.controller";
 import { UserController } from "../../app/controllers/user.controller";
 import { User } from "../dtos/user.dto";
 
