@@ -26,9 +26,7 @@ export class PermissionController {
   async getHello() {
     await this.checkConnection();
 
-    const data: ServiceResponse = await lastValueFrom(
-      this.permissionServiceClient.send(PermissionPatterns.getHello, {}).pipe(timeout(5000)),
-    );
+    const data: ServiceResponse = await lastValueFrom(this.permissionServiceClient.send(PermissionPatterns.getHello, {}).pipe(timeout(5000)));
 
     if (data.error) throw new HttpException(data.message, data.status);
 

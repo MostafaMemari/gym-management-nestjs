@@ -34,9 +34,7 @@ export class AuthController {
     this.logger.debug(`Received signup request: username=${signupDto.username}`);
     await this.checkConnection();
 
-    const data: ServiceResponse = await lastValueFrom(
-      this.authServiceClient.send(AuthPatterns.Signup, signupDto).pipe(timeout(this.timeout)),
-    );
+    const data: ServiceResponse = await lastValueFrom(this.authServiceClient.send(AuthPatterns.Signup, signupDto).pipe(timeout(this.timeout)));
 
     if (data.error) {
       this.logger.warn(`Signup failed for: email=${signupDto.username}: ${data.message}`);
@@ -53,9 +51,7 @@ export class AuthController {
     this.logger.debug(`Received signin request: identifier=${signinDto.identifier}`);
     await this.checkConnection();
 
-    const data: ServiceResponse = await lastValueFrom(
-      this.authServiceClient.send(AuthPatterns.Signin, signinDto).pipe(timeout(this.timeout)),
-    );
+    const data: ServiceResponse = await lastValueFrom(this.authServiceClient.send(AuthPatterns.Signin, signinDto).pipe(timeout(this.timeout)));
 
     if (data.error) {
       this.logger.warn(`Failed signin attempt: identifier=${signinDto.identifier} reason=${data.message}`);
@@ -73,9 +69,7 @@ export class AuthController {
     this.logger.debug(`Received signout request`);
     await this.checkConnection();
 
-    const data: ServiceResponse = await lastValueFrom(
-      this.authServiceClient.send(AuthPatterns.Signout, signoutDto).pipe(timeout(this.timeout)),
-    );
+    const data: ServiceResponse = await lastValueFrom(this.authServiceClient.send(AuthPatterns.Signout, signoutDto).pipe(timeout(this.timeout)));
 
     if (data.error) {
       this.logger.warn(`Failed signout attempt: reason=${data.message}`);

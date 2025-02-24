@@ -80,9 +80,7 @@ export class ClubController {
     try {
       await this.checkConnection();
 
-      const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(ClubPatterns.GetClub, { user, clubId: id }).pipe(timeout(5000)),
-      );
+      const data: ServiceResponse = await lastValueFrom(this.clubServiceClient.send(ClubPatterns.GetClub, { user, clubId: id }).pipe(timeout(5000)));
 
       return handleServiceResponse(data);
     } catch (error) {

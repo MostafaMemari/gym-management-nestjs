@@ -26,9 +26,7 @@ export class UserController {
     try {
       await this.checkConnection();
 
-      const data: ServiceResponse = await lastValueFrom(
-        this.userServiceClient.send(UserPatterns.GetUsers, { ...paginationDto }).pipe(timeout(5000)),
-      );
+      const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.GetUsers, { ...paginationDto }).pipe(timeout(5000)));
 
       return handleServiceResponse(data);
     } catch (error) {
@@ -41,9 +39,7 @@ export class UserController {
     try {
       await this.checkConnection();
 
-      const data: ServiceResponse = await lastValueFrom(
-        this.userServiceClient.send(UserPatterns.SearchUser, { ...searchDto }).pipe(timeout(5000)),
-      );
+      const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.SearchUser, { ...searchDto }).pipe(timeout(5000)));
 
       return handleServiceResponse(data);
     } catch (error) {
@@ -56,9 +52,7 @@ export class UserController {
     try {
       await this.checkConnection();
 
-      const data: ServiceResponse = await lastValueFrom(
-        this.userServiceClient.send(UserPatterns.GetUserById, { userId: id }).pipe(timeout(5000)),
-      );
+      const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.GetUserById, { userId: id }).pipe(timeout(5000)));
 
       return handleServiceResponse(data);
     } catch (error) {
