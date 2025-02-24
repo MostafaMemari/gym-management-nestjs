@@ -13,8 +13,10 @@ import { CacheKeys } from '../cache/enums/cache.enum';
 import { AwsService } from '../s3AWS/s3AWS.service';
 import { StudentEntity } from './entities/student.entity';
 import { StudentMessages } from './enums/student.message';
-import { ICreateStudent, IUpdateStudent } from './interfaces/student.interface';
+import { ICreateStudent, IQuery, IUpdateStudent } from './interfaces/student.interface';
 import { StudentRepository } from './repositories/student.repository';
+import { IUser } from '../../common/interfaces/user.interface';
+import { IPagination } from '../../common/interfaces/pagination.interface';
 
 @Injectable()
 export class StudentService {
@@ -35,7 +37,7 @@ export class StudentService {
     }
   }
 
-  async create(createStudentDto: ICreateStudent) {
+  async create(user: IUser, createStudentDto: ICreateStudent) {
     let userId = null;
     let imageKey = null;
 
@@ -58,7 +60,7 @@ export class StudentService {
     }
   }
 
-  async updateById(studentId: number, updateStudentDto: IUpdateStudent) {
+  async updateById(user: IUser, studentId: number, updateStudentDto: IUpdateStudent) {
     let imageKey: string | null = null;
     let updateData: Partial<StudentEntity> = {};
 
@@ -89,8 +91,8 @@ export class StudentService {
     }
   }
 
-  async getAll(query: any): Promise<PageDto<StudentEntity>> {
-    const { take, page } = query.paginationDto;
+  async getAll(user: IUser, query: { queryDto: IQuery; paginationDto: IPagination }): Promise<PageDto<StudentEntity>> {
+    const { take, page } = query?.paginationDto;
     const cacheKey = `${CacheKeys.STUDENT_LIST}-${page}-${take}`;
 
     const cachedData = await this.cacheService.get<PageDto<StudentEntity>>(cacheKey);
@@ -114,7 +116,7 @@ export class StudentService {
 
     return result;
   }
-  async findOneById(studentId: number): Promise<ServiceResponse> {
+  async findOneById(user: IUser, studentId: number): Promise<ServiceResponse> {
     try {
       const student = await this.findStudentById(studentId, { notFoundError: true });
 
@@ -123,7 +125,7 @@ export class StudentService {
       throw new RpcException(error);
     }
   }
-  async removeById(studentId: number): Promise<ServiceResponse> {
+  async removeById(user: IUser, studentId: number): Promise<ServiceResponse> {
     const queryRunner = this.studentRepository.manager.connection.createQueryRunner();
     await queryRunner.startTransaction();
 

@@ -6,17 +6,17 @@ import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
 import { EntityName } from '../../common/enums/entity.enum';
 import { UserPatterns } from '../../common/enums/patterns.events';
 import { Services } from '../../common/enums/services.enum';
+import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from '../../common/utils/response';
+import { ClubService } from '../club/club.service';
+import { ICreateClub } from '../club/interfaces/club.interface';
+import { IUser } from '../../common/interfaces/user.interface';
 import { AwsService } from '../s3AWS/s3AWS.service';
 import { CoachEntity } from './entities/coach.entity';
 import { CoachMessages } from './enums/coach.message';
 import { ICreateCoach, IQuery, IUpdateCoach } from './interfaces/coach.interface';
 import { CoachRepository } from './repositories/coach.repository';
-import { IUser } from '../club/interfaces/user.interface';
-import { ClubService } from '../club/club.service';
-import { IPagination } from '../../common/interfaces/pagination.interface';
-import { ICreateClub } from '../club/interfaces/club.interface';
 
 @Injectable()
 export class CoachService {
@@ -124,7 +124,7 @@ export class CoachService {
   }
   async findOneById(user: IUser, coachId: number): Promise<ServiceResponse> {
     try {
-      const coach = await this.findCoachById(coachId, { notFoundError: true });
+      const coach = await this.checkCoachOwnership(coachId, user.id);
 
       return ResponseUtil.success(coach, CoachMessages.RemovedCoachSuccess);
     } catch (error) {
@@ -134,7 +134,7 @@ export class CoachService {
   async removeById(user: IUser, coachId: number): Promise<ServiceResponse> {
     try {
       const coach = await this.checkCoachOwnership(coachId, user.id);
-      await this.ensureCoachHasNoRelations(coachId);
+      // await this.ensureCoachHasNoRelations(coachId);
 
       await this.removeUserById(Number(coach.userId));
 

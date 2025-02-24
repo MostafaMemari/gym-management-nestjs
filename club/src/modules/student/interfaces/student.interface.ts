@@ -21,4 +21,4 @@ export interface ICreateStudent {
 
 export type IUpdateStudent = Partial<ICreateStudent>;
 
-export interface IStudentQuery extends IPagination {}
+export interface IQuery extends IPagination {}

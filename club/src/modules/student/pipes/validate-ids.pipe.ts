@@ -1,10 +1,10 @@
-import { PipeTransform, Injectable, Scope, Inject, HttpStatus } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable, PipeTransform, Scope } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 
+import { ResponseUtil } from '../../../common/utils/response';
 import { ClubService } from '../../../modules/club/club.service';
 import { CoachService } from '../../../modules/coach/coach.service';
-import { ResponseUtil } from '../../../common/utils/response';
 import { StudentService } from '../student.service';
 
 @Injectable({ scope: Scope.REQUEST })
@@ -25,8 +25,14 @@ export class ValidateIdsPipe implements PipeTransform {
 
     try {
       if (national_code) await this.studentService.findStudentByNationalCode(national_code, { duplicateError: true });
-      if (clubId) await this.clubService.checkClubOwnership(clubId, userId);
-      if (coachId) await this.coachService.checkCoachOwnership(coachId, userId);
+
+      if (clubId && coachId) {
+        const club = await this.clubService.checkClubOwnership(clubId, userId);
+        const coach = await this.coachService.checkCoachOwnership(coachId, userId);
+
+        console.log(club);
+        console.log(coach);
+      }
     } catch (error) {
       return ResponseUtil.error(error?.message, HttpStatus.NOT_FOUND);
     }

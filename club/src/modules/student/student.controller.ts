@@ -1,10 +1,12 @@
 import { Controller, UsePipes } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
-import { ICreateStudent, IStudentQuery, IUpdateStudent } from './interfaces/student.interface';
+import { ICreateStudent, IQuery, IUpdateStudent } from './interfaces/student.interface';
 import { StudentPatterns } from './patterns/student.pattern';
 import { StudentService } from './student.service';
 import { ValidateIdsPipe } from './pipes/validate-ids.pipe';
+import { IUser } from '../../common/interfaces/user.interface';
+import { IPagination } from '../../common/interfaces/pagination.interface';
 
 @Controller()
 export class StudentController {
@@ -17,35 +19,41 @@ export class StudentController {
 
   @MessagePattern(StudentPatterns.CreateStudent)
   @UsePipes(ValidateIdsPipe)
-  create(@Payload() data: { createStudentDto: ICreateStudent }) {
-    const { createStudentDto } = data;
-    return this.studentService.create(createStudentDto);
+  create(@Payload() data: { user: IUser; createStudentDto: ICreateStudent }) {
+    const { user, createStudentDto } = data;
+
+    return this.studentService.create(user, createStudentDto);
   }
   @MessagePattern(StudentPatterns.UpdateStudent)
-  update(@Payload() data: { studentId: number; updateStudentDto: IUpdateStudent }) {
-    const { studentId, updateStudentDto } = data;
-    return this.studentService.updateById(studentId, updateStudentDto);
+  update(@Payload() data: { user: IUser; studentId: number; updateStudentDto: IUpdateStudent }) {
+    const { user, studentId, updateStudentDto } = data;
+
+    return this.studentService.updateById(user, studentId, updateStudentDto);
   }
 
   @MessagePattern(StudentPatterns.GetStudents)
-  findAll(@Payload() query: IStudentQuery) {
-    return this.studentService.getAll(query);
+  findAll(@Payload() data: { user: IUser; queryDto: IQuery; paginationDto: IPagination }) {
+    const { user, queryDto, paginationDto } = data;
+
+    return this.studentService.getAll(user, { queryDto, paginationDto });
   }
 
   @MessagePattern(StudentPatterns.RemoveUserStudent)
-  findOne(@Payload() data: { studentId: number }) {
-    const { studentId } = data;
-    return this.studentService.findOneById(studentId);
+  findOne(@Payload() data: { user: IUser; studentId: number }) {
+    const { user, studentId } = data;
+
+    return this.studentService.findOneById(user, studentId);
   }
 
   @MessagePattern(StudentPatterns.GetStudent)
-  remove(@Payload() data: { studentId: number }) {
-    const { studentId } = data;
-    return this.studentService.removeById(studentId);
+  remove(@Payload() data: { user: IUser; studentId: number }) {
+    const { user, studentId } = data;
+
+    return this.studentService.removeById(user, studentId);
   }
 
   @MessagePattern(StudentPatterns.checkExistStudentById)
-  checkExistById(@Payload() data: { studentId: number }) {
+  checkExistById(@Payload() data: { user: IUser; studentId: number }) {
     return this.studentService.findStudentById(data.studentId, {});
   }
 }

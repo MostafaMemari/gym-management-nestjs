@@ -4,7 +4,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { ICreateClub, IUpdateClub, IQuery } from './interfaces/club.interface';
 import { ClubPatterns } from './patterns/club.pattern';
 import { ClubService } from './club.service';
-import { IUser } from './interfaces/user.interface';
+import { IUser } from '../../common/interfaces/user.interface';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 
 @Controller()

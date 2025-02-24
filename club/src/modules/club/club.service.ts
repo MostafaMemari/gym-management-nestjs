@@ -8,15 +8,15 @@ import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
 import { EntityName } from '../../common/enums/entity.enum';
 import { UserPatterns } from '../../common/enums/patterns.events';
 import { Services } from '../../common/enums/services.enum';
+import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from '../../common/utils/response';
 import { CacheService } from '../cache/cache.service';
-import { CacheKeys, CachePatterns } from '../cache/enums/cache.enum';
+import { CachePatterns } from '../cache/enums/cache.enum';
 import { ClubEntity } from './entities/club.entity';
 import { ClubMessages } from './enums/club.message';
 import { ICreateClub, IQuery, IUpdateClub } from './interfaces/club.interface';
-import { IUser } from './interfaces/user.interface';
-import { IPagination } from '../../common/interfaces/pagination.interface';
+import { IUser } from '../../common/interfaces/user.interface';
 
 @Injectable()
 export class ClubService {
@@ -41,7 +41,6 @@ export class ClubService {
       const club = this.clubRepository.create({ ...createClubDto, ownerId: user.id });
       await this.clubRepository.save(club);
 
-      this.clearClubsCache();
       return ResponseUtil.success(club, ClubMessages.CreatedClub);
     } catch (error) {
       return ResponseUtil.error(error?.message || ClubMessages.FailedToCreateClub, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);

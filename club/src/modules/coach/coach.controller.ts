@@ -4,7 +4,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CoachService } from './coach.service';
 import { ICreateCoach, IQuery, IUpdateCoach } from './interfaces/coach.interface';
 import { CoachPatterns } from './patterns/coach.pattern';
-import { IUser } from '../club/interfaces/user.interface';
+import { IUser } from '../../common/interfaces/user.interface';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 
 @Controller()
@@ -36,14 +36,14 @@ export class CoachController {
     return this.coachService.getAll(user, { queryDto, paginationDto });
   }
 
-  @MessagePattern(CoachPatterns.RemoveUserCoach)
+  @MessagePattern(CoachPatterns.GetCoach)
   findOne(@Payload() data: { user: IUser; coachId: number }) {
     const { user, coachId } = data;
 
     return this.coachService.findOneById(user, coachId);
   }
 
-  @MessagePattern(CoachPatterns.GetCoach)
+  @MessagePattern(CoachPatterns.RemoveUserCoach)
   remove(@Payload() data: { user: IUser; coachId: number }) {
     const { user, coachId } = data;
 
