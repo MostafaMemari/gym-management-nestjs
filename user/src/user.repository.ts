@@ -1,6 +1,7 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "./prisma/prisma.service";
-import { Prisma, User } from "@prisma/client";
+import { Prisma, Role, User } from "@prisma/client";
+import { UserMessages } from "./common/enums/user.messages";
 
 @Injectable()
 export class UserRepository {
@@ -67,5 +68,22 @@ export class UserRepository {
             },
             ...args
         })
+    }
+
+    updateRole(userId: number, newRole: Role): Promise<Prisma.UserUpdateInput> {
+        return this.prisma.user.update({
+            where: { id: userId },
+            data: { role: newRole }
+        })
+    }
+
+    async findByIdAndThrow(userId: number): Promise<User> {
+        const user = await this.prisma.user.findFirst({ where: { id: userId } })
+
+        if (!user) {
+            throw new NotFoundException(UserMessages.NotFoundUser)
+        }
+
+        return user
     }
 }
