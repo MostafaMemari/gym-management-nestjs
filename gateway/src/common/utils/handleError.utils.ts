@@ -7,12 +7,18 @@ export function handleServiceResponse(data: ServiceResponse) {
   return data;
 }
 
-export function handleError(error: any, defaultMessage: string = '', service: string) {
+export function handleError(
+  error: any,
+  defaultMessage: string = '',
+  service: string,
+) {
   const logger = new Logger('ErrorHandler');
 
   const timestamp = new Date().toISOString();
 
-  logger.error(`[${timestamp}] [${service}] ${error?.message || defaultMessage}`);
+  logger.error(
+    `[${timestamp}] [${service}] ${error?.message || defaultMessage}`,
+  );
 
   throw new HttpException(
     {

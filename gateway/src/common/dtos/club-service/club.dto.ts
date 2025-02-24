@@ -9,11 +9,21 @@ export class CreateClubDto {
   @IsString()
   @Length(2, 120)
   @Transform(({ value }) => value?.trim())
-  @ApiProperty({ type: String, minLength: 2, maxLength: 120, required: true, example: 'آکادمی تکواندو یاری' })
+  @ApiProperty({
+    type: String,
+    minLength: 2,
+    maxLength: 120,
+    required: true,
+    example: 'آکادمی تکواندو یاری',
+  })
   name: string;
 
   @IsNotEmpty()
-  @ApiProperty({ example: [Gender.Male, Gender.Female], enum: Gender, isArray: true })
+  @ApiProperty({
+    example: [Gender.Male, Gender.Female],
+    enum: Gender,
+    isArray: true,
+  })
   genders: Gender[];
 
   @IsOptional()
@@ -26,7 +36,13 @@ export class CreateClubDto {
   @IsString()
   @Length(10, 200)
   @Transform(({ value }) => value?.trim())
-  @ApiPropertyOptional({ type: String, maxLength: 100, minLength: 10, required: true, example: '' })
+  @ApiPropertyOptional({
+    type: String,
+    maxLength: 100,
+    minLength: 10,
+    required: true,
+    example: '',
+  })
   address?: string;
 }
 

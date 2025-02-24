@@ -1,3 +1,3 @@
 export enum RbacMessages {
-    CannotChangeRole = "You cannot change your role"
+  CannotChangeRole = 'You cannot change your role',
 }

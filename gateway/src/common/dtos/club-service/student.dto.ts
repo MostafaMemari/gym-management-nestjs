@@ -21,7 +21,13 @@ export class CreateStudentDto {
   @IsString()
   @Length(5, 80)
   @Transform(({ value }) => value?.trim())
-  @ApiProperty({ type: String, minLength: 5, maxLength: 80, required: true, example: 'مصطفی معماری' })
+  @ApiProperty({
+    type: String,
+    minLength: 5,
+    maxLength: 80,
+    required: true,
+    example: 'مصطفی معماری',
+  })
   full_name: string;
 
   @IsNotEmpty()
@@ -44,14 +50,25 @@ export class CreateStudentDto {
   @IsString()
   @Length(2, 80)
   @Transform(({ value }) => value?.trim())
-  @ApiPropertyOptional({ type: String, maxLength: 80, minLength: 2, required: true, example: '' })
+  @ApiPropertyOptional({
+    type: String,
+    maxLength: 80,
+    minLength: 2,
+    required: true,
+    example: '',
+  })
   father_name?: string;
 
   @IsNotEmpty()
   @IsString()
   @MinLength(10)
   @Transform(({ value }) => value?.trim())
-  @ApiProperty({ type: String, example: '4900782343', minLength: 10, maxLength: 10 })
+  @ApiProperty({
+    type: String,
+    example: '4900782343',
+    minLength: 10,
+    maxLength: 10,
+  })
   national_code: string;
 
   @IsOptional()
@@ -70,7 +87,13 @@ export class CreateStudentDto {
   @IsString()
   @Length(10, 200)
   @Transform(({ value }) => value?.trim())
-  @ApiPropertyOptional({ type: String, maxLength: 100, minLength: 10, required: true, example: '' })
+  @ApiPropertyOptional({
+    type: String,
+    maxLength: 100,
+    minLength: 10,
+    required: true,
+    example: '',
+  })
   address?: string;
 
   @IsNotEmpty()

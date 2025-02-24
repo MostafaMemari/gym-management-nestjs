@@ -19,7 +19,10 @@ import { lastValueFrom, timeout } from 'rxjs';
 
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { GetUser } from '../../../common/decorators/get-user.decorator';
-import { CreateCoachDto, UpdateCoachDto } from '../../../common/dtos/club-service/coach.dto';
+import {
+  CreateCoachDto,
+  UpdateCoachDto,
+} from '../../../common/dtos/club-service/coach.dto';
 import { PaginationDto } from '../../../common/dtos/shared.dto';
 import { User } from '../../../common/dtos/user.dto';
 import { CoachPatterns } from '../../../common/enums/club.events';
@@ -28,17 +31,26 @@ import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { UploadFileS3 } from '../../../common/interceptors/upload-file.interceptor';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
 import { UploadFileValidationPipe } from '../../../common/pipes/upload-file.pipe';
-import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
+import {
+  handleError,
+  handleServiceResponse,
+} from '../../../common/utils/handleError.utils';
 
 @Controller('coaches')
 @ApiTags('Coaches')
 @AuthDecorator()
 export class CoachController {
-  constructor(@Inject(Services.CLUB) private readonly clubServiceClient: ClientProxy) {}
+  constructor(
+    @Inject(Services.CLUB) private readonly clubServiceClient: ClientProxy,
+  ) {}
 
   private async checkConnection(): Promise<boolean> {
     try {
-      return await lastValueFrom(this.clubServiceClient.send(CoachPatterns.CheckConnection, {}).pipe(timeout(5000)));
+      return await lastValueFrom(
+        this.clubServiceClient
+          .send(CoachPatterns.CheckConnection, {})
+          .pipe(timeout(5000)),
+      );
     } catch (error) {
       throw new InternalServerErrorException('Coach service is not connected');
     }
@@ -50,13 +62,24 @@ export class CoachController {
   async create(
     @GetUser() user: User,
     @Body() createCoachDto: CreateCoachDto,
-    @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)')) image: Express.Multer.File,
+    @UploadedFile(
+      new UploadFileValidationPipe(
+        10 * 1024 * 1024,
+        'image/(png|jpg|jpeg|webp)',
+      ),
+    )
+    image: Express.Multer.File,
   ) {
     try {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(CoachPatterns.CreateCoach, { user, createCoachDto: { ...createCoachDto, image } }).pipe(timeout(10000)),
+        this.clubServiceClient
+          .send(CoachPatterns.CreateCoach, {
+            user,
+            createCoachDto: { ...createCoachDto, image },
+          })
+          .pipe(timeout(10000)),
       );
 
       return handleServiceResponse(data);
@@ -72,13 +95,23 @@ export class CoachController {
     @GetUser() user: User,
     @Param('id', ParseIntPipe) id: number,
     @Body() updateCoachDto: UpdateCoachDto,
-    @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)')) image: Express.Multer.File,
+    @UploadedFile(
+      new UploadFileValidationPipe(
+        10 * 1024 * 1024,
+        'image/(png|jpg|jpeg|webp)',
+      ),
+    )
+    image: Express.Multer.File,
   ) {
     try {
       await this.checkConnection();
       const data: ServiceResponse = await lastValueFrom(
         this.clubServiceClient
-          .send(CoachPatterns.UpdateCoach, { user, coachId: id, updateCoachDto: { ...updateCoachDto, image } })
+          .send(CoachPatterns.UpdateCoach, {
+            user,
+            coachId: id,
+            updateCoachDto: { ...updateCoachDto, image },
+          })
           .pipe(timeout(5000)),
       );
 
@@ -89,12 +122,17 @@ export class CoachController {
   }
 
   @Get()
-  async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto): Promise<any> {
+  async findAll(
+    @GetUser() user: User,
+    @Query() paginationDto: PaginationDto,
+  ): Promise<any> {
     try {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(CoachPatterns.GetCoaches, { user, paginationDto }).pipe(timeout(5000)),
+        this.clubServiceClient
+          .send(CoachPatterns.GetCoaches, { user, paginationDto })
+          .pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -107,7 +145,9 @@ export class CoachController {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(CoachPatterns.GetCoach, { user, coachId: id }).pipe(timeout(5000)),
+        this.clubServiceClient
+          .send(CoachPatterns.GetCoach, { user, coachId: id })
+          .pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -122,7 +162,9 @@ export class CoachController {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(CoachPatterns.RemoveUserCoach, { user, coachId: id }).pipe(timeout(5000)),
+        this.clubServiceClient
+          .send(CoachPatterns.RemoveUserCoach, { user, coachId: id })
+          .pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
