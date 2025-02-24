@@ -50,13 +50,19 @@ export class CoachController {
   async create(
     @GetUser() user: User,
     @Body() createCoachDto: CreateCoachDto,
-    @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)')) image: Express.Multer.File,
+    @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)'))
+    image: Express.Multer.File,
   ) {
     try {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(CoachPatterns.CreateCoach, { user, createCoachDto: { ...createCoachDto, image } }).pipe(timeout(10000)),
+        this.clubServiceClient
+          .send(CoachPatterns.CreateCoach, {
+            user,
+            createCoachDto: { ...createCoachDto, image },
+          })
+          .pipe(timeout(10000)),
       );
 
       return handleServiceResponse(data);
@@ -72,13 +78,18 @@ export class CoachController {
     @GetUser() user: User,
     @Param('id', ParseIntPipe) id: number,
     @Body() updateCoachDto: UpdateCoachDto,
-    @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)')) image: Express.Multer.File,
+    @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)'))
+    image: Express.Multer.File,
   ) {
     try {
       await this.checkConnection();
       const data: ServiceResponse = await lastValueFrom(
         this.clubServiceClient
-          .send(CoachPatterns.UpdateCoach, { user, coachId: id, updateCoachDto: { ...updateCoachDto, image } })
+          .send(CoachPatterns.UpdateCoach, {
+            user,
+            coachId: id,
+            updateCoachDto: { ...updateCoachDto, image },
+          })
           .pipe(timeout(5000)),
       );
 

@@ -1,6 +1,6 @@
 import { Module, ValidationPipe } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { AuthController } from './controllers/auth.controller';
+import { AuthController } from './controllers/auth/auth.controller';
 import { ConfigModule } from '@nestjs/config';
 import envConfig from '../configs/env.config';
 import { UserController } from './controllers/user.controller';
@@ -11,6 +11,7 @@ import { Services } from '../common/enums/services.enum';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { CoachController } from './controllers/club/coach.controller';
 import { ClubController } from './controllers/club/club.controller';
+import { RbacController } from './controllers/auth/rbac.controller';
 
 @Module({
   imports: [
@@ -66,7 +67,7 @@ import { ClubController } from './controllers/club/club.controller';
       },
     ]),
   ],
-  controllers: [AuthController, UserController, StudentController, CoachController, ClubController, PermissionController],
+  controllers: [AuthController, UserController, StudentController, CoachController, ClubController, PermissionController, RbacController],
   providers: [
     {
       provide: APP_PIPE,

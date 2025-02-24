@@ -25,3 +25,8 @@ export interface IPagination {
 export interface ISearchUser extends IPagination {
   query: string;
 }
+
+export interface IChangeRole {
+  userId: number
+  role: Role
+}

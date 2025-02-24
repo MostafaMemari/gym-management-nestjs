@@ -7,11 +7,9 @@ import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(GatewayModule, {
-    logger: process.env.NODE_ENV === 'production'
-      ? ['log', 'warn', 'error']
-      : ['log', 'warn', 'debug', 'error', 'verbose', 'fatal']
+    logger: process.env.NODE_ENV === 'production' ? ['log', 'warn', 'error'] : ['log', 'warn', 'debug', 'error', 'verbose', 'fatal'],
   });
-  
+
   const logger = new Logger('NestApplication');
 
   const { PORT = 4000 } = process.env;

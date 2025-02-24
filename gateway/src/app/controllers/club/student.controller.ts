@@ -50,14 +50,18 @@ export class StudentController {
   async create(
     @GetUser() user: User,
     @Body() createStudentDto: CreateStudentDto,
-    @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)')) image: Express.Multer.File,
+    @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)'))
+    image: Express.Multer.File,
   ) {
     try {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
         this.clubServiceClient
-          .send(StudentPatterns.CreateStudent, { user, createStudentDto: { ...createStudentDto, image } })
+          .send(StudentPatterns.CreateStudent, {
+            user,
+            createStudentDto: { ...createStudentDto, image },
+          })
           .pipe(timeout(10000)),
       );
 
@@ -74,13 +78,18 @@ export class StudentController {
     @GetUser() user: User,
     @Param('id', ParseIntPipe) id: number,
     @Body() updateStudentDto: UpdateStudentDto,
-    @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)')) image: Express.Multer.File,
+    @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)'))
+    image: Express.Multer.File,
   ) {
     try {
       await this.checkConnection();
       const data: ServiceResponse = await lastValueFrom(
         this.clubServiceClient
-          .send(StudentPatterns.UpdateStudent, { user, studentId: id, updateStudentDto: { ...updateStudentDto, image } })
+          .send(StudentPatterns.UpdateStudent, {
+            user,
+            studentId: id,
+            updateStudentDto: { ...updateStudentDto, image },
+          })
           .pipe(timeout(5000)),
       );
 

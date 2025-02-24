@@ -4,4 +4,6 @@ export enum UserMessages {
   NotFoundUser = 'User not found',
   AlreadyExistsUserWithUsername = 'User with this username already exists.',
   RemovedUserSuccess = 'User removed successfully',
+  ChangedRoleSuccess = 'Role changed successfully',
+  AlreadyAssignedRole = 'This role is already assigned to the user.'
 }

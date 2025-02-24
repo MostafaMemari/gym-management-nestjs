@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsJWT, IsNotEmpty, IsPhoneNumber, IsString, Matches, MaxLength, MinLength } from 'class-validator';
-import { ConfirmPassword } from '../decorators/confirmPassword.decorator';
+import { IsJWT, IsNotEmpty, IsPhoneNumber, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { ConfirmPassword } from '../../decorators/confirmPassword.decorator';
 
 export class SignupDto {
   @IsNotEmpty()

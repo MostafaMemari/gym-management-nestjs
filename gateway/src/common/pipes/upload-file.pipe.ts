@@ -3,7 +3,10 @@ import { ParseFilePipe, MaxFileSizeValidator, FileTypeValidator } from '@nestjs/
 
 @Injectable()
 export class UploadFileValidationPipe implements PipeTransform {
-  constructor(private maxSize: number, private fileType: string) {}
+  constructor(
+    private maxSize: number,
+    private fileType: string,
+  ) {}
 
   transform(file: Express.Multer.File) {
     if (!file) return file;

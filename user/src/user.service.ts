@@ -2,7 +2,7 @@ import { ConflictException, HttpStatus, Injectable, NotFoundException } from '@n
 import { Prisma, Role, User } from '@prisma/client';
 import { ServiceResponse } from './common/interfaces/serviceResponse.interface';
 import { UserMessages } from './common/enums/user.messages';
-import { IPagination, ISearchUser } from './common/interfaces/user.interface';
+import { IChangeRole, IPagination, ISearchUser } from './common/interfaces/user.interface';
 import { pagination } from './common/utils/pagination.utils';
 import { RpcException } from '@nestjs/microservices';
 import { UserRepository } from './user.repository';
@@ -209,6 +209,22 @@ export class UserService {
       return ResponseUtil.success({ ...pagination(paginationDto, users) }, '', HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
+    }
+  }
+
+  async changeRole(roleDto: IChangeRole): Promise<ServiceResponse> {
+    try {
+      const { role, userId } = roleDto
+
+      const user = await this.userRepository.findByIdAndThrow(userId)
+
+      if (user.role == role) throw new ConflictException(UserMessages.AlreadyAssignedRole)
+
+      await this.userRepository.updateRole(userId, role)
+
+      return ResponseUtil.success({}, UserMessages.ChangedRoleSuccess, HttpStatus.OK)
+    } catch (error) {
+      throw new RpcException(error)
     }
   }
 }

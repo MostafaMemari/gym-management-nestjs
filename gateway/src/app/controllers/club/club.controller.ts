@@ -35,7 +35,12 @@ export class ClubController {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(ClubPatterns.CreateClub, { user, createClubDto: { ...createClubDto } }).pipe(timeout(10000)),
+        this.clubServiceClient
+          .send(ClubPatterns.CreateClub, {
+            user,
+            createClubDto: { ...createClubDto },
+          })
+          .pipe(timeout(10000)),
       );
 
       return handleServiceResponse(data);

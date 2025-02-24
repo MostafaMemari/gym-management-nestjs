@@ -2,11 +2,11 @@ import { Controller } from '@nestjs/common';
 import { UserService } from './user.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { UserPatterns } from './common/enums/user.events';
-import { ICreateUser, ICreateUserCoach, ICreateUserStudent, IPagination, ISearchUser } from './common/interfaces/user.interface';
+import { IChangeRole, ICreateUser, ICreateUserCoach, ICreateUserStudent, IPagination, ISearchUser } from './common/interfaces/user.interface';
 
 @Controller()
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) { }
 
   @MessagePattern(UserPatterns.CheckConnection)
   checkConnection() {
@@ -56,5 +56,10 @@ export class UserController {
   @MessagePattern(UserPatterns.SearchUser)
   search(@Payload() data: ISearchUser) {
     return this.userService.search(data);
+  }
+
+  @MessagePattern(UserPatterns.ChangeUserRole)
+  changeRole(@Payload() data: IChangeRole) {
+    return this.userService.changeRole(data)
   }
 }

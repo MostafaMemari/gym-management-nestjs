@@ -3,5 +3,6 @@ export enum UserPatterns {
     CheckConnection = "check_connection",
     GetUserByIdentifier = "get_user_by_identifier",
     GetUserById = 'get_user_by_id',
-    FindOrCreate = "find_or_create"
+    FindOrCreate = "find_or_create",
+    ChangeUserRole = "change_user_role"
 }
