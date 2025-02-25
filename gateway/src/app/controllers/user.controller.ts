@@ -1,4 +1,4 @@
-import { Controller, Get, HttpException, Inject, InternalServerErrorException, Param, ParseIntPipe, Query } from '@nestjs/common';
+import { Controller, Get, Inject, Param, ParseIntPipe, Query } from '@nestjs/common';
 import { Services } from '../../common/enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
@@ -7,24 +7,19 @@ import { UserPatterns } from '../../common/enums/user.events';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { PaginationDto, SearchDto } from '../../common/dtos/shared.dto';
 import { handleError, handleServiceResponse } from 'src/common/utils/handleError.utils';
+import { AuthDecorator } from '../../common/decorators/auth.decorator';
+import { checkConnection } from 'src/common/utils/checkConnection.utils';
 
 @Controller('user')
 @ApiTags('User')
+@AuthDecorator()
 export class UserController {
-  constructor(@Inject(Services.USER) private readonly userServiceClient: ClientProxy) {}
-
-  async checkConnection(): Promise<boolean> {
-    try {
-      return await lastValueFrom(this.userServiceClient.send(UserPatterns.CheckConnection, {}).pipe(timeout(5000)));
-    } catch (error) {
-      throw new InternalServerErrorException('User service is not connected');
-    }
-  }
+  constructor(@Inject(Services.USER) private readonly userServiceClient: ClientProxy) { }
 
   @Get()
   async getUsers(@Query() paginationDto: PaginationDto) {
     try {
-      await this.checkConnection();
+      await checkConnection(Services.USER, this.userServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.GetUsers, { ...paginationDto }).pipe(timeout(5000)));
 
@@ -37,7 +32,7 @@ export class UserController {
   @Get('search')
   async searchUser(@Query() searchDto: SearchDto) {
     try {
-      await this.checkConnection();
+      await checkConnection(Services.USER, this.userServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.SearchUser, { ...searchDto }).pipe(timeout(5000)));
 
@@ -50,7 +45,7 @@ export class UserController {
   @Get(':id')
   async getUserById(@Param('id', ParseIntPipe) id: number) {
     try {
-      await this.checkConnection();
+      await checkConnection(Services.USER, this.userServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.GetUserById, { userId: id }).pipe(timeout(5000)));
 
