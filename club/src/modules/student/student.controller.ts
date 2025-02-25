@@ -35,18 +35,18 @@ export class StudentController {
     return this.studentService.update(updateStudentDto, student);
   }
 
-  @MessagePattern(StudentPatterns.GetStudents)
-  findAll(@Payload() data: { user: IUser; studentQueryDto: ISeachStudentQuery; paginationDto: IPagination }) {
-    const { user, studentQueryDto, paginationDto } = data;
-
-    return this.studentService.getAll(user, { studentQueryDto, paginationDto });
-  }
-
   @MessagePattern(StudentPatterns.GetStudent)
   findOne(@Payload() data: { user: IUser; studentId: number }) {
     const { user, studentId } = data;
 
     return this.studentService.findOneById(user, studentId);
+  }
+
+  @MessagePattern(StudentPatterns.GetStudents)
+  findAll(@Payload() data: { user: IUser; studentQueryDto: ISeachStudentQuery; paginationDto: IPagination }) {
+    const { user, studentQueryDto, paginationDto } = data;
+
+    return this.studentService.getAll(user, { studentQueryDto, paginationDto });
   }
 
   @MessagePattern(StudentPatterns.RemoveUserStudent)
@@ -56,8 +56,8 @@ export class StudentController {
     return this.studentService.removeById(user, studentId);
   }
 
-  @MessagePattern(StudentPatterns.checkExistStudentById)
-  checkExistById(@Payload() data: { user: IUser; studentId: number }) {
-    return this.studentService.findStudentById(data.studentId, {});
-  }
+  // @MessagePattern(StudentPatterns.checkExistStudentById)
+  // checkExistById(@Payload() data: { user: IUser; studentId: number }) {
+  //   return this.studentService.findStudentById(data.studentId, {});
+  // }
 }

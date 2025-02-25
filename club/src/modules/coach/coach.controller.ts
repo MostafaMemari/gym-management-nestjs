@@ -4,7 +4,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CoachService } from './coach.service';
 import { ICreateCoach, IQuery, IUpdateCoach } from './interfaces/coach.interface';
 import { CoachPatterns } from './patterns/coach.pattern';
-import { ValidateCoachPipe } from './pipes/coach-validation.pipe';
+import { ValidateCoachCreatePipe } from './pipes/coachCreate.pipe';
 
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { IUser } from '../../common/interfaces/user.interface';
@@ -19,7 +19,7 @@ export class CoachController {
   }
 
   @MessagePattern(CoachPatterns.CreateCoach)
-  @UsePipes(ValidateCoachPipe)
+  @UsePipes(ValidateCoachCreatePipe)
   create(@Payload() data: { user: IUser; createCoachDto: ICreateCoach }) {
     const { user, createCoachDto } = data;
 
@@ -53,8 +53,8 @@ export class CoachController {
     return this.coachService.removeById(user, coachId);
   }
 
-  @MessagePattern(CoachPatterns.checkExistCoachById)
-  checkExistById(@Payload() data: { coachId: number }) {
-    return this.coachService.findCoachById(data.coachId, {});
-  }
+  // @MessagePattern(CoachPatterns.checkExistCoachById)
+  // checkExistById(@Payload() data: { coachId: number }) {
+  //   return this.coachService.findCoachById(data.coachId, {});
+  // }
 }

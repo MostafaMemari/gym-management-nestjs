@@ -111,7 +111,7 @@ export class StudentService {
 
   async findOneById(user: IUser, studentId: number): Promise<ServiceResponse> {
     try {
-      const student = await this.checkStudentOwnership(studentId, user.id);
+      const student = await this.validateOwnership(studentId, user.id);
 
       return ResponseUtil.success(student, StudentMessages.GetStudentSuccess);
     } catch (error) {
@@ -123,7 +123,7 @@ export class StudentService {
     await queryRunner.startTransaction();
 
     try {
-      const student = await this.checkStudentOwnership(studentId, user.id);
+      const student = await this.validateOwnership(studentId, user.id);
 
       await this.removeUserById(Number(student?.userId));
 
@@ -170,7 +170,7 @@ export class StudentService {
     await this.awsService.deleteFile(imageKey);
   }
 
-  async checkStudentOwnership(studentId: number, userId: number): Promise<StudentEntity> {
+  async validateOwnership(studentId: number, userId: number): Promise<StudentEntity> {
     const queryBuilder = this.studentRepository.createQueryBuilder(EntityName.Students);
 
     const student = await queryBuilder
@@ -183,19 +183,17 @@ export class StudentService {
 
     return student;
   }
+  async ensureUniqueNationalCode(nationalCode: string, userId: number): Promise<StudentEntity> {
+    const queryBuilder = this.studentRepository.createQueryBuilder(EntityName.Students);
 
-  async findStudent(field: keyof StudentEntity, value: any, notFoundError = false, duplicateError = false) {
-    const student = await this.studentRepository.findOneBy({ [field]: value });
+    const student = await queryBuilder
+      .where('students.national_code = :nationalCode', { nationalCode })
+      .leftJoinAndSelect('students.club', 'club')
+      .andWhere('club.ownerId = :userId', { userId })
+      .getOne();
 
-    if (!student && notFoundError) throw new NotFoundException(StudentMessages.NotFoundStudent);
-    if (student && duplicateError) throw new ConflictException(StudentMessages.DuplicateNationalCode);
+    if (student) throw new BadRequestException(StudentMessages.DuplicateNationalCode);
 
     return student;
-  }
-  async findStudentById(studentId: number, { notFoundError = false }) {
-    return this.findStudent('id', studentId, notFoundError);
-  }
-  async findStudentByNationalCode(nationalCode: string, { duplicateError = false, notFoundError = false }) {
-    return this.findStudent('national_code', nationalCode, notFoundError, duplicateError);
   }
 }

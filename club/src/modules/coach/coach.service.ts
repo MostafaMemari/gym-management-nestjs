@@ -76,10 +76,10 @@ export class CoachService {
     let updateData: Partial<CoachEntity> = {};
 
     try {
-      const coach = await this.findCoachById(coachId, { notFoundError: true });
+      const coach = await this.validateOwnership(coachId, user.id);
 
       Object.keys(updateCoachDto).forEach((key) => {
-        if (updateCoachDto[key] !== undefined && updateCoachDto[key] !== coach[key]) {
+        if (key !== 'image' && updateCoachDto[key] !== undefined && updateCoachDto[key] !== coach[key]) {
           updateData[key] = updateCoachDto[key];
         }
       });
@@ -130,7 +130,7 @@ export class CoachService {
   }
   async findOneById(user: IUser, coachId: number): Promise<ServiceResponse> {
     try {
-      const coach = await this.checkCoachOwnership(coachId, user.id);
+      const coach = await this.validateOwnership(coachId, user.id);
 
       return ResponseUtil.success(coach, CoachMessages.RemovedCoachSuccess);
     } catch (error) {
@@ -139,7 +139,7 @@ export class CoachService {
   }
   async removeById(user: IUser, coachId: number): Promise<ServiceResponse> {
     try {
-      const coach = await this.checkCoachOwnership(coachId, user.id);
+      const coach = await this.validateOwnership(coachId, user.id);
       // await this.ensureCoachHasNoRelations(coachId);
 
       await this.removeUserById(Number(coach.userId));
@@ -183,28 +183,30 @@ export class CoachService {
     await this.awsService.deleteFile(imageKey);
   }
 
-  async findCoach(field: keyof CoachEntity, value: any, notFoundError = false, duplicateError = false) {
-    const coach = await this.coachRepository.findOneBy({ [field]: value });
+  async validateOwnership(coachId: number, userId: number): Promise<CoachEntity> {
+    const queryBuilder = this.coachRepository.createQueryBuilder(EntityName.Coaches);
 
-    if (!coach && notFoundError) throw new NotFoundException(CoachMessages.NotFoundCoach);
-    if (coach && duplicateError) throw new ConflictException(CoachMessages.DuplicateNationalCode);
-
-    return coach;
-  }
-  async findCoachById(coachId: number, { notFoundError = false }) {
-    return this.findCoach('id', coachId, notFoundError);
-  }
-  async findCoachByNationalCode(nationalCode: string, { duplicateError = false, notFoundError = false }) {
-    return this.findCoach('national_code', nationalCode, notFoundError, duplicateError);
-  }
-
-  async checkCoachOwnership(coachId: number, userId: number): Promise<CoachEntity> {
-    const coach = await this.coachRepository.findOne({ where: { id: coachId }, relations: ['clubs'] });
+    const coach = await queryBuilder
+      .where('coaches.id = :coachId', { coachId })
+      .leftJoinAndSelect('coaches.clubs', 'club')
+      .andWhere('club.ownerId = :userId', { userId })
+      .getOne();
 
     if (!coach) throw new BadRequestException(CoachMessages.CoachNotFound);
 
-    const isCoachInUserClubs = coach.clubs.some((club) => club.ownerId === userId);
-    if (!isCoachInUserClubs) throw new BadRequestException(CoachMessages.CoachNotBelongToUser);
+    return coach;
+  }
+
+  async ensureUniqueNationalCode(nationalCode: string, userId: number): Promise<CoachEntity> {
+    const queryBuilder = this.coachRepository.createQueryBuilder(EntityName.Coaches);
+
+    const coach = await queryBuilder
+      .where('coaches.national_code = :nationalCode', { nationalCode })
+      .leftJoinAndSelect('coaches.clubs', 'club')
+      .andWhere('club.ownerId = :userId', { userId })
+      .getOne();
+
+    if (coach) throw new BadRequestException(CoachMessages.DuplicateNationalCode);
 
     return coach;
   }
@@ -212,7 +214,7 @@ export class CoachService {
   async ensureCoachHasNoRelations(coachId: number): Promise<void> {
     const coachWithRelations = await this.coachRepository
       .createQueryBuilder('coach')
-      .leftJoin('coach.students', 'student')
+      .leftJoin('coach.coaches', 'student')
       .leftJoin('coach.clubs', 'club')
       .where('coach.id = :coachId', { coachId })
       .andWhere('(student.id IS NOT NULL OR club.id IS NOT NULL)')
