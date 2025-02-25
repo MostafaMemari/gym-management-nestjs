@@ -9,6 +9,8 @@ import { UserPatterns } from '../enums/user.events';
 import { AuthController } from '../../app/controllers/auth/auth.controller';
 import { UserController } from '../../app/controllers/user.controller';
 import { User } from '../dtos/user.dto';
+import { Reflector } from '@nestjs/core';
+import { SKIP_AUTH } from '../decorators/skip-auth.decorator';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -19,9 +21,15 @@ export class AuthGuard implements CanActivate {
     private readonly authController: AuthController,
     @Inject(forwardRef(() => UserController))
     private readonly userController: UserController,
-  ) {}
+    private readonly reflector: Reflector
+  ) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+
+    const isSkipped = this.reflector.get<boolean>(SKIP_AUTH, context.getHandler())
+
+    if (isSkipped) return true
+
     await this.authController.checkConnection();
     await this.userController.checkConnection();
 

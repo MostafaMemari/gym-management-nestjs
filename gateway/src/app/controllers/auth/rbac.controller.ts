@@ -1,8 +1,6 @@
-import { Body, ConflictException, Controller, Inject, Post, UseGuards } from '@nestjs/common';
+import { Body, ConflictException, Controller, Inject, Post } from '@nestjs/common';
 import { Services } from '../../../common/enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
-import { AuthGuard } from '../../../common/guards/auth.guard';
-import { RoleGuard } from '../../../common/guards/role.guard';
 import { Roles } from '../../../common/decorators/role.decorator';
 import { Role } from '../../../common/enums/role.enum';
 import { AuthController } from './auth.controller';
@@ -16,18 +14,19 @@ import { GetUser } from '../../../common/decorators/get-user.decorator';
 import { User } from '../../../common/dtos/user.dto';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
 import { RbacMessages } from '../../../common/enums/auth.messages';
+import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 
 @Controller('rbac')
 export class RbacController {
   constructor(
     @Inject(Services.AUTH) private readonly authServiceClientProxy: ClientProxy,
     private readonly authController: AuthController,
-  ) {}
+  ) { }
 
   private readonly timeout: number = 5000;
 
   @Post('assign-role')
-  @UseGuards(AuthGuard, RoleGuard)
+  @AuthDecorator()
   @Roles(Role.SUPER_ADMIN)
   @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
   async assignRole(@Body() assignRoleDto: AssignRoleDto, @GetUser() user: User): Promise<ServiceResponse> {
