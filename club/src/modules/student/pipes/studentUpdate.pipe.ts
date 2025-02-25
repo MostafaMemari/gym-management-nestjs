@@ -30,23 +30,23 @@ export class ValidateStudentUpdatePipe implements PipeTransform {
 
     let coach = null;
     let club = null;
+    let student = null;
 
     try {
-      if (national_code) await this.validateNationalCode(national_code);
+      if (national_code) student = await this.validateNationalCode(national_code);
 
-      const student = await this.studentService.checkStudentOwnership(studentId, userId);
+      if (!student) student = await this.studentService.validateOwnership(studentId, userId);
+
       if (clubId) club = await this.clubService.checkClubOwnership(clubId, userId);
-      if (coachId) coach = await this.coachService.checkCoachOwnership(coachId, userId);
+      if (coachId) coach = await this.coachService.validateOwnership(coachId, userId);
 
       if (gender) {
         if (!club) club = await this.clubService.checkClubOwnership(student.clubId, userId);
-        if (!coach) coach = await this.coachService.checkCoachOwnership(student.coachId, userId);
+        if (!coach) coach = await this.coachService.validateOwnership(student.coachId, userId);
 
         this.validateGender(gender, coach.gender, club.gender);
       }
 
-      if (clubId) coach = await this.clubService.checkClubOwnership(clubId, userId);
-      if (coachId) club = await this.coachService.checkCoachOwnership(coachId, userId);
       if (gender) this.validateGender(gender, coach.gender, club.genders);
 
       if (!this.req.data) this.req.data = {};
@@ -58,8 +58,8 @@ export class ValidateStudentUpdatePipe implements PipeTransform {
     }
   }
 
-  private async validateNationalCode(national_code?: string) {
-    if (national_code) await this.studentService.findStudentByNationalCode(national_code, { duplicateError: true });
+  private async validateNationalCode(national_code?: string, userId?: number) {
+    if (national_code) await this.studentService.ensureUniqueNationalCode(national_code, userId);
   }
   private validateGender(studentGender: Gender, coachGender: Gender, allowedGenders: Gender[]) {
     if (coachGender && !isSameGender(studentGender, coachGender)) {

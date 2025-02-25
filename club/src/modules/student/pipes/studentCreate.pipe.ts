@@ -28,10 +28,10 @@ export class ValidateStudentCreatePipe implements PipeTransform {
     const userId = this.req?.data.user.id;
 
     try {
-      if (national_code) await this.validateNationalCode(national_code);
+      if (national_code) await this.validateNationalCode(national_code, userId);
       if (clubId && coachId) {
         const club = await this.clubService.checkClubOwnership(clubId, userId);
-        const coach = await this.coachService.checkCoachOwnership(coachId, userId);
+        const coach = await this.coachService.validateOwnership(coachId, userId);
 
         if (gender) this.validateGender(gender, coach.gender, club.genders);
       }
@@ -42,8 +42,8 @@ export class ValidateStudentCreatePipe implements PipeTransform {
     }
   }
 
-  private async validateNationalCode(national_code?: string) {
-    if (national_code) await this.studentService.findStudentByNationalCode(national_code, { duplicateError: true });
+  private async validateNationalCode(national_code?: string, userId?: number) {
+    if (national_code) await this.studentService.ensureUniqueNationalCode(national_code, userId);
   }
 
   private validateGender(studentGender: Gender, coachGender: Gender, allowedGenders: Gender[]) {
