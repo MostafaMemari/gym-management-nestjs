@@ -4,12 +4,12 @@ import { Request } from 'express';
 
 import { ResponseUtil } from '../../../common/utils/response';
 import { ClubService } from '../../club/club.service';
-import { CoachService } from '../../coach/coach.service';
+import { CoachService } from '../coach.service';
 
 import { Gender } from '../../../common/enums/gender.enum';
 
 @Injectable({ scope: Scope.REQUEST })
-export class ValidateCoachPipe implements PipeTransform {
+export class ValidateCoachUpdatePipe implements PipeTransform {
   constructor(
     private readonly clubService: ClubService,
     private readonly coachService: CoachService,
@@ -21,9 +21,11 @@ export class ValidateCoachPipe implements PipeTransform {
 
     const { clubIds, national_code, gender } = value.createCoachDto;
     const userId = this.req?.data.user.id;
+    const coachId = this.req?.data?.coachId;
+    let coach = null;
 
     try {
-      if (national_code) await this.validateNationalCode(national_code);
+      if (national_code) coach = await this.validateNationalCode(national_code, userId);
 
       if (clubIds && gender) {
         const ownedClubs = await this.getOwnedClubs(userId, clubIds);
@@ -37,10 +39,8 @@ export class ValidateCoachPipe implements PipeTransform {
     }
   }
 
-  private async validateNationalCode(national_code?: string) {
-    if (national_code) {
-      await this.coachService.findCoachByNationalCode(national_code, { duplicateError: true });
-    }
+  private async validateNationalCode(national_code?: string, userId?: number) {
+    if (national_code) await this.coachService.ensureUniqueNationalCode(national_code, userId);
   }
   private async getOwnedClubs(userId: number, clubIds: number[]) {
     return this.clubService.findOwnedClubs(userId, clubIds);

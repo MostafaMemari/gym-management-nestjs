@@ -9,6 +9,7 @@ declare global {
         user?: IUser;
         student?: StudentEntity;
         studentId?: number;
+        coachId?: number;
       };
     }
   }
