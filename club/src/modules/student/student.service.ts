@@ -4,7 +4,7 @@ import { lastValueFrom, timeout } from 'rxjs';
 
 import { StudentEntity } from './entities/student.entity';
 import { StudentMessages } from './enums/student.message';
-import { ICreateStudent, IQuery, IUpdateStudent } from './interfaces/student.interface';
+import { ICreateStudent, ISeachStudentQuery, IUpdateStudent } from './interfaces/student.interface';
 import { StudentRepository } from './repositories/student.repository';
 
 import { AwsService } from '../s3AWS/s3AWS.service';
@@ -62,7 +62,7 @@ export class StudentService {
     }
   }
 
-  async updateById(updateStudentDto: IUpdateStudent, student: StudentEntity) {
+  async update(updateStudentDto: IUpdateStudent, student: StudentEntity) {
     let imageKey: string | null = null;
     let updateData: Partial<StudentEntity> = {};
 
@@ -91,32 +91,24 @@ export class StudentService {
     }
   }
 
-  async getAll(user: IUser, query: { queryDto: IQuery; paginationDto: IPagination }): Promise<PageDto<StudentEntity>> {
-    const { take, page } = query?.paginationDto;
-    const cacheKey = `${CacheKeys.STUDENT_LIST}-${page}-${take}`;
+  async getAll(user: IUser, query: { studentQueryDto: ISeachStudentQuery; paginationDto: IPagination }): Promise<PageDto<StudentEntity>> {
+    const { take, page } = query.paginationDto;
+
+    const cacheKey = `${CacheKeys.STUDENT_LIST}-${user.id}-${page}-${take}-${JSON.stringify(query.studentQueryDto)}`;
 
     const cachedData = await this.cacheService.get<PageDto<StudentEntity>>(cacheKey);
     if (cachedData) return cachedData;
 
-    const queryBuilder = this.studentRepository.createQueryBuilder(EntityName.Students);
+    const [students, count] = await this.studentRepository.getStudentsWithFilters(user.id, query.studentQueryDto, page, take);
 
-    const [students, count] = await queryBuilder
-      .leftJoin('students.coach', 'coach')
-      .addSelect(['coach.id', 'coach.full_name'])
-      .leftJoin('students.club', 'club')
-      .addSelect(['club.id', 'club.name'])
-      .where('club.ownerId = :userId', { userId: user.id })
-      .skip((page - 1) * take)
-      .take(take)
-      .getManyAndCount();
-
-    const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
+    const pageMetaDto = new PageMetaDto(count, query.paginationDto);
     const result = new PageDto(students, pageMetaDto);
 
-    await this.cacheService.set(cacheKey, result, 1);
+    await this.cacheService.set(cacheKey, result, 60);
 
     return result;
   }
+
   async findOneById(user: IUser, studentId: number): Promise<ServiceResponse> {
     try {
       const student = await this.checkStudentOwnership(studentId, user.id);

@@ -1,7 +1,7 @@
 import { Controller, UsePipes } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
-import { ICreateStudent, IQuery, IUpdateStudent } from './interfaces/student.interface';
+import { ICreateStudent, ISeachStudentQuery, IUpdateStudent } from './interfaces/student.interface';
 import { StudentPatterns } from './patterns/student.pattern';
 import { StudentService } from './student.service';
 
@@ -32,14 +32,14 @@ export class StudentController {
   update(@Payload() data: { updateStudentDto: IUpdateStudent; student: StudentEntity }) {
     const { updateStudentDto, student } = data;
 
-    return this.studentService.updateById(updateStudentDto, student);
+    return this.studentService.update(updateStudentDto, student);
   }
 
   @MessagePattern(StudentPatterns.GetStudents)
-  findAll(@Payload() data: { user: IUser; queryDto: IQuery; paginationDto: IPagination }) {
-    const { user, queryDto, paginationDto } = data;
+  findAll(@Payload() data: { user: IUser; studentQueryDto: ISeachStudentQuery; paginationDto: IPagination }) {
+    const { user, studentQueryDto, paginationDto } = data;
 
-    return this.studentService.getAll(user, { queryDto, paginationDto });
+    return this.studentService.getAll(user, { studentQueryDto, paginationDto });
   }
 
   @MessagePattern(StudentPatterns.GetStudent)

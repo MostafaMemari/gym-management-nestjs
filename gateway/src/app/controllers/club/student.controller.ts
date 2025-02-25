@@ -19,7 +19,7 @@ import { lastValueFrom, timeout } from 'rxjs';
 
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { GetUser } from '../../../common/decorators/get-user.decorator';
-import { CreateStudentDto, UpdateStudentDto } from '../../../common/dtos/club-service/student.dto';
+import { CreateStudentDto, StudentQueryDto, UpdateStudentDto } from '../../../common/dtos/club-service/student.dto';
 import { PaginationDto } from '../../../common/dtos/shared.dto';
 import { User } from '../../../common/dtos/user.dto';
 import { StudentPatterns } from '../../../common/enums/club.events';
@@ -100,12 +100,12 @@ export class StudentController {
   }
 
   @Get()
-  async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto): Promise<any> {
+  async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto, @Query() studentQueryDto: StudentQueryDto): Promise<any> {
     try {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(StudentPatterns.GetStudents, { user, paginationDto }).pipe(timeout(5000)),
+        this.clubServiceClient.send(StudentPatterns.GetStudents, { user, studentQueryDto, paginationDto }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
