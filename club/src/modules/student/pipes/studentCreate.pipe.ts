@@ -13,7 +13,7 @@ import { isGenderAllowed, isSameGender } from '../../../common/utils/functions';
 import { ResponseUtil } from '../../../common/utils/response';
 
 @Injectable({ scope: Scope.REQUEST })
-export class ValidateStudentPipe implements PipeTransform {
+export class ValidateStudentCreatePipe implements PipeTransform {
   constructor(
     private readonly clubService: ClubService,
     private readonly coachService: CoachService,
@@ -28,8 +28,13 @@ export class ValidateStudentPipe implements PipeTransform {
     const userId = this.req?.data.user.id;
 
     try {
-      await this.validateNationalCode(national_code);
-      if (clubId && coachId) await this.validateClubAndCoach(clubId, coachId, gender, userId);
+      if (national_code) await this.validateNationalCode(national_code);
+      if (clubId && coachId) {
+        const club = await this.clubService.checkClubOwnership(clubId, userId);
+        const coach = await this.coachService.checkCoachOwnership(coachId, userId);
+
+        if (gender) this.validateGender(gender, coach.gender, club.genders);
+      }
 
       return value;
     } catch (error) {
@@ -39,13 +44,6 @@ export class ValidateStudentPipe implements PipeTransform {
 
   private async validateNationalCode(national_code?: string) {
     if (national_code) await this.studentService.findStudentByNationalCode(national_code, { duplicateError: true });
-  }
-
-  private async validateClubAndCoach(clubId: number, coachId: number, gender: Gender, userId: number) {
-    const club = await this.clubService.checkClubOwnership(clubId, userId);
-    const coach = await this.coachService.checkCoachOwnership(coachId, userId);
-
-    this.validateGender(gender, coach.gender, club.genders);
   }
 
   private validateGender(studentGender: Gender, coachGender: Gender, allowedGenders: Gender[]) {

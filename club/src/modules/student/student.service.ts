@@ -39,7 +39,7 @@ export class StudentService {
     }
   }
 
-  async create(user: IUser, createStudentDto: ICreateStudent) {
+  async create(createStudentDto: ICreateStudent) {
     let userId = null;
     let imageKey = null;
 
@@ -62,15 +62,13 @@ export class StudentService {
     }
   }
 
-  async updateById(user: IUser, studentId: number, updateStudentDto: IUpdateStudent) {
+  async updateById(updateStudentDto: IUpdateStudent, student: StudentEntity) {
     let imageKey: string | null = null;
     let updateData: Partial<StudentEntity> = {};
 
     try {
-      const student = await this.checkStudentOwnership(studentId, user.id);
-
       Object.keys(updateStudentDto).forEach((key) => {
-        if (updateStudentDto[key] !== undefined && updateStudentDto[key] !== student[key]) {
+        if (key !== 'image' && updateStudentDto[key] !== undefined && updateStudentDto[key] !== student[key]) {
           updateData[key] = updateStudentDto[key];
         }
       });

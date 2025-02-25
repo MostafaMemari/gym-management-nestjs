@@ -3,11 +3,13 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 
 import { ICreateStudent, IQuery, IUpdateStudent } from './interfaces/student.interface';
 import { StudentPatterns } from './patterns/student.pattern';
-import { ValidateStudentPipe } from './pipes/student-validation.pipe';
 import { StudentService } from './student.service';
 
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { IUser } from '../../common/interfaces/user.interface';
+import { ValidateStudentUpdatePipe } from './pipes/studentUpdate.pipe';
+import { ValidateStudentCreatePipe } from './pipes/studentCreate.pipe';
+import { StudentEntity } from './entities/student.entity';
 
 @Controller()
 export class StudentController {
@@ -19,17 +21,18 @@ export class StudentController {
   }
 
   @MessagePattern(StudentPatterns.CreateStudent)
-  @UsePipes(ValidateStudentPipe)
+  @UsePipes(ValidateStudentCreatePipe)
   create(@Payload() data: { user: IUser; createStudentDto: ICreateStudent }) {
-    const { user, createStudentDto } = data;
+    const { createStudentDto } = data;
 
-    return this.studentService.create(user, createStudentDto);
+    return this.studentService.create(createStudentDto);
   }
   @MessagePattern(StudentPatterns.UpdateStudent)
-  update(@Payload() data: { user: IUser; studentId: number; updateStudentDto: IUpdateStudent }) {
-    const { user, studentId, updateStudentDto } = data;
+  @UsePipes(ValidateStudentUpdatePipe)
+  update(@Payload() data: { updateStudentDto: IUpdateStudent; student: StudentEntity }) {
+    const { updateStudentDto, student } = data;
 
-    return this.studentService.updateById(user, studentId, updateStudentDto);
+    return this.studentService.updateById(updateStudentDto, student);
   }
 
   @MessagePattern(StudentPatterns.GetStudents)

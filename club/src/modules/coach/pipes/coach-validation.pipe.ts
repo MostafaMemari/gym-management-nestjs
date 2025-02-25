@@ -23,7 +23,7 @@ export class ValidateCoachPipe implements PipeTransform {
     const userId = this.req?.data.user.id;
 
     try {
-      await this.validateNationalCode(national_code);
+      if (national_code) await this.validateNationalCode(national_code);
 
       if (clubIds && gender) {
         const ownedClubs = await this.getOwnedClubs(userId, clubIds);
