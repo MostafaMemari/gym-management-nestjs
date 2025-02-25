@@ -4,7 +4,6 @@ import { AuthController } from './controllers/auth/auth.controller';
 import { ConfigModule } from '@nestjs/config';
 import envConfig from '../configs/env.config';
 import { UserController } from './controllers/user.controller';
-import { PermissionController } from './controllers/permission.controller';
 import { APP_PIPE } from '@nestjs/core';
 import { StudentController } from './controllers/club/student.controller';
 import { Services } from '../common/enums/services.enum';
@@ -67,7 +66,7 @@ import { RbacController } from './controllers/auth/rbac.controller';
       },
     ]),
   ],
-  controllers: [AuthController, UserController, StudentController, CoachController, ClubController, PermissionController, RbacController],
+  controllers: [AuthController, UserController, StudentController, CoachController, ClubController, RbacController],
   providers: [
     {
       provide: APP_PIPE,
