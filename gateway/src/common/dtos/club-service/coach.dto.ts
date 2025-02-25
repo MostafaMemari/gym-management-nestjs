@@ -1,8 +1,8 @@
 import { IsNotEmpty, IsOptional, IsString, IsEnum, IsPhoneNumber, IsDateString, Length, MinLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { Gender } from '../../enums/gender.enum';
 import { ToArray, ToBoolean } from '../../../common/decorators/transformers.decorator';
 import { Transform } from 'class-transformer';
+import { Gender } from '../../../common/enums/shared.enum';
 
 export class CreateCoachDto {
   @IsNotEmpty()
