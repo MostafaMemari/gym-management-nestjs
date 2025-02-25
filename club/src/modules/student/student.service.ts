@@ -1,4 +1,4 @@
-import { ConflictException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 
@@ -39,7 +39,7 @@ export class StudentService {
     }
   }
 
-  async create(user: IUser, createStudentDto: ICreateStudent) {
+  async create(createStudentDto: ICreateStudent) {
     let userId = null;
     let imageKey = null;
 
@@ -62,15 +62,13 @@ export class StudentService {
     }
   }
 
-  async updateById(user: IUser, studentId: number, updateStudentDto: IUpdateStudent) {
+  async updateById(updateStudentDto: IUpdateStudent, student: StudentEntity) {
     let imageKey: string | null = null;
     let updateData: Partial<StudentEntity> = {};
 
     try {
-      const student = await this.findStudentById(studentId, { notFoundError: true });
-
       Object.keys(updateStudentDto).forEach((key) => {
-        if (updateStudentDto[key] !== undefined && updateStudentDto[key] !== student[key]) {
+        if (key !== 'image' && updateStudentDto[key] !== undefined && updateStudentDto[key] !== student[key]) {
           updateData[key] = updateStudentDto[key];
         }
       });
@@ -107,6 +105,7 @@ export class StudentService {
       .addSelect(['coach.id', 'coach.full_name'])
       .leftJoin('students.club', 'club')
       .addSelect(['club.id', 'club.name'])
+      .where('club.ownerId = :userId', { userId: user.id })
       .skip((page - 1) * take)
       .take(take)
       .getManyAndCount();
@@ -120,9 +119,9 @@ export class StudentService {
   }
   async findOneById(user: IUser, studentId: number): Promise<ServiceResponse> {
     try {
-      const student = await this.findStudentById(studentId, { notFoundError: true });
+      const student = await this.checkStudentOwnership(studentId, user.id);
 
-      return ResponseUtil.success(student, StudentMessages.RemovedStudentSuccess);
+      return ResponseUtil.success(student, StudentMessages.GetStudentSuccess);
     } catch (error) {
       throw new RpcException(error);
     }
@@ -132,7 +131,7 @@ export class StudentService {
     await queryRunner.startTransaction();
 
     try {
-      const student = await this.findStudentById(studentId, { notFoundError: true });
+      const student = await this.checkStudentOwnership(studentId, user.id);
 
       await this.removeUserById(Number(student?.userId));
 
@@ -177,6 +176,20 @@ export class StudentService {
     if (!imageKey) return null;
 
     await this.awsService.deleteFile(imageKey);
+  }
+
+  async checkStudentOwnership(studentId: number, userId: number): Promise<StudentEntity> {
+    const queryBuilder = this.studentRepository.createQueryBuilder(EntityName.Students);
+
+    const student = await queryBuilder
+      .where('students.id = :studentId', { studentId })
+      .leftJoinAndSelect('students.club', 'club')
+      .andWhere('club.ownerId = :userId', { userId })
+      .getOne();
+
+    if (!student) throw new BadRequestException(StudentMessages.StudentNotFound);
+
+    return student;
   }
 
   async findStudent(field: keyof StudentEntity, value: any, notFoundError = false, duplicateError = false) {

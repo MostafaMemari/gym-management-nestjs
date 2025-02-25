@@ -1,11 +1,13 @@
-import { Controller } from '@nestjs/common';
+import { Controller, UsePipes } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
 import { CoachService } from './coach.service';
 import { ICreateCoach, IQuery, IUpdateCoach } from './interfaces/coach.interface';
 import { CoachPatterns } from './patterns/coach.pattern';
-import { IUser } from '../../common/interfaces/user.interface';
+import { ValidateCoachPipe } from './pipes/coach-validation.pipe';
+
 import { IPagination } from '../../common/interfaces/pagination.interface';
+import { IUser } from '../../common/interfaces/user.interface';
 
 @Controller()
 export class CoachController {
@@ -17,6 +19,7 @@ export class CoachController {
   }
 
   @MessagePattern(CoachPatterns.CreateCoach)
+  @UsePipes(ValidateCoachPipe)
   create(@Payload() data: { user: IUser; createCoachDto: ICreateCoach }) {
     const { user, createCoachDto } = data;
 

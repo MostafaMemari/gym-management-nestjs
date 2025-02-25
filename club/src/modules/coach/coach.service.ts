@@ -52,6 +52,8 @@ export class CoachService {
       // const ownedClubs = await this.clubService.findOwnedClubs(user.id, clubIds);
       // this.validateCoachGender(createCoachDto.gender, ownedClubs);
 
+      console.log(createCoachDto);
+
       imageKey = await this.uploadCoachImage(createCoachDto.image);
       userId = await this.createUserCoach();
 
@@ -199,7 +201,7 @@ export class CoachService {
   async checkCoachOwnership(coachId: number, userId: number): Promise<CoachEntity> {
     const coach = await this.coachRepository.findOne({ where: { id: coachId }, relations: ['clubs'] });
 
-    if (!coach) throw new BadRequestException(CoachMessages.CoachNotBelongToUser);
+    if (!coach) throw new BadRequestException(CoachMessages.CoachNotFound);
 
     const isCoachInUserClubs = coach.clubs.some((club) => club.ownerId === userId);
     if (!isCoachInUserClubs) throw new BadRequestException(CoachMessages.CoachNotBelongToUser);
@@ -221,7 +223,7 @@ export class CoachService {
     }
   }
 
-  private validateCoachGender(coachGender: Gender, clubs: ICreateClub[]): void {
+  validateCoachGender(coachGender: Gender, clubs: ICreateClub[]): void {
     const invalidClubs = clubs.filter((club) => !isGenderAllowed(coachGender, club.genders)).map((club) => club.id);
 
     if (invalidClubs.length > 0) throw new BadRequestException(`${CoachMessages.CoachGenderMismatch} ${invalidClubs.join(', ')}`);

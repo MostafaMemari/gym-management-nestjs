@@ -2,20 +2,22 @@ import { BadRequestException, HttpStatus, Inject, Injectable, PipeTransform, Sco
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 
-import { ResponseUtil } from '../../../common/utils/response';
+import { StudentMessages } from '../enums/student.message';
+import { StudentService } from '../student.service';
+
 import { ClubService } from '../../club/club.service';
 import { CoachService } from '../../coach/coach.service';
-import { StudentService } from '../student.service';
+
+import { Gender } from '../../../common/enums/gender.enum';
 import { isGenderAllowed, isSameGender } from '../../../common/utils/functions';
-import { StudentMessages } from '../enums/student.message';
+import { ResponseUtil } from '../../../common/utils/response';
 
 @Injectable({ scope: Scope.REQUEST })
-export class ValidateStudentDataPipe implements PipeTransform {
+export class ValidateStudentCreatePipe implements PipeTransform {
   constructor(
     private readonly clubService: ClubService,
     private readonly coachService: CoachService,
     private readonly studentService: StudentService,
-
     @Inject(REQUEST) private readonly req: Request,
   ) {}
 
@@ -26,21 +28,30 @@ export class ValidateStudentDataPipe implements PipeTransform {
     const userId = this.req?.data.user.id;
 
     try {
-      if (national_code) await this.studentService.findStudentByNationalCode(national_code, { duplicateError: true });
-
+      if (national_code) await this.validateNationalCode(national_code);
       if (clubId && coachId) {
         const club = await this.clubService.checkClubOwnership(clubId, userId);
         const coach = await this.coachService.checkCoachOwnership(coachId, userId);
 
-        if (!isSameGender(gender, coach.gender)) throw new BadRequestException(StudentMessages.CoachGenderMismatch);
-        if (!isGenderAllowed(gender, club.genders)) throw new BadRequestException(StudentMessages.ClubGenderMismatch);
-
-        return false;
+        if (gender) this.validateGender(gender, coach.gender, club.genders);
       }
+
+      return value;
     } catch (error) {
       return ResponseUtil.error(error?.message, HttpStatus.NOT_FOUND);
     }
+  }
 
-    return value;
+  private async validateNationalCode(national_code?: string) {
+    if (national_code) await this.studentService.findStudentByNationalCode(national_code, { duplicateError: true });
+  }
+
+  private validateGender(studentGender: Gender, coachGender: Gender, allowedGenders: Gender[]) {
+    if (!isSameGender(studentGender, coachGender)) {
+      throw new BadRequestException(StudentMessages.CoachGenderMismatch);
+    }
+    if (!isGenderAllowed(studentGender, allowedGenders)) {
+      throw new BadRequestException(StudentMessages.ClubGenderMismatch);
+    }
   }
 }
