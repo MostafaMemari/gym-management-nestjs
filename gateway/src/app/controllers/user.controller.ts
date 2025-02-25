@@ -6,9 +6,9 @@ import { ApiTags } from '@nestjs/swagger';
 import { UserPatterns } from '../../common/enums/user.events';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { PaginationDto, SearchDto } from '../../common/dtos/shared.dto';
-import { handleError, handleServiceResponse } from 'src/common/utils/handleError.utils';
+import { handleError, handleServiceResponse } from '../../common/utils/handleError.utils';
 import { AuthDecorator } from '../../common/decorators/auth.decorator';
-import { checkConnection } from 'src/common/utils/checkConnection.utils';
+import { checkConnection } from '../../common/utils/checkConnection.utils';
 
 @Controller('user')
 @ApiTags('User')
