@@ -9,5 +9,7 @@ export enum AuthMessages {
     InvalidRefreshTokenPayload = "Refresh token payload is invalid",
     VerifiedTokenSuccess = "Verified token successfully",
     RefreshedTokenSuccess = "Token refreshed successfully",
-    OtpSentSuccessfully = "otp sent successfully"
+    OtpSentSuccessfully = "Otp sent successfully",
+    InvalidOtpCode = "Otp code is invalid",
+    ResetPasswordSuccess = "Your password has been successfully changed."
 }

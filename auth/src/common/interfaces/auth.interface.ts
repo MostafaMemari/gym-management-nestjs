@@ -19,3 +19,9 @@ export interface ISignin {
 export interface IForgetPassword {
     mobile: string
 }
+
+export interface IResetPassword {
+    mobile: string
+    otpCode: string
+    newPassword: string
+}

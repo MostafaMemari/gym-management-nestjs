@@ -1,5 +1,5 @@
 import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { GenerateTokens, IForgetPassword, ISignin, ISignup } from '../../common/interfaces/auth.interface';
+import { GenerateTokens, IForgetPassword, IResetPassword, ISignin, ISignup } from '../../common/interfaces/auth.interface';
 import { Services } from '../../common/enums/services.enum';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { UserPatterns } from '../../common/enums/user.events';
@@ -210,7 +210,7 @@ export class AuthService {
 
       const otpCode = Math.floor(100_000 + Math.random() * 900_000).toString()
 
-      const resetPasswordKey = `otp:reset:${otpCode}`
+      const resetPasswordKey = `otp:reset:${mobile}`
 
       await this.redis.set(resetPasswordKey, otpCode, 'EX', 300) //* 5 Minutes
 
@@ -227,4 +227,45 @@ export class AuthService {
     }
   }
 
+  async resetPassword(resetPasswordDto: IResetPassword): Promise<ServiceResponse> {
+    try {
+      await this.checkUserServiceConnection()
+
+      const { mobile, newPassword, otpCode } = resetPasswordDto
+
+      const otpKey = `otp:reset:${mobile}`
+
+      const storedOtp = await this.redis.get(otpKey)
+
+      if (!storedOtp || otpCode !== storedOtp)
+        throw new BadRequestException(AuthMessages.InvalidOtpCode)
+
+
+      const user: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.GetUserByMobile, { mobile }).pipe(timeout(this.timeout)))
+
+      if (user.error) return user
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10)
+
+      const updateUserData = {
+        password: hashedPassword,
+        userId: user.data?.user?.id
+      }
+
+      const updatedUser: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.UpdateUser, updateUserData).pipe(timeout(this.timeout)))
+
+      if (updatedUser.error) throw updatedUser
+
+      await this.redis.del(otpKey)
+
+      return {
+        data: {},
+        error: false,
+        message: AuthMessages.ResetPasswordSuccess,
+        status: HttpStatus.OK
+      }
+    } catch (error) {
+      throw new RpcException(error)
+    }
+  }
 }
