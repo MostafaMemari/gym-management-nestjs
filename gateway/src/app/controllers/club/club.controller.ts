@@ -7,7 +7,7 @@ import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { GetUser } from '../../../common/decorators/get-user.decorator';
 import { CreateClubDto, UpdateClubDto } from '../../../common/dtos/club-service/club.dto';
 import { PaginationDto, QueryClubDto } from '../../../common/dtos/shared.dto';
-import { User } from '../../../common/dtos/user.dto';
+import { User } from '../../../common/interfaces/user.interface';
 import { ClubPatterns } from '../../../common/enums/club.events';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';

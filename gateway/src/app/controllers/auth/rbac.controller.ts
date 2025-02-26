@@ -11,7 +11,7 @@ import { AssignRoleDto } from '../../../common/dtos/auth-service/rbac.dto';
 import { ApiConsumes } from '@nestjs/swagger';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { GetUser } from '../../../common/decorators/get-user.decorator';
-import { User } from '../../../common/dtos/user.dto';
+import { User } from '../../../common/interfaces/user.interface';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
 import { RbacMessages } from '../../../common/enums/auth.messages';
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
@@ -22,7 +22,7 @@ export class RbacController {
   constructor(
     @Inject(Services.AUTH) private readonly authServiceClientProxy: ClientProxy,
     private readonly authController: AuthController,
-  ) { }
+  ) {}
 
   private readonly timeout: number = 5000;
 

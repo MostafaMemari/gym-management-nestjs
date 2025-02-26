@@ -3,4 +3,5 @@ export enum UserPatterns {
   GetUsers = 'get_users',
   GetUserById = 'get_user_by_id',
   SearchUser = 'search_user',
+  UpdateUser = 'update_user',
 }

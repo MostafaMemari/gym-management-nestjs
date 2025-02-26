@@ -21,7 +21,7 @@ import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { GetUser } from '../../../common/decorators/get-user.decorator';
 import { CreateStudentDto, StudentQueryDto, UpdateStudentDto } from '../../../common/dtos/club-service/student.dto';
 import { PaginationDto } from '../../../common/dtos/shared.dto';
-import { User } from '../../../common/dtos/user.dto';
+import { User } from '../../../common/interfaces/user.interface';
 import { StudentPatterns } from '../../../common/enums/club.events';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';

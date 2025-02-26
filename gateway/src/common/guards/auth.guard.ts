@@ -2,11 +2,11 @@ import { CanActivate, ExecutionContext, Inject, Injectable, UnauthorizedExceptio
 import { Services } from '../enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
 import { Request } from 'express';
-import { lastValueFrom, timeout } from 'rxjs';
+import { lastValueFrom } from 'rxjs';
 import { AuthPatterns } from '../enums/auth.events';
 import { ServiceResponse } from '../interfaces/serviceResponse.interface';
 import { UserPatterns } from '../enums/user.events';
-import { User } from '../dtos/user.dto';
+import { User } from '../interfaces/user.interface';
 import { Reflector } from '@nestjs/core';
 import { SKIP_AUTH } from '../decorators/skip-auth.decorator';
 import { checkConnection } from '../utils/checkConnection.utils';

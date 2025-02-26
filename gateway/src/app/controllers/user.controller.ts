@@ -1,8 +1,8 @@
-import { Controller, Get, HttpStatus, Inject, Param, ParseIntPipe, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Inject, Param, ParseIntPipe, Put, Query } from '@nestjs/common';
 import { Services } from '../../common/enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { UserPatterns } from '../../common/enums/user.events';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { PaginationDto, SearchDto } from '../../common/dtos/shared.dto';
@@ -12,13 +12,15 @@ import { checkConnection } from '../../common/utils/checkConnection.utils';
 import { Roles } from '../../common/decorators/role.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { GetUser } from '../../common/decorators/get-user.decorator';
-import { User } from '../../common/dtos/user.dto';
+import { UpdateUserDto } from '../../common/dtos/user.dto';
+import { User } from '../../common/interfaces/user.interface';
+import { SwaggerConsumes } from '../../common/enums/swagger-consumes.enum';
 
 @Controller('user')
 @ApiTags('User')
 @AuthDecorator()
 export class UserController {
-  constructor(@Inject(Services.USER) private readonly userServiceClient: ClientProxy) { }
+  constructor(@Inject(Services.USER) private readonly userServiceClient: ClientProxy) {}
 
   @Roles(Role.SUPER_ADMIN)
   @Get()
@@ -48,9 +50,25 @@ export class UserController {
     }
   }
 
-  @Get("profile")
+  @Get('profile')
   getProfile(@GetUser() user: User) {
-    return handleServiceResponse({ data: { user }, error: false, message: "", status: HttpStatus.OK })
+    return handleServiceResponse({ data: { user }, error: false, message: '', status: HttpStatus.OK });
+  }
+
+  @Put('profile/update')
+  @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
+  async updateProfile(@Body() updateUserDto: UpdateUserDto, @GetUser() user: User) {
+    try {
+      await checkConnection(Services.USER, this.userServiceClient);
+
+      const updateUserData = { ...updateUserDto, userId: user.id };
+
+      const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.UpdateUser, updateUserData).pipe(timeout(5000)));
+
+      return handleServiceResponse(data);
+    } catch (error) {
+      handleError(error, 'Failed to update profile', 'UserService');
+    }
   }
 
   @Roles(Role.SUPER_ADMIN)
