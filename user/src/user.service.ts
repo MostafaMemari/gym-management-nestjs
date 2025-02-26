@@ -2,7 +2,7 @@ import { ConflictException, HttpStatus, Injectable, NotFoundException } from '@n
 import { Prisma, Role, User } from '@prisma/client';
 import { ServiceResponse } from './common/interfaces/serviceResponse.interface';
 import { UserMessages } from './common/enums/user.messages';
-import { IChangeRole, IPagination, ISearchUser } from './common/interfaces/user.interface';
+import { IChangeRole, IPagination, ISearchUser, IUpdateUser } from './common/interfaces/user.interface';
 import { pagination } from './common/utils/pagination.utils';
 import { RpcException } from '@nestjs/microservices';
 import { UserRepository } from './user.repository';
@@ -223,6 +223,24 @@ export class UserService {
       await this.userRepository.updateRole(userId, role)
 
       return ResponseUtil.success({}, UserMessages.ChangedRoleSuccess, HttpStatus.OK)
+    } catch (error) {
+      throw new RpcException(error)
+    }
+  }
+
+  async update(data: IUpdateUser) {
+    try {
+      const { userId, mobile, username } = data
+
+      const existingUser = await this.userRepository.findById(userId, { where: { id: { not: userId }, OR: [{ mobile }, { username }] } })
+
+      if (existingUser) {
+        throw new ConflictException(UserMessages.AlreadyExistsUser)
+      }
+
+      const updatedUser = await this.userRepository.update(userId, { data: { mobile, username }, omit: { password: true } })
+
+      return ResponseUtil.success({ updatedUser }, UserMessages.UpdatedUser, HttpStatus.OK)
     } catch (error) {
       throw new RpcException(error)
     }

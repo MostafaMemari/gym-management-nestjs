@@ -9,5 +9,6 @@ export enum UserPatterns {
   RemoveUser = 'remove_user',
   FindOrCreate = 'find_or_create',
   SearchUser = 'search_user',
-  ChangeUserRole = 'change_user_role'
+  ChangeUserRole = 'change_user_role',
+  UpdateUser = "update_user"
 }
