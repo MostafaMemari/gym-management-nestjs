@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpStatus, Inject, Param, ParseIntPipe, Put, Query } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, HttpStatus, Inject, Param, ParseIntPipe, Put, Query } from '@nestjs/common';
 import { Services } from '../../common/enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
@@ -68,6 +68,23 @@ export class UserController {
       return handleServiceResponse(data);
     } catch (error) {
       handleError(error, 'Failed to update profile', 'UserService');
+    }
+  }
+
+  @Delete(':id')
+  @Roles(Role.SUPER_ADMIN)
+  @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
+  async removeUser(@Param('id', ParseIntPipe) id: number, @GetUser() user: User) {
+    try {
+      await checkConnection(Services.USER, this.userServiceClient);
+
+      if (id == user.id) throw new BadRequestException('You cannot delete your account.');
+
+      const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.RemoveUser, { userId: id }).pipe(timeout(5000)));
+
+      return handleServiceResponse(data);
+    } catch (error) {
+      handleError(error, 'Failed to remove user', 'UserService');
     }
   }
 

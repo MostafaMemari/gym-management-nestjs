@@ -15,7 +15,7 @@ export class AuthController {
   private readonly timeout = 5000;
   private logger: Logger = new Logger(AuthController.name);
 
-  constructor(@Inject(Services.AUTH) private readonly authServiceClient: ClientProxy) { }
+  constructor(@Inject(Services.AUTH) private readonly authServiceClient: ClientProxy) {}
 
   async checkConnection(): Promise<void> {
     try {
@@ -116,12 +116,14 @@ export class AuthController {
   @Post('reset-password')
   @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
   async resetPassword(@Body() restPasswordDto: RestPasswordDto) {
-    await this.checkConnection()
+    await this.checkConnection();
 
-    const data: ServiceResponse = await lastValueFrom(this.authServiceClient.send(AuthPatterns.ResetPassword, restPasswordDto).pipe(timeout(this.timeout)))
+    const data: ServiceResponse = await lastValueFrom(
+      this.authServiceClient.send(AuthPatterns.ResetPassword, restPasswordDto).pipe(timeout(this.timeout)),
+    );
 
-    if (data.error) throw new HttpException(data.message, data.status)
+    if (data.error) throw new HttpException(data.message, data.status);
 
-    return data
+    return data;
   }
 }

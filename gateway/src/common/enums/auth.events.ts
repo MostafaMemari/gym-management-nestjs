@@ -6,7 +6,7 @@ export enum AuthPatterns {
   VerifyAccessToken = 'verify_access_token',
   RefreshToken = 'refresh_token',
   ForgetPassword = 'forget_password',
-  ResetPassword = "reset_password"
+  ResetPassword = 'reset_password',
 }
 
 export enum RbacPatterns {

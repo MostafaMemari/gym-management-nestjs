@@ -74,7 +74,7 @@ export class SignoutDto {
   refreshToken: string;
 }
 
-export class RefreshTokenDto extends SignoutDto { }
+export class RefreshTokenDto extends SignoutDto {}
 
 export class ForgetPasswordDto {
   @IsNotEmpty()
@@ -87,23 +87,22 @@ export class ForgetPasswordDto {
   mobile: string;
 }
 
-
 export class RestPasswordDto {
   @IsString()
   @IsNotEmpty()
   @ApiProperty({
-    type: "string",
-    nullable: false
+    type: 'string',
+    nullable: false,
   })
-  mobile: string
-  
+  mobile: string;
+
   @IsString()
   @IsNotEmpty()
   @ApiProperty({
-    type: "string",
-    nullable: false
+    type: 'string',
+    nullable: false,
   })
-  otpCode: string
+  otpCode: string;
 
   @IsNotEmpty()
   @IsString()
