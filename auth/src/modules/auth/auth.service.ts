@@ -1,5 +1,5 @@
 import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { GenerateTokens, ISignin, ISignup } from '../../common/interfaces/auth.interface';
+import { GenerateTokens, IForgetPassword, ISignin, ISignup } from '../../common/interfaces/auth.interface';
 import { Services } from '../../common/enums/services.enum';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { UserPatterns } from '../../common/enums/user.events';
@@ -191,6 +191,35 @@ export class AuthService {
         data: { accessToken: newAccessToken },
         error: false,
         message: AuthMessages.RefreshedTokenSuccess,
+        status: HttpStatus.OK
+      }
+    } catch (error) {
+      throw new RpcException(error)
+    }
+  }
+
+  async forgetPassword(forgetPasswordDto: IForgetPassword): Promise<ServiceResponse> {
+    try {
+      await this.checkUserServiceConnection()
+
+      const { mobile } = forgetPasswordDto
+      const result: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.GetUserByMobile, { mobile }).pipe(timeout(this.timeout)))
+
+      if (result.error) return result
+
+
+      const otpCode = Math.floor(100_000 + Math.random() * 900_000).toString()
+
+      const resetPasswordKey = `otp:reset:${otpCode}`
+
+      await this.redis.set(resetPasswordKey, otpCode, 'EX', 300) //* 5 Minutes
+
+      //TODO: Send otp code with sms
+
+      return {
+        data: {},
+        error: false,
+        message: AuthMessages.OtpSentSuccessfully,
         status: HttpStatus.OK
       }
     } catch (error) {

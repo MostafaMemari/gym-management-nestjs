@@ -15,3 +15,7 @@ export interface ISignin {
     identifier: string
     password: string
 }
+
+export interface IForgetPassword {
+    mobile: string
+}
