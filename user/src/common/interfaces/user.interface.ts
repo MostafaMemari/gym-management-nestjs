@@ -35,5 +35,6 @@ export interface IUpdateUser {
   userId: number
   username?: string
   mobile?: string,
+  lastPasswordChange?: Date
   password?: string
 }

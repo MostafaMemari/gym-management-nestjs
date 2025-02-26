@@ -246,7 +246,8 @@ export class UserService {
 
   async update(data: IUpdateUser) {
     try {
-      const { userId, mobile, username, password } = data
+      const { userId, ...updateUserData } = data
+      const { mobile, username } = updateUserData
 
       const existingUser = await this.userRepository.findById(userId, { where: { id: { not: userId }, OR: [{ mobile }, { username }] } })
 
@@ -254,7 +255,7 @@ export class UserService {
         throw new ConflictException(UserMessages.AlreadyExistsUser)
       }
 
-      const updatedUser = await this.userRepository.update(userId, { data: { mobile, username, password }, omit: { password: true } })
+      const updatedUser = await this.userRepository.update(userId, { data: { ...updateUserData }, omit: { password: true } })
 
       return ResponseUtil.success({ updatedUser }, UserMessages.UpdatedUser, HttpStatus.OK)
     } catch (error) {
