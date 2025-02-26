@@ -171,6 +171,22 @@ export class UserService {
     }
   }
 
+  async findByMobile(userDto: { mobile: string }) {
+    try {
+      const { mobile } = userDto
+
+      const user = await this.userRepository.findOneByIdentifier(mobile)
+
+      if (!user) {
+        throw new NotFoundException(UserMessages.NotFoundUser)
+      }
+
+      return ResponseUtil.success({ user }, "", HttpStatus.OK)
+    } catch (error) {
+      throw new RpcException(error)
+    }
+  }
+
   async search({ query, ...paginationDto }: ISearchUser): Promise<ServiceResponse> {
     try {
       const cacheKey = `${CacheKeys.SearchUsers}_${query}_${paginationDto.page || 1}_${paginationDto.take || 20}`;

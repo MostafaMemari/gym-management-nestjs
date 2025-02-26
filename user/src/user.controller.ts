@@ -53,6 +53,11 @@ export class UserController {
     return this.userService.findOrCreate(data);
   }
 
+  @MessagePattern(UserPatterns.GetUserByMobile)
+  getByMobile(@Payload() data: { mobile: string }) {
+    return this.userService.findByMobile(data)
+  }
+
   @MessagePattern(UserPatterns.SearchUser)
   search(@Payload() data: ISearchUser) {
     return this.userService.search(data);
