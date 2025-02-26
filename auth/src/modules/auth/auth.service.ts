@@ -216,20 +216,21 @@ export class AuthService {
 
       const currentDate = new Date()
 
-      const { user: { lastPasswordChange } = {} } = user.data
-
+      let { user: { lastPasswordChange } = {} } = user.data
+      
+      if (lastPasswordChange) {
+        lastPasswordChange = new Date(lastPasswordChange)
+        const diffDays = Math.floor((currentDate.getTime() - lastPasswordChange.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays < 3)
+          throw new ForbiddenException(AuthMessages.CannotChangePassword)
+      }
+      
       const otpCode = Math.floor(100_000 + Math.random() * 900_000).toString()
 
       await this.redis.set(resetPasswordKey, otpCode, 'EX', 300) //* 5 Minutes
 
       //TODO: Send otp code via sms
-
-      if (lastPasswordChange) {
-        const diffDays = Math.floor((currentDate.getTime() - lastPasswordChange.getTime()) / (1000 * 60 * 60 * 24));
-
-        if (diffDays < 3)
-          throw new ForbiddenException(AuthMessages.CannotChangePassword)
-      }
 
       const updateUserData = {
         lastPasswordChange: currentDate,
