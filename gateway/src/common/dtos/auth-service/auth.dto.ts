@@ -75,3 +75,14 @@ export class SignoutDto {
 }
 
 export class RefreshTokenDto extends SignoutDto {}
+
+export class ForgetPasswordDto {
+  @IsNotEmpty()
+  @IsString()
+  @IsPhoneNumber('IR')
+  @ApiProperty({
+    type: 'string',
+    nullable: false,
+  })
+  mobile: string;
+}

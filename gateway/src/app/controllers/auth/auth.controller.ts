@@ -5,7 +5,7 @@ import { lastValueFrom, timeout } from 'rxjs';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { AuthPatterns } from '../../../common/enums/auth.events';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
-import { RefreshTokenDto, SigninDto, SignoutDto, SignupDto } from '../../../common/dtos/auth-service/auth.dto';
+import { ForgetPasswordDto, RefreshTokenDto, SigninDto, SignoutDto, SignupDto } from '../../../common/dtos/auth-service/auth.dto';
 import { AuthGuard } from '../../../common/guards/auth.guard';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 
@@ -15,7 +15,7 @@ export class AuthController {
   private readonly timeout = 5000;
   private logger: Logger = new Logger(AuthController.name);
 
-  constructor(@Inject(Services.AUTH) private readonly authServiceClient: ClientProxy) {}
+  constructor(@Inject(Services.AUTH) private readonly authServiceClient: ClientProxy) { }
 
   async checkConnection(): Promise<void> {
     try {
@@ -96,6 +96,20 @@ export class AuthController {
     }
 
     this.logger.log(`Refreshed token successfully: message=${data.message}`);
+    return data;
+  }
+
+  @Post('forget-password')
+  @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
+  async forgetPassword(@Body() { mobile }: ForgetPasswordDto) {
+    await this.checkConnection();
+
+    const data: ServiceResponse = await lastValueFrom(
+      this.authServiceClient.send(AuthPatterns.ForgetPassword, { mobile }).pipe(timeout(this.timeout)),
+    );
+
+    if (data.error) throw new HttpException(data.message, data.status);
+
     return data;
   }
 }
