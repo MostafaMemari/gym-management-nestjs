@@ -1,4 +1,4 @@
-import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, forwardRef, HttpStatus, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { GenerateTokens, IForgetPassword, IResetPassword, ISignin, ISignup } from '../../common/interfaces/auth.interface';
 import { Services } from '../../common/enums/services.enum';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
@@ -203,18 +203,41 @@ export class AuthService {
       await this.checkUserServiceConnection()
 
       const { mobile } = forgetPasswordDto
-      const result: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.GetUserByMobile, { mobile }).pipe(timeout(this.timeout)))
+      const user: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.GetUserByMobile, { mobile }).pipe(timeout(this.timeout)))
 
-      if (result.error) return result
-
-
-      const otpCode = Math.floor(100_000 + Math.random() * 900_000).toString()
+      if (user.error) return user
 
       const resetPasswordKey = `otp:reset:${mobile}`
 
+      const existingOtp = await this.redis.get(resetPasswordKey)
+
+      if (existingOtp)
+        throw new BadRequestException(AuthMessages.AlreadySetOtpCode)
+
+      const currentDate = new Date()
+
+      const { user: { lastPasswordChange } = {} } = user.data
+
+      const otpCode = Math.floor(100_000 + Math.random() * 900_000).toString()
+
       await this.redis.set(resetPasswordKey, otpCode, 'EX', 300) //* 5 Minutes
 
-      //TODO: Send otp code with sms
+      //TODO: Send otp code via sms
+
+      if (lastPasswordChange) {
+        const diffDays = Math.floor((currentDate.getTime() - lastPasswordChange.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 3)
+          throw new ForbiddenException(AuthMessages.CannotChangePassword)
+      }
+
+      const updateUserData = {
+        lastPasswordChange: currentDate,
+        userId: user.data.user.id
+      }
+
+      const updatedUser = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.UpdateUser, updateUserData).pipe(timeout(this.timeout)))
+      if (updatedUser.error) return updatedUser
 
       return {
         data: {},
