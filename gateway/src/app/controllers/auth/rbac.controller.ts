@@ -17,6 +17,7 @@ import { RbacMessages } from '../../../common/enums/auth.messages';
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 
 @Controller('rbac')
+@AuthDecorator()
 export class RbacController {
   constructor(
     @Inject(Services.AUTH) private readonly authServiceClientProxy: ClientProxy,
@@ -26,7 +27,6 @@ export class RbacController {
   private readonly timeout: number = 5000;
 
   @Post('assign-role')
-  @AuthDecorator()
   @Roles(Role.SUPER_ADMIN)
   @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
   async assignRole(@Body() assignRoleDto: AssignRoleDto, @GetUser() user: User): Promise<ServiceResponse> {

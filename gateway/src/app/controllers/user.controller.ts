@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Param, ParseIntPipe, Query } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Inject, Param, ParseIntPipe, Query } from '@nestjs/common';
 import { Services } from '../../common/enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
@@ -9,6 +9,10 @@ import { PaginationDto, SearchDto } from '../../common/dtos/shared.dto';
 import { handleError, handleServiceResponse } from '../../common/utils/handleError.utils';
 import { AuthDecorator } from '../../common/decorators/auth.decorator';
 import { checkConnection } from '../../common/utils/checkConnection.utils';
+import { Roles } from '../../common/decorators/role.decorator';
+import { Role } from '../../common/enums/role.enum';
+import { GetUser } from '../../common/decorators/get-user.decorator';
+import { User } from '../../common/dtos/user.dto';
 
 @Controller('user')
 @ApiTags('User')
@@ -16,6 +20,7 @@ import { checkConnection } from '../../common/utils/checkConnection.utils';
 export class UserController {
   constructor(@Inject(Services.USER) private readonly userServiceClient: ClientProxy) { }
 
+  @Roles(Role.SUPER_ADMIN)
   @Get()
   async getUsers(@Query() paginationDto: PaginationDto) {
     try {
@@ -29,6 +34,7 @@ export class UserController {
     }
   }
 
+  @Roles(Role.SUPER_ADMIN)
   @Get('search')
   async searchUser(@Query() searchDto: SearchDto) {
     try {
@@ -42,6 +48,12 @@ export class UserController {
     }
   }
 
+  @Get("profile")
+  getProfile(@GetUser() user: User) {
+    return handleServiceResponse({ data: { user }, error: false, message: "", status: HttpStatus.OK })
+  }
+
+  @Roles(Role.SUPER_ADMIN)
   @Get(':id')
   async getUserById(@Param('id', ParseIntPipe) id: number) {
     try {

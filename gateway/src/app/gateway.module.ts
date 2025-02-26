@@ -66,7 +66,7 @@ import { RbacController } from './controllers/auth/rbac.controller';
       },
     ]),
   ],
-  controllers: [AuthController, UserController, StudentController, CoachController, ClubController, RbacController],
+  controllers: [AuthController, RbacController, UserController, StudentController, CoachController, ClubController],
   providers: [
     {
       provide: APP_PIPE,

@@ -16,14 +16,13 @@ export class AuthGuard implements CanActivate {
   constructor(
     @Inject(Services.AUTH) private readonly authServiceClientProxy: ClientProxy,
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
-    private readonly reflector: Reflector
-  ) { }
+    private readonly reflector: Reflector,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const isSkipped = this.reflector.get<boolean>(SKIP_AUTH, context.getHandler());
 
-    const isSkipped = this.reflector.get<boolean>(SKIP_AUTH, context.getHandler())
-
-    if (isSkipped) return true
+    if (isSkipped) return true;
 
     await checkConnection(Services.AUTH, this.authServiceClientProxy);
     await checkConnection(Services.USER, this.userServiceClientProxy);
