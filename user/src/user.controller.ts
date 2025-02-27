@@ -2,7 +2,7 @@ import { Controller } from '@nestjs/common';
 import { UserService } from './user.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { UserPatterns } from './common/enums/user.events';
-import { IChangeRole, ICreateUser, ICreateUserCoach, ICreateUserStudent, IPagination, ISearchUser } from './common/interfaces/user.interface';
+import { IChangeRole, ICreateUser, ICreateUserCoach, ICreateUserStudent, IPagination, ISearchUser, IUpdateUser } from './common/interfaces/user.interface';
 
 @Controller()
 export class UserController {
@@ -53,6 +53,11 @@ export class UserController {
     return this.userService.findOrCreate(data);
   }
 
+  @MessagePattern(UserPatterns.GetUserByMobile)
+  getByMobile(@Payload() data: { mobile: string }) {
+    return this.userService.findByMobile(data)
+  }
+
   @MessagePattern(UserPatterns.SearchUser)
   search(@Payload() data: ISearchUser) {
     return this.userService.search(data);
@@ -61,5 +66,10 @@ export class UserController {
   @MessagePattern(UserPatterns.ChangeUserRole)
   changeRole(@Payload() data: IChangeRole) {
     return this.userService.changeRole(data)
+  }
+
+  @MessagePattern(UserPatterns.UpdateUser)
+  update(@Payload() data: IUpdateUser) {
+    return this.userService.update(data)
   }
 }

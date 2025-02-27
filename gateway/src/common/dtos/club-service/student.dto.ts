@@ -1,9 +1,21 @@
 import { Transform } from 'class-transformer';
-import { IsDateString, IsEnum, IsInt, IsNotEmpty, IsOptional, IsPhoneNumber, IsPositive, IsString, Length, MinLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsPhoneNumber,
+  IsPositive,
+  IsString,
+  Length,
+  MinLength,
+} from 'class-validator';
 
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { ToBoolean } from '../../../common/decorators/transformers.decorator';
-import { Gender } from '../../enums/gender.enum';
+import { Gender, SortBy, SortOrder } from '../../../common/enums/shared.enum';
 
 export class CreateStudentDto {
   @IsNotEmpty()
@@ -19,6 +31,7 @@ export class CreateStudentDto {
 
   @IsOptional()
   @ToBoolean()
+  @IsBoolean()
   @ApiPropertyOptional({ type: Boolean, example: true })
   is_active?: boolean;
 
@@ -87,3 +100,46 @@ export class CreateStudentDto {
 }
 
 export class UpdateStudentDto extends PartialType(CreateStudentDto) {}
+
+export class QueryStudentDto {
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({ type: 'string', example: '', description: 'search full name and national code' })
+  search?: string;
+
+  @IsOptional()
+  @IsEnum(Gender)
+  @ApiPropertyOptional({ example: 'male', enum: Gender })
+  gender?: Gender;
+
+  @IsOptional()
+  @ToBoolean()
+  @IsBoolean()
+  @ApiPropertyOptional({ type: Boolean, example: true })
+  is_active?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({ type: 'string', example: '09388366510' })
+  phone_number?: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({ type: 'string', example: '' })
+  coach: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({ type: 'string', example: '' })
+  club: string;
+
+  @IsOptional()
+  @IsEnum(SortBy, { message: 'sort_by must be one of "birth_date", "sports_insurance_date", "expire_image_date", "created_at", or "updated_at"' })
+  @ApiPropertyOptional({ example: 'birth_date', enum: SortBy })
+  sort_by?: SortBy;
+
+  @IsOptional()
+  @IsEnum(SortOrder, { message: 'sort_order must be either "asc" or "desc"' })
+  @ApiPropertyOptional({ example: 'desc', enum: SortOrder })
+  sort_order?: SortOrder;
+}

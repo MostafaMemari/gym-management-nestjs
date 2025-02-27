@@ -1,8 +1,8 @@
 import { IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
 
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { Gender } from '../../enums/gender.enum';
 import { Transform } from 'class-transformer';
+import { Gender } from '../../../common/enums/shared.enum';
 
 export class CreateClubDto {
   @IsNotEmpty()
@@ -20,7 +20,7 @@ export class CreateClubDto {
 
   @IsNotEmpty()
   @ApiProperty({
-    example: [Gender.Male, Gender.Female],
+    example: [Gender.MALE, Gender.FEMALE],
     enum: Gender,
     isArray: true,
   })

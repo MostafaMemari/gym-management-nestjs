@@ -1,4 +1,3 @@
-import { IPagination } from '../../../common/interfaces/pagination.interface';
 import { Gender } from '../../../common/enums/gender.enum';
 
 export interface ICreateCoach {
@@ -21,4 +20,12 @@ export interface ICreateCoach {
 
 export type IUpdateCoach = Partial<ICreateCoach>;
 
-export interface IQuery extends IPagination {}
+export interface ISeachCoachQuery {
+  search?: string;
+  gender?: Gender;
+  is_active?: boolean;
+  phone_number?: string;
+  clubIds?: number[];
+  sort_by?: 'birth_date' | 'sports_insurance_date' | 'expire_image_date';
+  sort_order?: 'asc' | 'desc';
+}

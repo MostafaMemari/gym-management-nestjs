@@ -5,6 +5,8 @@ export enum AuthPatterns {
   Signout = 'signout',
   VerifyAccessToken = 'verify_access_token',
   RefreshToken = 'refresh_token',
+  ForgetPassword = 'forget_password',
+  ResetPassword = 'reset_password',
 }
 
 export enum RbacPatterns {

@@ -71,6 +71,9 @@ importers:
       rxjs:
         specifier: ^7.8.1
         version: 7.8.1
+      swagger-themes:
+        specifier: ^1.4.3
+        version: 1.4.3
     devDependencies:
       '@nestjs/cli':
         specifier: ^10.0.0
@@ -1841,6 +1844,9 @@ packages:
   supports-color@8.1.1:
     resolution: {integrity: sha512-MpUEN2OodtUzxvKQl72cUF7RQ5EiHsGvSsVG0ia9c5RbWGL2CI4C7EpPS8UTBIplnlzZiNuV56w+FuNxy3ty2Q==}
     engines: {node: '>=10'}
+
+  swagger-themes@1.4.3:
+    resolution: {integrity: sha512-1G0CqJC1IBbNxkAOyJoREd9hfwXH1R6+3GOFxLhQho2w2i+AbaJqkF4mTJhkce4yhaEMUXvv4KKu1YO/qpe6nQ==}
 
   swagger-ui-dist@5.18.2:
     resolution: {integrity: sha512-J+y4mCw/zXh1FOj5wGJvnAajq6XgHOyywsa9yITmwxIlJbMqITq3gYRZHaeqLVH/eV/HOPphE6NjF+nbSNC5Zw==}
@@ -3950,6 +3956,8 @@ snapshots:
   supports-color@8.1.1:
     dependencies:
       has-flag: 4.0.0
+
+  swagger-themes@1.4.3: {}
 
   swagger-ui-dist@5.18.2:
     dependencies:

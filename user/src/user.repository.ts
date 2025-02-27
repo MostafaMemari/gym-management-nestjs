@@ -19,7 +19,7 @@ export class UserRepository {
         return this.prisma.user.create(args)
     }
 
-    update(id: number, args: Prisma.UserUpdateArgs): Promise<User> {
+    update(id: number, args: Omit<Prisma.UserUpdateArgs, 'where'>): Promise<User> {
         return this.prisma.user.update({ where: { id }, ...args })
     }
 

@@ -1,20 +1,22 @@
 import { Transform, TransformFnParams } from 'class-transformer';
+import { BadRequestException } from '@nestjs/common';
 
-export function ToBoolean(): (target: any, key: string) => void {
-  return Transform((params: TransformFnParams) => {
+export const ToBoolean = () =>
+  Transform((params: TransformFnParams) => {
     const { value } = params;
+
     if (typeof value === 'boolean') {
       return value;
     }
-    if (value?.toString()?.toLowerCase() === 'false') {
-      return false;
+
+    if (typeof value === 'string') {
+      const lowerValue = value.toLowerCase();
+      if (lowerValue === 'true') return true;
+      if (lowerValue === 'false') return false;
     }
-    if (value?.toString()?.toLowerCase() === 'true') {
-      return true;
-    }
-    return undefined;
+
+    throw new BadRequestException('Invalid boolean value! Only "true" or "false" is allowed');
   });
-}
 
 export function ToArray(): (target: any, key: string) => void {
   return Transform((params: TransformFnParams) => {

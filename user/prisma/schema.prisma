@@ -26,6 +26,7 @@ model User {
   role Role @default(STUDENT)
   mobile String?
   password String? 
+  lastPasswordChange DateTime? 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
 }

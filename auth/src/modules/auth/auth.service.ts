@@ -1,5 +1,5 @@
-import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { GenerateTokens, ISignin, ISignup } from '../../common/interfaces/auth.interface';
+import { BadRequestException, ForbiddenException, forwardRef, HttpStatus, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { GenerateTokens, IForgetPassword, IResetPassword, ISignin, ISignup } from '../../common/interfaces/auth.interface';
 import { Services } from '../../common/enums/services.enum';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { UserPatterns } from '../../common/enums/user.events';
@@ -198,4 +198,98 @@ export class AuthService {
     }
   }
 
+  async forgetPassword(forgetPasswordDto: IForgetPassword): Promise<ServiceResponse> {
+    try {
+      await this.checkUserServiceConnection()
+
+      const { mobile } = forgetPasswordDto
+      const user: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.GetUserByMobile, { mobile }).pipe(timeout(this.timeout)))
+
+      if (user.error) return user
+
+      const resetPasswordKey = `otp:reset:${mobile}`
+
+      const existingOtp = await this.redis.get(resetPasswordKey)
+
+      if (existingOtp)
+        throw new BadRequestException(AuthMessages.AlreadySetOtpCode)
+
+      const currentDate = new Date()
+
+      let { user: { lastPasswordChange } = {} } = user.data
+      
+      if (lastPasswordChange) {
+        lastPasswordChange = new Date(lastPasswordChange)
+        const diffDays = Math.floor((currentDate.getTime() - lastPasswordChange.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays < 3)
+          throw new ForbiddenException(AuthMessages.CannotChangePassword)
+      }
+      
+      const otpCode = Math.floor(100_000 + Math.random() * 900_000).toString()
+
+      await this.redis.set(resetPasswordKey, otpCode, 'EX', 300) //* 5 Minutes
+
+      //TODO: Send otp code via sms
+
+      const updateUserData = {
+        lastPasswordChange: currentDate,
+        userId: user.data.user.id
+      }
+
+      const updatedUser = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.UpdateUser, updateUserData).pipe(timeout(this.timeout)))
+      if (updatedUser.error) return updatedUser
+
+      return {
+        data: {},
+        error: false,
+        message: AuthMessages.OtpSentSuccessfully,
+        status: HttpStatus.OK
+      }
+    } catch (error) {
+      throw new RpcException(error)
+    }
+  }
+
+  async resetPassword(resetPasswordDto: IResetPassword): Promise<ServiceResponse> {
+    try {
+      await this.checkUserServiceConnection()
+
+      const { mobile, newPassword, otpCode } = resetPasswordDto
+
+      const otpKey = `otp:reset:${mobile}`
+
+      const storedOtp = await this.redis.get(otpKey)
+
+      if (!storedOtp || otpCode !== storedOtp)
+        throw new BadRequestException(AuthMessages.InvalidOtpCode)
+
+
+      const user: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.GetUserByMobile, { mobile }).pipe(timeout(this.timeout)))
+
+      if (user.error) return user
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10)
+
+      const updateUserData = {
+        password: hashedPassword,
+        userId: user.data?.user?.id
+      }
+
+      const updatedUser: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.UpdateUser, updateUserData).pipe(timeout(this.timeout)))
+
+      if (updatedUser.error) throw updatedUser
+
+      await this.redis.del(otpKey)
+
+      return {
+        data: {},
+        error: false,
+        message: AuthMessages.ResetPasswordSuccess,
+        status: HttpStatus.OK
+      }
+    } catch (error) {
+      throw new RpcException(error)
+    }
+  }
 }

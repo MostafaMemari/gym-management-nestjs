@@ -30,3 +30,11 @@ export interface IChangeRole {
   userId: number
   role: Role
 }
+
+export interface IUpdateUser {
+  userId: number
+  username?: string
+  mobile?: string,
+  lastPasswordChange?: Date
+  password?: string
+}

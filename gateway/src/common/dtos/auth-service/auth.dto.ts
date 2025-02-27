@@ -75,3 +75,44 @@ export class SignoutDto {
 }
 
 export class RefreshTokenDto extends SignoutDto {}
+
+export class ForgetPasswordDto {
+  @IsNotEmpty()
+  @IsString()
+  @IsPhoneNumber('IR')
+  @ApiProperty({
+    type: 'string',
+    nullable: false,
+  })
+  mobile: string;
+}
+
+export class RestPasswordDto {
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    type: 'string',
+    nullable: false,
+  })
+  mobile: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    type: 'string',
+    nullable: false,
+  })
+  otpCode: string;
+
+  @IsNotEmpty()
+  @IsString()
+  @MaxLength(16)
+  @MinLength(8)
+  @ApiProperty({
+    maxLength: 16,
+    minLength: 8,
+    type: 'string',
+    nullable: false,
+  })
+  newPassword: string;
+}

@@ -19,9 +19,9 @@ import { lastValueFrom, timeout } from 'rxjs';
 
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { GetUser } from '../../../common/decorators/get-user.decorator';
-import { CreateCoachDto, UpdateCoachDto } from '../../../common/dtos/club-service/coach.dto';
+import { CreateCoachDto, QueryCoachDto, UpdateCoachDto } from '../../../common/dtos/club-service/coach.dto';
 import { PaginationDto } from '../../../common/dtos/shared.dto';
-import { User } from '../../../common/dtos/user.dto';
+import { User } from '../../../common/interfaces/user.interface';
 import { CoachPatterns } from '../../../common/enums/club.events';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
@@ -100,12 +100,12 @@ export class CoachController {
   }
 
   @Get()
-  async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto): Promise<any> {
+  async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto, @Query() queryCoachDto: QueryCoachDto): Promise<any> {
     try {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(CoachPatterns.GetCoaches, { user, paginationDto }).pipe(timeout(5000)),
+        this.clubServiceClient.send(CoachPatterns.GetCoaches, { user, queryCoachDto, paginationDto }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);

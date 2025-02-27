@@ -1,11 +1,11 @@
-import { Body, Controller, Get, HttpException, Inject, InternalServerErrorException, Logger, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, HttpException, Inject, InternalServerErrorException, Logger, Post, UseGuards } from '@nestjs/common';
 import { Services } from '../../../common/enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { AuthPatterns } from '../../../common/enums/auth.events';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
-import { RefreshTokenDto, SigninDto, SignoutDto, SignupDto } from '../../../common/dtos/auth-service/auth.dto';
+import { ForgetPasswordDto, RefreshTokenDto, RestPasswordDto, SigninDto, SignoutDto, SignupDto } from '../../../common/dtos/auth-service/auth.dto';
 import { AuthGuard } from '../../../common/guards/auth.guard';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 
@@ -96,6 +96,34 @@ export class AuthController {
     }
 
     this.logger.log(`Refreshed token successfully: message=${data.message}`);
+    return data;
+  }
+
+  @Post('forget-password')
+  @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
+  async forgetPassword(@Body() { mobile }: ForgetPasswordDto) {
+    await this.checkConnection();
+
+    const data: ServiceResponse = await lastValueFrom(
+      this.authServiceClient.send(AuthPatterns.ForgetPassword, { mobile }).pipe(timeout(this.timeout)),
+    );
+
+    if (data.error) throw new HttpException(data.message, data.status);
+
+    return data;
+  }
+
+  @Post('reset-password')
+  @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
+  async resetPassword(@Body() restPasswordDto: RestPasswordDto) {
+    await this.checkConnection();
+
+    const data: ServiceResponse = await lastValueFrom(
+      this.authServiceClient.send(AuthPatterns.ResetPassword, restPasswordDto).pipe(timeout(this.timeout)),
+    );
+
+    if (data.error) throw new HttpException(data.message, data.status);
+
     return data;
   }
 }

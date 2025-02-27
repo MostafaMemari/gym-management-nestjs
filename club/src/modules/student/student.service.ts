@@ -1,10 +1,10 @@
-import { BadRequestException, ConflictException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 
 import { StudentEntity } from './entities/student.entity';
 import { StudentMessages } from './enums/student.message';
-import { ICreateStudent, IQuery, IUpdateStudent } from './interfaces/student.interface';
+import { ICreateStudent, ISeachStudentQuery, IUpdateStudent } from './interfaces/student.interface';
 import { StudentRepository } from './repositories/student.repository';
 
 import { AwsService } from '../s3AWS/s3AWS.service';
@@ -19,6 +19,12 @@ import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { IUser } from '../../common/interfaces/user.interface';
 import { ResponseUtil } from '../../common/utils/response';
+import { ClubEntity } from '../club/entities/club.entity';
+import { CoachService } from '../coach/coach.service';
+import { ClubService } from '../club/club.service';
+import { isGenderAllowed, isSameGender } from '../../common/utils/functions';
+import { CoachEntity } from '../coach/entities/coach.entity';
+import { Gender } from '../../common/enums/gender.enum';
 
 @Injectable()
 export class StudentService {
@@ -29,6 +35,8 @@ export class StudentService {
     private readonly studentRepository: StudentRepository,
     private readonly awsService: AwsService,
     private readonly cacheService: CacheService,
+    private readonly clubService: ClubService,
+    @Inject(forwardRef(() => CoachService)) private readonly coachService: CoachService,
   ) {}
 
   async checkUserServiceConnection(): Promise<ServiceResponse | void> {
@@ -40,51 +48,53 @@ export class StudentService {
   }
 
   async create(user: IUser, createStudentDto: ICreateStudent) {
-    let userId = null;
-    let imageKey = null;
+    const { clubId, coachId, national_code, gender, image } = createStudentDto;
+    const userId: number = user.id;
+
+    let imageKey: string | null = null;
+    let studentUserId: number | null = null;
 
     try {
-      imageKey = createStudentDto?.image ? await this.uploadStudentImage(createStudentDto.image) : null;
+      if (national_code) await this.ensureUniqueNationalCode(national_code, userId);
 
-      userId = await this.createUserCoach();
+      const { club, coach } = await this.ensureClubAndCoach(userId, clubId, coachId);
+      this.validateGenderRestrictions(gender, coach, club);
+
+      imageKey = image ? await this.uploadStudentImage(image) : null;
+
+      studentUserId = await this.createUserCoach();
 
       const student = await this.studentRepository.createStudentWithTransaction({
         ...createStudentDto,
         image_url: imageKey,
-        userId: userId,
+        userId: studentUserId,
       });
 
-      return ResponseUtil.success({ ...student, userId }, StudentMessages.CreatedStudent);
+      return ResponseUtil.success({ ...student, studentUserId }, StudentMessages.CreatedStudent);
     } catch (error) {
-      await this.removeUserById(userId);
-      await this.removeStudentImage(imageKey);
+      await this.deleteStudentUserAndImage(studentUserId, imageKey);
       return ResponseUtil.error(error?.message || StudentMessages.FailedToCreateStudent, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  async updateById(user: IUser, studentId: number, updateStudentDto: IUpdateStudent) {
+  async update(user: IUser, studentId: number, updateStudentDto: IUpdateStudent) {
+    const { clubId, coachId, national_code, gender, image } = updateStudentDto;
+    const userId: number = user.id;
+
     let imageKey: string | null = null;
-    let updateData: Partial<StudentEntity> = {};
 
     try {
-      const student = await this.checkStudentOwnership(studentId, user.id);
+      let student = national_code ? await this.ensureUniqueNationalCode(national_code, userId) : null;
+      if (!student) student = await this.validateOwnership(studentId, userId);
 
-      Object.keys(updateStudentDto).forEach((key) => {
-        if (updateStudentDto[key] !== undefined && updateStudentDto[key] !== student[key]) {
-          updateData[key] = updateStudentDto[key];
-        }
-      });
+      const { club, coach } = await this.ensureClubAndCoach(userId, clubId ?? student.clubId, coachId ?? student.coachId);
+      if (gender) this.validateGenderRestrictions(gender, coach, club);
 
-      if (updateStudentDto.image) {
-        imageKey = await this.uploadStudentImage(updateStudentDto.image);
-        updateData.image_url = imageKey;
-      }
+      const updateData = this.prepareUpdateData(updateStudentDto, student);
+      if (image) updateData.image_url = await this.uploadStudentImage(image);
 
       await this.studentRepository.updateStudent(student, updateData);
-
-      if (updateStudentDto.image && student.image_url) {
-        await this.awsService.deleteFile(student.image_url);
-      }
+      if (image && student.image_url) await this.awsService.deleteFile(student.image_url);
 
       return ResponseUtil.success({ ...student, ...updateData }, StudentMessages.UpdatedStudent);
     } catch (error) {
@@ -93,35 +103,27 @@ export class StudentService {
     }
   }
 
-  async getAll(user: IUser, query: { queryDto: IQuery; paginationDto: IPagination }): Promise<PageDto<StudentEntity>> {
-    const { take, page } = query?.paginationDto;
-    const cacheKey = `${CacheKeys.STUDENT_LIST}-${page}-${take}`;
+  async getAll(user: IUser, query: { queryStudentDto: ISeachStudentQuery; paginationDto: IPagination }): Promise<PageDto<StudentEntity>> {
+    const { take, page } = query.paginationDto;
+
+    const cacheKey = `${CacheKeys.STUDENT_LIST}-${user.id}-${page}-${take}-${JSON.stringify(query.queryStudentDto)}`;
 
     const cachedData = await this.cacheService.get<PageDto<StudentEntity>>(cacheKey);
     if (cachedData) return cachedData;
 
-    const queryBuilder = this.studentRepository.createQueryBuilder(EntityName.Students);
+    const [students, count] = await this.studentRepository.getStudentsWithFilters(user.id, query.queryStudentDto, page, take);
 
-    const [students, count] = await queryBuilder
-      .leftJoin('students.coach', 'coach')
-      .addSelect(['coach.id', 'coach.full_name'])
-      .leftJoin('students.club', 'club')
-      .addSelect(['club.id', 'club.name'])
-      .where('club.ownerId = :userId', { userId: user.id })
-      .skip((page - 1) * take)
-      .take(take)
-      .getManyAndCount();
-
-    const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
+    const pageMetaDto = new PageMetaDto(count, query.paginationDto);
     const result = new PageDto(students, pageMetaDto);
 
-    await this.cacheService.set(cacheKey, result, 1);
+    await this.cacheService.set(cacheKey, result, 60);
 
     return result;
   }
+
   async findOneById(user: IUser, studentId: number): Promise<ServiceResponse> {
     try {
-      const student = await this.checkStudentOwnership(studentId, user.id);
+      const student = await this.validateOwnership(studentId, user.id);
 
       return ResponseUtil.success(student, StudentMessages.GetStudentSuccess);
     } catch (error) {
@@ -129,25 +131,18 @@ export class StudentService {
     }
   }
   async removeById(user: IUser, studentId: number): Promise<ServiceResponse> {
-    const queryRunner = this.studentRepository.manager.connection.createQueryRunner();
-    await queryRunner.startTransaction();
-
     try {
-      const student = await this.checkStudentOwnership(studentId, user.id);
+      const student = await this.validateOwnership(studentId, user.id);
 
       await this.removeUserById(Number(student?.userId));
 
-      const removedStudent = await queryRunner.manager.delete(StudentEntity, student.id);
-      await queryRunner.commitTransaction();
+      const isRemoved = await this.studentRepository.removeStudentById(studentId);
 
-      if (removedStudent.affected) this.removeStudentImage(student?.image_url);
+      if (isRemoved) this.deleteStudentUserAndImage(Number(student.userId), student.image_url);
 
       return ResponseUtil.success(student, StudentMessages.RemovedStudentSuccess);
     } catch (error) {
-      await queryRunner.rollbackTransaction();
       throw new RpcException(error);
-    } finally {
-      await queryRunner.release();
     }
   }
 
@@ -168,7 +163,7 @@ export class StudentService {
     if (result?.error) throw result;
   }
 
-  private async uploadStudentImage(image: any): Promise<string | null> {
+  private async uploadStudentImage(image: Express.Multer.File): Promise<string | null> {
     if (!image) return null;
 
     const uploadedImage = await this.awsService.uploadSingleFile({ file: image, folderName: 'students' });
@@ -180,32 +175,47 @@ export class StudentService {
     await this.awsService.deleteFile(imageKey);
   }
 
-  async checkStudentOwnership(studentId: number, userId: number): Promise<StudentEntity> {
-    const queryBuilder = this.studentRepository.createQueryBuilder(EntityName.Students);
-
-    const student = await queryBuilder
-      .where('students.id = :studentId', { studentId })
-      .leftJoinAndSelect('students.club', 'club')
-      .andWhere('club.ownerId = :userId', { userId })
-      .getOne();
-
-    if (!student) throw new BadRequestException(StudentMessages.StudentNotFound);
-
+  async validateOwnership(studentId: number, userId: number): Promise<StudentEntity> {
+    return this.studentRepository.findStudentByOwner(studentId, userId);
+  }
+  async ensureUniqueNationalCode(nationalCode: string, userId: number): Promise<StudentEntity> {
+    const student = await this.studentRepository.findStudentByNationalCode(nationalCode, userId);
+    if (student) throw new BadRequestException(StudentMessages.DuplicateNationalCode);
     return student;
   }
 
-  async findStudent(field: keyof StudentEntity, value: any, notFoundError = false, duplicateError = false) {
-    const student = await this.studentRepository.findOneBy({ [field]: value });
+  async hasStudentsInClub(removedClubs: ClubEntity[], coachId: number): Promise<void> {
+    const clubIds = removedClubs.map((club) => club.id);
+    const clubsWithStudents = await this.studentRepository.countStudentsInClubs(clubIds, coachId);
 
-    if (!student && notFoundError) throw new NotFoundException(StudentMessages.NotFoundStudent);
-    if (student && duplicateError) throw new ConflictException(StudentMessages.DuplicateNationalCode);
+    if (clubsWithStudents.length > 0) {
+      const clubMessages = clubsWithStudents.map((club) => `${club.clubName}: has students`);
+      throw new BadRequestException(`${StudentMessages.CannotRemoveClubsInArray} ${clubMessages.join(', ')}`);
+    }
+  }
 
-    return student;
+  private async ensureClubAndCoach(userId: number, clubId?: number, coachId?: number) {
+    const club = clubId ? await this.clubService.checkClubOwnership(clubId, userId) : null;
+    const coach = coachId ? await this.coachService.validateOwnership(coachId, userId) : null;
+    return { club, coach };
   }
-  async findStudentById(studentId: number, { notFoundError = false }) {
-    return this.findStudent('id', studentId, notFoundError);
+
+  private validateGenderRestrictions(gender: Gender, coach: CoachEntity | null, club: ClubEntity | null) {
+    if (coach && !isSameGender(gender, coach.gender)) throw new BadRequestException(StudentMessages.CoachGenderMismatch);
+    if (club && !isGenderAllowed(gender, club.genders)) throw new BadRequestException(StudentMessages.ClubGenderMismatch);
   }
-  async findStudentByNationalCode(nationalCode: string, { duplicateError = false, notFoundError = false }) {
-    return this.findStudent('national_code', nationalCode, notFoundError, duplicateError);
+
+  private prepareUpdateData(updateDto: IUpdateStudent, student: StudentEntity): Partial<StudentEntity> {
+    return Object.keys(updateDto).reduce((acc, key) => {
+      if (key !== 'image' && updateDto[key] !== undefined && updateDto[key] !== student[key]) {
+        acc[key] = updateDto[key];
+      }
+      return acc;
+    }, {} as Partial<StudentEntity>);
+  }
+
+  private async deleteStudentUserAndImage(studentUserId: number | null, imageKey: string | null) {
+    if (studentUserId) await this.removeUserById(studentUserId);
+    if (imageKey) await this.removeStudentImage(imageKey);
   }
 }
