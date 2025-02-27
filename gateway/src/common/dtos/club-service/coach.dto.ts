@@ -133,15 +133,10 @@ export class QueryCoachDto {
   @ApiPropertyOptional({ type: 'string', example: '09388366510' })
   phone_number?: string;
 
-  @IsOptional()
-  @IsString()
-  @ApiPropertyOptional({ type: 'string', example: '' })
-  coach: string;
-
-  @IsOptional()
-  @IsString()
-  @ApiPropertyOptional({ type: 'string', example: '' })
-  club: string;
+  // @IsOptional()
+  // @IsString()
+  // @ApiPropertyOptional({ type: 'string', example: '' })
+  // club: string;
 
   @IsOptional()
   @IsEnum(SortBy, { message: 'sort_by must be one of "birth_date", "sports_insurance_date", "expire_image_date", "created_at", or "updated_at"' })

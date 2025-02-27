@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { CoachEntity } from '../entities/coach.entity';
 import { CoachMessages } from '../enums/coach.message';
+import { ISeachCoachQuery } from '../interfaces/coach.interface';
+import { EntityName } from 'src/common/enums/entity.enum';
 
 @Injectable()
 export class CoachRepository extends Repository<CoachEntity> {
@@ -41,6 +43,43 @@ export class CoachRepository extends Repository<CoachEntity> {
     }
   }
 
+  async getCoachesWithFilters(userId: number, filters: ISeachCoachQuery, page: number, take: number): Promise<[CoachEntity[], number]> {
+    const queryBuilder = this.createQueryBuilder(EntityName.Coaches)
+      .leftJoinAndSelect('coaches.clubs', 'club')
+      .where('club.ownerId = :userId', { userId });
+
+    if (filters?.search) {
+      queryBuilder.andWhere('(coaches.full_name LIKE :search OR coaches.national_code LIKE :search)', { search: `%${filters.search}%` });
+    }
+    if (filters?.gender) {
+      queryBuilder.andWhere('coaches.gender = :gender', { gender: filters?.gender });
+    }
+    if (filters?.is_active !== undefined) {
+      queryBuilder.andWhere('coaches.is_active = :isActive', { isActive: filters?.is_active });
+    }
+
+    if (filters?.phone_number) {
+      queryBuilder.andWhere('coaches.phone_number LIKE :phoneNumber', { phoneNumber: `%${filters?.phone_number}%` });
+    }
+
+    if (filters?.sort_by && validSortFields.includes(filters.sort_by)) {
+      queryBuilder.orderBy(`coaches.${filters.sort_by}`, filters.sort_order === 'asc' ? 'ASC' : 'DESC');
+    } else {
+      queryBuilder.orderBy('coaches.created_at', 'DESC');
+    }
+
+    if (filters?.sort_by) {
+      queryBuilder.orderBy(`coaches.${filters.sort_by}`, filters.sort_order === 'asc' ? 'ASC' : 'DESC');
+    } else {
+      queryBuilder.orderBy('coaches.updated_at', 'DESC');
+    }
+
+    return queryBuilder
+      .skip((page - 1) * take)
+      .take(take)
+      .getManyAndCount();
+  }
+
   async removeCoachWithTransaction(coachId: number): Promise<CoachEntity> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.startTransaction();
@@ -61,3 +100,5 @@ export class CoachRepository extends Repository<CoachEntity> {
     }
   }
 }
+
+const validSortFields = ['birth_date', 'sports_insurance_date', 'expire_image_date', 'created_at', 'updated_at'];

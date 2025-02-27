@@ -4,7 +4,7 @@ import { lastValueFrom, timeout } from 'rxjs';
 
 import { CoachEntity } from './entities/coach.entity';
 import { CoachMessages } from './enums/coach.message';
-import { ICreateCoach, IQuery, IUpdateCoach } from './interfaces/coach.interface';
+import { ICreateCoach, ISeachCoachQuery, IUpdateCoach } from './interfaces/coach.interface';
 import { CoachRepository } from './repositories/coach.repository';
 
 import { ClubService } from '../club/club.service';
@@ -114,21 +114,16 @@ export class CoachService {
     }
   }
 
-  async getAll(user: IUser, query: { queryDto: IQuery; paginationDto: IPagination }): Promise<PageDto<CoachEntity>> {
+  async getAll(user: IUser, query: { queryCoachDto: ISeachCoachQuery; paginationDto: IPagination }): Promise<PageDto<CoachEntity>> {
     const { take, page } = query.paginationDto;
+    const userId: number = user.id;
+
     // const cacheKey = `${CacheKeys.COACH_LIST}-${page}-${take}`;
 
     // const cachedData = await this.cacheService.get<PageDto<CoachEntity>>(cacheKey);
     // if (cachedData) return cachedData;
 
-    const queryBuilder = this.coachRepository.createQueryBuilder(EntityName.Coaches);
-
-    const [coaches, count] = await queryBuilder
-      .leftJoinAndSelect('coaches.clubs', 'club')
-      .where('club.ownerId = :userId', { userId: user.id })
-      .skip((page - 1) * take)
-      .take(take)
-      .getManyAndCount();
+    const [coaches, count] = await this.coachRepository.getCoachesWithFilters(userId, query.queryCoachDto, page, take);
 
     const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
     const result = new PageDto(coaches, pageMetaDto);
