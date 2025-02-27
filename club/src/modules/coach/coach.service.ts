@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 
@@ -21,6 +21,8 @@ import { ServiceResponse } from '../../common/interfaces/serviceResponse.interfa
 import { IUser } from '../../common/interfaces/user.interface';
 import { ResponseUtil } from '../../common/utils/response';
 import { isGenderAllowed } from '../../common/utils/functions';
+import { ClubEntity } from '../club/entities/club.entity';
+import { StudentService } from '../student/student.service';
 
 @Injectable()
 export class CoachService {
@@ -31,76 +33,80 @@ export class CoachService {
     private readonly coachRepository: CoachRepository,
     private readonly awsService: AwsService,
     private readonly clubService: ClubService,
+    @Inject(forwardRef(() => StudentService)) private readonly studentService: StudentService,
   ) {}
 
   async checkUserServiceConnection(): Promise<ServiceResponse | void> {
     try {
       await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CheckConnection, {}).pipe(timeout(this.timeout)));
     } catch (error) {
-      console.log(error);
       throw new RpcException({ message: 'User service is not connected', status: HttpStatus.INTERNAL_SERVER_ERROR });
     }
   }
 
   async create(user: IUser, createCoachDto: ICreateCoach) {
-    const { clubIds } = createCoachDto;
-
-    let userId = null;
-    let imageKey = null;
+    const { clubIds, national_code, gender, image } = createCoachDto;
+    let userId: number = user.id;
+    let imageKey: string | null = null;
 
     try {
-      // const ownedClubs = await this.clubService.findOwnedClubs(user.id, clubIds);
-      // this.validateCoachGender(createCoachDto.gender, ownedClubs);
+      if (national_code) await this.ensureUniqueNationalCode(national_code, userId);
 
-      console.log(createCoachDto);
+      const ownedClubs = clubIds?.length ? await this.clubService.findOwnedClubs(clubIds, userId) : [];
+      this.validateCoachGender(gender, ownedClubs);
 
-      imageKey = await this.uploadCoachImage(createCoachDto.image);
+      imageKey = image ? await this.uploadCoachImage(image) : null;
+
       userId = await this.createUserCoach();
-
       const coach = await this.coachRepository.createCoachWithTransaction({
         ...createCoachDto,
         image_url: imageKey,
-        userId: userId,
-        // clubs: ownedClubs,
+        userId,
       });
 
-      return ResponseUtil.success({ ...coach, userId: userId }, CoachMessages.CreatedCoach);
+      return ResponseUtil.success({ ...coach, userId }, CoachMessages.CreatedCoach);
     } catch (error) {
-      await this.removeUserById(userId);
-      await this.removeCoachImage(imageKey);
-      ResponseUtil.error(error?.message || CoachMessages.FailedToCreateCoach, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
+      await this.rollbackCoachCreation(userId, imageKey);
+      return ResponseUtil.error(error?.message || CoachMessages.FailedToCreateCoach, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-  async updateById(user: IUser, coachId: number, updateCoachDto: IUpdateCoach) {
+
+  async update(user: IUser, coachId: number, updateCoachDto: IUpdateCoach) {
+    const { clubIds, national_code, gender, image } = updateCoachDto;
+    const userId: number = user.id;
     let imageKey: string | null = null;
     let updateData: Partial<CoachEntity> = {};
 
     try {
-      const coach = await this.validateOwnership(coachId, user.id);
+      let coach = national_code ? await this.ensureUniqueNationalCode(national_code, userId) : null;
+      if (!coach) coach = await this.validateOwnership(coachId, userId);
+
+      const ownedClubs = clubIds?.length ? await this.clubService.findOwnedClubs(clubIds, userId) : coach.clubs;
+      this.validateCoachGender(gender || coach.gender, ownedClubs);
+
+      const removedClubs = coach.clubs.filter((club) => !clubIds.includes(club.id));
+      await this.studentService.hasStudentsInClub(removedClubs, coachId);
 
       Object.keys(updateCoachDto).forEach((key) => {
-        if (key !== 'image' && updateCoachDto[key] !== undefined && updateCoachDto[key] !== coach[key]) {
+        if (key !== 'image' && key !== 'clubIds' && updateCoachDto[key] !== undefined && updateCoachDto[key] !== coach[key]) {
           updateData[key] = updateCoachDto[key];
         }
       });
 
-      if (updateCoachDto.image) {
-        imageKey = await this.uploadCoachImage(updateCoachDto.image);
+      if (image) {
+        imageKey = await this.uploadCoachImage(image);
         updateData.image_url = imageKey;
       }
 
-      if (Object.keys(updateData).length > 0) {
-        await this.coachRepository.update(coachId, updateData);
-      }
+      updateData.clubs = ownedClubs;
 
-      if (updateCoachDto.image && coach.image_url) {
-        await this.awsService.deleteFile(coach.image_url);
-      }
+      await this.coachRepository.updateCoach(coach, updateData);
+
+      if (image && coach.image_url) await this.awsService.deleteFile(coach.image_url);
 
       return ResponseUtil.success({ ...coach, ...updateData }, CoachMessages.UpdatedCoach);
     } catch (error) {
       await this.removeCoachImage(imageKey);
-
       return ResponseUtil.error(error?.message || CoachMessages.FailedToUpdateCoach, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -229,5 +235,10 @@ export class CoachService {
     const invalidClubs = clubs.filter((club) => !isGenderAllowed(coachGender, club.genders)).map((club) => club.id);
 
     if (invalidClubs.length > 0) throw new BadRequestException(`${CoachMessages.CoachGenderMismatch} ${invalidClubs.join(', ')}`);
+  }
+
+  private async rollbackCoachCreation(userId: number, imageKey: string | null) {
+    if (userId) await this.removeUserById(userId);
+    if (imageKey) await this.removeCoachImage(imageKey);
   }
 }

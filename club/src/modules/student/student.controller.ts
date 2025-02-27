@@ -7,8 +7,6 @@ import { StudentService } from './student.service';
 
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { IUser } from '../../common/interfaces/user.interface';
-import { ValidateStudentUpdatePipe } from './pipes/studentUpdate.pipe';
-import { ValidateStudentCreatePipe } from './pipes/studentCreate.pipe';
 import { StudentEntity } from './entities/student.entity';
 
 @Controller()
@@ -21,18 +19,16 @@ export class StudentController {
   }
 
   @MessagePattern(StudentPatterns.CreateStudent)
-  @UsePipes(ValidateStudentCreatePipe)
   create(@Payload() data: { user: IUser; createStudentDto: ICreateStudent }) {
-    const { createStudentDto } = data;
+    const { user, createStudentDto } = data;
 
-    return this.studentService.create(createStudentDto);
+    return this.studentService.create(user, createStudentDto);
   }
   @MessagePattern(StudentPatterns.UpdateStudent)
-  @UsePipes(ValidateStudentUpdatePipe)
-  update(@Payload() data: { updateStudentDto: IUpdateStudent; student: StudentEntity }) {
-    const { updateStudentDto, student } = data;
+  update(@Payload() data: { user: IUser; studentId: number; updateStudentDto: IUpdateStudent }) {
+    const { user, studentId, updateStudentDto } = data;
 
-    return this.studentService.update(updateStudentDto, student);
+    return this.studentService.update(user, studentId, updateStudentDto);
   }
 
   @MessagePattern(StudentPatterns.GetStudent)

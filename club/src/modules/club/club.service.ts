@@ -17,6 +17,8 @@ import { ClubEntity } from './entities/club.entity';
 import { ClubMessages } from './enums/club.message';
 import { ICreateClub, IQuery, IUpdateClub } from './interfaces/club.interface';
 import { IUser } from '../../common/interfaces/user.interface';
+import { CoachEntity } from '../coach/entities/coach.entity';
+import { validateCoachGender } from '../../common/utils/functions';
 
 @Injectable()
 export class ClubService {
@@ -95,7 +97,7 @@ export class ClubService {
   async removeById(user: IUser, clubId: number): Promise<ServiceResponse> {
     try {
       const club = await this.checkClubOwnership(clubId, user.id);
-      await this.ensureClubHasNoRelations(clubId);
+      await this.ensureClubHasNoRelations(clubId, user.id);
 
       const removedClub = await this.clubRepository.delete(clubId);
 
@@ -123,7 +125,7 @@ export class ClubService {
     await this.cacheService.delByPattern(CachePatterns.CLUB_LIST);
   }
 
-  async findOwnedClubs(userId: number, clubIds: number[]): Promise<ClubEntity[]> {
+  async findOwnedClubs(clubIds: number[], userId: number): Promise<ClubEntity[]> {
     const ownedClubs = await this.clubRepository.find({
       where: { ownerId: userId, id: In(clubIds) },
     });
@@ -142,12 +144,13 @@ export class ClubService {
     return club;
   }
 
-  async ensureClubHasNoRelations(clubId: number): Promise<void> {
+  async ensureClubHasNoRelations(clubId: number, userId: number): Promise<void> {
     const clubWithRelations = await this.clubRepository
-      .createQueryBuilder('club')
-      .leftJoin('club.coaches', 'coach')
-      .leftJoin('club.students', 'student')
-      .where('club.id = :clubId', { clubId })
+      .createQueryBuilder(EntityName.Clubs)
+      .where('clubs.ownerId = :userId', { userId })
+      .leftJoin('clubs.coaches', 'coach')
+      .leftJoin('clubs.students', 'student')
+      .where('clubs.id = :clubId', { clubId })
       .andWhere('(coach.id IS NOT NULL OR student.id IS NOT NULL)')
       .getOne();
 
