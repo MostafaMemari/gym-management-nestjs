@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 
@@ -51,8 +51,8 @@ export class StudentService {
     const { clubId, coachId, national_code, gender, image } = createStudentDto;
     const userId: number = user.id;
 
-    let studentUserId: number | null = null;
     let imageKey: string | null = null;
+    let studentUserId: number | null = null;
 
     try {
       if (national_code) await this.ensureUniqueNationalCode(national_code, userId);
@@ -60,7 +60,8 @@ export class StudentService {
       const { club, coach } = await this.ensureClubAndCoach(userId, clubId, coachId);
       this.validateGenderRestrictions(gender, coach, club);
 
-      imageKey = await this.handleStudentImage(image);
+      imageKey = image ? await this.handleStudentImage(image) : null;
+
       studentUserId = await this.createUserCoach();
 
       const student = await this.studentRepository.createStudentWithTransaction({
@@ -71,7 +72,7 @@ export class StudentService {
 
       return ResponseUtil.success({ ...student, studentUserId }, StudentMessages.CreatedStudent);
     } catch (error) {
-      await this.cleanupFailedCreation(studentUserId, imageKey);
+      await this.rollbackStudentCreation(studentUserId, imageKey);
       return ResponseUtil.error(error?.message || StudentMessages.FailedToCreateStudent, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -102,15 +103,15 @@ export class StudentService {
     }
   }
 
-  async getAll(user: IUser, query: { studentQueryDto: ISeachStudentQuery; paginationDto: IPagination }): Promise<PageDto<StudentEntity>> {
+  async getAll(user: IUser, query: { queryStudentDto: ISeachStudentQuery; paginationDto: IPagination }): Promise<PageDto<StudentEntity>> {
     const { take, page } = query.paginationDto;
 
-    const cacheKey = `${CacheKeys.STUDENT_LIST}-${user.id}-${page}-${take}-${JSON.stringify(query.studentQueryDto)}`;
+    const cacheKey = `${CacheKeys.STUDENT_LIST}-${user.id}-${page}-${take}-${JSON.stringify(query.queryStudentDto)}`;
 
     const cachedData = await this.cacheService.get<PageDto<StudentEntity>>(cacheKey);
     if (cachedData) return cachedData;
 
-    const [students, count] = await this.studentRepository.getStudentsWithFilters(user.id, query.studentQueryDto, page, take);
+    const [students, count] = await this.studentRepository.getStudentsWithFilters(user.id, query.queryStudentDto, page, take);
 
     const pageMetaDto = new PageMetaDto(count, query.paginationDto);
     const result = new PageDto(students, pageMetaDto);
@@ -250,7 +251,7 @@ export class StudentService {
     }, {} as Partial<StudentEntity>);
   }
 
-  private async cleanupFailedCreation(studentUserId: number | null, imageKey: string | null) {
+  private async rollbackStudentCreation(studentUserId: number | null, imageKey: string | null) {
     if (studentUserId) await this.removeUserById(studentUserId);
     if (imageKey) await this.removeStudentImage(imageKey);
   }

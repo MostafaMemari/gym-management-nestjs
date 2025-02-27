@@ -1,4 +1,4 @@
-import { Controller, UsePipes } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
 import { CoachService } from './coach.service';
@@ -7,7 +7,6 @@ import { CoachPatterns } from './patterns/coach.pattern';
 
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { IUser } from '../../common/interfaces/user.interface';
-import { CoachEntity } from './entities/coach.entity';
 
 @Controller()
 export class CoachController {
@@ -51,9 +50,4 @@ export class CoachController {
 
     return this.coachService.removeById(user, coachId);
   }
-
-  // @MessagePattern(CoachPatterns.checkExistCoachById)
-  // checkExistById(@Payload() data: { coachId: number }) {
-  //   return this.coachService.findCoachById(data.coachId, {});
-  // }
 }

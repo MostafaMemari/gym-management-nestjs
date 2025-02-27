@@ -23,6 +23,8 @@ import { isGenderAllowed } from '../../common/utils/functions';
 import { ResponseUtil } from '../../common/utils/response';
 import { ClubEntity } from '../club/entities/club.entity';
 import { StudentService } from '../student/student.service';
+import { CacheKeys } from '../../common/enums/cache.enum';
+import { CacheService } from '../cache/cache.service';
 
 @Injectable()
 export class CoachService {
@@ -33,6 +35,7 @@ export class CoachService {
     private readonly coachRepository: CoachRepository,
     private readonly awsService: AwsService,
     private readonly clubService: ClubService,
+    private readonly cacheService: CacheService,
     @Inject(forwardRef(() => StudentService)) private readonly studentService: StudentService,
   ) {}
 
@@ -47,8 +50,9 @@ export class CoachService {
   async create(user: IUser, createCoachDto: ICreateCoach) {
     const { clubIds, national_code, gender, image } = createCoachDto;
     const userId: number = user.id;
+
     let imageKey: string | null = null;
-    let userCoachId: number | null = null;
+    let coachUserId: number | null = null;
 
     try {
       if (national_code) await this.ensureUniqueNationalCode(national_code, userId);
@@ -58,18 +62,18 @@ export class CoachService {
 
       imageKey = image ? await this.uploadCoachImage(image) : null;
 
-      userCoachId = await this.createUserCoach();
+      coachUserId = await this.createUserCoach();
 
       const coach = await this.coachRepository.createCoachWithTransaction({
         ...createCoachDto,
         image_url: imageKey,
         clubs: ownedClubs,
-        userId: userCoachId,
+        userId: coachUserId,
       });
 
       return ResponseUtil.success({ ...coach, userId }, CoachMessages.CreatedCoach);
     } catch (error) {
-      await this.rollbackCoachCreation(userCoachId, imageKey);
+      await this.rollbackCoachCreation(coachUserId, imageKey);
       return ResponseUtil.error(error?.message || CoachMessages.FailedToCreateCoach, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -118,17 +122,17 @@ export class CoachService {
     const { take, page } = query.paginationDto;
     const userId: number = user.id;
 
-    // const cacheKey = `${CacheKeys.COACH_LIST}-${page}-${take}`;
+    const cacheKey = `${CacheKeys.COACH_LIST}-${user.id}-${page}-${take}-${JSON.stringify(query.queryCoachDto)}`;
 
-    // const cachedData = await this.cacheService.get<PageDto<CoachEntity>>(cacheKey);
-    // if (cachedData) return cachedData;
+    const cachedData = await this.cacheService.get<PageDto<CoachEntity>>(cacheKey);
+    if (cachedData) return cachedData;
 
     const [coaches, count] = await this.coachRepository.getCoachesWithFilters(userId, query.queryCoachDto, page, take);
 
     const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
     const result = new PageDto(coaches, pageMetaDto);
 
-    // await this.cacheService.set(cacheKey, result, 600);
+    await this.cacheService.set(cacheKey, result, 60);
 
     return result;
   }
@@ -235,8 +239,8 @@ export class CoachService {
     if (invalidClubs.length > 0) throw new BadRequestException(`${CoachMessages.CoachGenderMismatch} ${invalidClubs.join(', ')}`);
   }
 
-  private async rollbackCoachCreation(userId: number, imageKey: string | null) {
-    if (userId) await this.removeUserById(userId);
+  private async rollbackCoachCreation(coachUserId: number, imageKey: string | null) {
+    if (coachUserId) await this.removeUserById(coachUserId);
     if (imageKey) await this.removeCoachImage(imageKey);
   }
 }
