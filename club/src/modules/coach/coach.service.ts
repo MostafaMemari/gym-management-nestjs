@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 
@@ -19,8 +19,8 @@ import { Services } from '../../common/enums/services.enum';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { IUser } from '../../common/interfaces/user.interface';
-import { ResponseUtil } from '../../common/utils/response';
 import { isGenderAllowed } from '../../common/utils/functions';
+import { ResponseUtil } from '../../common/utils/response';
 import { ClubEntity } from '../club/entities/club.entity';
 import { StudentService } from '../student/student.service';
 
@@ -45,11 +45,10 @@ export class CoachService {
   }
 
   async create(user: IUser, createCoachDto: ICreateCoach) {
-    // let createData: Partial<CoachEntity> = ICreateCoach;
-
     const { clubIds, national_code, gender, image } = createCoachDto;
-    let userId: number = user.id;
+    const userId: number = user.id;
     let imageKey: string | null = null;
+    let userCoachId: number | null = null;
 
     try {
       if (national_code) await this.ensureUniqueNationalCode(national_code, userId);
@@ -59,18 +58,18 @@ export class CoachService {
 
       imageKey = image ? await this.uploadCoachImage(image) : null;
 
-      // createCoachDto.clubs = ownedClubs;
+      userCoachId = await this.createUserCoach();
 
-      userId = await this.createUserCoach();
       const coach = await this.coachRepository.createCoachWithTransaction({
         ...createCoachDto,
         image_url: imageKey,
-        userId,
+        clubs: ownedClubs,
+        userId: userCoachId,
       });
 
       return ResponseUtil.success({ ...coach, userId }, CoachMessages.CreatedCoach);
     } catch (error) {
-      await this.rollbackCoachCreation(userId, imageKey);
+      await this.rollbackCoachCreation(userCoachId, imageKey);
       return ResponseUtil.error(error?.message || CoachMessages.FailedToCreateCoach, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
