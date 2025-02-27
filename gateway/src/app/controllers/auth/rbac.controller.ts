@@ -22,7 +22,7 @@ export class RbacController {
   constructor(
     @Inject(Services.AUTH) private readonly authServiceClientProxy: ClientProxy,
     private readonly authController: AuthController,
-  ) { }
+  ) {}
 
   private readonly timeout: number = 5000;
 
