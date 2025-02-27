@@ -131,26 +131,15 @@ export class StudentService {
     }
   }
   async removeById(user: IUser, studentId: number): Promise<ServiceResponse> {
-    const queryRunner = this.studentRepository.manager.connection.createQueryRunner();
-    await queryRunner.startTransaction();
+    const student = await this.validateOwnership(studentId, user.id);
 
-    try {
-      const student = await this.validateOwnership(studentId, user.id);
+    await this.removeUserById(Number(student?.userId));
 
-      await this.removeUserById(Number(student?.userId));
+    const isRemoved = await this.studentRepository.removeStudentById(student.id);
 
-      const removedStudent = await queryRunner.manager.delete(StudentEntity, student.id);
-      await queryRunner.commitTransaction();
+    if (isRemoved) this.removeStudentImage(student?.image_url);
 
-      if (removedStudent.affected) this.removeStudentImage(student?.image_url);
-
-      return ResponseUtil.success(student, StudentMessages.RemovedStudentSuccess);
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw new RpcException(error);
-    } finally {
-      await queryRunner.release();
-    }
+    return ResponseUtil.success(student, StudentMessages.RemovedStudentSuccess);
   }
 
   private async createUserCoach(): Promise<number | null> {
@@ -183,47 +172,21 @@ export class StudentService {
   }
 
   async validateOwnership(studentId: number, userId: number): Promise<StudentEntity> {
-    const queryBuilder = this.studentRepository.createQueryBuilder(EntityName.Students);
-
-    const student = await queryBuilder
-      .where('students.id = :studentId', { studentId })
-      .leftJoinAndSelect('students.club', 'club')
-      .andWhere('club.ownerId = :userId', { userId })
-      .getOne();
-
-    if (!student) throw new BadRequestException(StudentMessages.StudentNotFound);
-
-    return student;
+    return this.studentRepository.findStudentByOwner(studentId, userId);
   }
   async ensureUniqueNationalCode(nationalCode: string, userId: number): Promise<StudentEntity> {
-    const queryBuilder = this.studentRepository.createQueryBuilder(EntityName.Students);
-
-    const student = await queryBuilder
-      .where('students.national_code = :nationalCode', { nationalCode })
-      .leftJoinAndSelect('students.club', 'club')
-      .andWhere('club.ownerId = :userId', { userId })
-      .getOne();
-
+    const student = await this.studentRepository.findStudentByNationalCode(nationalCode, userId);
     if (student) throw new BadRequestException(StudentMessages.DuplicateNationalCode);
-
     return student;
   }
+
   async hasStudentsInClub(removedClubs: ClubEntity[], coachId: number): Promise<void> {
-    const clubsWithStudents: string[] = [];
-
-    for (const club of removedClubs) {
-      const hasStudents = await this.studentRepository.count({
-        where: {
-          club: { id: club.id },
-          coach: { id: coachId },
-        },
-      });
-
-      if (hasStudents > 0) clubsWithStudents.push(`${club.name}: has students`);
-    }
+    const clubIds = removedClubs.map((club) => club.id);
+    const clubsWithStudents = await this.studentRepository.countStudentsInClubs(clubIds, coachId);
 
     if (clubsWithStudents.length > 0) {
-      throw new BadRequestException(`${StudentMessages.CannotRemoveClubsInArray} ${clubsWithStudents.join(', ')}`);
+      const clubMessages = clubsWithStudents.map((club) => `${club.clubName}: has students`);
+      throw new BadRequestException(`${StudentMessages.CannotRemoveClubsInArray} ${clubMessages.join(', ')}`);
     }
   }
 
