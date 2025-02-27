@@ -51,8 +51,8 @@ export class StudentRepository extends Repository<StudentEntity> {
       .addSelect(['club.id', 'club.name'])
       .where('club.ownerId = :userId', { userId });
 
-    if (filters?.full_name) {
-      queryBuilder.andWhere('students.full_name LIKE :fullName', { fullName: `%${filters?.full_name}%` });
+    if (filters?.search) {
+      queryBuilder.andWhere('(students.full_name LIKE :search OR students.national_code LIKE :search)', { search: `%${filters.search}%` });
     }
     if (filters?.gender) {
       queryBuilder.andWhere('students.gender = :gender', { gender: filters?.gender });
@@ -60,21 +60,17 @@ export class StudentRepository extends Repository<StudentEntity> {
     if (filters?.is_active !== undefined) {
       queryBuilder.andWhere('students.is_active = :isActive', { isActive: filters?.is_active });
     }
-    if (filters?.national_code) {
-      queryBuilder.andWhere('students.national_code LIKE :nationalCode', { nationalCode: `%${filters.national_code}%` });
-    }
 
     if (filters?.phone_number) {
       queryBuilder.andWhere('students.phone_number LIKE :phoneNumber', { phoneNumber: `%${filters?.phone_number}%` });
     }
 
-    if (filters?.birth_date) {
-      queryBuilder.andWhere('students.birth_date = :birthDate', { birthDate: filters?.birth_date });
+    if (filters?.club) {
+      queryBuilder.andWhere('students.clubId = :club', { club: filters?.club });
     }
-    if (filters?.sports_insurance_date) {
-      queryBuilder.andWhere('students.sports_insurance_date = :sportsInsuranceDate', {
-        sportsInsuranceDate: filters?.sports_insurance_date,
-      });
+
+    if (filters?.coach) {
+      queryBuilder.andWhere('students.coachId = :coach', { coach: filters?.coach });
     }
 
     if (filters?.sort_by && validSortFields.includes(filters.sort_by)) {

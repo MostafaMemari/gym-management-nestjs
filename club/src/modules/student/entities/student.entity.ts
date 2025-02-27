@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 
 import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
@@ -7,6 +7,7 @@ import { ClubEntity } from '../../../modules/club/entities/club.entity';
 import { CoachEntity } from '../../coach/entities/coach.entity';
 
 @Entity(EntityName.Students)
+@Index(['full_name', 'national_code'])
 export class StudentEntity extends AbstractEntity {
   @Column({ type: 'integer', unique: true, nullable: false })
   userId: Number;
