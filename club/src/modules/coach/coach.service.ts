@@ -73,7 +73,7 @@ export class CoachService {
 
       return ResponseUtil.success({ ...coach, userId }, CoachMessages.CreatedCoach);
     } catch (error) {
-      await this.rollbackCoachCreation(coachUserId, imageKey);
+      await this.deleteCoachUserAndImage(coachUserId, imageKey);
       return ResponseUtil.error(error?.message || CoachMessages.FailedToCreateCoach, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -82,7 +82,6 @@ export class CoachService {
     const { clubIds, national_code, gender, image } = updateCoachDto;
     const userId: number = user.id;
     let imageKey: string | null = null;
-    let updateData: Partial<CoachEntity> = {};
 
     try {
       let coach = national_code ? await this.ensureUniqueNationalCode(national_code, userId) : null;
@@ -94,20 +93,13 @@ export class CoachService {
       const removedClubs = coach.clubs.filter((club) => !clubIds.includes(club.id));
       await this.studentService.hasStudentsInClub(removedClubs, coachId);
 
-      Object.keys(updateCoachDto).forEach((key) => {
-        if (key !== 'image' && key !== 'clubIds' && updateCoachDto[key] !== undefined && updateCoachDto[key] !== coach[key]) {
-          updateData[key] = updateCoachDto[key];
-        }
+      const updateData = this.prepareUpdateData(updateCoachDto, coach);
+      if (image) updateData.image_url = await this.uploadCoachImage(image);
+
+      await this.coachRepository.updateCoach(coach, {
+        ...updateData,
+        clubs: ownedClubs ?? [],
       });
-
-      if (image) {
-        imageKey = await this.uploadCoachImage(image);
-        updateData.image_url = imageKey;
-      }
-
-      updateData.clubs = ownedClubs;
-
-      await this.coachRepository.updateCoach(coach, updateData);
 
       if (image && coach.image_url) await this.awsService.deleteFile(coach.image_url);
 
@@ -148,15 +140,16 @@ export class CoachService {
   async removeById(user: IUser, coachId: number): Promise<ServiceResponse> {
     try {
       const coach = await this.validateOwnership(coachId, user.id);
-      // await this.ensureCoachHasNoRelations(coachId);
 
       await this.removeUserById(Number(coach.userId));
 
       if (coach.image_url) await this.removeCoachImage(coach.image_url);
 
-      const removedCoach = await this.coachRepository.removeCoachWithTransaction(coachId);
+      const isRemoved = await this.coachRepository.removeCoachById(coachId);
 
-      return ResponseUtil.success(removedCoach, CoachMessages.RemovedCoachSuccess);
+      if (isRemoved) this.removeCoachImage(coach?.image_url);
+
+      return ResponseUtil.success(coach, CoachMessages.RemovedCoachSuccess);
     } catch (error) {
       throw new RpcException(error);
     }
@@ -171,6 +164,7 @@ export class CoachService {
     if (result?.error) throw result;
     return result?.data?.user?.id;
   }
+
   private async removeUserById(userId: number) {
     if (!userId) return null;
 
@@ -185,48 +179,26 @@ export class CoachService {
     const uploadedImage = await this.awsService.uploadSingleFile({ file: image, folderName: 'coaches' });
     return uploadedImage.key;
   }
+
   private async removeCoachImage(imageKey: string): Promise<string | null> {
     if (!imageKey) return null;
-
     await this.awsService.deleteFile(imageKey);
   }
 
   async validateOwnership(coachId: number, userId: number): Promise<CoachEntity> {
-    const queryBuilder = this.coachRepository.createQueryBuilder(EntityName.Coaches);
-
-    const coach = await queryBuilder
-      .where('coaches.id = :coachId', { coachId })
-      .leftJoinAndSelect('coaches.clubs', 'club')
-      .andWhere('club.ownerId = :userId', { userId })
-      .getOne();
-
+    const coach = await this.coachRepository.findCoachByIdAndOwner(coachId, userId);
     if (!coach) throw new BadRequestException(CoachMessages.CoachNotFound);
-
     return coach;
   }
 
   async ensureUniqueNationalCode(nationalCode: string, userId: number): Promise<CoachEntity> {
-    const queryBuilder = this.coachRepository.createQueryBuilder(EntityName.Coaches);
-
-    const coach = await queryBuilder
-      .where('coaches.national_code = :nationalCode', { nationalCode })
-      .leftJoinAndSelect('coaches.clubs', 'club')
-      .andWhere('club.ownerId = :userId', { userId })
-      .getOne();
-
+    const coach = await this.coachRepository.findCoachByNationalCode(nationalCode, userId);
     if (coach) throw new BadRequestException(CoachMessages.DuplicateNationalCode);
-
     return coach;
   }
 
   async ensureCoachHasNoRelations(coachId: number): Promise<void> {
-    const coachWithRelations = await this.coachRepository
-      .createQueryBuilder('coach')
-      .leftJoin('coach.coaches', 'student')
-      .leftJoin('coach.clubs', 'club')
-      .where('coach.id = :coachId', { coachId })
-      .andWhere('(student.id IS NOT NULL OR club.id IS NOT NULL)')
-      .getOne();
+    const coachWithRelations = await this.coachRepository.findCoachWithRelations(coachId);
 
     if (coachWithRelations) {
       throw new BadRequestException(CoachMessages.CoachHasRelations);
@@ -239,7 +211,16 @@ export class CoachService {
     if (invalidClubs.length > 0) throw new BadRequestException(`${CoachMessages.CoachGenderMismatch} ${invalidClubs.join(', ')}`);
   }
 
-  private async rollbackCoachCreation(coachUserId: number, imageKey: string | null) {
+  private prepareUpdateData(updateDto: IUpdateCoach, coach: CoachEntity): Partial<CoachEntity> {
+    return Object.keys(updateDto).reduce((acc, key) => {
+      if (key !== 'image' && key !== 'clubIds' && updateDto[key] !== undefined && updateDto[key] !== coach[key]) {
+        acc[key] = updateDto[key];
+      }
+      return acc;
+    }, {} as Partial<CoachEntity>);
+  }
+
+  private async deleteCoachUserAndImage(coachUserId: number, imageKey: string | null) {
     if (coachUserId) await this.removeUserById(coachUserId);
     if (imageKey) await this.removeCoachImage(imageKey);
   }

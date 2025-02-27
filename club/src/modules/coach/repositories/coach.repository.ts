@@ -80,24 +80,46 @@ export class CoachRepository extends Repository<CoachEntity> {
       .getManyAndCount();
   }
 
-  async removeCoachWithTransaction(coachId: number): Promise<CoachEntity> {
+  async removeCoachById(coachId: number): Promise<boolean> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.startTransaction();
 
     try {
-      const coach = await queryRunner.manager.findOne(CoachEntity, { where: { id: coachId } });
-      if (!coach) throw new NotFoundException(CoachMessages.CoachNotFound);
-
-      await queryRunner.manager.delete(CoachEntity, { id: coachId });
-
+      const removedCoach = await queryRunner.manager.delete(CoachEntity, coachId);
       await queryRunner.commitTransaction();
-      return coach;
+
+      return removedCoach.affected > 0;
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;
     } finally {
       await queryRunner.release();
     }
+  }
+
+  async findCoachWithRelations(coachId: number): Promise<CoachEntity | null> {
+    return await this.createQueryBuilder(EntityName.Coaches)
+      .leftJoin('coach.coaches', 'student')
+      .leftJoin('coach.clubs', 'club')
+      .where('coach.id = :coachId', { coachId })
+      .andWhere('(student.id IS NOT NULL OR club.id IS NOT NULL)')
+      .getOne();
+  }
+
+  async findCoachByNationalCode(nationalCode: string, userId: number): Promise<CoachEntity | null> {
+    return await this.createQueryBuilder(EntityName.Coaches)
+      .where('coaches.national_code = :nationalCode', { nationalCode })
+      .leftJoinAndSelect('coaches.clubs', 'club')
+      .andWhere('club.ownerId = :userId', { userId })
+      .getOne();
+  }
+
+  async findCoachByIdAndOwner(coachId: number, userId: number): Promise<CoachEntity | null> {
+    return await this.createQueryBuilder(EntityName.Coaches)
+      .where('coaches.id = :coachId', { coachId })
+      .leftJoinAndSelect('coaches.clubs', 'club')
+      .andWhere('club.ownerId = :userId', { userId })
+      .getOne();
   }
 }
 

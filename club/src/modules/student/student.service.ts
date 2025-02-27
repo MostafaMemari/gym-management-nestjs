@@ -60,7 +60,7 @@ export class StudentService {
       const { club, coach } = await this.ensureClubAndCoach(userId, clubId, coachId);
       this.validateGenderRestrictions(gender, coach, club);
 
-      imageKey = image ? await this.handleStudentImage(image) : null;
+      imageKey = image ? await this.uploadStudentImage(image) : null;
 
       studentUserId = await this.createUserCoach();
 
@@ -72,7 +72,7 @@ export class StudentService {
 
       return ResponseUtil.success({ ...student, studentUserId }, StudentMessages.CreatedStudent);
     } catch (error) {
-      await this.rollbackStudentCreation(studentUserId, imageKey);
+      await this.deleteStudentUserAndImage(studentUserId, imageKey);
       return ResponseUtil.error(error?.message || StudentMessages.FailedToCreateStudent, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -91,7 +91,7 @@ export class StudentService {
       if (gender) this.validateGenderRestrictions(gender, coach, club);
 
       const updateData = this.prepareUpdateData(updateStudentDto, student);
-      if (image) updateData.image_url = imageKey = await this.handleStudentImage(image);
+      if (image) updateData.image_url = await this.uploadStudentImage(image);
 
       await this.studentRepository.updateStudent(student, updateData);
       if (image && student.image_url) await this.awsService.deleteFile(student.image_url);
@@ -131,15 +131,19 @@ export class StudentService {
     }
   }
   async removeById(user: IUser, studentId: number): Promise<ServiceResponse> {
-    const student = await this.validateOwnership(studentId, user.id);
+    try {
+      const student = await this.validateOwnership(studentId, user.id);
 
-    await this.removeUserById(Number(student?.userId));
+      await this.removeUserById(Number(student?.userId));
 
-    const isRemoved = await this.studentRepository.removeStudentById(student.id);
+      const isRemoved = await this.studentRepository.removeStudentById(studentId);
 
-    if (isRemoved) this.removeStudentImage(student?.image_url);
+      if (isRemoved) this.deleteStudentUserAndImage(Number(student.userId), student.image_url);
 
-    return ResponseUtil.success(student, StudentMessages.RemovedStudentSuccess);
+      return ResponseUtil.success(student, StudentMessages.RemovedStudentSuccess);
+    } catch (error) {
+      throw new RpcException(error);
+    }
   }
 
   private async createUserCoach(): Promise<number | null> {
@@ -201,10 +205,6 @@ export class StudentService {
     if (club && !isGenderAllowed(gender, club.genders)) throw new BadRequestException(StudentMessages.ClubGenderMismatch);
   }
 
-  private async handleStudentImage(image?: Express.Multer.File): Promise<string | null> {
-    return image ? await this.uploadStudentImage(image) : null;
-  }
-
   private prepareUpdateData(updateDto: IUpdateStudent, student: StudentEntity): Partial<StudentEntity> {
     return Object.keys(updateDto).reduce((acc, key) => {
       if (key !== 'image' && updateDto[key] !== undefined && updateDto[key] !== student[key]) {
@@ -214,7 +214,7 @@ export class StudentService {
     }, {} as Partial<StudentEntity>);
   }
 
-  private async rollbackStudentCreation(studentUserId: number | null, imageKey: string | null) {
+  private async deleteStudentUserAndImage(studentUserId: number | null, imageKey: string | null) {
     if (studentUserId) await this.removeUserById(studentUserId);
     if (imageKey) await this.removeStudentImage(imageKey);
   }

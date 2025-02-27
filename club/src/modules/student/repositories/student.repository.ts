@@ -40,7 +40,7 @@ export class StudentRepository extends Repository<StudentEntity> {
   }
 
   async removeStudentById(studentId: number): Promise<boolean> {
-    const queryRunner = this.manager.connection.createQueryRunner();
+    const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.startTransaction();
 
     try {
