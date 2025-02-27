@@ -32,6 +32,10 @@ export class AuthService {
     }
   }
 
+  generateOtp() {
+    return Math.floor(100_000 + Math.random() * 900_000).toString()
+  }
+
   async validateRefreshToken(refreshToken: string): Promise<never | { refreshTokenKey: string }> {
     const jwtResult = this.jwtService.decode<{ id: number } | undefined>(refreshToken)
 
@@ -113,6 +117,10 @@ export class AuthService {
         ...signupDto,
         password: hashedPassword
       }
+
+      const otpCode = this.generateOtp()
+
+      await this.sendSms(signupDto.mobile, otpCode)
 
       const result: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CreateUser, data).pipe(timeout(this.timeout)))
 
@@ -227,7 +235,7 @@ export class AuthService {
           throw new ForbiddenException(AuthMessages.CannotChangePassword)
       }
 
-      const otpCode = Math.floor(100_000 + Math.random() * 900_000).toString()
+      const otpCode = this.generateOtp()
 
       await this.redis.set(resetPasswordKey, otpCode, 'EX', 300) //* 5 Minutes
 
