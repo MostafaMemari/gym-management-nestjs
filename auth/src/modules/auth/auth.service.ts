@@ -11,6 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as dateFns from 'date-fns'
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { Redis } from 'ioredis'
+import { Smsir } from 'sms-typescript/lib'
 
 @Injectable()
 export class AuthService {
@@ -217,20 +218,20 @@ export class AuthService {
       const currentDate = new Date()
 
       let { user: { lastPasswordChange } = {} } = user.data
-      
+
       if (lastPasswordChange) {
         lastPasswordChange = new Date(lastPasswordChange)
         const diffDays = Math.floor((currentDate.getTime() - lastPasswordChange.getTime()) / (1000 * 60 * 60 * 24));
-        
+
         if (diffDays < 3)
           throw new ForbiddenException(AuthMessages.CannotChangePassword)
       }
-      
+
       const otpCode = Math.floor(100_000 + Math.random() * 900_000).toString()
 
       await this.redis.set(resetPasswordKey, otpCode, 'EX', 300) //* 5 Minutes
 
-      //TODO: Send otp code via sms
+      await this.sendSms(mobile, otpCode)
 
       const updateUserData = {
         lastPasswordChange: currentDate,
@@ -291,5 +292,15 @@ export class AuthService {
     } catch (error) {
       throw new RpcException(error)
     }
+  }
+
+  async sendSms(mobile: string, verifyCode: string): Promise<{ message: string, status: number }> {
+    const { SMS_API_KEY, SMS_LINE_NUMBER, SMS_TEMPLATE_ID, SMS_NAME } = process.env
+    const sms = new Smsir(SMS_API_KEY, Number(SMS_LINE_NUMBER))
+
+    const result = await sms.SendVerifyCode(mobile, Number(SMS_TEMPLATE_ID), [{ name: SMS_NAME, value: verifyCode }])
+
+    if (result.data?.status == 1) return { message: "success", status: 200 }
+    else return { message: "failed", status: 500 }
   }
 }
