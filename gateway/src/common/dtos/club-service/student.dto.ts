@@ -104,8 +104,8 @@ export class UpdateStudentDto extends PartialType(CreateStudentDto) {}
 export class StudentQueryDto {
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ type: String, example: 'مصطفی معماری' })
-  full_name?: string;
+  @ApiPropertyOptional({ type: 'string', example: '', description: 'search full name and national code' })
+  search?: string;
 
   @IsOptional()
   @IsEnum(Gender)
@@ -120,28 +120,18 @@ export class StudentQueryDto {
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ type: String, example: '4900782343', minLength: 10, maxLength: 10 })
-  national_code?: string;
-
-  @IsOptional()
-  @IsString()
-  @ApiPropertyOptional({ type: String, example: '09388366510' })
+  @ApiPropertyOptional({ type: 'string', example: '09388366510' })
   phone_number?: string;
 
   @IsOptional()
-  @IsDateString()
-  @ApiPropertyOptional({ type: String, example: '2025-01-25' })
-  birth_date?: string;
+  @IsString()
+  @ApiPropertyOptional({ type: 'string', example: '' })
+  coach: string;
 
   @IsOptional()
-  @IsDateString()
-  @ApiPropertyOptional({ type: String, example: '2025-06-15' })
-  sports_insurance_date?: string;
-
-  @IsOptional()
-  @IsDateString()
-  @ApiPropertyOptional({ type: String, example: '2026-01-01' })
-  expire_image_date?: string;
+  @IsString()
+  @ApiPropertyOptional({ type: 'string', example: '' })
+  club: string;
 
   @IsOptional()
   @IsEnum(SortBy, { message: 'sort_by must be one of "birth_date", "sports_insurance_date", "expire_image_date", "created_at", or "updated_at"' })

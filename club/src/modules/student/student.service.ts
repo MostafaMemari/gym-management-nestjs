@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 
@@ -19,6 +19,12 @@ import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { IUser } from '../../common/interfaces/user.interface';
 import { ResponseUtil } from '../../common/utils/response';
+import { ClubEntity } from '../club/entities/club.entity';
+import { CoachService } from '../coach/coach.service';
+import { ClubService } from '../club/club.service';
+import { isGenderAllowed, isSameGender } from '../../common/utils/functions';
+import { CoachEntity } from '../coach/entities/coach.entity';
+import { Gender } from '../../common/enums/gender.enum';
 
 @Injectable()
 export class StudentService {
@@ -29,6 +35,8 @@ export class StudentService {
     private readonly studentRepository: StudentRepository,
     private readonly awsService: AwsService,
     private readonly cacheService: CacheService,
+    private readonly clubService: ClubService,
+    @Inject(forwardRef(() => CoachService)) private readonly coachService: CoachService,
   ) {}
 
   async checkUserServiceConnection(): Promise<ServiceResponse | void> {
@@ -39,50 +47,53 @@ export class StudentService {
     }
   }
 
-  async create(createStudentDto: ICreateStudent) {
-    let userId = null;
-    let imageKey = null;
+  async create(user: IUser, createStudentDto: ICreateStudent) {
+    const { clubId, coachId, national_code, gender, image } = createStudentDto;
+    const userId: number = user.id;
+
+    let studentUserId: number | null = null;
+    let imageKey: string | null = null;
 
     try {
-      imageKey = createStudentDto?.image ? await this.uploadStudentImage(createStudentDto.image) : null;
+      if (national_code) await this.ensureUniqueNationalCode(national_code, userId);
 
-      userId = await this.createUserCoach();
+      const { club, coach } = await this.ensureClubAndCoach(userId, clubId, coachId);
+      this.validateGenderRestrictions(gender, coach, club);
+
+      imageKey = await this.handleStudentImage(image);
+      studentUserId = await this.createUserCoach();
 
       const student = await this.studentRepository.createStudentWithTransaction({
         ...createStudentDto,
         image_url: imageKey,
-        userId: userId,
+        userId: studentUserId,
       });
 
-      return ResponseUtil.success({ ...student, userId }, StudentMessages.CreatedStudent);
+      return ResponseUtil.success({ ...student, studentUserId }, StudentMessages.CreatedStudent);
     } catch (error) {
-      await this.removeUserById(userId);
-      await this.removeStudentImage(imageKey);
+      await this.cleanupFailedCreation(studentUserId, imageKey);
       return ResponseUtil.error(error?.message || StudentMessages.FailedToCreateStudent, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  async update(updateStudentDto: IUpdateStudent, student: StudentEntity) {
+  async update(user: IUser, studentId: number, updateStudentDto: IUpdateStudent) {
+    const { clubId, coachId, national_code, gender, image } = updateStudentDto;
+    const userId: number = user.id;
+
     let imageKey: string | null = null;
-    let updateData: Partial<StudentEntity> = {};
 
     try {
-      Object.keys(updateStudentDto).forEach((key) => {
-        if (key !== 'image' && updateStudentDto[key] !== undefined && updateStudentDto[key] !== student[key]) {
-          updateData[key] = updateStudentDto[key];
-        }
-      });
+      let student = national_code ? await this.ensureUniqueNationalCode(national_code, userId) : null;
+      if (!student) student = await this.validateOwnership(studentId, userId);
 
-      if (updateStudentDto.image) {
-        imageKey = await this.uploadStudentImage(updateStudentDto.image);
-        updateData.image_url = imageKey;
-      }
+      const { club, coach } = await this.ensureClubAndCoach(userId, clubId ?? student.clubId, coachId ?? student.coachId);
+      if (gender) this.validateGenderRestrictions(gender, coach, club);
+
+      const updateData = this.prepareUpdateData(updateStudentDto, student);
+      if (image) updateData.image_url = imageKey = await this.handleStudentImage(image);
 
       await this.studentRepository.updateStudent(student, updateData);
-
-      if (updateStudentDto.image && student.image_url) {
-        await this.awsService.deleteFile(student.image_url);
-      }
+      if (image && student.image_url) await this.awsService.deleteFile(student.image_url);
 
       return ResponseUtil.success({ ...student, ...updateData }, StudentMessages.UpdatedStudent);
     } catch (error) {
@@ -158,7 +169,7 @@ export class StudentService {
     if (result?.error) throw result;
   }
 
-  private async uploadStudentImage(image: any): Promise<string | null> {
+  private async uploadStudentImage(image: Express.Multer.File): Promise<string | null> {
     if (!image) return null;
 
     const uploadedImage = await this.awsService.uploadSingleFile({ file: image, folderName: 'students' });
@@ -195,5 +206,52 @@ export class StudentService {
     if (student) throw new BadRequestException(StudentMessages.DuplicateNationalCode);
 
     return student;
+  }
+  async hasStudentsInClub(removedClubs: ClubEntity[], coachId: number): Promise<void> {
+    const clubsWithStudents: string[] = [];
+
+    for (const club of removedClubs) {
+      const hasStudents = await this.studentRepository.count({
+        where: {
+          club: { id: club.id },
+          coach: { id: coachId },
+        },
+      });
+
+      if (hasStudents > 0) clubsWithStudents.push(`${club.name}: has students`);
+    }
+
+    if (clubsWithStudents.length > 0) {
+      throw new BadRequestException(`${StudentMessages.CannotRemoveClubsInArray} ${clubsWithStudents.join(', ')}`);
+    }
+  }
+
+  private async ensureClubAndCoach(userId: number, clubId?: number, coachId?: number) {
+    const club = clubId ? await this.clubService.checkClubOwnership(clubId, userId) : null;
+    const coach = coachId ? await this.coachService.validateOwnership(coachId, userId) : null;
+    return { club, coach };
+  }
+
+  private validateGenderRestrictions(gender: Gender, coach: CoachEntity | null, club: ClubEntity | null) {
+    if (coach && !isSameGender(gender, coach.gender)) throw new BadRequestException(StudentMessages.CoachGenderMismatch);
+    if (club && !isGenderAllowed(gender, club.genders)) throw new BadRequestException(StudentMessages.ClubGenderMismatch);
+  }
+
+  private async handleStudentImage(image?: Express.Multer.File): Promise<string | null> {
+    return image ? await this.uploadStudentImage(image) : null;
+  }
+
+  private prepareUpdateData(updateDto: IUpdateStudent, student: StudentEntity): Partial<StudentEntity> {
+    return Object.keys(updateDto).reduce((acc, key) => {
+      if (key !== 'image' && updateDto[key] !== undefined && updateDto[key] !== student[key]) {
+        acc[key] = updateDto[key];
+      }
+      return acc;
+    }, {} as Partial<StudentEntity>);
+  }
+
+  private async cleanupFailedCreation(studentUserId: number | null, imageKey: string | null) {
+    if (studentUserId) await this.removeUserById(studentUserId);
+    if (imageKey) await this.removeStudentImage(imageKey);
   }
 }

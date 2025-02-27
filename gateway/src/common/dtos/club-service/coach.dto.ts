@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString, IsEnum, IsPhoneNumber, IsDateString, Length, MinLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsEnum, IsPhoneNumber, IsDateString, Length, MinLength, IsInt } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { ToArray, ToBoolean } from '../../../common/decorators/transformers.decorator';
 import { Transform } from 'class-transformer';
@@ -103,8 +103,9 @@ export class CreateCoachDto {
 
   @ToArray()
   @IsNotEmpty()
+  @IsInt({ each: true })
   @ApiProperty({ isArray: true, example: [1, 2] })
-  clubIds: string;
+  clubIds: number[];
 }
 
 export class UpdateCoachDto extends PartialType(CreateCoachDto) {}

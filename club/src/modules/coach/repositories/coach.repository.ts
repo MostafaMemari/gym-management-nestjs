@@ -27,9 +27,13 @@ export class CoachRepository extends Repository<CoachEntity> {
   }
 
   async updateCoach(coach: CoachEntity, updateData: Partial<CoachEntity>) {
-    const hasRelations = ['coach', 'club'].some((rel) => updateData.hasOwnProperty(rel));
+    const hasRelations = ['clubs'].some((rel) => updateData.hasOwnProperty(rel));
 
     if (hasRelations) {
+      if (updateData.clubs) {
+        coach.clubs = updateData.clubs;
+      }
+
       const updatedCoach = this.merge(coach, updateData);
       return await this.save(updatedCoach);
     } else {

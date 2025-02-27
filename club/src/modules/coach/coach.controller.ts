@@ -4,10 +4,10 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CoachService } from './coach.service';
 import { ICreateCoach, IQuery, IUpdateCoach } from './interfaces/coach.interface';
 import { CoachPatterns } from './patterns/coach.pattern';
-import { ValidateCoachCreatePipe } from './pipes/coachCreate.pipe';
 
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { IUser } from '../../common/interfaces/user.interface';
+import { CoachEntity } from './entities/coach.entity';
 
 @Controller()
 export class CoachController {
@@ -19,7 +19,6 @@ export class CoachController {
   }
 
   @MessagePattern(CoachPatterns.CreateCoach)
-  @UsePipes(ValidateCoachCreatePipe)
   create(@Payload() data: { user: IUser; createCoachDto: ICreateCoach }) {
     const { user, createCoachDto } = data;
 
@@ -29,7 +28,7 @@ export class CoachController {
   update(@Payload() data: { user: IUser; coachId: number; updateCoachDto: IUpdateCoach }) {
     const { user, coachId, updateCoachDto } = data;
 
-    return this.coachService.updateById(user, coachId, updateCoachDto);
+    return this.coachService.update(user, coachId, updateCoachDto);
   }
 
   @MessagePattern(CoachPatterns.GetCoaches)

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
@@ -13,6 +13,7 @@ import { CoachSubscriber } from './subscribers/coach.subscriber';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClubService } from '../club/club.service';
 import { ClubModule } from '../club/club.module';
+import { StudentModule } from '../student/student.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { ClubModule } from '../club/club.module';
     CacheModule,
     AwsModule,
     ClubModule,
+    forwardRef(() => StudentModule),
   ],
   controllers: [CoachController],
   providers: [CoachService, CoachRepository, CoachSubscriber],

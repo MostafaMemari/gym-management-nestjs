@@ -22,14 +22,13 @@ export interface ICreateStudent {
 export type IUpdateStudent = Partial<ICreateStudent>;
 
 export interface ISeachStudentQuery {
-  full_name?: string;
+  search?: string;
   gender?: Gender;
   is_active?: boolean;
-  national_code?: string;
   phone_number?: string;
-  birth_date?: string;
-  sports_insurance_date?: string;
   expire_image_date?: string;
+  coach?: string;
+  club?: string;
   sort_by?: 'birth_date' | 'sports_insurance_date' | 'expire_image_date';
   sort_order?: 'asc' | 'desc';
 }

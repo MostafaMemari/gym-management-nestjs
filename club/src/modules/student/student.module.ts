@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -35,11 +35,11 @@ import { Services } from '../../common/enums/services.enum';
     TypeOrmModule.forFeature([StudentEntity]),
     AwsModule,
     CacheModule,
-    CoachModule,
     ClubModule,
+    forwardRef(() => CoachModule),
   ],
   controllers: [StudentController],
   providers: [StudentService, StudentRepository, StudentSubscriber],
-  exports: [],
+  exports: [StudentService, StudentRepository],
 })
 export class StudentModule {}
