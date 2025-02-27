@@ -101,7 +101,7 @@ export class CreateStudentDto {
 
 export class UpdateStudentDto extends PartialType(CreateStudentDto) {}
 
-export class StudentQueryDto {
+export class QueryStudentDto {
   @IsOptional()
   @IsString()
   @ApiPropertyOptional({ type: 'string', example: '', description: 'search full name and national code' })
