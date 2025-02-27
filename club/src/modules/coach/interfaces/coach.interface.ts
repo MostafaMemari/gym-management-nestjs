@@ -1,5 +1,6 @@
 import { IPagination } from '../../../common/interfaces/pagination.interface';
 import { Gender } from '../../../common/enums/gender.enum';
+import { ClubEntity } from 'src/modules/club/entities/club.entity';
 
 export interface ICreateCoach {
   full_name: string;

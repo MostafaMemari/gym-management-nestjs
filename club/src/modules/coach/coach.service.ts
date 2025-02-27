@@ -45,6 +45,8 @@ export class CoachService {
   }
 
   async create(user: IUser, createCoachDto: ICreateCoach) {
+    // let createData: Partial<CoachEntity> = ICreateCoach;
+
     const { clubIds, national_code, gender, image } = createCoachDto;
     let userId: number = user.id;
     let imageKey: string | null = null;
@@ -56,6 +58,8 @@ export class CoachService {
       this.validateCoachGender(gender, ownedClubs);
 
       imageKey = image ? await this.uploadCoachImage(image) : null;
+
+      // createCoachDto.clubs = ownedClubs;
 
       userId = await this.createUserCoach();
       const coach = await this.coachRepository.createCoachWithTransaction({

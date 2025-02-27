@@ -105,7 +105,7 @@ export class CreateCoachDto {
   @ToArray()
   @IsNotEmpty()
   @IsInt({ each: true })
-  @ApiProperty({ isArray: true, example: [1, 2] })
+  @ApiProperty({ type: 'array' })
   clubIds: number[];
 }
 
