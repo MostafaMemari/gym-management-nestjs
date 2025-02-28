@@ -5,7 +5,7 @@ import { lastValueFrom, timeout } from 'rxjs';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { AuthPatterns } from '../../../common/enums/auth.events';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
-import { ForgetPasswordDto, RefreshTokenDto, RequestNewOtpDto, RestPasswordDto, SigninDto, SignoutDto, SignupDto, VerifyOtpDto } from '../../../common/dtos/auth-service/auth.dto';
+import { ForgetPasswordDto, RefreshTokenDto, RestPasswordDto, SigninDto, SignoutDto, SignupDto, VerifyOtpDto } from '../../../common/dtos/auth-service/auth.dto';
 import { AuthGuard } from '../../../common/guards/auth.guard';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 

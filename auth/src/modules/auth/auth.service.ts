@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, ForbiddenException, forwardRef, HttpStatus, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { GenerateTokens, IForgetPassword, IResetPassword, ISignin, ISignup } from '../../common/interfaces/auth.interface';
+import { GenerateTokens, IForgetPassword, IResetPassword, ISignin, ISignup, IVerifyOtp } from '../../common/interfaces/auth.interface';
 import { Services } from '../../common/enums/services.enum';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { UserPatterns } from '../../common/enums/user.events';
@@ -121,9 +121,12 @@ export class AuthService {
       await this.enforceOtpRequestLimit(signupDto.mobile);
       await this.storePendingUser(signupDto);
 
-      const otpCode = this.generateOtp();
-      await this.storeOtp(signupDto.mobile, otpCode);
-      await this.sendSms(signupDto.mobile, otpCode);
+      const otpCode = this.generateOtp()
+      const hashedOtp = await bcrypt.hash(otpCode, 10);
+      await this.storeOtp(signupDto.mobile, hashedOtp);
+
+      //TODO: Uncomment send sms fn
+      // await this.sendSms(signupDto.mobile, otpCode);
 
       return this.createResponse(AuthMessages.OtpSentSuccessfully, HttpStatus.OK);
     } catch (error) {
@@ -131,7 +134,7 @@ export class AuthService {
     }
   }
 
-  async verifyOtp(verifyOtpDto: any) {
+  async verifyOtp(verifyOtpDto: IVerifyOtp) {
     try {
       const { mobile, otp } = verifyOtpDto;
 
@@ -345,7 +348,8 @@ export class AuthService {
 
   private async validateOtp(mobile: string, otp: string): Promise<void | never> {
     const storedOtp = await this.redis.get(`${OtpKeys.SignupOtp}${mobile}`);
-    if (!storedOtp || storedOtp !== otp) {
+    const isValidOtp = await bcrypt.compare(otp, storedOtp)
+    if (!isValidOtp) {
       throw new BadRequestException(AuthMessages.NotFoundOrInvalidOtpCode);
     }
   }
@@ -359,14 +363,16 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(signupDto.password, 10);
     const userData = { ...signupDto, password: hashedPassword };
 
+    const hashedUserData = await bcrypt.hash(JSON.stringify(userData), 10)
+
     await this.redis.setex(
       `${OtpKeys.PendingUser}${signupDto.mobile}`,
       this.USER_DATA_EXPIRATION_SEC,
-      JSON.stringify(userData)
+      hashedUserData
     );
   }
 
-  private async enforceOtpRequestLimit(mobile: string) {
+  private async enforceOtpRequestLimit(mobile: string): Promise<void | never> {
     const requestKey = `${OtpKeys.RequestsOtp}${mobile}`;
     let requestCount = Number(await this.redis.get(requestKey)) || 0;
 
@@ -378,7 +384,7 @@ export class AuthService {
     await this.redis.setex(requestKey, this.OTP_REQUEST_TIMEOUT_SEC, requestCount + 1);
   }
 
-  private async ensureUserDoesNotExist(mobile: string, username: string) {
+  private async ensureUserDoesNotExist(mobile: string, username: string): Promise<void | never> {
     const userArgs = { mobile, username };
     const userRes: ServiceResponse = await lastValueFrom(
       this.userServiceClientProxy.send(UserPatterns.GetUserByArgs, userArgs).pipe(timeout(this.TIMEOUT_MS))
@@ -402,7 +408,7 @@ export class AuthService {
     return { message, status, error: false, data };
   }
 
-  formatSecondsToMinutes(seconds: number): string {
+  private formatSecondsToMinutes(seconds: number): string {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
 

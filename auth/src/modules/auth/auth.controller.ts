@@ -2,7 +2,7 @@ import { Controller } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { AuthPatterns } from '../../common/enums/auth.events';
-import { IForgetPassword, IResetPassword, ISignin, ISignup } from '../../common/interfaces/auth.interface';
+import { IForgetPassword, IResetPassword, ISignin, ISignup, IVerifyOtp } from '../../common/interfaces/auth.interface';
 
 @Controller()
 export class AuthController {
@@ -49,7 +49,7 @@ export class AuthController {
   }
 
   @MessagePattern(AuthPatterns.VerifyOtp)
-  verifyOtp(@Payload() data: any) {
+  verifyOtp(@Payload() data: IVerifyOtp) {
     return this.authService.verifyOtp(data)
   }
 }

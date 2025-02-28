@@ -25,3 +25,8 @@ export interface IResetPassword {
     otpCode: string
     newPassword: string
 }
+
+export interface IVerifyOtp {
+    otp: string
+    mobile: string
+}
