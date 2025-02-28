@@ -2,7 +2,7 @@ import { Controller } from '@nestjs/common';
 import { UserService } from './user.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { UserPatterns } from './common/enums/user.events';
-import { IChangeRole, ICreateUser, ICreateUserCoach, ICreateUserStudent, IPagination, ISearchUser, IUpdateUser } from './common/interfaces/user.interface';
+import { IChangeRole, ICreateUser, ICreateUserCoach, ICreateUserStudent, IGetUserByArgs, IPagination, ISearchUser, IUpdateUser } from './common/interfaces/user.interface';
 
 @Controller()
 export class UserController {
@@ -71,5 +71,10 @@ export class UserController {
   @MessagePattern(UserPatterns.UpdateUser)
   update(@Payload() data: IUpdateUser) {
     return this.userService.update(data)
+  }
+
+  @MessagePattern(UserPatterns.GetUserByArgs)
+  getOneByArgs(@Payload() data: IGetUserByArgs) {
+    return this.userService.findByArgs(data)
   }
 }

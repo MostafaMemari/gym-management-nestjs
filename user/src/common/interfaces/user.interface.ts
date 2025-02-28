@@ -38,3 +38,8 @@ export interface IUpdateUser {
   lastPasswordChange?: Date
   password?: string
 }
+
+export interface IGetUserByArgs {
+  mobile?: string
+  username?: string
+}

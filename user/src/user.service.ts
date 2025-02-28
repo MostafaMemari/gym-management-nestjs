@@ -2,7 +2,7 @@ import { ConflictException, HttpStatus, Injectable, NotFoundException } from '@n
 import { Prisma, Role, User } from '@prisma/client';
 import { ServiceResponse } from './common/interfaces/serviceResponse.interface';
 import { UserMessages } from './common/enums/user.messages';
-import { IChangeRole, IPagination, ISearchUser, IUpdateUser } from './common/interfaces/user.interface';
+import { IChangeRole, IGetUserByArgs, IPagination, ISearchUser, IUpdateUser } from './common/interfaces/user.interface';
 import { pagination } from './common/utils/pagination.utils';
 import { RpcException } from '@nestjs/microservices';
 import { UserRepository } from './user.repository';
@@ -258,6 +258,21 @@ export class UserService {
       const updatedUser = await this.userRepository.update(userId, { data: { ...updateUserData }, omit: { password: true } })
 
       return ResponseUtil.success({ updatedUser }, UserMessages.UpdatedUser, HttpStatus.OK)
+    } catch (error) {
+      throw new RpcException(error)
+    }
+  }
+
+
+  async findByArgs(userDto: IGetUserByArgs) {
+    try {
+      const user = await this.userRepository.findByArgs(userDto)
+
+      if (!user) {
+        return ResponseUtil.success({}, "", HttpStatus.OK)
+      }
+
+      return ResponseUtil.success({ user }, "", HttpStatus.OK)
     } catch (error) {
       throw new RpcException(error)
     }

@@ -11,5 +11,6 @@ export enum UserPatterns {
   SearchUser = 'search_user',
   ChangeUserRole = 'change_user_role',
   UpdateUser = "update_user",
-  GetUserByMobile = "get_user_by_mobile"
+  GetUserByMobile = "get_user_by_mobile",
+  GetUserByArgs = "get_user_by_args"
 }

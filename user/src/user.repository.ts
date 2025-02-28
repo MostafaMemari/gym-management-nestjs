@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "./prisma/prisma.service";
 import { Prisma, Role, User } from "@prisma/client";
 import { UserMessages } from "./common/enums/user.messages";
+import { IGetUserByArgs } from "./common/interfaces/user.interface";
 
 @Injectable()
 export class UserRepository {
@@ -85,5 +86,9 @@ export class UserRepository {
         }
 
         return user
+    }
+
+    async findByArgs(data: IGetUserByArgs = {}): Promise<User> {
+        return this.prisma.user.findFirst({ where: { OR: [{ username: data.username }, { mobile: data.mobile }] } })
     }
 }
