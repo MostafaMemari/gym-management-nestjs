@@ -12,7 +12,6 @@ import { ICreateClub } from '../club/interfaces/club.interface';
 import { AwsService } from '../s3AWS/s3AWS.service';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
-import { EntityName } from '../../common/enums/entity.enum';
 import { Gender } from '../../common/enums/gender.enum';
 import { UserPatterns } from '../../common/enums/patterns.events';
 import { Services } from '../../common/enums/services.enum';
@@ -33,9 +32,10 @@ export class CoachService {
   constructor(
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
     private readonly coachRepository: CoachRepository,
+
     private readonly awsService: AwsService,
-    private readonly clubService: ClubService,
     private readonly cacheService: CacheService,
+    @Inject(forwardRef(() => ClubService)) private readonly clubService: ClubService,
     @Inject(forwardRef(() => StudentService)) private readonly studentService: StudentService,
   ) {}
 
@@ -94,10 +94,11 @@ export class CoachService {
         const ownedClubs = clubIds?.length ? await this.clubService.findOwnedClubs(clubIds, userId) : coach.clubs;
         const removedClubs = coach.clubs.filter((club) => !clubIds.includes(club.id));
         if (removedClubs.length) await this.studentService.hasStudentsInClub(removedClubs, coachId);
+        this.validateCoachGender(coach.gender, ownedClubs);
         updateData.clubs = ownedClubs;
       }
 
-      if (gender) this.validateCoachGender(gender ?? coach.gender, updateData.clubs ?? coach.clubs);
+      if (gender) this.validateCoachGender(gender, updateData.clubs ?? coach.clubs);
 
       if (image) updateData.image_url = await this.uploadCoachImage(image);
 
@@ -116,7 +117,7 @@ export class CoachService {
     const { take, page } = query.paginationDto;
     const userId: number = user.id;
 
-    const cacheKey = `${CacheKeys.COACH_LIST}-${user.id}-${page}-${take}-${JSON.stringify(query.queryCoachDto)}`;
+    const cacheKey = `${CacheKeys.COACH_LIST}:${user.id}-${page}-${take}-${JSON.stringify(query.queryCoachDto)}`;
 
     const cachedData = await this.cacheService.get<PageDto<CoachEntity>>(cacheKey);
     if (cachedData) return cachedData;
@@ -224,5 +225,13 @@ export class CoachService {
   private async removeCoachUserAndImage(coachUserId: number, imageKey: string | null) {
     if (coachUserId) await this.removeUserById(coachUserId);
     if (imageKey) await this.removeCoachImage(imageKey);
+  }
+
+  async isGenderAssignedToCoaches(clubId: number, gender: Gender): Promise<boolean> {
+    return await this.coachRepository.existsCoachByGenderInClub(clubId, gender);
+  }
+
+  async isClubAssignedToCoaches(clubId: number): Promise<boolean> {
+    return await this.coachRepository.existsCoachByClubId(clubId);
   }
 }
