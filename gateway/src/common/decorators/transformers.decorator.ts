@@ -18,22 +18,23 @@ export const ToBoolean = () =>
     throw new BadRequestException('Invalid boolean value! Only "true" or "false" is allowed');
   });
 
-export function ToArray(): (target: any, key: string) => void {
-  return Transform((params: TransformFnParams) => {
-    const { value } = params;
+export function ToArray<T = any>(enumType?: T): (target: any, key: string) => void {
+  return Transform(({ value }: TransformFnParams) => {
+    if (!value) return [];
+
+    const normalize = (item: any) => {
+      if (typeof item === 'string') item = item.trim();
+
+      if (enumType && Object.values(enumType).includes(item)) {
+        return item as T;
+      }
+
+      const num = Number(item);
+      return isNaN(num) ? null : num;
+    };
 
     if (Array.isArray(value)) {
-      return Array.from(
-        new Set(
-          value
-            .map((item) => (typeof item === 'string' ? item.trim() : item))
-            .map((item) => {
-              const num = Number(item);
-              return isNaN(num) ? null : num;
-            })
-            .filter((item) => item !== null),
-        ),
-      );
+      return Array.from(new Set(value.map(normalize).filter((item) => item !== null)));
     }
 
     if (typeof value === 'string') {
@@ -41,11 +42,7 @@ export function ToArray(): (target: any, key: string) => void {
         new Set(
           value
             .split(',')
-            .map((item) => item.trim())
-            .map((item) => {
-              const num = Number(item);
-              return isNaN(num) ? null : num;
-            })
+            .map(normalize)
             .filter((item) => item !== null),
         ),
       );

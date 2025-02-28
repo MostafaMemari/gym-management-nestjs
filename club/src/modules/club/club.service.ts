@@ -15,7 +15,7 @@ import { CacheService } from '../cache/cache.service';
 import { CacheKeys, CachePatterns } from '../../common/enums/cache.enum';
 import { ClubEntity } from './entities/club.entity';
 import { ClubMessages } from './enums/club.message';
-import { ICreateClub, IQuery, IUpdateClub } from './interfaces/club.interface';
+import { ICreateClub, ISearchClubQuery, IUpdateClub } from './interfaces/club.interface';
 import { IUser } from '../../common/interfaces/user.interface';
 import { CoachEntity } from '../coach/entities/coach.entity';
 import { Gender } from '../../common/enums/gender.enum';
@@ -68,15 +68,15 @@ export class ClubService {
     }
   }
 
-  async getAll(user: IUser, query: { queryDto: IQuery; paginationDto: IPagination }): Promise<PageDto<ClubEntity>> {
+  async getAll(user: IUser, query: { queryClubDto: ISearchClubQuery; paginationDto: IPagination }): Promise<PageDto<ClubEntity>> {
     const { take, page } = query.paginationDto;
 
-    const cacheKey = `${CacheKeys.CLUB_LIST}-${user.id}-${page}-${take}-${JSON.stringify(query.queryDto)}`;
+    const cacheKey = `${CacheKeys.CLUB_LIST}-${user.id}-${page}-${take}-${JSON.stringify(query.queryClubDto)}`;
 
     const cachedData = await this.cacheService.get<PageDto<ClubEntity>>(cacheKey);
     if (cachedData) return cachedData;
 
-    const [clubs, count] = await this.clubRepository.getClubsWithFilters(user.id, {}, page, take);
+    const [clubs, count] = await this.clubRepository.getClubsWithFilters(user.id, query.queryClubDto, page, take);
 
     const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
     const result = new PageDto(clubs, pageMetaDto);

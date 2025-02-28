@@ -3,7 +3,7 @@ import { DataSource, In, Repository } from 'typeorm';
 
 import { ClubEntity } from '../entities/club.entity';
 import { EntityName } from 'src/common/enums/entity.enum';
-import { ICreateClub, IUpdateClub } from '../interfaces/club.interface';
+import { ICreateClub, ISearchClubQuery, IUpdateClub } from '../interfaces/club.interface';
 
 @Injectable()
 export class ClubRepository extends Repository<ClubEntity> {
@@ -21,34 +21,20 @@ export class ClubRepository extends Repository<ClubEntity> {
     return await this.save(updatedClub);
   }
 
-  async getClubsWithFilters(userId: number, filters: any, page: number, take: number): Promise<[ClubEntity[], number]> {
+  async getClubsWithFilters(userId: number, filters: ISearchClubQuery, page: number, take: number): Promise<[ClubEntity[], number]> {
     const queryBuilder = this.createQueryBuilder(EntityName.Clubs).where('clubs.ownerId = :ownerId', { ownerId: userId });
 
-    // if (filters?.search) {
-    //   queryBuilder.andWhere('(coaches.full_name LIKE :search OR coaches.national_code LIKE :search)', { search: `%${filters.search}%` });
-    // }
-    // if (filters?.gender) {
-    //   queryBuilder.andWhere('coaches.gender = :gender', { gender: filters?.gender });
-    // }
-    // if (filters?.is_active !== undefined) {
-    //   queryBuilder.andWhere('coaches.is_active = :isActive', { isActive: filters?.is_active });
-    // }
+    if (filters?.search) {
+      queryBuilder.andWhere('clubs.name LIKE :search', { search: `%${filters.search}%` });
+    }
 
-    // if (filters?.phone_number) {
-    //   queryBuilder.andWhere('coaches.phone_number LIKE :phoneNumber', { phoneNumber: `%${filters?.phone_number}%` });
-    // }
+    if (filters?.gender) {
+      queryBuilder.andWhere(`FIND_IN_SET(:gender, clubs.genders)`, { gender: filters.gender });
+    }
 
-    // if (filters?.sort_by && validSortFields.includes(filters.sort_by)) {
-    //   queryBuilder.orderBy(`coaches.${filters.sort_by}`, filters.sort_order === 'asc' ? 'ASC' : 'DESC');
-    // } else {
-    //   queryBuilder.orderBy('coaches.created_at', 'DESC');
-    // }
-
-    // if (filters?.sort_by) {
-    //   queryBuilder.orderBy(`coaches.${filters.sort_by}`, filters.sort_order === 'asc' ? 'ASC' : 'DESC');
-    // } else {
-    //   queryBuilder.orderBy('coaches.updated_at', 'DESC');
-    // }
+    if (filters?.sort_order) {
+      queryBuilder.orderBy('clubs.updated_at', filters.sort_order === 'asc' ? 'ASC' : 'DESC');
+    }
 
     return queryBuilder
       .skip((page - 1) * take)
