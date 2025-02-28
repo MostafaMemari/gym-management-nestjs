@@ -1,12 +1,14 @@
-import { Column, Entity, ManyToMany, OneToMany } from 'typeorm';
+import { Column, Entity, Index, ManyToMany, OneToMany } from 'typeorm';
+
+import { StudentEntity } from '../../student/entities/student.entity';
 
 import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
-import { StudentEntity } from '../../student/entities/student.entity';
-import { ClubEntity } from 'src/modules/club/entities/club.entity';
+import { ClubEntity } from '../../../modules/club/entities/club.entity';
 
 @Entity(EntityName.Coaches)
+@Index(['full_name', 'national_code'])
 export class CoachEntity extends AbstractEntity {
   @Column({ type: 'integer', unique: true, nullable: false })
   userId: Number;
@@ -47,6 +49,6 @@ export class CoachEntity extends AbstractEntity {
   @OneToMany(() => StudentEntity, (student) => student.coach)
   students: StudentEntity[];
 
-  @ManyToMany(() => ClubEntity, (club) => club.coaches)
+  @ManyToMany(() => ClubEntity, (club) => club.coaches, { onDelete: 'CASCADE' })
   clubs: ClubEntity[];
 }

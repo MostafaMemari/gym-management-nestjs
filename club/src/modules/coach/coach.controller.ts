@@ -1,13 +1,12 @@
-import { Controller, UsePipes } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
 import { CoachService } from './coach.service';
-import { ICreateCoach, IQuery, IUpdateCoach } from './interfaces/coach.interface';
+import { ICreateCoach, ISeachCoachQuery, IUpdateCoach } from './interfaces/coach.interface';
 import { CoachPatterns } from './patterns/coach.pattern';
 
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { IUser } from '../../common/interfaces/user.interface';
-import { CoachEntity } from './entities/coach.entity';
 
 @Controller()
 export class CoachController {
@@ -32,10 +31,10 @@ export class CoachController {
   }
 
   @MessagePattern(CoachPatterns.GetCoaches)
-  findAll(@Payload() data: { user: IUser; queryDto: IQuery; paginationDto: IPagination }) {
-    const { user, queryDto, paginationDto } = data;
+  findAll(@Payload() data: { user: IUser; queryCoachDto: ISeachCoachQuery; paginationDto: IPagination }) {
+    const { user, queryCoachDto, paginationDto } = data;
 
-    return this.coachService.getAll(user, { queryDto, paginationDto });
+    return this.coachService.getAll(user, { queryCoachDto, paginationDto });
   }
 
   @MessagePattern(CoachPatterns.GetCoach)
@@ -51,9 +50,4 @@ export class CoachController {
 
     return this.coachService.removeById(user, coachId);
   }
-
-  // @MessagePattern(CoachPatterns.checkExistCoachById)
-  // checkExistById(@Payload() data: { coachId: number }) {
-  //   return this.coachService.findCoachById(data.coachId, {});
-  // }
 }
