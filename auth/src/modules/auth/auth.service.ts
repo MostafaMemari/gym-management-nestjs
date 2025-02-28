@@ -12,9 +12,9 @@ import * as dateFns from 'date-fns'
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { Redis } from 'ioredis'
 import { Smsir } from 'sms-typescript/lib'
-import { OtpKeys } from 'src/common/enums/redis.keys';
-import { ResponseUtil } from 'src/common/utils/response.utils';
-import { checkConnection } from 'src/common/utils/checkConnection.utils';
+import { OtpKeys } from '../../common/enums/redis.keys';
+import { ResponseUtil } from '../../common/utils/response.utils';
+import { checkConnection } from '../../common/utils/checkConnection.utils';
 
 @Injectable()
 export class AuthService {
