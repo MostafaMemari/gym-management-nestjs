@@ -14,6 +14,7 @@ import { Redis } from 'ioredis'
 import { Smsir } from 'sms-typescript/lib'
 import { OtpKeys } from 'src/common/enums/redis.keys';
 import { ResponseUtil } from 'src/common/utils/response.utils';
+import { checkConnection } from 'src/common/utils/checkConnection.utils';
 
 @Injectable()
 export class AuthService {
@@ -29,14 +30,6 @@ export class AuthService {
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
     @InjectRedis() private readonly redis: Redis
   ) { }
-
-  async checkUserServiceConnection(): Promise<never | void> {
-    try {
-      await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CheckConnection, {}).pipe(timeout(this.TIMEOUT_MS)))
-    } catch (error) {
-      throw new RpcException({ message: "User service is not connected", status: error.status })
-    }
-  }
 
   generateOtp() {
     return Math.floor(100_000 + Math.random() * 900_000).toString()
@@ -62,7 +55,7 @@ export class AuthService {
     try {
       const { ACCESS_TOKEN_SECRET } = process.env
 
-      await this.checkUserServiceConnection()
+      await checkConnection(Services.USER, this.userServiceClientProxy)
 
       const verifiedToken = this.jwtService.verify<{ id: number }>(verifyTokenDto.accessToken, { secret: ACCESS_TOKEN_SECRET })
 
@@ -70,12 +63,7 @@ export class AuthService {
         throw new BadRequestException(AuthMessages.InvalidAccessTokenPayload)
       }
 
-      return {
-        data: { userId: verifiedToken.id },
-        error: false,
-        message: AuthMessages.VerifiedTokenSuccess,
-        status: HttpStatus.OK
-      }
+      return ResponseUtil.success({ userId: verifiedToken.id }, AuthMessages.VerifiedTokenSuccess, HttpStatus.OK)
     } catch (error) {
       throw new RpcException(error)
     }
@@ -115,7 +103,7 @@ export class AuthService {
 
   async signup(signupDto: ISignup): Promise<ServiceResponse> {
     try {
-      await this.checkUserServiceConnection();
+      await checkConnection(Services.USER, this.userServiceClientProxy);
       await this.checkExistingOtp(signupDto.mobile)
       await this.ensureUserDoesNotExist(signupDto.mobile, signupDto.username);
 
@@ -156,7 +144,7 @@ export class AuthService {
 
   async signin(signinDto: ISignin): Promise<ServiceResponse> {
     try {
-      await this.checkUserServiceConnection()
+      await checkConnection(Services.USER, this.userServiceClientProxy)
 
       const result: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.GetUserByIdentifier, signinDto).pipe(timeout(this.TIMEOUT_MS)))
 
@@ -191,7 +179,7 @@ export class AuthService {
 
   async refreshToken({ refreshToken }: { refreshToken: string }): Promise<ServiceResponse> {
     try {
-      await this.checkUserServiceConnection()
+      await checkConnection(Services.USER, this.userServiceClientProxy)
 
       await this.validateRefreshToken(refreshToken)
 
@@ -209,7 +197,7 @@ export class AuthService {
 
   async forgetPassword(forgetPasswordDto: IForgetPassword): Promise<ServiceResponse> {
     try {
-      await this.checkUserServiceConnection()
+      await checkConnection(Services.USER, this.userServiceClientProxy)
 
       const { mobile } = forgetPasswordDto
       const user: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.GetUserByMobile, { mobile }).pipe(timeout(this.TIMEOUT_MS)))
@@ -258,7 +246,7 @@ export class AuthService {
 
   async resetPassword(resetPasswordDto: IResetPassword): Promise<ServiceResponse> {
     try {
-      await this.checkUserServiceConnection()
+      await checkConnection(Services.USER, this.userServiceClientProxy)
 
       const { mobile, newPassword, otpCode } = resetPasswordDto
 
