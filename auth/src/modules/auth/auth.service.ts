@@ -114,15 +114,13 @@ export class AuthService {
       await this.checkExistingOtp(signupDto.mobile);
       await this.ensureUserDoesNotExist(signupDto.mobile, signupDto.username);
 
-      await this.enforceOtpRequestLimit(signupDto.mobile);
+      await this.enforceOtpRequestLimit(`${OtpKeys.RequestsOtp}${signupDto.mobile}`);
       await this.storePendingUser(signupDto);
 
       const otpCode = this.generateOtp();
-      const hashedOtp = await bcrypt.hash(otpCode, 10);
-      await this.storeOtp(signupDto.mobile, hashedOtp);
+      await this.storeOtp(`${OtpKeys.SignupOtp}${signupDto.mobile}`, otpCode);
 
-      //TODO: Uncomment send sms fn
-      // await this.sendSms(signupDto.mobile, otpCode);
+      await this.sendSms(signupDto.mobile, otpCode);
 
       return ResponseUtil.success({}, AuthMessages.OtpSentSuccessfully, HttpStatus.OK);
     } catch (error) {
@@ -134,9 +132,8 @@ export class AuthService {
     try {
       const { mobile, otp } = verifyOtpDto;
 
-      await this.enforceOtpRequestLimit(mobile);
+      await this.enforceOtpRequestLimit(`${OtpKeys.RequestsOtp}${mobile}`);
       await this.validateOtp(mobile, otp);
-
       const userData = await this.getPendingUser(mobile);
       const result = await this.createUser(userData);
 
@@ -208,45 +205,20 @@ export class AuthService {
       await checkConnection(Services.USER, this.userServiceClientProxy);
 
       const { mobile } = forgetPasswordDto;
-      const user: ServiceResponse = await lastValueFrom(
-        this.userServiceClientProxy.send(UserPatterns.GetUserByMobile, { mobile }).pipe(timeout(this.TIMEOUT_MS)),
-      );
 
-      if (user.error) return user;
+      const user = await this.getUserByMobile(forgetPasswordDto.mobile);
+      if (user.error) throw user;
 
-      const resetPasswordKey = `${OtpKeys.ResetPasswordOtp}${mobile}`;
+      await this.ensurePasswordChangeAllowed(user.data?.user?.lastPasswordChange);
 
-      const existingOtp = await this.redis.get(resetPasswordKey);
+      await this.checkExistingOtp(`${OtpKeys.ResetPasswordOtp}${mobile}`);
 
-      if (existingOtp) throw new BadRequestException(AuthMessages.AlreadySentOtpCode);
-
-      const currentDate = new Date();
-
-      let { user: { lastPasswordChange } = {} } = user.data;
-
-      if (lastPasswordChange) {
-        lastPasswordChange = new Date(lastPasswordChange);
-        const diffDays = Math.floor((currentDate.getTime() - lastPasswordChange.getTime()) / (1000 * 60 * 60 * 24));
-
-        if (diffDays < 3) throw new ForbiddenException(AuthMessages.CannotChangePassword);
-      }
+      await this.enforceOtpRequestLimit(`${OtpKeys.RequestsOtp}${mobile}`);
 
       const otpCode = this.generateOtp();
+      await this.storeOtp(`${OtpKeys.ResetPasswordOtp}${mobile}`, otpCode);
 
-      await this.redis.set(resetPasswordKey, otpCode, 'EX', this.OTP_EXPIRATION_SEC);
-
-      //TODO: uncomment send sms fn
-      // await this.sendSms(mobile, otpCode)
-
-      const updateUserData = {
-        lastPasswordChange: currentDate,
-        userId: user.data.user.id,
-      };
-
-      const updatedUser = await lastValueFrom(
-        this.userServiceClientProxy.send(UserPatterns.UpdateUser, updateUserData).pipe(timeout(this.TIMEOUT_MS)),
-      );
-      if (updatedUser.error) return updatedUser;
+      await this.sendSms(mobile, otpCode);
 
       return ResponseUtil.success({}, AuthMessages.OtpSentSuccessfully, HttpStatus.OK);
     } catch (error) {
@@ -260,32 +232,22 @@ export class AuthService {
 
       const { mobile, newPassword, otpCode } = resetPasswordDto;
 
+      await this.enforceOtpRequestLimit(`${OtpKeys.RequestsOtp}${mobile}`);
+
       const otpKey = `${OtpKeys.ResetPasswordOtp}${mobile}`;
+      await this.validateOtp(otpKey, otpCode);
 
-      const storedOtp = await this.redis.get(otpKey);
-
-      if (!storedOtp || otpCode !== storedOtp) throw new BadRequestException(AuthMessages.InvalidOtpCode);
-
-      const user: ServiceResponse = await lastValueFrom(
-        this.userServiceClientProxy.send(UserPatterns.GetUserByMobile, { mobile }).pipe(timeout(this.TIMEOUT_MS)),
-      );
+      const user = await this.getUserByMobile(mobile);
 
       if (user.error) return user;
 
       const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-      const updateUserData = {
-        password: hashedPassword,
-        userId: user.data?.user?.id,
-      };
-
-      const updatedUser: ServiceResponse = await lastValueFrom(
-        this.userServiceClientProxy.send(UserPatterns.UpdateUser, updateUserData).pipe(timeout(this.TIMEOUT_MS)),
-      );
+      const updatedUser = await this.updateUser(user.data?.user?.id, { password: hashedPassword, lastPasswordChange: new Date() });
 
       if (updatedUser.error) throw updatedUser;
 
       await this.redis.del(otpKey);
+      await this.redis.del(`${OtpKeys.RequestsOtp}${mobile}`);
 
       return ResponseUtil.success({}, AuthMessages.ResetPasswordSuccess, HttpStatus.OK);
     } catch (error) {
@@ -321,34 +283,31 @@ export class AuthService {
     return JSON.parse(userData);
   }
 
-  private async validateOtp(mobile: string, otp: string): Promise<void | never> {
-    const storedOtp = await this.redis.get(`${OtpKeys.SignupOtp}${mobile}`);
-    const isValidOtp = await bcrypt.compare(otp, storedOtp);
+  private async validateOtp(otpKey: string, otp: string): Promise<void | never> {
+    const storedOtp = await this.redis.get(otpKey);
+    const isValidOtp = await bcrypt.compare(otp, storedOtp || '');
     if (!isValidOtp) {
       throw new BadRequestException(AuthMessages.NotFoundOrInvalidOtpCode);
     }
   }
 
-  private async storeOtp(mobile: string, otp: string): Promise<void | never> {
-    const otpKey = `${OtpKeys.SignupOtp}${mobile}`;
-    await this.redis.setex(otpKey, this.OTP_EXPIRATION_SEC, otp);
+  private async storeOtp(otpKey: string, otp: string): Promise<void | never> {
+    const hashedOtp = await bcrypt.hash(otp, 10);
+    await this.redis.setex(otpKey, this.OTP_EXPIRATION_SEC, hashedOtp);
   }
 
   private async storePendingUser(signupDto: ISignup): Promise<void | never> {
     const hashedPassword = await bcrypt.hash(signupDto.password, 10);
     const userData = { ...signupDto, password: hashedPassword };
 
-    const hashedUserData = await bcrypt.hash(JSON.stringify(userData), 10);
-
-    await this.redis.setex(`${OtpKeys.PendingUser}${signupDto.mobile}`, this.USER_DATA_EXPIRATION_SEC, hashedUserData);
+    await this.redis.setex(`${OtpKeys.PendingUser}${signupDto.mobile}`, this.USER_DATA_EXPIRATION_SEC, JSON.stringify(userData));
   }
 
-  private async enforceOtpRequestLimit(mobile: string): Promise<void | never> {
-    const requestKey = `${OtpKeys.RequestsOtp}${mobile}`;
+  private async enforceOtpRequestLimit(requestKey: string): Promise<void | never> {
     let requestCount = Number(await this.redis.get(requestKey)) || 0;
-
+    const requestCountTtl = await this.redis.ttl(requestKey);
     if (requestCount >= this.OTP_REQUEST_LIMIT) {
-      const formattedTime = this.formatSecondsToMinutes(this.OTP_REQUEST_TIMEOUT_SEC);
+      const formattedTime = this.formatSecondsToMinutes(requestCountTtl);
       throw new ForbiddenException(`${AuthMessages.MaxOtpRequests}${formattedTime}.`);
     }
 
@@ -365,8 +324,7 @@ export class AuthService {
     if (userRes.data?.user) throw new ConflictException(AuthMessages.AlreadySignupUser);
   }
 
-  private async checkExistingOtp(mobile: string): Promise<void> {
-    const otpKey = `${OtpKeys.SignupOtp}${mobile}`;
+  private async checkExistingOtp(otpKey: string): Promise<void> {
     const existingOtp = await this.redis.get(otpKey);
     const otpTtl = await this.redis.ttl(otpKey);
 
@@ -380,5 +338,23 @@ export class AuthService {
     const remainingSeconds = seconds % 60;
 
     return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+  }
+
+  private async updateUser(userId: number, data: Record<string, any>): Promise<ServiceResponse> {
+    return lastValueFrom(this.userServiceClientProxy.send(UserPatterns.UpdateUser, { userId, ...data }).pipe(timeout(this.TIMEOUT_MS)));
+  }
+
+  private async getUserByMobile(mobile: string): Promise<ServiceResponse> {
+    return lastValueFrom(this.userServiceClientProxy.send(UserPatterns.GetUserByMobile, { mobile }).pipe(timeout(this.TIMEOUT_MS)));
+  }
+
+  private async ensurePasswordChangeAllowed(lastPasswordChange?: string): Promise<void> {
+    if (!lastPasswordChange) return;
+
+    const lastChangeDate = new Date(lastPasswordChange);
+    const diffDays = Math.floor((Date.now() - lastChangeDate.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays < 3) {
+      throw new ForbiddenException(AuthMessages.CannotChangePassword);
+    }
   }
 }
