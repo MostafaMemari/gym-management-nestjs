@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, forwardRef, HttpStatus, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, forwardRef, HttpStatus, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { GenerateTokens, IForgetPassword, IResetPassword, ISignin, ISignup } from '../../common/interfaces/auth.interface';
 import { Services } from '../../common/enums/services.enum';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
@@ -12,11 +12,16 @@ import * as dateFns from 'date-fns'
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { Redis } from 'ioredis'
 import { Smsir } from 'sms-typescript/lib'
+import { OtpKeys } from 'src/common/enums/redis.keys';
 
 @Injectable()
 export class AuthService {
 
-  private readonly timeout: number = 4500
+  private readonly TIMEOUT_MS: number = 4500
+  private readonly OTP_EXPIRATION_SEC = 300; // 5 minutes
+  private readonly OTP_REQUEST_LIMIT = 5;
+  private readonly OTP_REQUEST_TIMEOUT_SEC = 3600; // 1 hour
+  private readonly USER_DATA_EXPIRATION_SEC = 1200; // 20 minutes
 
   constructor(
     @Inject(forwardRef(() => JwtService)) private readonly jwtService: JwtService,
@@ -26,7 +31,7 @@ export class AuthService {
 
   async checkUserServiceConnection(): Promise<never | void> {
     try {
-      await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CheckConnection, {}).pipe(timeout(this.timeout)))
+      await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CheckConnection, {}).pipe(timeout(this.TIMEOUT_MS)))
     } catch (error) {
       throw new RpcException({ message: "User service is not connected", status: error.status })
     }
@@ -109,33 +114,39 @@ export class AuthService {
 
   async signup(signupDto: ISignup): Promise<ServiceResponse> {
     try {
-      await this.checkUserServiceConnection()
+      await this.checkUserServiceConnection();
+      await this.checkExistingOtp(signupDto.mobile)
+      await this.ensureUserDoesNotExist(signupDto.mobile, signupDto.username);
 
-      const hashedPassword = await bcrypt.hash(signupDto.password, 10)
+      await this.enforceOtpRequestLimit(signupDto.mobile);
+      await this.storePendingUser(signupDto);
 
-      const data = {
-        ...signupDto,
-        password: hashedPassword
-      }
+      const otpCode = this.generateOtp();
+      await this.storeOtp(signupDto.mobile, otpCode);
+      await this.sendSms(signupDto.mobile, otpCode);
 
-      const otpCode = this.generateOtp()
-
-      await this.sendSms(signupDto.mobile, otpCode)
-
-      const result: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CreateUser, data).pipe(timeout(this.timeout)))
-
-      if (result.error) return result
-
-      const tokens = await this.generateTokens(result.data?.user)
-
-      return {
-        message: AuthMessages.SignupSuccess,
-        status: HttpStatus.CREATED,
-        error: false,
-        data: { ...tokens }
-      }
+      return this.createResponse(AuthMessages.OtpSentSuccessfully, HttpStatus.OK);
     } catch (error) {
-      throw new RpcException(error)
+      throw new RpcException(error);
+    }
+  }
+
+  async verifyOtp(verifyOtpDto: any) {
+    try {
+      const { mobile, otp } = verifyOtpDto;
+
+      await this.enforceOtpRequestLimit(mobile);
+      await this.validateOtp(mobile, otp);
+
+      const userData = await this.getPendingUser(mobile);
+      const result = await this.createUser(userData);
+
+      const tokens = await this.generateTokens(result.data?.user);
+      await this.clearOtpData(mobile);
+
+      return this.createResponse(AuthMessages.SignupSuccess, HttpStatus.CREATED, tokens);
+    } catch (error) {
+      throw new RpcException(error);
     }
   }
 
@@ -143,7 +154,7 @@ export class AuthService {
     try {
       await this.checkUserServiceConnection()
 
-      const result: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.GetUserByIdentifier, signinDto).pipe(timeout(this.timeout)))
+      const result: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.GetUserByIdentifier, signinDto).pipe(timeout(this.TIMEOUT_MS)))
 
 
       if (result.error) return result
@@ -212,16 +223,16 @@ export class AuthService {
       await this.checkUserServiceConnection()
 
       const { mobile } = forgetPasswordDto
-      const user: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.GetUserByMobile, { mobile }).pipe(timeout(this.timeout)))
+      const user: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.GetUserByMobile, { mobile }).pipe(timeout(this.TIMEOUT_MS)))
 
       if (user.error) return user
 
-      const resetPasswordKey = `otp:reset:${mobile}`
+      const resetPasswordKey = `${OtpKeys.ResetPasswordOtp}${mobile}`
 
       const existingOtp = await this.redis.get(resetPasswordKey)
 
       if (existingOtp)
-        throw new BadRequestException(AuthMessages.AlreadySetOtpCode)
+        throw new BadRequestException(AuthMessages.AlreadySentOtpCode)
 
       const currentDate = new Date()
 
@@ -237,7 +248,7 @@ export class AuthService {
 
       const otpCode = this.generateOtp()
 
-      await this.redis.set(resetPasswordKey, otpCode, 'EX', 300) //* 5 Minutes
+      await this.redis.set(resetPasswordKey, otpCode, 'EX', this.OTP_EXPIRATION_SEC)
 
       await this.sendSms(mobile, otpCode)
 
@@ -246,7 +257,7 @@ export class AuthService {
         userId: user.data.user.id
       }
 
-      const updatedUser = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.UpdateUser, updateUserData).pipe(timeout(this.timeout)))
+      const updatedUser = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.UpdateUser, updateUserData).pipe(timeout(this.TIMEOUT_MS)))
       if (updatedUser.error) return updatedUser
 
       return {
@@ -266,7 +277,7 @@ export class AuthService {
 
       const { mobile, newPassword, otpCode } = resetPasswordDto
 
-      const otpKey = `otp:reset:${mobile}`
+      const otpKey = `${OtpKeys.ResetPasswordOtp}${mobile}`
 
       const storedOtp = await this.redis.get(otpKey)
 
@@ -274,7 +285,7 @@ export class AuthService {
         throw new BadRequestException(AuthMessages.InvalidOtpCode)
 
 
-      const user: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.GetUserByMobile, { mobile }).pipe(timeout(this.timeout)))
+      const user: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.GetUserByMobile, { mobile }).pipe(timeout(this.TIMEOUT_MS)))
 
       if (user.error) return user
 
@@ -285,7 +296,7 @@ export class AuthService {
         userId: user.data?.user?.id
       }
 
-      const updatedUser: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.UpdateUser, updateUserData).pipe(timeout(this.timeout)))
+      const updatedUser: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.UpdateUser, updateUserData).pipe(timeout(this.TIMEOUT_MS)))
 
       if (updatedUser.error) throw updatedUser
 
@@ -310,5 +321,91 @@ export class AuthService {
 
     if (result.data?.status == 1) return { message: "success", status: 200 }
     else return { message: "failed", status: 500 }
+  }
+
+  private async clearOtpData(mobile: string): Promise<void | never> {
+    await Promise.all([
+      this.redis.del(`${OtpKeys.SignupOtp}${mobile}`),
+      this.redis.del(`${OtpKeys.PendingUser}${mobile}`),
+      this.redis.del(`${OtpKeys.RequestsOtp}${mobile}`)
+    ]);
+  }
+
+  private async createUser(userData: ISignup): Promise<ServiceResponse> {
+    return await lastValueFrom(
+      this.userServiceClientProxy.send(UserPatterns.CreateUser, userData).pipe(timeout(this.TIMEOUT_MS))
+    );
+  }
+
+  private async getPendingUser(mobile: string): Promise<ISignup> {
+    const userData = await this.redis.get(`${OtpKeys.PendingUser}${mobile}`);
+    if (!userData) throw new BadRequestException(AuthMessages.UserDataNotFound);
+    return JSON.parse(userData);
+  }
+
+  private async validateOtp(mobile: string, otp: string): Promise<void | never> {
+    const storedOtp = await this.redis.get(`${OtpKeys.SignupOtp}${mobile}`);
+    if (!storedOtp || storedOtp !== otp) {
+      throw new BadRequestException(AuthMessages.NotFoundOrInvalidOtpCode);
+    }
+  }
+
+  private async storeOtp(mobile: string, otp: string): Promise<void | never> {
+    const otpKey = `${OtpKeys.SignupOtp}${mobile}`;
+    await this.redis.setex(otpKey, this.OTP_EXPIRATION_SEC, otp);
+  }
+
+  private async storePendingUser(signupDto: ISignup): Promise<void | never> {
+    const hashedPassword = await bcrypt.hash(signupDto.password, 10);
+    const userData = { ...signupDto, password: hashedPassword };
+
+    await this.redis.setex(
+      `${OtpKeys.PendingUser}${signupDto.mobile}`,
+      this.USER_DATA_EXPIRATION_SEC,
+      JSON.stringify(userData)
+    );
+  }
+
+  private async enforceOtpRequestLimit(mobile: string) {
+    const requestKey = `${OtpKeys.RequestsOtp}${mobile}`;
+    let requestCount = Number(await this.redis.get(requestKey)) || 0;
+
+    if (requestCount >= this.OTP_REQUEST_LIMIT) {
+      const formattedTime = this.formatSecondsToMinutes(this.OTP_REQUEST_TIMEOUT_SEC)
+      throw new ForbiddenException(`${AuthMessages.MaxOtpRequests}${formattedTime}.`);
+    }
+
+    await this.redis.setex(requestKey, this.OTP_REQUEST_TIMEOUT_SEC, requestCount + 1);
+  }
+
+  private async ensureUserDoesNotExist(mobile: string, username: string) {
+    const userArgs = { mobile, username };
+    const userRes: ServiceResponse = await lastValueFrom(
+      this.userServiceClientProxy.send(UserPatterns.GetUserByArgs, userArgs).pipe(timeout(this.TIMEOUT_MS))
+    );
+
+    if (userRes.error) throw userRes;
+    if (userRes.data?.user) throw new ConflictException(AuthMessages.AlreadySignupUser);
+  }
+
+  private async checkExistingOtp(mobile: string): Promise<void> {
+    const otpKey = `${OtpKeys.SignupOtp}${mobile}`;
+    const existingOtp = await this.redis.get(otpKey);
+    const otpTtl = await this.redis.ttl(otpKey);
+
+    if (existingOtp) {
+      throw new ConflictException(`${AuthMessages.OtpAlreadySentWithWaitTime}${this.formatSecondsToMinutes(otpTtl)}`);
+    }
+  }
+
+  private createResponse(message: string, status: HttpStatus, data: any = {}): ServiceResponse {
+    return { message, status, error: false, data };
+  }
+
+  formatSecondsToMinutes(seconds: number): string {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+
+    return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
   }
 }

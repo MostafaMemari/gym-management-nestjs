@@ -47,4 +47,9 @@ export class AuthController {
   resetPassword(@Payload() data: IResetPassword) {
     return this.authService.resetPassword(data)
   }
+
+  @MessagePattern(AuthPatterns.VerifyOtp)
+  verifyOtp(@Payload() data: any) {
+    return this.authService.verifyOtp(data)
+  }
 }
