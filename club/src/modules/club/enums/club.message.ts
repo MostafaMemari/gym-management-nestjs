@@ -20,4 +20,7 @@ export enum ClubMessages {
   ClubNotBelongToUser = 'This club does not belong to the user',
   GetClubSuccess = 'Club data retrieved successfully',
   ClubHasRelations = 'Cannot delete club relations with coaches or students',
+  CannotRemoveMaleCoach = 'Cannot remove male gender while assigned coaches exist',
+  CannotRemoveFemaleCoach = 'Cannot remove female gender while assigned coaches exist',
+  CannotRemoveClubAssignedToCoaches = 'The club has assigned coaches and cannot be removed',
 }

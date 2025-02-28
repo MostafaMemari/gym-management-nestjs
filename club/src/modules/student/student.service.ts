@@ -125,7 +125,7 @@ export class StudentService {
   async getAll(user: IUser, query: { queryStudentDto: ISeachStudentQuery; paginationDto: IPagination }): Promise<PageDto<StudentEntity>> {
     const { take, page } = query.paginationDto;
 
-    const cacheKey = `${CacheKeys.STUDENT_LIST}-${user.id}-${page}-${take}-${JSON.stringify(query.queryStudentDto)}`;
+    const cacheKey = `${CacheKeys.STUDENT_LIST}:${user.id}-${page}-${take}-${JSON.stringify(query.queryStudentDto)}`;
 
     const cachedData = await this.cacheService.get<PageDto<StudentEntity>>(cacheKey);
     if (cachedData) return cachedData;

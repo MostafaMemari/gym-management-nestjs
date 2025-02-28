@@ -1,9 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { CoachEntity } from '../entities/coach.entity';
-import { CoachMessages } from '../enums/coach.message';
 import { ISeachCoachQuery } from '../interfaces/coach.interface';
-import { EntityName } from 'src/common/enums/entity.enum';
+import { EntityName } from '../../../common/enums/entity.enum';
+import { Gender } from '../../../common/enums/gender.enum';
 
 @Injectable()
 export class CoachRepository extends Repository<CoachEntity> {
@@ -120,6 +120,20 @@ export class CoachRepository extends Repository<CoachEntity> {
       .leftJoinAndSelect('coaches.clubs', 'club')
       .andWhere('club.ownerId = :userId', { userId })
       .getOne();
+  }
+
+  async existsCoachByGenderInClub(clubId: number, gender: Gender): Promise<boolean> {
+    const count = await this.createQueryBuilder(EntityName.Coaches)
+      .innerJoin('coaches.clubs', 'club')
+      .where('club.id = :clubId', { clubId })
+      .andWhere('coaches.gender = :gender', { gender })
+      .getCount();
+
+    return count > 0;
+  }
+  async existsCoachByClubId(clubId: number): Promise<boolean> {
+    const count = await this.count({ where: { clubs: { id: clubId } } });
+    return count > 0;
   }
 }
 

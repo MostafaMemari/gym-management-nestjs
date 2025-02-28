@@ -26,7 +26,7 @@ export class ClubController {
   update(@Payload() data: { user: IUser; clubId: number; updateClubDto: IUpdateClub }) {
     const { user, clubId, updateClubDto } = data;
 
-    return this.clubService.updateById(user, clubId, updateClubDto);
+    return this.clubService.update(user, clubId, updateClubDto);
   }
 
   @MessagePattern(ClubPatterns.GetClubs)
@@ -48,10 +48,5 @@ export class ClubController {
     const { user, clubId } = data;
 
     return this.clubService.removeById(user, clubId);
-  }
-
-  @MessagePattern(ClubPatterns.checkExistClubById)
-  checkExistById(@Payload() data: { user: IUser; clubId: number }) {
-    return this.clubService.findClubById(data.clubId, {});
   }
 }
