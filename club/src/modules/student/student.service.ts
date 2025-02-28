@@ -1,4 +1,12 @@
-import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  forwardRef,
+  HttpStatus,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 
@@ -58,6 +66,8 @@ export class StudentService {
       if (national_code) await this.ensureUniqueNationalCode(national_code, userId);
 
       const { club, coach } = await this.ensureClubAndCoach(userId, clubId, coachId);
+      this.ensureClubInCoachClubs(clubId, coach);
+
       this.validateGenderRestrictions(gender, coach, club);
 
       imageKey = image ? await this.uploadStudentImage(image) : null;
@@ -70,9 +80,9 @@ export class StudentService {
         userId: studentUserId,
       });
 
-      return ResponseUtil.success({ ...student, studentUserId }, StudentMessages.CreatedStudent);
+      return ResponseUtil.success({ ...student, userId: studentUserId }, StudentMessages.CreatedStudent);
     } catch (error) {
-      await this.deleteStudentUserAndImage(studentUserId, imageKey);
+      await this.removeStudentUserAndImage(studentUserId, imageKey);
       return ResponseUtil.error(error?.message || StudentMessages.FailedToCreateStudent, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -87,14 +97,23 @@ export class StudentService {
       let student = national_code ? await this.ensureUniqueNationalCode(national_code, userId) : null;
       if (!student) student = await this.validateOwnership(studentId, userId);
 
-      const { club, coach } = await this.ensureClubAndCoach(userId, clubId ?? student.clubId, coachId ?? student.coachId);
-      if (gender) this.validateGenderRestrictions(gender, coach, club);
+      if (clubId || coachId || gender) {
+        const { club, coach } = await this.ensureClubAndCoach(userId, clubId ?? student.clubId, coachId ?? student.coachId);
+        this.ensureClubInCoachClubs(clubId, coach);
+        this.validateGenderRestrictions(gender ?? student.gender, coach, club);
+      }
 
       const updateData = this.prepareUpdateData(updateStudentDto, student);
+      if (clubId !== undefined) updateData.clubId = clubId;
+      if (coachId !== undefined) updateData.coachId = coachId;
+
       if (image) updateData.image_url = await this.uploadStudentImage(image);
 
       await this.studentRepository.updateStudent(student, updateData);
-      if (image && student.image_url) await this.awsService.deleteFile(student.image_url);
+
+      if (image && updateData.image_url && student.image_url) {
+        await this.awsService.deleteFile(student.image_url);
+      }
 
       return ResponseUtil.success({ ...student, ...updateData }, StudentMessages.UpdatedStudent);
     } catch (error) {
@@ -134,11 +153,9 @@ export class StudentService {
     try {
       const student = await this.validateOwnership(studentId, user.id);
 
-      await this.removeUserById(Number(student?.userId));
-
       const isRemoved = await this.studentRepository.removeStudentById(studentId);
 
-      if (isRemoved) this.deleteStudentUserAndImage(Number(student.userId), student.image_url);
+      if (isRemoved) this.removeStudentUserAndImage(Number(student.userId), student.image_url);
 
       return ResponseUtil.success(student, StudentMessages.RemovedStudentSuccess);
     } catch (error) {
@@ -185,12 +202,15 @@ export class StudentService {
   }
 
   async hasStudentsInClub(removedClubs: ClubEntity[], coachId: number): Promise<void> {
-    const clubIds = removedClubs.map((club) => club.id);
-    const clubsWithStudents = await this.studentRepository.countStudentsInClubs(clubIds, coachId);
+    const clubsWithStudents: string[] = [];
+
+    for (const club of removedClubs) {
+      const hasStudents = await this.studentRepository.existsStudentsInClub(club.id, coachId);
+      if (hasStudents) clubsWithStudents.push(`${club.id}`);
+    }
 
     if (clubsWithStudents.length > 0) {
-      const clubMessages = clubsWithStudents.map((club) => `${club.clubName}: has students`);
-      throw new BadRequestException(`${StudentMessages.CannotRemoveClubsInArray} ${clubMessages.join(', ')}`);
+      throw new BadRequestException(`${StudentMessages.CannotRemoveClubsInArray} ${clubsWithStudents.join(', ')}`);
     }
   }
 
@@ -214,8 +234,19 @@ export class StudentService {
     }, {} as Partial<StudentEntity>);
   }
 
-  private async deleteStudentUserAndImage(studentUserId: number | null, imageKey: string | null) {
+  private async removeStudentUserAndImage(studentUserId: number | null, imageKey: string | null) {
     if (studentUserId) await this.removeUserById(studentUserId);
     if (imageKey) await this.removeStudentImage(imageKey);
+  }
+
+  private ensureClubInCoachClubs(clubId: number, coach: CoachEntity): void {
+    const exists = coach.clubs.some((club) => club.id === clubId);
+    if (!exists) {
+      throw new BadRequestException(`Club with ID ${clubId} is not associated with Coach ID ${coach.id}`);
+    }
+  }
+
+  async validateCoachHasNoStudents(coachId: number): Promise<boolean> {
+    return await this.studentRepository.existsStudentsByCoachId(coachId);
   }
 }

@@ -49,6 +49,6 @@ export class CoachEntity extends AbstractEntity {
   @OneToMany(() => StudentEntity, (student) => student.coach)
   students: StudentEntity[];
 
-  @ManyToMany(() => ClubEntity, (club) => club.coaches)
+  @ManyToMany(() => ClubEntity, (club) => club.coaches, { onDelete: 'CASCADE' })
   clubs: ClubEntity[];
 }

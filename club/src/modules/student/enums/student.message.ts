@@ -21,4 +21,5 @@ export enum StudentMessages {
   CoachGenderMismatch = 'Student gender does not match coach',
   CannotRemoveClubsInArray = 'Cannot remove clubs:',
   NotAssignedToClub = 'Coach is not assigned to the specified club:',
+  CheckCoachAssignmentFailed = 'Failed to check if the coach is assigned to students',
 }

@@ -57,7 +57,7 @@ export class CoachService {
     try {
       if (national_code) await this.ensureUniqueNationalCode(national_code, userId);
 
-      const ownedClubs = clubIds?.length ? await this.clubService.findOwnedClubs(clubIds, userId) : [];
+      const ownedClubs = await this.clubService.findOwnedClubs(clubIds, userId);
       this.validateCoachGender(gender, ownedClubs);
 
       imageKey = image ? await this.uploadCoachImage(image) : null;
@@ -71,37 +71,39 @@ export class CoachService {
         userId: coachUserId,
       });
 
-      return ResponseUtil.success({ ...coach, userId }, CoachMessages.CreatedCoach);
+      return ResponseUtil.success({ ...coach, userId: coachUserId }, CoachMessages.CreatedCoach);
     } catch (error) {
-      await this.deleteCoachUserAndImage(coachUserId, imageKey);
+      await this.removeCoachUserAndImage(coachUserId, imageKey);
       return ResponseUtil.error(error?.message || CoachMessages.FailedToCreateCoach, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
   async update(user: IUser, coachId: number, updateCoachDto: IUpdateCoach) {
-    const { clubIds, national_code, gender, image } = updateCoachDto;
+    const { clubIds = [], national_code, gender, image } = updateCoachDto;
     const userId: number = user.id;
+
     let imageKey: string | null = null;
 
     try {
       let coach = national_code ? await this.ensureUniqueNationalCode(national_code, userId) : null;
       if (!coach) coach = await this.validateOwnership(coachId, userId);
 
-      const ownedClubs = clubIds?.length ? await this.clubService.findOwnedClubs(clubIds, userId) : coach.clubs;
-      this.validateCoachGender(gender || coach.gender, ownedClubs);
-
-      const removedClubs = coach.clubs.filter((club) => !clubIds.includes(club.id));
-      await this.studentService.hasStudentsInClub(removedClubs, coachId);
-
       const updateData = this.prepareUpdateData(updateCoachDto, coach);
+
+      if (clubIds.length) {
+        const ownedClubs = clubIds?.length ? await this.clubService.findOwnedClubs(clubIds, userId) : coach.clubs;
+        const removedClubs = coach.clubs.filter((club) => !clubIds.includes(club.id));
+        if (removedClubs.length) await this.studentService.hasStudentsInClub(removedClubs, coachId);
+        updateData.clubs = ownedClubs;
+      }
+
+      if (gender) this.validateCoachGender(gender ?? coach.gender, updateData.clubs ?? coach.clubs);
+
       if (image) updateData.image_url = await this.uploadCoachImage(image);
 
-      await this.coachRepository.updateCoach(coach, {
-        ...updateData,
-        clubs: ownedClubs ?? [],
-      });
+      await this.coachRepository.updateCoach(coach, { ...updateData });
 
-      if (image && coach.image_url) await this.awsService.deleteFile(coach.image_url);
+      if (image && updateData.image_url && coach.image_url) await this.awsService.deleteFile(coach.image_url);
 
       return ResponseUtil.success({ ...coach, ...updateData }, CoachMessages.UpdatedCoach);
     } catch (error) {
@@ -141,13 +143,12 @@ export class CoachService {
     try {
       const coach = await this.validateOwnership(coachId, user.id);
 
-      await this.removeUserById(Number(coach.userId));
-
-      if (coach.image_url) await this.removeCoachImage(coach.image_url);
+      const hasStudents = await this.studentService.validateCoachHasNoStudents(coachId);
+      if (hasStudents) throw new BadRequestException(CoachMessages.CoachHasStudents);
 
       const isRemoved = await this.coachRepository.removeCoachById(coachId);
 
-      if (isRemoved) this.removeCoachImage(coach?.image_url);
+      if (isRemoved) await this.removeCoachUserAndImage(Number(coach.userId), coach.image_url);
 
       return ResponseUtil.success(coach, CoachMessages.RemovedCoachSuccess);
     } catch (error) {
@@ -220,7 +221,7 @@ export class CoachService {
     }, {} as Partial<CoachEntity>);
   }
 
-  private async deleteCoachUserAndImage(coachUserId: number, imageKey: string | null) {
+  private async removeCoachUserAndImage(coachUserId: number, imageKey: string | null) {
     if (coachUserId) await this.removeUserById(coachUserId);
     if (imageKey) await this.removeCoachImage(imageKey);
   }
