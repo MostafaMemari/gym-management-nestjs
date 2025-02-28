@@ -13,5 +13,10 @@ export enum AuthMessages {
     InvalidOtpCode = "Otp code is invalid",
     ResetPasswordSuccess = "Your password has been successfully changed.",
     CannotChangePassword = "You can only change your password every 3 days.",
-    AlreadySetOtpCode = 'Otp code already set for you.'
+    AlreadySentOtpCode = 'Otp code already sent for you.',
+    NotFoundOrInvalidOtpCode = 'Otp code is invalid or not found',
+    UserDataNotFound = 'User data not found.',
+    MaxOtpRequests = "Max OTP requests reached. Please try again after: ",
+    AlreadySignupUser = "User with this mobile or username already exists.",
+    OtpAlreadySentWithWaitTime = "An OTP has already been sent. Please try again after: "
 }

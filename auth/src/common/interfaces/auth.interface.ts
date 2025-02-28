@@ -1,9 +1,9 @@
 export interface ISignup {
-    name: string
-
     password: string
 
     mobile: string
+
+    username: string
 }
 
 export interface GenerateTokens {
