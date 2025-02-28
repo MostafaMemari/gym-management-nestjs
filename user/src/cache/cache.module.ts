@@ -4,11 +4,9 @@ import { RedisModule } from '@nestjs-modules/ioredis';
 import { redisConfig } from '../configs/redis.config';
 
 @Module({
-  imports: [
-    RedisModule.forRoot(redisConfig())
-  ],
+  imports: [RedisModule.forRoot(redisConfig())],
   controllers: [],
   providers: [CacheService],
-  exports: [CacheService, CacheModule]
+  exports: [CacheService, CacheModule],
 })
-export class CacheModule { }
+export class CacheModule {}

@@ -27,19 +27,19 @@ export interface ISearchUser extends IPagination {
 }
 
 export interface IChangeRole {
-  userId: number
-  role: Role
+  userId: number;
+  role: Role;
 }
 
 export interface IUpdateUser {
-  userId: number
-  username?: string
-  mobile?: string,
-  lastPasswordChange?: Date
-  password?: string
+  userId: number;
+  username?: string;
+  mobile?: string;
+  lastPasswordChange?: Date;
+  password?: string;
 }
 
 export interface IGetUserByArgs {
-  mobile?: string
-  username?: string
+  mobile?: string;
+  username?: string;
 }

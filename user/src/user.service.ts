@@ -15,7 +15,7 @@ export class UserService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly cache: CacheService,
-  ) { }
+  ) {}
 
   async create(userDto: Prisma.UserCreateInput): Promise<ServiceResponse> {
     try {
@@ -173,17 +173,17 @@ export class UserService {
 
   async findByMobile(userDto: { mobile: string }) {
     try {
-      const { mobile } = userDto
+      const { mobile } = userDto;
 
-      const user = await this.userRepository.findOneByIdentifier(mobile)
+      const user = await this.userRepository.findOneByIdentifier(mobile);
 
       if (!user) {
-        throw new NotFoundException(UserMessages.NotFoundUser)
+        throw new NotFoundException(UserMessages.NotFoundUser);
       }
 
-      return ResponseUtil.success({ user }, "", HttpStatus.OK)
+      return ResponseUtil.success({ user }, '', HttpStatus.OK);
     } catch (error) {
-      throw new RpcException(error)
+      throw new RpcException(error);
     }
   }
 
@@ -230,51 +230,50 @@ export class UserService {
 
   async changeRole(roleDto: IChangeRole): Promise<ServiceResponse> {
     try {
-      const { role, userId } = roleDto
+      const { role, userId } = roleDto;
 
-      const user = await this.userRepository.findByIdAndThrow(userId)
+      const user = await this.userRepository.findByIdAndThrow(userId);
 
-      if (user.role == role) throw new ConflictException(UserMessages.AlreadyAssignedRole)
+      if (user.role == role) throw new ConflictException(UserMessages.AlreadyAssignedRole);
 
-      await this.userRepository.updateRole(userId, role)
+      await this.userRepository.updateRole(userId, role);
 
-      return ResponseUtil.success({}, UserMessages.ChangedRoleSuccess, HttpStatus.OK)
+      return ResponseUtil.success({}, UserMessages.ChangedRoleSuccess, HttpStatus.OK);
     } catch (error) {
-      throw new RpcException(error)
+      throw new RpcException(error);
     }
   }
 
   async update(data: IUpdateUser) {
     try {
-      const { userId, ...updateUserData } = data
-      const { mobile, username } = updateUserData
+      const { userId, ...updateUserData } = data;
+      const { mobile, username } = updateUserData;
 
-      const existingUser = await this.userRepository.findById(userId, { where: { id: { not: userId }, OR: [{ mobile }, { username }] } })
+      const existingUser = await this.userRepository.findById(userId, { where: { id: { not: userId }, OR: [{ mobile }, { username }] } });
 
       if (existingUser) {
-        throw new ConflictException(UserMessages.AlreadyExistsUser)
+        throw new ConflictException(UserMessages.AlreadyExistsUser);
       }
 
-      const updatedUser = await this.userRepository.update(userId, { data: { ...updateUserData }, omit: { password: true } })
+      const updatedUser = await this.userRepository.update(userId, { data: { ...updateUserData }, omit: { password: true } });
 
-      return ResponseUtil.success({ updatedUser }, UserMessages.UpdatedUser, HttpStatus.OK)
+      return ResponseUtil.success({ updatedUser }, UserMessages.UpdatedUser, HttpStatus.OK);
     } catch (error) {
-      throw new RpcException(error)
+      throw new RpcException(error);
     }
   }
 
-
   async findByArgs(userDto: IGetUserByArgs) {
     try {
-      const user = await this.userRepository.findByArgs(userDto)
+      const user = await this.userRepository.findByArgs(userDto);
 
       if (!user) {
-        return ResponseUtil.success({}, "", HttpStatus.OK)
+        return ResponseUtil.success({}, '', HttpStatus.OK);
       }
 
-      return ResponseUtil.success({ user }, "", HttpStatus.OK)
+      return ResponseUtil.success({ user }, '', HttpStatus.OK);
     } catch (error) {
-      throw new RpcException(error)
+      throw new RpcException(error);
     }
   }
 }
