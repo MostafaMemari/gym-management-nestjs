@@ -5,7 +5,15 @@ import { lastValueFrom, timeout } from 'rxjs';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { AuthPatterns } from '../../../common/enums/auth.events';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
-import { ForgetPasswordDto, RefreshTokenDto, RestPasswordDto, SigninDto, SignoutDto, SignupDto, VerifyOtpDto } from '../../../common/dtos/auth-service/auth.dto';
+import {
+  ForgetPasswordDto,
+  RefreshTokenDto,
+  RestPasswordDto,
+  SigninDto,
+  SignoutDto,
+  SignupDto,
+  VerifyOtpDto,
+} from '../../../common/dtos/auth-service/auth.dto';
 import { AuthGuard } from '../../../common/guards/auth.guard';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 
@@ -15,7 +23,7 @@ export class AuthController {
   private readonly timeout = 5000;
   private logger: Logger = new Logger(AuthController.name);
 
-  constructor(@Inject(Services.AUTH) private readonly authServiceClient: ClientProxy) { }
+  constructor(@Inject(Services.AUTH) private readonly authServiceClient: ClientProxy) {}
 
   async checkConnection(): Promise<void> {
     try {
@@ -127,14 +135,12 @@ export class AuthController {
     return data;
   }
 
-  @Post("verify-otp")
+  @Post('verify-otp')
   @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
   async verifyOtp(@Body() verifyOtpDto: VerifyOtpDto) {
-    await this.checkConnection()
+    await this.checkConnection();
 
-    const data: ServiceResponse = await lastValueFrom(
-      this.authServiceClient.send('verify_otp', verifyOtpDto).pipe(timeout(this.timeout)),
-    );
+    const data: ServiceResponse = await lastValueFrom(this.authServiceClient.send('verify_otp', verifyOtpDto).pipe(timeout(this.timeout)));
 
     if (data.error) throw new HttpException(data.message, data.status);
 
