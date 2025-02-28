@@ -19,7 +19,7 @@ import { checkConnection } from '../../../common/utils/checkConnection.utils';
 @Controller('rbac')
 @AuthDecorator()
 export class RbacController {
-  constructor(@Inject(Services.AUTH) private readonly authServiceClientProxy: ClientProxy) { }
+  constructor(@Inject(Services.AUTH) private readonly authServiceClientProxy: ClientProxy) {}
 
   private readonly timeout: number = 5000;
 

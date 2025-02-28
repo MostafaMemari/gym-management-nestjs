@@ -59,13 +59,13 @@ export class AuthController {
   @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
   async signout(@Body() signoutDto: SignoutDto) {
     try {
+      await checkConnection(Services.AUTH, this.authServiceClient);
       const data: ServiceResponse = await lastValueFrom(this.authServiceClient.send(AuthPatterns.Signout, signoutDto).pipe(timeout(this.timeout)));
 
       return handleServiceResponse(data);
     } catch (error) {
       handleError(error, 'Failed to signout', 'AuthService');
     }
-    await checkConnection(Services.AUTH, this.authServiceClient);
   }
 
   @Post('refresh-token')
