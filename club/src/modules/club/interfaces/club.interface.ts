@@ -11,4 +11,8 @@ export interface ICreateClub {
 
 export type IUpdateClub = Partial<ICreateClub>;
 
-export interface IQuery extends IPagination {}
+export interface ISearchClubQuery {
+  search?: string;
+  gender?: Gender;
+  sort_order?: 'asc' | 'desc';
+}
