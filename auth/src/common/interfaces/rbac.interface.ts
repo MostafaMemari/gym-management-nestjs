@@ -1,4 +1,4 @@
 export interface IAssignRole {
-    userId: number
-    role: string
+  userId: number;
+  role: string;
 }

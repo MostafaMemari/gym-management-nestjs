@@ -24,13 +24,13 @@ import { RbacService } from '../rbac/rbac.service';
         options: {
           urls: [process.env.RABBITMQ_URL],
           queue: process.env.RABBITMQ_USER_QUEUE_NAME,
-        }
-      }
+        },
+      },
     ]),
-    forwardRef(() => RbacModule)
+    forwardRef(() => RbacModule),
   ],
   controllers: [AuthController, RbacController],
   providers: [AuthService, RbacService],
-  exports: [ClientsModule]
+  exports: [ClientsModule],
 })
-export class AuthModule { }
+export class AuthModule {}

@@ -1,32 +1,32 @@
 export interface ISignup {
-    password: string
+  password: string;
 
-    mobile: string
+  mobile: string;
 
-    username: string
+  username: string;
 }
 
 export interface GenerateTokens {
-    accessToken: string
-    refreshToken: string
+  accessToken: string;
+  refreshToken: string;
 }
 
 export interface ISignin {
-    identifier: string
-    password: string
+  identifier: string;
+  password: string;
 }
 
 export interface IForgetPassword {
-    mobile: string
+  mobile: string;
 }
 
 export interface IResetPassword {
-    mobile: string
-    otpCode: string
-    newPassword: string
+  mobile: string;
+  otpCode: string;
+  newPassword: string;
 }
 
 export interface IVerifyOtp {
-    otp: string
-    mobile: string
+  otp: string;
+  mobile: string;
 }

@@ -1,3 +1,3 @@
 export enum RbacMessages {
-    AssignedRoleSuccess = "Assigned role to user successfully."
-} 
+  AssignedRoleSuccess = 'Assigned role to user successfully.',
+}

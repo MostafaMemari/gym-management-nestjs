@@ -11,25 +11,25 @@ import { ResponseUtil } from '../../common/utils/response.utils';
 
 @Injectable()
 export class RbacService {
-    constructor(
-        @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
-    ) { }
+  constructor(@Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy) {}
 
-    private readonly timeout = 5000
+  private readonly timeout = 5000;
 
-    async assignRole(roleDto: IAssignRole): Promise<ServiceResponse> {
-        try {
-            await checkConnection(Services.USER, this.userServiceClientProxy)
+  async assignRole(roleDto: IAssignRole): Promise<ServiceResponse> {
+    try {
+      await checkConnection(Services.USER, this.userServiceClientProxy);
 
-            const { role, userId } = roleDto
+      const { role, userId } = roleDto;
 
-            const result: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.ChangeUserRole, { role, userId }).pipe(timeout(this.timeout)))
+      const result: ServiceResponse = await lastValueFrom(
+        this.userServiceClientProxy.send(UserPatterns.ChangeUserRole, { role, userId }).pipe(timeout(this.timeout)),
+      );
 
-            if (result.error) throw result
+      if (result.error) throw result;
 
-            return ResponseUtil.success({}, RbacMessages.AssignedRoleSuccess, HttpStatus.OK)
-        } catch (error) {
-            throw new RpcException(error)
-        }
+      return ResponseUtil.success({}, RbacMessages.AssignedRoleSuccess, HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
     }
+  }
 }

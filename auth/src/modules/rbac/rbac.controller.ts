@@ -6,10 +6,10 @@ import { IAssignRole } from '../../common/interfaces/rbac.interface';
 
 @Controller()
 export class RbacController {
-  constructor(private readonly rbacService: RbacService) { }
+  constructor(private readonly rbacService: RbacService) {}
 
   @MessagePattern(RbacPatterns.AssignRole)
   assignRole(@Payload() data: IAssignRole) {
-    return this.rbacService.assignRole(data)
+    return this.rbacService.assignRole(data);
   }
 }
