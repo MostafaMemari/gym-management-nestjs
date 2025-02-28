@@ -13,6 +13,7 @@ import { InjectRedis } from '@nestjs-modules/ioredis';
 import { Redis } from 'ioredis'
 import { Smsir } from 'sms-typescript/lib'
 import { OtpKeys } from 'src/common/enums/redis.keys';
+import { ResponseUtil } from 'src/common/utils/response.utils';
 
 @Injectable()
 export class AuthService {
@@ -128,7 +129,7 @@ export class AuthService {
       //TODO: Uncomment send sms fn
       // await this.sendSms(signupDto.mobile, otpCode);
 
-      return this.createResponse(AuthMessages.OtpSentSuccessfully, HttpStatus.OK);
+      return ResponseUtil.success({}, AuthMessages.OtpSentSuccessfully, HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }
@@ -147,7 +148,7 @@ export class AuthService {
       const tokens = await this.generateTokens(result.data?.user);
       await this.clearOtpData(mobile);
 
-      return this.createResponse(AuthMessages.SignupSuccess, HttpStatus.CREATED, tokens);
+      return ResponseUtil.success({ ...tokens }, AuthMessages.SignupSuccess, HttpStatus.CREATED)
     } catch (error) {
       throw new RpcException(error);
     }
@@ -170,12 +171,7 @@ export class AuthService {
 
       const tokens = await this.generateTokens(result.data?.user)
 
-      return {
-        data: { ...tokens },
-        error: false,
-        message: AuthMessages.SigninSuccess,
-        status: HttpStatus.OK
-      }
+      return ResponseUtil.success({ ...tokens }, AuthMessages.SigninSuccess, HttpStatus.OK)
     } catch (error) {
       throw new RpcException(error)
     }
@@ -187,12 +183,7 @@ export class AuthService {
 
       await this.redis.del(refreshTokenKey)
 
-      return {
-        data: {},
-        error: false,
-        message: AuthMessages.SignoutSuccess,
-        status: HttpStatus.OK
-      }
+      return ResponseUtil.success({}, AuthMessages.SignoutSuccess, HttpStatus.OK)
     } catch (error) {
       throw new RpcException(error)
     }
@@ -210,12 +201,7 @@ export class AuthService {
 
       const newAccessToken = this.jwtService.sign({ id }, { secret: ACCESS_TOKEN_SECRET, expiresIn: ACCESS_TOKEN_EXPIRE_TIME })
 
-      return {
-        data: { accessToken: newAccessToken },
-        error: false,
-        message: AuthMessages.RefreshedTokenSuccess,
-        status: HttpStatus.OK
-      }
+      return ResponseUtil.success({ accessToken: newAccessToken }, AuthMessages.RefreshedTokenSuccess, HttpStatus.OK)
     } catch (error) {
       throw new RpcException(error)
     }
@@ -253,7 +239,8 @@ export class AuthService {
 
       await this.redis.set(resetPasswordKey, otpCode, 'EX', this.OTP_EXPIRATION_SEC)
 
-      await this.sendSms(mobile, otpCode)
+      //TODO: uncomment send sms fn
+      // await this.sendSms(mobile, otpCode)
 
       const updateUserData = {
         lastPasswordChange: currentDate,
@@ -263,12 +250,7 @@ export class AuthService {
       const updatedUser = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.UpdateUser, updateUserData).pipe(timeout(this.TIMEOUT_MS)))
       if (updatedUser.error) return updatedUser
 
-      return {
-        data: {},
-        error: false,
-        message: AuthMessages.OtpSentSuccessfully,
-        status: HttpStatus.OK
-      }
+      return ResponseUtil.success({}, AuthMessages.OtpSentSuccessfully, HttpStatus.OK)
     } catch (error) {
       throw new RpcException(error)
     }
@@ -305,12 +287,7 @@ export class AuthService {
 
       await this.redis.del(otpKey)
 
-      return {
-        data: {},
-        error: false,
-        message: AuthMessages.ResetPasswordSuccess,
-        status: HttpStatus.OK
-      }
+      return ResponseUtil.success({}, AuthMessages.ResetPasswordSuccess, HttpStatus.OK)
     } catch (error) {
       throw new RpcException(error)
     }
@@ -402,10 +379,6 @@ export class AuthService {
     if (existingOtp) {
       throw new ConflictException(`${AuthMessages.OtpAlreadySentWithWaitTime}${this.formatSecondsToMinutes(otpTtl)}`);
     }
-  }
-
-  private createResponse(message: string, status: HttpStatus, data: any = {}): ServiceResponse {
-    return { message, status, error: false, data };
   }
 
   private formatSecondsToMinutes(seconds: number): string {
