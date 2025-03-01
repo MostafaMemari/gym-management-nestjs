@@ -19,5 +19,5 @@ export enum AuthMessages {
   MaxOtpRequests = 'Max OTP requests reached. Please try again after: ',
   AlreadySignupUser = 'User with this mobile or username already exists.',
   OtpAlreadySentWithWaitTime = 'An OTP has already been sent. Please try again after: ',
-  ProblemSendingSms = 'There was a problem sending sms. Please try again later'
+  ProblemSendingSms = 'There was a problem sending sms. Please try again later',
 }
