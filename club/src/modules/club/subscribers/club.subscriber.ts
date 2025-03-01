@@ -2,33 +2,34 @@ import { Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, EntitySubscriberInterface, InsertEvent, UpdateEvent, RemoveEvent } from 'typeorm';
 
+import { ClubEntity } from '../entities/club.entity';
 import { CacheService } from '../../../modules/cache/cache.service';
-import { CachePatterns } from 'src/common/enums/cache.enum';
-import { CoachEntity } from '../entities/coach.entity';
+
+import { CachePatterns } from '../../../common/enums/cache.enum';
 
 @Injectable()
-export class CoachSubscriber implements EntitySubscriberInterface<CoachEntity> {
+export class ClubSubscriber implements EntitySubscriberInterface<ClubEntity> {
   constructor(@InjectDataSource() private readonly dataSource: DataSource, private readonly cacheService: CacheService) {
     this.dataSource.subscribers.push(this);
   }
 
   listenTo() {
-    return CoachEntity;
+    return ClubEntity;
   }
 
-  async afterInsert(event: InsertEvent<CoachEntity>) {
+  async afterInsert(event: InsertEvent<ClubEntity>) {
     await this.clearCache();
   }
 
-  async afterUpdate(event: UpdateEvent<CoachEntity>) {
+  async afterUpdate(event: UpdateEvent<ClubEntity>) {
     await this.clearCache();
   }
 
-  async afterRemove(event: RemoveEvent<CoachEntity>) {
+  async afterRemove(event: RemoveEvent<ClubEntity>) {
     await this.clearCache();
   }
 
   private async clearCache() {
-    await this.cacheService.delByPattern(CachePatterns.STUDENT_LIST);
+    await this.cacheService.delByPattern(CachePatterns.CLUB_LIST);
   }
 }

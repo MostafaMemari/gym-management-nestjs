@@ -13,6 +13,8 @@ import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
+import { Roles } from '../../../common/decorators/role.decorator';
+import { Role } from '../../../common/enums/role.enum';
 
 @Controller('clubs')
 @ApiTags('clubs')
@@ -29,6 +31,7 @@ export class ClubController {
   }
 
   @Post()
+  @Roles(Role.ADMIN_CLUB)
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
   async create(@GetUser() user: User, @Body() createClubDto: CreateClubDto) {
     try {
@@ -50,6 +53,7 @@ export class ClubController {
   }
 
   @Put(':id')
+  @Roles(Role.ADMIN_CLUB)
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
   async update(@GetUser() user: User, @Param('id', ParseIntPipe) id: number, @Body() updateClubDto: UpdateClubDto) {
     try {
@@ -65,6 +69,7 @@ export class ClubController {
   }
 
   @Get()
+  @Roles(Role.ADMIN_CLUB)
   async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto, @Query() queryClubDto: QueryClubDto): Promise<any> {
     try {
       await this.checkConnection();
@@ -77,6 +82,7 @@ export class ClubController {
   }
 
   @Get(':id')
+  @Roles(Role.ADMIN_CLUB)
   async findOne(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
       await this.checkConnection();
@@ -90,6 +96,7 @@ export class ClubController {
   }
 
   @Delete(':id')
+  @Roles(Role.ADMIN_CLUB)
   async remove(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
       await this.checkConnection();

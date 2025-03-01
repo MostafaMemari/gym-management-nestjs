@@ -9,6 +9,7 @@ import { ClubService } from './club.service';
 import { CacheModule } from '../cache/cache.module';
 import { CoachModule } from '../coach/coach.module';
 import { ClubRepository } from './repositories/club.repository';
+import { ClubSubscriber } from './subscribers/club.subscriber';
 
 @Module({
   imports: [
@@ -27,7 +28,7 @@ import { ClubRepository } from './repositories/club.repository';
     forwardRef(() => CoachModule),
   ],
   controllers: [ClubController],
-  providers: [ClubService, ClubRepository],
+  providers: [ClubService, ClubRepository, ClubSubscriber],
   exports: [ClubService],
 })
 export class ClubModule {}
