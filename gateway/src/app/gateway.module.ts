@@ -28,7 +28,7 @@ import { NotificationController } from './controllers/notification.controller';
           noAck: true,
           persistent: false,
           queueOptions: {
-            durable: process.env.NODE_ENV == 'production',
+            // durable: process.env.NODE_ENV == 'production',
           },
         },
       },
@@ -43,7 +43,7 @@ import { NotificationController } from './controllers/notification.controller';
           noAck: true,
           persistent: false,
           queueOptions: {
-            durable: process.env.NODE_ENV == 'production',
+            // durable: process.env.NODE_ENV == 'production',
           },
         },
       },
@@ -58,7 +58,7 @@ import { NotificationController } from './controllers/notification.controller';
           noAck: true,
           persistent: false,
           queueOptions: {
-            durable: process.env.NODE_ENV == 'production',
+            // durable: process.env.NODE_ENV == 'production',
           },
         },
       },
@@ -73,7 +73,7 @@ import { NotificationController } from './controllers/notification.controller';
           noAck: true,
           persistent: false,
           queueOptions: {
-            durable: process.env.NODE_ENV == 'production',
+            // durable: process.env.NODE_ENV == 'production',
           },
         },
       },
