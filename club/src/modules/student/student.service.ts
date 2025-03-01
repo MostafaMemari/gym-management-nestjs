@@ -1,12 +1,4 @@
-import {
-  BadRequestException,
-  forwardRef,
-  HttpStatus,
-  Inject,
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 
@@ -15,29 +7,27 @@ import { StudentMessages } from './enums/student.message';
 import { ICreateStudent, ISeachStudentQuery, IUpdateStudent } from './interfaces/student.interface';
 import { StudentRepository } from './repositories/student.repository';
 
-import { AwsService } from '../s3AWS/s3AWS.service';
 import { CacheService } from '../cache/cache.service';
+import { ClubService } from '../club/club.service';
+import { ClubEntity } from '../club/entities/club.entity';
+import { CoachService } from '../coach/coach.service';
+import { CoachEntity } from '../coach/entities/coach.entity';
+import { AwsService } from '../s3AWS/s3AWS.service';
 
-import { CacheKeys } from '../../common/enums/cache.enum';
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
-import { EntityName } from '../../common/enums/entity.enum';
+import { CacheKeys } from '../../common/enums/cache.enum';
+import { Gender } from '../../common/enums/gender.enum';
 import { UserPatterns } from '../../common/enums/patterns.events';
 import { Services } from '../../common/enums/services.enum';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { IUser } from '../../common/interfaces/user.interface';
-import { ResponseUtil } from '../../common/utils/response';
-import { ClubEntity } from '../club/entities/club.entity';
-import { CoachService } from '../coach/coach.service';
-import { ClubService } from '../club/club.service';
 import { isGenderAllowed, isSameGender } from '../../common/utils/functions';
-import { CoachEntity } from '../coach/entities/coach.entity';
-import { Gender } from '../../common/enums/gender.enum';
+import { ResponseUtil } from '../../common/utils/response';
 
 @Injectable()
 export class StudentService {
   private readonly timeout: number = 4500;
-
   constructor(
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
     private readonly studentRepository: StudentRepository,
