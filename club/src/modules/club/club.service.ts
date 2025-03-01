@@ -81,7 +81,7 @@ export class ClubService {
     const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
     const result = new PageDto(clubs, pageMetaDto);
 
-    await this.cacheService.set(cacheKey, result, 60);
+    await this.cacheService.set(cacheKey, result, 600);
 
     return result;
   }

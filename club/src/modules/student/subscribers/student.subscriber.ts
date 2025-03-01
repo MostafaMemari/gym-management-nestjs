@@ -1,12 +1,17 @@
-import { EventSubscriber, EntitySubscriberInterface, InsertEvent, UpdateEvent, RemoveEvent } from 'typeorm';
+import { Injectable } from '@nestjs/common';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource, EntitySubscriberInterface, InsertEvent, UpdateEvent, RemoveEvent } from 'typeorm';
 
 import { StudentEntity } from '../entities/student.entity';
-import { CacheService } from '../../cache/cache.service';
+
+import { CacheService } from '../../../modules/cache/cache.service';
 import { CachePatterns } from '../../../common/enums/cache.enum';
 
-@EventSubscriber()
+@Injectable()
 export class StudentSubscriber implements EntitySubscriberInterface<StudentEntity> {
-  constructor(private readonly cacheService: CacheService) {}
+  constructor(@InjectDataSource() private readonly dataSource: DataSource, private readonly cacheService: CacheService) {
+    this.dataSource.subscribers.push(this);
+  }
 
   listenTo() {
     return StudentEntity;
