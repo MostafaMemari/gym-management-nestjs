@@ -45,7 +45,22 @@ services:
       - ./user/src:/app/src
       - ./user/logs:/app/logs
 
-  ### club Service ###
+  ### Notification Service ###
+  notification_service:
+    container_name: notification_service
+    build:
+      context: ./notification
+      dockerfile: Dockerfile
+    networks:
+      - app
+    depends_on:
+      - rabbitmq
+    env_file:
+      - notification/.env
+    volumes:
+      - ./notification/src:/app/src
+
+  ### Club Service ###
   club_service:
     container_name: club_service
     build:
