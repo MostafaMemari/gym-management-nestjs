@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Inject,
   Injectable,
+  InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { GenerateTokens, IForgetPassword, IResetPassword, ISignin, ISignup, IVerifyOtp } from '../../common/interfaces/auth.interface';
@@ -37,7 +38,7 @@ export class AuthService {
     @Inject(forwardRef(() => JwtService)) private readonly jwtService: JwtService,
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
     @InjectRedis() private readonly redis: Redis,
-  ) {}
+  ) { }
 
   generateOtp() {
     return Math.floor(100_000 + Math.random() * 900_000).toString();
@@ -255,14 +256,14 @@ export class AuthService {
     }
   }
 
-  async sendSms(mobile: string, verifyCode: string): Promise<{ message: string; status: number }> {
+  async sendSms(mobile: string, verifyCode: string): Promise<void | never> {
     const { SMS_API_KEY, SMS_LINE_NUMBER, SMS_TEMPLATE_ID, SMS_NAME } = process.env;
     const sms = new Smsir(SMS_API_KEY, Number(SMS_LINE_NUMBER));
 
     const result = await sms.SendVerifyCode(mobile, Number(SMS_TEMPLATE_ID), [{ name: SMS_NAME, value: verifyCode }]);
 
-    if (result.data?.status == 1) return { message: 'success', status: 200 };
-    else return { message: 'failed', status: 500 };
+    if (result.data?.status !== 1)
+      throw new InternalServerErrorException(AuthMessages.ProblemSendingSms)
   }
 
   private async clearOtpData(mobile: string): Promise<void | never> {
