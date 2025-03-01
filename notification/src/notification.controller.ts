@@ -5,7 +5,7 @@ import { NotificationPatterns } from './enums/notification.events';
 
 @Controller()
 export class NotificationController {
-  constructor(private readonly notificationService: NotificationService) { }
+  constructor(private readonly notificationService: NotificationService) {}
 
   @MessagePattern(NotificationPatterns.getHello)
   getHello(): string {
@@ -14,6 +14,6 @@ export class NotificationController {
 
   @MessagePattern(NotificationPatterns.checkConnection)
   checkConnection() {
-    return true
+    return true;
   }
 }
