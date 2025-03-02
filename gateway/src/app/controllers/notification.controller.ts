@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Post } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, Post, Put } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { Services } from '../../common/enums/services.enum';
@@ -61,11 +61,28 @@ export class NotificationController {
     try {
       await checkConnection(Services.NOTIFICATION, this.notificationServiceClient)
 
-      const data = await lastValueFrom(this.notificationServiceClient.send(NotificationPatterns.GetSentNotifications, { senderId: user.id }).pipe(timeout(this.timeout)))
+      const data: ServiceResponse = await lastValueFrom(this.notificationServiceClient.send(NotificationPatterns.GetSentNotifications, { senderId: user.id }).pipe(timeout(this.timeout)))
 
       return handleServiceResponse(data)
     } catch (error) {
       handleError(error, "Failed to get sent notifications", Services.NOTIFICATION)
     }
   }
+
+  @Put('read/:id')
+  async markAsRead(@Param("id") id: string, @GetUser() user: User) {
+    try {
+      await checkConnection(Services.NOTIFICATION, this.notificationServiceClient)
+
+      const notificationData = { notificationId: id, userId: user.id }
+
+      const data: ServiceResponse = await lastValueFrom(this.notificationServiceClient.send(NotificationPatterns.MarkAsRead, notificationData).pipe(timeout(this.timeout)))
+
+      return handleServiceResponse(data)
+    } catch (error) {
+      handleError(error, "Failed to mark as read notification", Services.NOTIFICATION)
+    }
+  }
+
+
 }

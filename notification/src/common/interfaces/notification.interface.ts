@@ -6,3 +6,8 @@ export interface ICreateNotification {
   type?: NotificationType;
   senderId?: number;
 }
+
+export interface IMarkAsRead {
+  userId: number
+  notificationId: string
+}

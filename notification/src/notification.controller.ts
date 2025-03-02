@@ -2,7 +2,7 @@ import { Controller } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { NotificationPatterns } from './common/enums/notification.events';
-import { ICreateNotification } from './common/interfaces/notification.interface';
+import { ICreateNotification, IMarkAsRead } from './common/interfaces/notification.interface';
 
 @Controller()
 export class NotificationController {
@@ -21,6 +21,11 @@ export class NotificationController {
   @MessagePattern(NotificationPatterns.GetSentNotification)
   getSentNotifications(@Payload() data: { senderId: string }) {
     return this.notificationService.getSentNotifications(data)
+  }
+
+  @MessagePattern(NotificationPatterns.MarkAsRead)
+  markAsRead(@Payload() data: IMarkAsRead) {
+    return this.notificationService.markAsRead(data)
   }
 
   @MessagePattern(NotificationPatterns.CheckConnection)
