@@ -12,6 +12,8 @@ export class Notification extends Document<Notification> {
   message: string;
   @Prop({ type: String, enum: NotificationType, default: NotificationType.PUSH })
   type: NotificationType;
+  @Prop({ type: Boolean, default: false, select: false })
+  isRead: boolean
   @Prop({ type: [Number], default: [] })
   readBy: number[];
 }
