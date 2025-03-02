@@ -4,6 +4,7 @@ import { StudentEntity } from '../entities/student.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { ISeachStudentQuery } from '../interfaces/student.interface';
 import { StudentMessages } from '../enums/student.message';
+import { Gender } from 'src/common/enums/gender.enum';
 
 @Injectable()
 export class StudentRepository extends Repository<StudentEntity> {
@@ -139,9 +140,14 @@ export class StudentRepository extends Repository<StudentEntity> {
     return count > 0;
   }
 
-  async existsStudentsByCoachId(coachId: number): Promise<boolean> {
+  async existsByCoachId(coachId: number): Promise<boolean> {
     const count = await this.count({ where: { coach: { id: coachId } } });
     return count > 0;
+  }
+
+  async existsByCoachIdAndCoachGender(coachId: number, gender: Gender): Promise<boolean> {
+    const studentExists = await this.findOne({ where: { coachId, gender } });
+    return !!studentExists;
   }
 }
 

@@ -8,13 +8,8 @@ export interface ICreateCoach {
   father_name?: string;
   national_code: string;
   phone_number?: string;
-  landline_number?: string;
-  address?: string;
-  birth_date: Date;
-  sports_insurance_date?: Date;
-  expire_image_date?: Date;
+  birth_date?: Date;
   userId?: number;
-  coachId?: number;
   clubIds?: number[];
 }
 

@@ -5,11 +5,11 @@ export abstract class AbstractEntity {
   @PrimaryGeneratedColumn()
   public id: number;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp' })
   @Exclude()
   public created_at: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamp' })
   @Exclude()
   public updated_at: Date;
 }

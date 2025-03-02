@@ -14,7 +14,7 @@ export class CreateCoachDto {
     minLength: 5,
     maxLength: 80,
     required: true,
-    example: 'مصطفی معماری',
+    example: '',
   })
   full_name: string;
 
@@ -53,7 +53,7 @@ export class CreateCoachDto {
   @Transform(({ value }) => value?.trim())
   @ApiProperty({
     type: String,
-    example: '4900782343',
+    example: '',
     minLength: 10,
     maxLength: 10,
   })
@@ -62,45 +62,14 @@ export class CreateCoachDto {
   @IsOptional()
   @IsPhoneNumber('IR')
   @Transform(({ value }) => value?.trim())
-  @ApiPropertyOptional({ type: String, example: '09388366510' })
+  @ApiProperty({ type: String, example: '' })
   phone_number: string;
-
-  @IsOptional()
-  @Length(9, 12)
-  @Transform(({ value }) => value?.trim())
-  @ApiPropertyOptional({ type: String, example: '' })
-  landline_number?: string;
-
-  @IsOptional()
-  @IsString()
-  @Length(10, 200)
-  @Transform(({ value }) => value?.trim())
-  @ApiPropertyOptional({
-    type: String,
-    maxLength: 100,
-    minLength: 10,
-    required: true,
-    example: '',
-  })
-  address?: string;
-
-  @IsNotEmpty()
-  @IsDateString()
-  @Transform(({ value }) => value?.trim())
-  @ApiProperty({ type: Date, example: '2025-01-25' })
-  birth_date: Date;
 
   @IsOptional()
   @IsDateString()
   @Transform(({ value }) => value?.trim())
   @ApiPropertyOptional({ type: Date, example: '' })
-  sports_insurance_date?: Date;
-
-  @IsOptional()
-  @IsDateString()
-  @Transform(({ value }) => value?.trim())
-  @ApiPropertyOptional({ type: String, example: '' })
-  expire_image_date?: Date;
+  birth_date: Date;
 
   @ToArray()
   @IsNotEmpty()
@@ -130,7 +99,7 @@ export class QueryCoachDto {
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ type: 'string', example: '09388366510' })
+  @ApiPropertyOptional({ type: 'string', example: '' })
   phone_number?: string;
 
   // @IsOptional()
