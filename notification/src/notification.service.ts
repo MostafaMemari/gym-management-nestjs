@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Notification } from './notification.schema';
 import { isValidObjectId, Model } from 'mongoose';
 import { RpcException } from '@nestjs/microservices';
-import { ICreateNotification, IMarkAsRead, IRemoveNotification } from './common/interfaces/notification.interface';
+import { ICreateNotification, IMarkAsRead, IRemoveNotification, IUpdateNotification } from './common/interfaces/notification.interface';
 import { ServiceResponse } from './common/interfaces/serviceResponse.interface';
 import { NotificationMessages } from './common/enums/notification.messages';
 import { ResponseUtil } from './common/utils/response.utils';
@@ -11,7 +11,7 @@ import { transformArrayIds, transformId } from './common/utils/transformId.utils
 
 @Injectable()
 export class NotificationService {
-  constructor(@InjectModel(Notification.name) private readonly notificationModel: Model<Notification>) {}
+  constructor(@InjectModel(Notification.name) private readonly notificationModel: Model<Notification>) { }
 
   async create(createNotificationDto: ICreateNotification): Promise<ServiceResponse> {
     try {
@@ -106,6 +106,36 @@ export class NotificationService {
       const transformedId = transformId(notification);
 
       return ResponseUtil.success({ notification: transformedId }, NotificationMessages.RemovedSuccess, HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
+  async update(notificationDto: IUpdateNotification) {
+    try {
+      const { message, recipients, notificationId, senderId } = notificationDto;
+
+      if (!isValidObjectId(notificationId)) throw new BadRequestException(NotificationMessages.InvalidObjectId);
+
+      const notification = await this.notificationModel
+        .findOneAndUpdate(
+          { _id: notificationId, senderId },
+          {
+            message,
+            recipients,
+            $pull: { readBy: { $nin: recipients } }
+          },
+          {
+            new: true,
+          },
+        )
+        .lean();
+
+      if (!notification) throw new NotFoundException(NotificationMessages.NotFoundNotification);
+
+      const transformedId = transformId(notification);
+
+      return ResponseUtil.success({ notification: transformedId }, NotificationMessages.UpdatedSuccess, HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }

@@ -4,5 +4,6 @@ export enum NotificationPatterns {
   GetSentNotification = 'get_sent_notifications',
   MarkAsRead = 'mark_as_read',
   RemoveNotification = 'remove_notification',
+  UpdateNotification = 'update_notification',
   CheckConnection = 'check_connection',
 }

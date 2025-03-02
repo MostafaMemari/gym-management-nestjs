@@ -10,7 +10,7 @@ import { AuthDecorator } from '../../common/decorators/auth.decorator';
 import { Roles } from '../../common/decorators/role.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { SwaggerConsumes } from '../../common/enums/swagger-consumes.enum';
-import { CreateNotificationDto } from '../../common/dtos/notification.dto';
+import { CreateNotificationDto, UpdateNotificationDto } from '../../common/dtos/notification.dto';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 import { User } from '../../common/interfaces/user.interface';
@@ -81,6 +81,22 @@ export class NotificationController {
       return handleServiceResponse(data)
     } catch (error) {
       handleError(error, "Failed to mark as read notification", Services.NOTIFICATION)
+    }
+  }
+
+  @Put(':id')
+  async update(@Param("id") id: string, @Body() updateNotificationDto: UpdateNotificationDto, @GetUser() user: User,) {
+    try {
+      await checkConnection(Services.NOTIFICATION, this.notificationServiceClient)
+
+      const notificationData = { notificationId: id, senderId: user.id, ...updateNotificationDto }
+      notificationData.recipients = notificationData.recipients.filter(item => typeof item == 'number')
+
+      const data: ServiceResponse = await lastValueFrom(this.notificationServiceClient.send(NotificationPatterns.UpdateNotification, notificationData).pipe(timeout(this.timeout)))
+
+      return handleServiceResponse(data)
+    } catch (error) {
+      handleError(error, "Failed to update notification", Services.NOTIFICATION)
     }
   }
 
