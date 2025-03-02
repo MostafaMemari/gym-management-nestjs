@@ -8,6 +8,6 @@ export interface ICreateNotification {
 }
 
 export interface IMarkAsRead {
-  userId: number
-  notificationId: string
+  userId: number;
+  notificationId: string;
 }

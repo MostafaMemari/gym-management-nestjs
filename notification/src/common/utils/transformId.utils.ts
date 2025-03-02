@@ -6,13 +6,12 @@ export const transformId = (data: any) => {
   };
 };
 
-
 export const transformArrayIds = (data: any[]) => {
-  return data.map(item => {
+  return data.map((item) => {
     return {
       ...item,
       _id: undefined,
-      id: data.find(i => i._id == item._id)._id
-    }
-  })
-}
+      id: data.find((i) => i._id == item._id)._id,
+    };
+  });
+};

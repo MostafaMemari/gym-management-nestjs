@@ -6,7 +6,7 @@ import { ICreateNotification, IMarkAsRead } from './common/interfaces/notificati
 
 @Controller()
 export class NotificationController {
-  constructor(private readonly notificationService: NotificationService) { }
+  constructor(private readonly notificationService: NotificationService) {}
 
   @MessagePattern(NotificationPatterns.CreateNotification)
   create(@Payload() data: ICreateNotification) {
@@ -15,17 +15,17 @@ export class NotificationController {
 
   @MessagePattern(NotificationPatterns.GetUserNotification)
   getUserNotifications(@Payload() data: { userId: string }) {
-    return this.notificationService.getUserNotifications(data)
+    return this.notificationService.getUserNotifications(data);
   }
 
   @MessagePattern(NotificationPatterns.GetSentNotification)
   getSentNotifications(@Payload() data: { senderId: string }) {
-    return this.notificationService.getSentNotifications(data)
+    return this.notificationService.getSentNotifications(data);
   }
 
   @MessagePattern(NotificationPatterns.MarkAsRead)
   markAsRead(@Payload() data: IMarkAsRead) {
-    return this.notificationService.markAsRead(data)
+    return this.notificationService.markAsRead(data);
   }
 
   @MessagePattern(NotificationPatterns.CheckConnection)

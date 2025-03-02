@@ -13,7 +13,7 @@ export class Notification extends Document<Notification> {
   @Prop({ type: String, enum: NotificationType, default: NotificationType.PUSH })
   type: NotificationType;
   @Prop({ type: Boolean, default: false, select: false })
-  isRead: boolean
+  isRead: boolean;
   @Prop({ type: [Number], default: [] })
   readBy: number[];
 }

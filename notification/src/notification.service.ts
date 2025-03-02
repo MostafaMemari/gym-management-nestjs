@@ -27,46 +27,67 @@ export class NotificationService {
 
   async getUserNotifications({ userId }: { userId: string }) {
     try {
-      const notifications = await this.notificationModel.find({ recipients: { $in: userId } }, { recipients: 0, readBy: 0 }).sort({ createdAt: -1 }).lean()
+      const notifications = await this.notificationModel.aggregate([
+        { $match: { $or: [{ recipients: userId }, { readBy: userId }] } },
+        { $sort: { createdAt: -1 } },
+        {
+          $project: {
+            _id: 1,
+            message: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            senderId: 1,
+            type: 1,
+            isRead: { $in: [userId, '$readBy'] }
+          }
+        }
+      ])
 
-      const transformedNotifications = transformArrayIds(notifications)
+      const transformedNotifications = transformArrayIds(notifications);
 
-      return ResponseUtil.success({ notifications: transformedNotifications }, "", HttpStatus.OK)
+      return ResponseUtil.success({ notifications: transformedNotifications }, '', HttpStatus.OK);
     } catch (error) {
-      throw new RpcException(error)
+      throw new RpcException(error);
     }
   }
 
   async getSentNotifications({ senderId }: { senderId: string }) {
     try {
-      const notifications = await this.notificationModel.find({ senderId }).sort({ createdAt: -1 }).lean()
+      const notifications = await this.notificationModel.find({ senderId }).sort({ createdAt: -1 }).lean();
 
-      const transformedNotifications = transformArrayIds(notifications)
+      const transformedNotifications = transformArrayIds(notifications);
 
-      return ResponseUtil.success({ notifications: transformedNotifications }, "", HttpStatus.OK)
+      return ResponseUtil.success({ notifications: transformedNotifications }, '', HttpStatus.OK);
     } catch (error) {
-      throw new RpcException(error)
+      throw new RpcException(error);
     }
   }
 
   async markAsRead(notificationDto: IMarkAsRead) {
     try {
-      const { notificationId, userId } = notificationDto
+      const { notificationId, userId } = notificationDto;
 
-      const notification = await this.notificationModel.findOneAndUpdate({ _id: notificationId, recipients: userId }, {
-        $addToSet: { readBy: userId },
-        $pull: { recipients: userId }
-      }, { new: true }).select('-readBy -recipients').lean()
+      const notification = await this.notificationModel
+        .findOneAndUpdate(
+          { _id: notificationId, recipients: userId },
+          {
+            $addToSet: { readBy: userId },
+            $pull: { recipients: userId },
+          },
+          { new: true },
+        )
+        .select('-readBy -recipients')
+        .lean();
 
       if (!notification) {
-        throw new NotFoundException(NotificationMessages.NotFoundNotification)
+        throw new NotFoundException(NotificationMessages.NotFoundNotification);
       }
 
-      const transformedNotification = transformId(notification)
+      const transformedNotification = transformId(notification);
 
-      return ResponseUtil.success({ notification: transformedNotification }, NotificationMessages.MarkAsReadSuccess, HttpStatus.OK)
+      return ResponseUtil.success({ notification: transformedNotification }, NotificationMessages.MarkAsReadSuccess, HttpStatus.OK);
     } catch (error) {
-      throw new RpcException(error)
+      throw new RpcException(error);
     }
   }
 }
