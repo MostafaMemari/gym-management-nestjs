@@ -11,7 +11,7 @@ export class Notification extends Document<Notification> {
   @Prop({ type: String, required: true, trim: true })
   message: string;
   @Prop({ type: String, enum: NotificationType, default: NotificationType.PUSH })
-  type: NotificationType
+  type: NotificationType;
   @Prop({ type: [Number], default: [] })
   readBy: number[];
 }

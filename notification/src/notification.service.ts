@@ -6,22 +6,20 @@ import { RpcException } from '@nestjs/microservices';
 import { ICreateNotification } from './common/interfaces/notification.interface';
 import { ServiceResponse } from './common/interfaces/serviceResponse.interface';
 import { NotificationMessages } from './common/enums/notification.messages';
+import { ResponseUtil } from './common/utils/response.utils';
+import { transformId } from './common/utils/transformId.utils';
 
 @Injectable()
 export class NotificationService {
-  constructor(@InjectModel(Notification.name) private readonly notificationModel: Model<Notification>) { }
+  constructor(@InjectModel(Notification.name) private readonly notificationModel: Model<Notification>) {}
 
   async create(createNotificationDto: ICreateNotification): Promise<ServiceResponse> {
     try {
+      const newNotification = (await this.notificationModel.create(createNotificationDto)).toObject();
 
-      const newNotification = (await this.notificationModel.create(createNotificationDto)).toObject()
+      const transformedNotification = transformId(newNotification, newNotification._id);
 
-      return {
-        data: { notification: { ...newNotification, _id: undefined, id: newNotification._id } },
-        error: false,
-        message: NotificationMessages.CreatedSuccess,
-        status: HttpStatus.OK
-      }
+      return ResponseUtil.success({ notification: transformedNotification }, NotificationMessages.CreatedSuccess, HttpStatus.CREATED);
     } catch (error) {
       throw new RpcException(error);
     }

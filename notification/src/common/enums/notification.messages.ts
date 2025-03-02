@@ -1,3 +1,3 @@
 export enum NotificationMessages {
-    CreatedSuccess = "Notification created successfully"
+  CreatedSuccess = 'Notification created successfully',
 }
