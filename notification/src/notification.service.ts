@@ -25,9 +25,21 @@ export class NotificationService {
     }
   }
 
-  async getUserNotification({ userId }: { userId: string }) {
+  async getUserNotifications({ userId }: { userId: string }) {
     try {
-      const notifications = await this.notificationModel.find({ recipients: { $in: userId } }, { recipients: 0, readBy: 0 }).lean()
+      const notifications = await this.notificationModel.find({ recipients: { $in: userId } }, { recipients: 0, readBy: 0 }).sort({ createdAt: -1 }).lean()
+
+      const transformedNotifications = transformArrayIds(notifications)
+
+      return ResponseUtil.success({ notifications: transformedNotifications }, "", HttpStatus.OK)
+    } catch (error) {
+      throw new RpcException(error)
+    }
+  }
+
+  async getSentNotifications({ senderId }: { senderId: string }) {
+    try {
+      const notifications = await this.notificationModel.find({ senderId }).sort({ createdAt: -1 }).lean()
 
       const transformedNotifications = transformArrayIds(notifications)
 

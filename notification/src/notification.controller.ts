@@ -15,10 +15,15 @@ export class NotificationController {
 
   @MessagePattern(NotificationPatterns.GetUserNotification)
   getUserNotifications(@Payload() data: { userId: string }) {
-    return this.notificationService.getUserNotification(data)
+    return this.notificationService.getUserNotifications(data)
   }
 
-  @MessagePattern(NotificationPatterns.checkConnection)
+  @MessagePattern(NotificationPatterns.GetSentNotification)
+  getSentNotifications(@Payload() data: { senderId: string }) {
+    return this.notificationService.getSentNotifications(data)
+  }
+
+  @MessagePattern(NotificationPatterns.CheckConnection)
   checkConnection() {
     return true;
   }

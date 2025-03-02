@@ -55,4 +55,17 @@ export class NotificationController {
       handleError(error, "Failed to get notifications", Services.NOTIFICATION)
     }
   }
+
+  @Get('sent')
+  async getSentNotifications(@GetUser() user: User) {
+    try {
+      await checkConnection(Services.NOTIFICATION, this.notificationServiceClient)
+
+      const data = await lastValueFrom(this.notificationServiceClient.send(NotificationPatterns.GetSentNotifications, { senderId: user.id }).pipe(timeout(this.timeout)))
+
+      return handleServiceResponse(data)
+    } catch (error) {
+      handleError(error, "Failed to get sent notifications", Services.NOTIFICATION)
+    }
+  }
 }
