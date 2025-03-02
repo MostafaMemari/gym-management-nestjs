@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { NotificationController } from './notification.controller';
 import { NotificationService } from './notification.service';
 import { ConfigModule } from '@nestjs/config';
-import envConfig from './configs/env.config';
+import envConfig from '../../configs/env.config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Notification, NotificationSchema } from './notification.schema';
 
@@ -15,4 +15,4 @@ import { Notification, NotificationSchema } from './notification.schema';
   controllers: [NotificationController],
   providers: [NotificationService],
 })
-export class NotificationModule {}
+export class NotificationModule { }

@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { NotificationModule } from './notification.module';
+import { NotificationModule } from './modules/notification/notification.module';
 import { Logger } from '@nestjs/common';
 import { RmqOptions, Transport } from '@nestjs/microservices';
 import { CustomRpcException } from './common/filters/rpeException.filter';

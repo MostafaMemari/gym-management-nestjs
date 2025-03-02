@@ -3,11 +3,11 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Notification } from './notification.schema';
 import { isValidObjectId, Model } from 'mongoose';
 import { RpcException } from '@nestjs/microservices';
-import { ICreateNotification, IMarkAsRead, IRemoveNotification, IUpdateNotification } from './common/interfaces/notification.interface';
-import { ServiceResponse } from './common/interfaces/serviceResponse.interface';
-import { NotificationMessages } from './common/enums/notification.messages';
-import { ResponseUtil } from './common/utils/response.utils';
-import { transformArrayIds, transformId } from './common/utils/transformId.utils';
+import { ICreateNotification, IMarkAsRead, IRemoveNotification, IUpdateNotification } from '../../common/interfaces/notification.interface';
+import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
+import { NotificationMessages } from '../../common/enums/notification.messages';
+import { ResponseUtil } from '../../common/utils/response.utils';
+import { transformArrayIds, transformId } from '../../common/utils/transformId.utils';
 
 @Injectable()
 export class NotificationService {
