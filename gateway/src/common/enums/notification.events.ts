@@ -1,3 +1,3 @@
 export enum NotificationPatterns {
-    getHello = "get_hello"
+  CreateNotification = 'create_notification',
 }
