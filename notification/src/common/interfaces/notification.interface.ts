@@ -11,3 +11,8 @@ export interface IMarkAsRead {
   userId: number;
   notificationId: string;
 }
+
+export interface IRemoveNotification {
+  senderId: number;
+  notificationId: string;
+}

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, Param, Post, Put } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { Services } from '../../common/enums/services.enum';
@@ -84,5 +84,19 @@ export class NotificationController {
     }
   }
 
+  @Delete(':id')
+  async remove(@Param("id") id: string, @GetUser() user: User) {
+    try {
+      await checkConnection(Services.NOTIFICATION, this.notificationServiceClient)
+
+      const notificationData = { notificationId: id, senderId: user.id }
+
+      const data: ServiceResponse = await lastValueFrom(this.notificationServiceClient.send(NotificationPatterns.RemoveNotification, notificationData).pipe(timeout(this.timeout)))
+
+      return handleServiceResponse(data)
+    } catch (error) {
+      handleError(error, "Failed to remove notification", Services.NOTIFICATION)
+    }
+  }
 
 }
