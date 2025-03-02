@@ -30,10 +30,11 @@ export class NotificationController {
     try {
       await checkConnection(Services.NOTIFICATION, this.notificationServiceClient);
 
-      const notificationDta = { ...notificationDto, senderId: user.id }
+      const notificationData = { ...notificationDto, senderId: user.id }
+      notificationData.recipients = notificationData.recipients.filter(item => typeof item == 'number')
 
       const data: ServiceResponse = await lastValueFrom(
-        this.notificationServiceClient.send(NotificationPatterns.CreateNotification, notificationDta).pipe(timeout(this.timeout)),
+        this.notificationServiceClient.send(NotificationPatterns.CreateNotification, notificationData).pipe(timeout(this.timeout)),
       );
 
       return handleServiceResponse(data);
