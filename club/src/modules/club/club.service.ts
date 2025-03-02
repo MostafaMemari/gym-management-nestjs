@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { lastValueFrom, timeout } from 'rxjs';
@@ -40,7 +40,6 @@ export class ClubService {
       throw new RpcException({ message: 'User service is not connected', status: HttpStatus.INTERNAL_SERVER_ERROR });
     }
   }
-
   async create(user: IUser, createClubDto: ICreateClub) {
     try {
       const club = await this.clubRepository.createAndSaveClub(createClubDto, user.id);
@@ -50,7 +49,6 @@ export class ClubService {
       return ResponseUtil.error(error?.message || ClubMessages.FailedToCreateClub, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-
   async update(user: IUser, clubId: number, updateClubDto: IUpdateClub) {
     try {
       const { genders } = updateClubDto;
@@ -67,7 +65,6 @@ export class ClubService {
       return ResponseUtil.error(error?.message || ClubMessages.FailedToUpdateClub, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-
   async getAll(user: IUser, query: { queryClubDto: ISearchClubQuery; paginationDto: IPagination }): Promise<PageDto<ClubEntity>> {
     const { take, page } = query.paginationDto;
 
@@ -111,27 +108,11 @@ export class ClubService {
     }
   }
 
-  async clearClubsCache(): Promise<void> {
-    await this.cacheService.delByPattern(CachePatterns.CLUB_LIST);
-  }
-
-  async findOwnedClubs(clubIds: number[], userId: number): Promise<ClubEntity[]> {
-    const ownedClubs = await this.clubRepository.findOwnedClubsByIds(clubIds, userId);
-
-    if (ownedClubs.length !== clubIds.length) {
-      const notOwnedClubIds = clubIds.filter((id) => !ownedClubs.some((club) => club.id === id));
-      throw new BadRequestException(`${ClubMessages.UnauthorizedClubs} ${notOwnedClubIds.join(', ')}`);
-    }
-
-    return ownedClubs;
-  }
-
   async checkClubOwnership(clubId: number, userId: number): Promise<ClubEntity> {
     const club = await this.clubRepository.findByIdAndOwner(clubId, userId);
     if (!club) throw new BadRequestException(ClubMessages.ClubNotBelongToUser);
     return club;
   }
-
   async checkGenderRemoval(genders: Gender[], clubId: number, currentGenders: Gender[]): Promise<void> {
     const removedGenders = currentGenders.filter((gender) => !genders.includes(gender));
 
@@ -144,5 +125,18 @@ export class ClubService {
       const femaleCoachExists = await this.coachService.isGenderAssignedToCoaches(clubId, Gender.Female);
       if (femaleCoachExists) throw new BadRequestException(ClubMessages.CannotRemoveFemaleCoach);
     }
+  }
+  async clearClubsCache(): Promise<void> {
+    await this.cacheService.delByPattern(CachePatterns.CLUB_LIST);
+  }
+  async findOwnedClubs(clubIds: number[], userId: number): Promise<ClubEntity[]> {
+    const ownedClubs = await this.clubRepository.findOwnedClubsByIds(clubIds, userId);
+
+    if (ownedClubs.length !== clubIds.length) {
+      const notOwnedClubIds = clubIds.filter((id) => !ownedClubs.some((club) => club.id === id));
+      throw new BadRequestException(`${ClubMessages.UnauthorizedClubs} ${notOwnedClubIds.join(', ')}`);
+    }
+
+    return ownedClubs;
   }
 }

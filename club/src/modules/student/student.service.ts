@@ -182,26 +182,13 @@ export class StudentService {
     await this.awsService.deleteFile(imageKey);
   }
 
-  async validateOwnership(studentId: number, userId: number): Promise<StudentEntity> {
+  private async validateOwnership(studentId: number, userId: number): Promise<StudentEntity> {
     return this.studentRepository.findStudentByOwner(studentId, userId);
   }
-  async ensureUniqueNationalCode(nationalCode: string, userId: number): Promise<StudentEntity> {
+  private async ensureUniqueNationalCode(nationalCode: string, userId: number): Promise<StudentEntity> {
     const student = await this.studentRepository.findStudentByNationalCode(nationalCode, userId);
     if (student) throw new BadRequestException(StudentMessages.DuplicateNationalCode);
     return student;
-  }
-
-  async hasStudentsInClub(removedClubs: ClubEntity[], coachId: number): Promise<void> {
-    const clubsWithStudents: string[] = [];
-
-    for (const club of removedClubs) {
-      const hasStudents = await this.studentRepository.existsStudentsInClub(club.id, coachId);
-      if (hasStudents) clubsWithStudents.push(`${club.id}`);
-    }
-
-    if (clubsWithStudents.length > 0) {
-      throw new BadRequestException(`${StudentMessages.CannotRemoveClubsInArray} ${clubsWithStudents.join(', ')}`);
-    }
   }
 
   private async ensureClubAndCoach(userId: number, clubId?: number, coachId?: number) {
@@ -229,10 +216,6 @@ export class StudentService {
     if (imageKey) await this.removeStudentImage(imageKey);
   }
 
-  async isCheckExistsByCoachAndGender(coachId: number, gender: Gender): Promise<boolean> {
-    return await this.studentRepository.existsByCoachIdAndCoachGender(coachId, gender);
-  }
-
   private ensureClubInCoachClubs(clubId: number, coach: CoachEntity): void {
     console.log(clubId);
     const exists = coach.clubs.some((club) => club.id === clubId);
@@ -243,5 +226,20 @@ export class StudentService {
 
   async validateCoachHasNoStudents(coachId: number): Promise<boolean> {
     return await this.studentRepository.existsByCoachId(coachId);
+  }
+  async hasStudentsInClub(removedClubs: ClubEntity[], coachId: number): Promise<void> {
+    const clubsWithStudents: string[] = [];
+
+    for (const club of removedClubs) {
+      const hasStudents = await this.studentRepository.existsStudentsInClub(club.id, coachId);
+      if (hasStudents) clubsWithStudents.push(`${club.id}`);
+    }
+
+    if (clubsWithStudents.length > 0) {
+      throw new BadRequestException(`${StudentMessages.CannotRemoveClubsInArray} ${clubsWithStudents.join(', ')}`);
+    }
+  }
+  async isCheckExistsByCoachAndGender(coachId: number, gender: Gender): Promise<boolean> {
+    return await this.studentRepository.existsByCoachIdAndCoachGender(coachId, gender);
   }
 }

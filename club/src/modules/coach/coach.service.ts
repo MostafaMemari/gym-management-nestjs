@@ -187,18 +187,11 @@ export class CoachService {
     await this.awsService.deleteFile(imageKey);
   }
 
-  async validateOwnership(coachId: number, userId: number): Promise<CoachEntity> {
-    const coach = await this.coachRepository.findCoachByIdAndOwner(coachId, userId);
-    if (!coach) throw new BadRequestException(CoachMessages.CoachNotFound);
-    return coach;
-  }
-
-  async ensureUniqueNationalCode(nationalCode: string, userId: number): Promise<CoachEntity> {
+  private async ensureUniqueNationalCode(nationalCode: string, userId: number): Promise<CoachEntity> {
     const coach = await this.coachRepository.findCoachByNationalCode(nationalCode, userId);
     if (coach) throw new BadRequestException(CoachMessages.DuplicateNationalCode);
     return coach;
   }
-
   async ensureCoachHasNoRelations(coachId: number): Promise<void> {
     const coachWithRelations = await this.coachRepository.findCoachWithRelations(coachId);
 
@@ -206,8 +199,7 @@ export class CoachService {
       throw new BadRequestException(CoachMessages.CoachHasRelations);
     }
   }
-
-  async validateCoachGender(coachGender: Gender, clubs: ICreateClub[], coachId?: number | null): Promise<void> {
+  private async validateCoachGender(coachGender: Gender, clubs: ICreateClub[], coachId?: number | null): Promise<void> {
     const invalidClubs = clubs.filter((club) => !isGenderAllowed(coachGender, club.genders)).map((club) => club.id);
     if (invalidClubs.length > 0) throw new BadRequestException(`${CoachMessages.CoachGenderMismatch} ${invalidClubs.join(', ')}`);
 
@@ -219,7 +211,6 @@ export class CoachService {
       if (isCheckExistStudent) throw new BadRequestException(CoachMessages.InvalidGenderCoach);
     }
   }
-
   private prepareUpdateData(updateDto: IUpdateCoach, coach: CoachEntity): Partial<CoachEntity> {
     return Object.keys(updateDto).reduce((acc, key) => {
       if (key !== 'image' && key !== 'clubIds' && updateDto[key] !== undefined && updateDto[key] !== coach[key]) {
@@ -228,7 +219,6 @@ export class CoachService {
       return acc;
     }, {} as Partial<CoachEntity>);
   }
-
   private async removeCoachUserAndImage(coachUserId: number, imageKey: string | null) {
     if (coachUserId) await this.removeUserById(coachUserId);
     if (imageKey) await this.removeCoachImage(imageKey);
@@ -237,8 +227,12 @@ export class CoachService {
   async isGenderAssignedToCoaches(clubId: number, gender: Gender): Promise<boolean> {
     return await this.coachRepository.existsCoachByGenderInClub(clubId, gender);
   }
-
   async isClubAssignedToCoaches(clubId: number): Promise<boolean> {
     return await this.coachRepository.existsCoachByClubId(clubId);
+  }
+  async validateOwnership(coachId: number, userId: number): Promise<CoachEntity> {
+    const coach = await this.coachRepository.findCoachByIdAndOwner(coachId, userId);
+    if (!coach) throw new BadRequestException(CoachMessages.CoachNotFound);
+    return coach;
   }
 }
