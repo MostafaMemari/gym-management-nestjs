@@ -1,12 +1,18 @@
-export const transformId = (data: object, _id: any) => {
+export const transformId = (data: any) => {
   return {
     ...data,
     _id: undefined,
-    id: _id,
+    id: data._id,
   };
 };
 
 
-export const transformArrayIds = (data: object[], _id: any[]) => {
-  return data.map(item => ({ ...item, _id: undefined, id: _id }))
+export const transformArrayIds = (data: any[]) => {
+  return data.map(item => {
+    return {
+      ...item,
+      _id: undefined,
+      id: data.find(i => i._id == item._id)._id
+    }
+  })
 }

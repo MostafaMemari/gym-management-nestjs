@@ -6,11 +6,16 @@ import { ICreateNotification } from './common/interfaces/notification.interface'
 
 @Controller()
 export class NotificationController {
-  constructor(private readonly notificationService: NotificationService) {}
+  constructor(private readonly notificationService: NotificationService) { }
 
   @MessagePattern(NotificationPatterns.CreateNotification)
   create(@Payload() data: ICreateNotification) {
     return this.notificationService.create(data);
+  }
+
+  @MessagePattern(NotificationPatterns.GetUserNotification)
+  getUserNotifications(@Payload() data: { userId: string }) {
+    return this.notificationService.getUserNotification(data)
   }
 
   @MessagePattern(NotificationPatterns.checkConnection)
