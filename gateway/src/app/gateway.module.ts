@@ -11,6 +11,7 @@ import { AuthGuard } from '../common/guards/auth.guard';
 import { CoachController } from './controllers/club/coach.controller';
 import { ClubController } from './controllers/club/club.controller';
 import { RbacController } from './controllers/auth/rbac.controller';
+import { NotificationController } from './controllers/notification.controller';
 
 @Module({
   imports: [
@@ -26,6 +27,9 @@ import { RbacController } from './controllers/auth/rbac.controller';
           isGlobalPrefetchCount: true,
           noAck: true,
           persistent: false,
+          queueOptions: {
+            // durable: process.env.NODE_ENV == 'production',
+          },
         },
       },
       {
@@ -38,18 +42,24 @@ import { RbacController } from './controllers/auth/rbac.controller';
           isGlobalPrefetchCount: true,
           noAck: true,
           persistent: false,
+          queueOptions: {
+            // durable: process.env.NODE_ENV == 'production',
+          },
         },
       },
       {
-        name: Services.PERMISSION,
+        name: Services.NOTIFICATION,
         transport: Transport.RMQ,
         options: {
           urls: [process.env.RABBITMQ_URL],
-          queue: process.env.RABBITMQ_PERMISSION_SERVICE_QUEUE,
+          queue: process.env.RABBITMQ_NOTIFICATION_SERVICE_QUEUE,
           prefetchCount: 2,
           isGlobalPrefetchCount: true,
           noAck: true,
           persistent: false,
+          queueOptions: {
+            // durable: process.env.NODE_ENV == 'production',
+          },
         },
       },
       {
@@ -62,11 +72,14 @@ import { RbacController } from './controllers/auth/rbac.controller';
           isGlobalPrefetchCount: true,
           noAck: true,
           persistent: false,
+          queueOptions: {
+            // durable: process.env.NODE_ENV == 'production',
+          },
         },
       },
     ]),
   ],
-  controllers: [AuthController, RbacController, UserController, StudentController, CoachController, ClubController],
+  controllers: [AuthController, RbacController, UserController, NotificationController, StudentController, CoachController, ClubController],
   providers: [
     {
       provide: APP_PIPE,

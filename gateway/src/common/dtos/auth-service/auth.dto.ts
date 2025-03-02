@@ -74,7 +74,7 @@ export class SignoutDto {
   refreshToken: string;
 }
 
-export class RefreshTokenDto extends SignoutDto { }
+export class RefreshTokenDto extends SignoutDto {}
 
 export class ForgetPasswordDto {
   @IsNotEmpty()
@@ -125,7 +125,7 @@ export class VerifyOtpDto {
     type: 'string',
     nullable: false,
   })
-  otp: string
+  otp: string;
 
   @IsString()
   @IsNotEmpty()
@@ -134,5 +134,5 @@ export class VerifyOtpDto {
     type: 'string',
     nullable: false,
   })
-  mobile: string
+  mobile: string;
 }

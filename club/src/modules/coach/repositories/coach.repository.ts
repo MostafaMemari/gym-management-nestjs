@@ -114,7 +114,7 @@ export class CoachRepository extends Repository<CoachEntity> {
       .getOne();
   }
 
-  async findCoachByIdAndOwner(coachId: number, userId: number): Promise<CoachEntity | null> {
+  async findByIdAndOwner(coachId: number, userId: number): Promise<CoachEntity | null> {
     return await this.createQueryBuilder(EntityName.Coaches)
       .where('coaches.id = :coachId', { coachId })
       .leftJoinAndSelect('coaches.clubs', 'club')

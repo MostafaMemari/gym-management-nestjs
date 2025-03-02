@@ -2,11 +2,11 @@ import { Controller } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { AuthPatterns } from '../../common/enums/auth.events';
-import { IForgetPassword, IResetPassword, ISignin, ISignup } from '../../common/interfaces/auth.interface';
+import { IForgetPassword, IResetPassword, ISignin, ISignup, IVerifyOtp } from '../../common/interfaces/auth.interface';
 
 @Controller()
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
 
   @MessagePattern(AuthPatterns.CheckConnection)
   checkConnection() {
@@ -30,26 +30,26 @@ export class AuthController {
 
   @MessagePattern(AuthPatterns.VerifyAccessToken)
   verifyAccessToken(@Payload() data: { accessToken: string }) {
-    return this.authService.verifyAccessToken(data)
+    return this.authService.verifyAccessToken(data);
   }
 
   @MessagePattern(AuthPatterns.RefreshToken)
   refreshToken(@Payload() data: { refreshToken: string }) {
-    return this.authService.refreshToken(data)
+    return this.authService.refreshToken(data);
   }
 
   @MessagePattern(AuthPatterns.ForgetPassword)
   forgetPassword(@Payload() data: IForgetPassword) {
-    return this.authService.forgetPassword(data)
+    return this.authService.forgetPassword(data);
   }
 
   @MessagePattern(AuthPatterns.ResetPassword)
   resetPassword(@Payload() data: IResetPassword) {
-    return this.authService.resetPassword(data)
+    return this.authService.resetPassword(data);
   }
 
   @MessagePattern(AuthPatterns.VerifyOtp)
-  verifyOtp(@Payload() data: any) {
-    return this.authService.verifyOtp(data)
+  verifyOtp(@Payload() data: IVerifyOtp) {
+    return this.authService.verifyOtp(data);
   }
 }

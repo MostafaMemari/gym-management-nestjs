@@ -62,7 +62,7 @@ export class StudentService {
 
       imageKey = image ? await this.uploadStudentImage(image) : null;
 
-      studentUserId = await this.createUserCoach();
+      studentUserId = await this.createUserStudent();
 
       const student = await this.studentRepository.createStudentWithTransaction({
         ...createStudentDto,
@@ -72,7 +72,7 @@ export class StudentService {
 
       return ResponseUtil.success({ ...student, userId: studentUserId }, StudentMessages.CreatedStudent);
     } catch (error) {
-      await this.removeStudentUserAndImage(studentUserId, imageKey);
+      await this.removeStudentData(studentUserId, imageKey);
       return ResponseUtil.error(error?.message || StudentMessages.FailedToCreateStudent, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -85,7 +85,7 @@ export class StudentService {
 
     try {
       let student = national_code ? await this.ensureUniqueNationalCode(national_code, userId) : null;
-      if (!student) student = await this.validateOwnership(studentId, userId);
+      if (!student) student = await this.checkStudentOwnership(studentId, userId);
 
       if (clubId || coachId || gender) {
         const { club, coach } = await this.ensureClubAndCoach(userId, clubId ?? student.clubId, coachId ?? student.coachId);
@@ -132,7 +132,7 @@ export class StudentService {
 
   async findOneById(user: IUser, studentId: number): Promise<ServiceResponse> {
     try {
-      const student = await this.validateOwnership(studentId, user.id);
+      const student = await this.checkStudentOwnership(studentId, user.id);
 
       return ResponseUtil.success(student, StudentMessages.GetStudentSuccess);
     } catch (error) {
@@ -141,11 +141,11 @@ export class StudentService {
   }
   async removeById(user: IUser, studentId: number): Promise<ServiceResponse> {
     try {
-      const student = await this.validateOwnership(studentId, user.id);
+      const student = await this.checkStudentOwnership(studentId, user.id);
 
       const isRemoved = await this.studentRepository.removeStudentById(studentId);
 
-      if (isRemoved) this.removeStudentUserAndImage(Number(student.userId), student.image_url);
+      if (isRemoved) this.removeStudentData(Number(student.userId), student.image_url);
 
       return ResponseUtil.success(student, StudentMessages.RemovedStudentSuccess);
     } catch (error) {
@@ -153,37 +153,39 @@ export class StudentService {
     }
   }
 
-  private async createUserCoach(): Promise<number | null> {
-    const data = { username: `STU_${Date.now()}_${Math.floor(Math.random() * 1000)}` };
+  private async checkStudentOwnership(studentId: number, userId: number): Promise<StudentEntity> {
+    const student = await this.studentRepository.findByIdAndOwner(studentId, userId);
+    if (!student) throw new BadRequestException(StudentMessages.StudentNotFound);
+    return student;
+  }
+
+  private async createUserStudent(): Promise<number | null> {
+    const username = `STU_${Math.random().toString(36).slice(2, 8)}`;
 
     await this.checkUserServiceConnection();
-    const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CreateUserStudent, data).pipe(timeout(this.timeout)));
+    const result = await lastValueFrom(
+      this.userServiceClientProxy.send(UserPatterns.CreateUserStudent, username).pipe(timeout(this.timeout)),
+    );
 
     if (result?.error) throw result;
-    return result?.data?.user?.id;
+    return result?.data?.user?.id ?? null;
   }
-  private async removeUserById(userId: number) {
+  private async removeStudentUserById(userId: number): Promise<void> {
     if (!userId) return null;
 
     await this.checkUserServiceConnection();
     const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.RemoveUser, { userId }).pipe(timeout(this.timeout)));
     if (result?.error) throw result;
   }
-
-  private async uploadStudentImage(image: Express.Multer.File): Promise<string | null> {
-    if (!image) return null;
+  private async uploadStudentImage(image: Express.Multer.File): Promise<string | undefined> {
+    if (!image) return;
 
     const uploadedImage = await this.awsService.uploadSingleFile({ file: image, folderName: 'students' });
     return uploadedImage.key;
   }
-  private async removeStudentImage(imageKey: string): Promise<string | null> {
-    if (!imageKey) return null;
-
+  private async removeStudentImage(imageKey: string): Promise<void> {
+    if (!imageKey) return;
     await this.awsService.deleteFile(imageKey);
-  }
-
-  private async validateOwnership(studentId: number, userId: number): Promise<StudentEntity> {
-    return this.studentRepository.findStudentByOwner(studentId, userId);
   }
   private async ensureUniqueNationalCode(nationalCode: string, userId: number): Promise<StudentEntity> {
     const student = await this.studentRepository.findStudentByNationalCode(nationalCode, userId);
@@ -193,7 +195,7 @@ export class StudentService {
 
   private async ensureClubAndCoach(userId: number, clubId?: number, coachId?: number) {
     const club = clubId ? await this.clubService.checkClubOwnership(clubId, userId) : null;
-    const coach = coachId ? await this.coachService.validateOwnership(coachId, userId) : null;
+    const coach = coachId ? await this.coachService.checkCoachOwnership(coachId, userId) : null;
     return { club, coach };
   }
 
@@ -210,10 +212,11 @@ export class StudentService {
       return acc;
     }, {} as Partial<StudentEntity>);
   }
-
-  private async removeStudentUserAndImage(studentUserId: number | null, imageKey: string | null) {
-    if (studentUserId) await this.removeUserById(studentUserId);
-    if (imageKey) await this.removeStudentImage(imageKey);
+  private async removeStudentData(studentUserId: number, imageKey: string | null) {
+    await Promise.all([
+      studentUserId ? this.removeStudentUserById(studentUserId) : Promise.resolve(),
+      imageKey ? this.removeStudentImage(imageKey) : Promise.resolve(),
+    ]);
   }
 
   private ensureClubInCoachClubs(clubId: number, coach: CoachEntity): void {

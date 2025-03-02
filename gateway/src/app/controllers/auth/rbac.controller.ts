@@ -3,7 +3,6 @@ import { Services } from '../../../common/enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
 import { Roles } from '../../../common/decorators/role.decorator';
 import { Role } from '../../../common/enums/role.enum';
-import { AuthController } from './auth.controller';
 import { lastValueFrom, timeout } from 'rxjs';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
 import { RbacPatterns } from '../../../common/enums/auth.events';
@@ -15,14 +14,12 @@ import { User } from '../../../common/interfaces/user.interface';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
 import { RbacMessages } from '../../../common/enums/auth.messages';
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
+import { checkConnection } from '../../../common/utils/checkConnection.utils';
 
 @Controller('rbac')
 @AuthDecorator()
 export class RbacController {
-  constructor(
-    @Inject(Services.AUTH) private readonly authServiceClientProxy: ClientProxy,
-    private readonly authController: AuthController,
-  ) {}
+  constructor(@Inject(Services.AUTH) private readonly authServiceClientProxy: ClientProxy) {}
 
   private readonly timeout: number = 5000;
 
@@ -31,7 +28,7 @@ export class RbacController {
   @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
   async assignRole(@Body() assignRoleDto: AssignRoleDto, @GetUser() user: User): Promise<ServiceResponse> {
     try {
-      await this.authController.checkConnection();
+      await checkConnection(Services.AUTH, this.authServiceClientProxy);
 
       if (user.id == assignRoleDto.userId) throw new ConflictException(RbacMessages.CannotChangeRole);
 

@@ -9,15 +9,15 @@ async function bootstrap() {
     transport: Transport.RMQ,
     options: {
       urls: [process.env.RABBITMQ_URL],
-      queue: process.env.RABBITMQ_QUEUE_NAME
-    }
+      queue: process.env.RABBITMQ_QUEUE_NAME,
+    },
   } as RmqOptions);
 
-  app.useGlobalFilters(new CustomRpcException())
+  app.useGlobalFilters(new CustomRpcException());
 
-  const logger = new Logger("NestApplication")
+  const logger = new Logger('NestApplication');
 
-  await app.listen()
-  logger.log("Auth service is running....")
+  await app.listen();
+  logger.log('Auth service is running....');
 }
 bootstrap();

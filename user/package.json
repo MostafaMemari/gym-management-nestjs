@@ -6,6 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
+    "format": "prettier --write \"src/**/*.ts\"",
     "build": "nest build",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -35,6 +36,7 @@
     "@types/express": "^5.0.0",
     "@types/joi": "^17.2.3",
     "@types/node": "^20.17.19",
+    "prettier": "^3.5.2",
     "prisma": "^6.4.1",
     "source-map-support": "^0.5.21",
     "ts-loader": "^9.5.2",
