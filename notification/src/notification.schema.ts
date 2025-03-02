@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+import { NotificationType } from './common/enums/notification.type';
 
 @Schema({ versionKey: false, timestamps: true })
 export class Notification extends Document<Notification> {
@@ -9,8 +10,8 @@ export class Notification extends Document<Notification> {
   recipients: number[] | null;
   @Prop({ type: String, required: true, trim: true })
   message: string;
-  @Prop({ type: String, enum: ['EMAIL', 'SMS', 'PUSH'], default: 'PUSH' })
-  type: 'EMAIL' | 'SMS' | 'PUSH';
+  @Prop({ type: String, enum: NotificationType, default: NotificationType.PUSH })
+  type: NotificationType
   @Prop({ type: [Number], default: [] })
   readBy: number[];
 }
