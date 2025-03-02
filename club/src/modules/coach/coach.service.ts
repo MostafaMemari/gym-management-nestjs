@@ -58,7 +58,7 @@ export class CoachService {
       if (national_code) await this.ensureUniqueNationalCode(national_code, userId);
 
       const ownedClubs = await this.clubService.findOwnedClubs(clubIds, userId);
-      this.validateCoachGender(gender, ownedClubs);
+      await this.validateCoachGender(gender, ownedClubs);
 
       imageKey = image ? await this.uploadCoachImage(image) : null;
 
@@ -94,11 +94,11 @@ export class CoachService {
         const ownedClubs = clubIds?.length ? await this.clubService.findOwnedClubs(clubIds, userId) : coach.clubs;
         const removedClubs = coach.clubs.filter((club) => !clubIds.includes(club.id));
         if (removedClubs.length) await this.studentService.hasStudentsInClub(removedClubs, coachId);
-        this.validateCoachGender(coach.gender, ownedClubs);
+        await this.validateCoachGender(coach.gender, ownedClubs);
         updateData.clubs = ownedClubs;
       }
 
-      if (gender) this.validateCoachGender(gender, updateData.clubs ?? coach.clubs);
+      if (gender !== coach.gender) await this.validateCoachGender(gender, updateData.clubs ?? coach.clubs, coachId);
 
       if (image) updateData.image_url = await this.uploadCoachImage(image);
 
@@ -207,10 +207,17 @@ export class CoachService {
     }
   }
 
-  validateCoachGender(coachGender: Gender, clubs: ICreateClub[]): void {
+  async validateCoachGender(coachGender: Gender, clubs: ICreateClub[], coachId?: number | null): Promise<void> {
     const invalidClubs = clubs.filter((club) => !isGenderAllowed(coachGender, club.genders)).map((club) => club.id);
-
     if (invalidClubs.length > 0) throw new BadRequestException(`${CoachMessages.CoachGenderMismatch} ${invalidClubs.join(', ')}`);
+
+    if (coachId) {
+      const isCheckExistStudent = await this.studentService.isCheckExistsByCoachAndGender(
+        coachId,
+        coachGender === Gender.Male ? Gender.Female : Gender.Male,
+      );
+      if (isCheckExistStudent) throw new BadRequestException(CoachMessages.InvalidGenderCoach);
+    }
   }
 
   private prepareUpdateData(updateDto: IUpdateCoach, coach: CoachEntity): Partial<CoachEntity> {

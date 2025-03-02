@@ -89,7 +89,7 @@ export class StudentService {
 
       if (clubId || coachId || gender) {
         const { club, coach } = await this.ensureClubAndCoach(userId, clubId ?? student.clubId, coachId ?? student.coachId);
-        this.ensureClubInCoachClubs(clubId, coach);
+        this.ensureClubInCoachClubs(club.id, coach);
         this.validateGenderRestrictions(gender ?? student.gender, coach, club);
       }
 
@@ -229,7 +229,12 @@ export class StudentService {
     if (imageKey) await this.removeStudentImage(imageKey);
   }
 
+  async isCheckExistsByCoachAndGender(coachId: number, gender: Gender): Promise<boolean> {
+    return await this.studentRepository.existsByCoachIdAndCoachGender(coachId, gender);
+  }
+
   private ensureClubInCoachClubs(clubId: number, coach: CoachEntity): void {
+    console.log(clubId);
     const exists = coach.clubs.some((club) => club.id === clubId);
     if (!exists) {
       throw new BadRequestException(`Club with ID ${clubId} is not associated with Coach ID ${coach.id}`);
@@ -237,6 +242,6 @@ export class StudentService {
   }
 
   async validateCoachHasNoStudents(coachId: number): Promise<boolean> {
-    return await this.studentRepository.existsStudentsByCoachId(coachId);
+    return await this.studentRepository.existsByCoachId(coachId);
   }
 }
