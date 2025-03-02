@@ -8,7 +8,7 @@ export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 
   @MessagePattern(NotificationPatterns.getHello)
-  getHello(): string {
+  getHello() {
     return this.notificationService.getHello();
   }
 

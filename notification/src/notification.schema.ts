@@ -1,17 +1,18 @@
-import { Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
 @Schema({ versionKey: false, timestamps: true })
 export class Notification extends Document<Notification> {
-    senderId: { type: Number, default: null }
-
-    recipients: { type: [Number], default: null }
-
-    message: { type: String, required: true }
-
-    type: { type: String, enum: ['EMAIL', 'SMS', 'PUSH'], default: 'PUSH' }
-
-    readBy: { type: [Number], default: [] }
+  @Prop({ type: Number, required: false, default: null })
+  senderId: number | null;
+  @Prop({ type: [Number], required: false, default: null })
+  recipients: number[] | null;
+  @Prop({ type: String, required: true, trim: true })
+  message: string;
+  @Prop({ type: String, enum: ['EMAIL', 'SMS', 'PUSH'], default: 'PUSH' })
+  type: 'EMAIL' | 'SMS' | 'PUSH';
+  @Prop({ type: [Number], default: [] })
+  readBy: number[];
 }
 
 export const NotificationSchema = SchemaFactory.createForClass(Notification);
