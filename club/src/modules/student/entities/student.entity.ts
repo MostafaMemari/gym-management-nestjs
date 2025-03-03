@@ -11,7 +11,7 @@ import { ClubEntity } from '../../../modules/club/entities/club.entity';
 @Index(['full_name', 'national_code'])
 export class StudentEntity extends AbstractEntity {
   @Column({ type: 'integer', unique: true, nullable: false })
-  userId: Number;
+  userId: number;
 
   @Column({ type: 'varchar', length: 80 })
   full_name: string;

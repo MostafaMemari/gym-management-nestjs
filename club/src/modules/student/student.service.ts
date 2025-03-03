@@ -53,12 +53,12 @@ export class StudentService {
     let studentUserId: number | null = null;
 
     try {
-      if (national_code) await this.ensureUniqueNationalCode(national_code, userId);
+      if (national_code) await this.validateUniqueNationalCode(national_code, userId);
 
-      const { club, coach } = await this.ensureClubAndCoach(userId, clubId, coachId);
-      this.ensureClubInCoachClubs(clubId, coach);
+      const { club, coach } = await this.validateClubAndCoachOwnership(userId, clubId, coachId);
+      this.checkClubIdInCoachClubs(clubId, coach);
 
-      this.validateGenderRestrictions(gender, coach, club);
+      this.validateStudentGender(gender, coach, club);
 
       imageKey = image ? await this.uploadStudentImage(image) : null;
 
@@ -84,13 +84,13 @@ export class StudentService {
     let imageKey: string | null = null;
 
     try {
-      let student = national_code ? await this.ensureUniqueNationalCode(national_code, userId) : null;
+      let student = national_code ? await this.validateUniqueNationalCode(national_code, userId) : null;
       if (!student) student = await this.checkStudentOwnership(studentId, userId);
 
       if (clubId || coachId || gender) {
-        const { club, coach } = await this.ensureClubAndCoach(userId, clubId ?? student.clubId, coachId ?? student.coachId);
-        this.ensureClubInCoachClubs(club.id, coach);
-        this.validateGenderRestrictions(gender ?? student.gender, coach, club);
+        const { club, coach } = await this.validateClubAndCoachOwnership(userId, clubId ?? student.clubId, coachId ?? student.coachId);
+        this.checkClubIdInCoachClubs(club.id, coach);
+        this.validateStudentGender(gender ?? student.gender, coach, club);
       }
 
       const updateData = this.prepareUpdateData(updateStudentDto, student);
@@ -187,19 +187,19 @@ export class StudentService {
     if (!imageKey) return;
     await this.awsService.deleteFile(imageKey);
   }
-  private async ensureUniqueNationalCode(nationalCode: string, userId: number): Promise<StudentEntity> {
+  private async validateUniqueNationalCode(nationalCode: string, userId: number): Promise<StudentEntity> {
     const student = await this.studentRepository.findStudentByNationalCode(nationalCode, userId);
     if (student) throw new BadRequestException(StudentMessages.DuplicateNationalCode);
     return student;
   }
 
-  private async ensureClubAndCoach(userId: number, clubId?: number, coachId?: number) {
+  private async validateClubAndCoachOwnership(userId: number, clubId?: number, coachId?: number) {
     const club = clubId ? await this.clubService.checkClubOwnership(clubId, userId) : null;
     const coach = coachId ? await this.coachService.checkCoachOwnership(coachId, userId) : null;
     return { club, coach };
   }
 
-  private validateGenderRestrictions(gender: Gender, coach: CoachEntity | null, club: ClubEntity | null) {
+  private validateStudentGender(gender: Gender, coach: CoachEntity | null, club: ClubEntity | null) {
     if (coach && !isSameGender(gender, coach.gender)) throw new BadRequestException(StudentMessages.CoachGenderMismatch);
     if (club && !isGenderAllowed(gender, club.genders)) throw new BadRequestException(StudentMessages.ClubGenderMismatch);
   }
@@ -212,6 +212,7 @@ export class StudentService {
       return acc;
     }, {} as Partial<StudentEntity>);
   }
+
   private async removeStudentData(studentUserId: number, imageKey: string | null) {
     await Promise.all([
       studentUserId ? this.removeStudentUserById(studentUserId) : Promise.resolve(),
@@ -219,18 +220,15 @@ export class StudentService {
     ]);
   }
 
-  private ensureClubInCoachClubs(clubId: number, coach: CoachEntity): void {
-    console.log(clubId);
+  private checkClubIdInCoachClubs(clubId: number, coach: CoachEntity): void {
     const exists = coach.clubs.some((club) => club.id === clubId);
-    if (!exists) {
-      throw new BadRequestException(`Club with ID ${clubId} is not associated with Coach ID ${coach.id}`);
-    }
+    if (!exists) throw new BadRequestException(`Coach (ID: ${coach.id}) is not associated with Club (ID: ${clubId})`);
   }
 
-  async validateCoachHasNoStudents(coachId: number): Promise<boolean> {
+  async hasStudentsAssignedToCoach(coachId: number): Promise<boolean> {
     return await this.studentRepository.existsByCoachId(coachId);
   }
-  async hasStudentsInClub(removedClubs: ClubEntity[], coachId: number): Promise<void> {
+  async checkStudentsInRemovedClubs(removedClubs: ClubEntity[], coachId: number): Promise<void> {
     const clubsWithStudents: string[] = [];
 
     for (const club of removedClubs) {
@@ -242,7 +240,7 @@ export class StudentService {
       throw new BadRequestException(`${StudentMessages.CannotRemoveClubsInArray} ${clubsWithStudents.join(', ')}`);
     }
   }
-  async isCheckExistsByCoachAndGender(coachId: number, gender: Gender): Promise<boolean> {
+  async hasStudentsByGender(coachId: number, gender: Gender): Promise<boolean> {
     return await this.studentRepository.existsByCoachIdAndCoachGender(coachId, gender);
   }
 }
