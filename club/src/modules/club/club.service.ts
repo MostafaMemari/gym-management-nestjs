@@ -1,4 +1,4 @@
-import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 
@@ -109,7 +109,7 @@ export class ClubService {
 
   async checkClubOwnership(clubId: number, userId: number): Promise<ClubEntity> {
     const club = await this.clubRepository.findByIdAndOwner(clubId, userId);
-    if (!club) throw new BadRequestException(ClubMessages.ClubNotBelongToUser);
+    if (!club) throw new NotFoundException(ClubMessages.ClubNotBelongToUser);
     return club;
   }
 

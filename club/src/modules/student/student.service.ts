@@ -165,7 +165,7 @@ export class StudentService {
 
   private async checkStudentOwnership(studentId: number, userId: number): Promise<StudentEntity> {
     const student = await this.studentRepository.findByIdAndOwner(studentId, userId);
-    if (!student) throw new BadRequestException(StudentMessages.StudentNotFound);
+    if (!student) throw new NotFoundException(StudentMessages.StudentNotFound);
     return student;
   }
 
