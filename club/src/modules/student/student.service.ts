@@ -1,4 +1,4 @@
-import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 
@@ -156,7 +156,7 @@ export class StudentService {
   async getOneByNationalCode(nationalCode: string): Promise<StudentEntity> {
     try {
       const student = await this.studentRepository.findOneBy({ national_code: nationalCode });
-      if (!student) throw new BadRequestException(StudentMessages.StudentNotFound);
+      if (!student) throw new NotFoundException(StudentMessages.StudentNotFound);
       return student;
     } catch (error) {
       throw new RpcException(error);
