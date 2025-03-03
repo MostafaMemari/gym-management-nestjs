@@ -19,21 +19,21 @@ export class CreateBeltDto {
 
   @IsOptional()
   @IsInt()
-  @Transform(({ value }) => parseInt(value, 10))
-  @ApiPropertyOptional({ type: 'integer', required: false, example: '' })
-  min_age: number;
+  @Transform(({ value }) => (value !== undefined ? parseInt(value, 10) : null))
+  @ApiPropertyOptional({ type: 'integer', required: false, example: 10 })
+  min_age?: number;
 
   @IsOptional()
   @IsInt()
-  @Transform(({ value }) => parseInt(value, 10))
-  @ApiPropertyOptional({ type: 'integer', required: false, example: '' })
+  @Transform(({ value }) => (value !== undefined ? parseInt(value, 10) : null))
+  @ApiPropertyOptional({ type: 'integer', required: false, example: 50 })
   max_age?: number;
 
   @IsOptional()
   @IsInt()
-  @Transform(({ value }) => parseInt(value, 10))
-  @IsIn([3, 4, 6, 9, 12, 24, 36, 48, 60, 72, 84, 96, 108])
-  @ApiPropertyOptional({ type: 'integer', required: true, example: '' })
+  @Transform(({ value }) => (value !== undefined ? parseInt(value, 10) : 0))
+  @IsIn([0, 3, 4, 6, 9, 12, 24, 36, 48, 60, 72, 84, 96, 108])
+  @ApiPropertyOptional({ type: 'integer', required: false, example: 12 })
   duration_month: number;
 }
 
