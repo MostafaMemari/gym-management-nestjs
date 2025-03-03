@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
@@ -8,10 +8,8 @@ import { BeltEntity } from './entities/belt.entity';
 import { BeltRepository } from './repositories/belt.repository';
 import { BeltSubscriber } from './subscribers/club.subscriber';
 
-import { CacheModule } from '../cache/cache.module';
-import { CoachModule } from '../coach/coach.module';
-
 import { Services } from '../../common/enums/services.enum';
+import { CacheModule } from '../cache/cache.module';
 
 @Module({
   imports: [
@@ -27,7 +25,6 @@ import { Services } from '../../common/enums/services.enum';
     ]),
     TypeOrmModule.forFeature([BeltEntity]),
     CacheModule,
-    forwardRef(() => CoachModule),
   ],
   controllers: [BeltController],
   providers: [BeltService, BeltRepository, BeltSubscriber],

@@ -36,9 +36,16 @@ export class BeltRepository extends Repository<BeltEntity> {
     //   queryBuilder.orderBy('belts.updated_at', filters.sort_order === 'asc' ? 'ASC' : 'DESC');
     // }
 
-    return queryBuilder
-      .skip((page - 1) * take)
-      .take(take)
-      .getManyAndCount();
+    return (
+      queryBuilder
+        // .leftJoinAndSelect('belts.nextBelt', 'nextBelt')
+        .skip((page - 1) * take)
+        .take(take)
+        .getManyAndCount()
+    );
+  }
+
+  async findByIds(clubIds: number[]): Promise<BeltEntity[]> {
+    return this.find({ where: { id: In(clubIds) } });
   }
 }

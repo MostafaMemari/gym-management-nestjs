@@ -8,17 +8,13 @@ import { ICreateBelt, ISearchBeltQuery, IUpdateBelt } from './interfaces/belt.in
 import { BeltRepository } from './repositories/belt.repository';
 
 import { CacheService } from '../cache/cache.service';
-import { CoachService } from '../coach/coach.service';
-import { CoachEntity } from '../coach/entities/coach.entity';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
-import { CacheKeys, CachePatterns } from '../../common/enums/cache.enum';
-import { Gender } from '../../common/enums/gender.enum';
+import { CacheKeys } from '../../common/enums/cache.enum';
 import { UserPatterns } from '../../common/enums/patterns.events';
 import { Services } from '../../common/enums/services.enum';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
-import { IUser } from '../../common/interfaces/user.interface';
 import { ResponseUtil } from '../../common/utils/response';
 
 @Injectable()
@@ -29,7 +25,6 @@ export class BeltService {
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
     private readonly beltRepository: BeltRepository,
     private readonly cacheService: CacheService,
-    @Inject(forwardRef(() => CoachService)) private readonly coachService: CoachService,
   ) {}
 
   async checkUserServiceConnection(): Promise<ServiceResponse | void> {
@@ -41,6 +36,12 @@ export class BeltService {
   }
   async create(createBeltDto: ICreateBelt) {
     try {
+      const { nextBeltIds } = createBeltDto;
+      if (nextBeltIds) {
+        const nextBelt = await this.validateBeltIds(nextBeltIds);
+        createBeltDto.nextBelt = nextBelt;
+      }
+
       const belt = await this.beltRepository.createAndSaveBelt(createBeltDto);
 
       return ResponseUtil.success(belt, BeltMessages.CreatedBelt);
@@ -50,7 +51,13 @@ export class BeltService {
   }
   async update(beltId: number, updateBeltDto: IUpdateBelt) {
     try {
+      const { nextBeltIds } = updateBeltDto;
       const belt = await this.validateBeltId(beltId);
+
+      if (nextBeltIds) {
+        const nextBelt = await this.validateBeltIds(nextBeltIds);
+        updateBeltDto.nextBelt = nextBelt;
+      }
 
       const updatedBelt = await this.beltRepository.updateBelt(belt, updateBeltDto);
 
@@ -62,17 +69,17 @@ export class BeltService {
   async getAll(query: { queryBeltDto: ISearchBeltQuery; paginationDto: IPagination }): Promise<PageDto<BeltEntity>> {
     const { take, page } = query.paginationDto;
 
-    const cacheKey = `${CacheKeys.BELT_LIST}-${page}-${take}-${JSON.stringify(query.queryBeltDto)}`;
+    // const cacheKey = `${CacheKeys.BELT_LIST}-${page}-${take}-${JSON.stringify(query.queryBeltDto)}`;
 
-    const cachedData = await this.cacheService.get<PageDto<BeltEntity>>(cacheKey);
-    if (cachedData) return cachedData;
+    // const cachedData = await this.cacheService.get<PageDto<BeltEntity>>(cacheKey);
+    // if (cachedData) return cachedData;
 
     const [belts, count] = await this.beltRepository.getBeltsWithFilters(query.queryBeltDto, page, take);
 
     const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
     const result = new PageDto(belts, pageMetaDto);
 
-    await this.cacheService.set(cacheKey, result, 600);
+    // await this.cacheService.set(cacheKey, result, 600);
 
     return result;
   }
@@ -101,5 +108,17 @@ export class BeltService {
     const belt = await this.beltRepository.findOneBy({ id: beltId });
     if (!belt) throw new NotFoundException(BeltMessages.BeltNotBelongToUser);
     return belt;
+  }
+
+  async validateBeltIds(beltIds: number[]): Promise<BeltEntity[]> {
+    const foundBelts = await this.beltRepository.findByIds(beltIds);
+    const foundIds = foundBelts.map((belt) => belt.id);
+    const invalidIds = beltIds.filter((id) => !foundIds.includes(id));
+
+    if (invalidIds.length > 0) {
+      throw new NotFoundException(BeltMessages.BeltNotFound.replace('{ids}', invalidIds.join(', ')));
+    }
+
+    return foundBelts;
   }
 }

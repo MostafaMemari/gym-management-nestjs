@@ -1,3 +1,4 @@
+import { BeltEntity } from '../entities/belt.entity';
 import { BeltName } from '../enums/belt.enum';
 
 export interface ICreateBelt {
@@ -6,6 +7,8 @@ export interface ICreateBelt {
   min_age?: number;
   max_age?: number;
   duration_month: number;
+  nextBeltIds: number[];
+  nextBelt: BeltEntity[];
 }
 
 export type IUpdateBelt = Partial<ICreateBelt>;

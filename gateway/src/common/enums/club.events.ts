@@ -32,5 +32,4 @@ export enum BeltPatterns {
   GetBelts = 'get_belts',
   GetBelt = 'get_belt',
   RemoveBelt = 'remove_belt',
-  checkExistBeltById = 'check_exist_belt_by_id',
 }

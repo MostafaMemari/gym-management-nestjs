@@ -15,4 +15,5 @@ export enum BeltMessages {
   BeltNotBelongToUser = 'This belt does not belong to the user',
   GetBeltSuccess = 'Belt data retrieved successfully',
   BeltHasRelations = 'Cannot delete belt relations with students',
+  BeltNotFounds = 'Belts with IDs {ids} were not found',
 }

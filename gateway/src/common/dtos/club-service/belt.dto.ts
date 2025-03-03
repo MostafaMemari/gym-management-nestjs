@@ -1,8 +1,9 @@
-import { IsNotEmpty, IsEnum, IsInt, Min, IsIn, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsEnum, IsInt, Min, IsIn, IsOptional, IsString, Max } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 
 import { BeltName } from '../../../common/enums/belt.enum';
+import { ToArray } from '../../../common/decorators/transformers.decorator';
 
 export class CreateBeltDto {
   @IsNotEmpty()
@@ -12,7 +13,7 @@ export class CreateBeltDto {
 
   @IsNotEmpty()
   @IsInt()
-  @Min(1)
+  @Max(15)
   @Transform(({ value }) => parseInt(value, 10))
   @ApiProperty({ type: 'integer', required: true, example: 4 })
   level: number;
@@ -32,9 +33,15 @@ export class CreateBeltDto {
   @IsOptional()
   @IsInt()
   @Transform(({ value }) => (value !== undefined ? parseInt(value, 10) : 0))
-  @IsIn([0, 3, 4, 6, 9, 12, 24, 36, 48, 60, 72, 84, 96, 108])
+  @IsIn([0, 3, 4, 6, 9, 12, 24, 36, 48, 60, 72, 84, 96, 108, 120])
   @ApiPropertyOptional({ type: 'integer', required: false, example: 12 })
   duration_month: number;
+
+  @IsOptional()
+  @ToArray()
+  @IsInt({ each: true })
+  @ApiPropertyOptional({ type: 'array' })
+  nextBeltIds: number[];
 }
 
 export class UpdateBeltDto extends PartialType(CreateBeltDto) {}
