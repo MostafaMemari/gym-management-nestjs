@@ -76,7 +76,6 @@ export class StudentService {
       return ResponseUtil.error(error?.message || StudentMessages.FailedToCreateStudent, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-
   async update(user: IUser, studentId: number, updateStudentDto: IUpdateStudent) {
     const { clubId, coachId, national_code, gender, image } = updateStudentDto;
     const userId: number = user.id;
@@ -111,7 +110,6 @@ export class StudentService {
       return ResponseUtil.error(error?.message || StudentMessages.FailedToUpdateStudent, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-
   async getAll(user: IUser, query: { queryStudentDto: ISeachStudentQuery; paginationDto: IPagination }): Promise<PageDto<StudentEntity>> {
     const { take, page } = query.paginationDto;
 
@@ -129,7 +127,6 @@ export class StudentService {
 
     return result;
   }
-
   async findOneById(user: IUser, studentId: number): Promise<ServiceResponse> {
     try {
       const student = await this.checkStudentOwnership(studentId, user.id);
@@ -152,12 +149,11 @@ export class StudentService {
       throw new RpcException(error);
     }
   }
-
-  async getOneByNationalCode(nationalCode: string): Promise<StudentEntity> {
+  async getOneByNationalCode(nationalCode: string): Promise<ServiceResponse> {
     try {
       const student = await this.studentRepository.findOneBy({ national_code: nationalCode });
       if (!student) throw new NotFoundException(StudentMessages.StudentNotFound);
-      return student;
+      return ResponseUtil.success(student, StudentMessages.GetStudentSuccess);
     } catch (error) {
       throw new RpcException(error);
     }
