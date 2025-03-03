@@ -153,6 +153,16 @@ export class StudentService {
     }
   }
 
+  async getOneByNationalCode(nationalCode: string): Promise<StudentEntity> {
+    try {
+      const student = await this.studentRepository.findOneBy({ national_code: nationalCode });
+      if (!student) throw new BadRequestException(StudentMessages.StudentNotFound);
+      return student;
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
   private async checkStudentOwnership(studentId: number, userId: number): Promise<StudentEntity> {
     const student = await this.studentRepository.findByIdAndOwner(studentId, userId);
     if (!student) throw new BadRequestException(StudentMessages.StudentNotFound);
