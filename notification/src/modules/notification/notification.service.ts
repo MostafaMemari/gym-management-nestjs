@@ -11,7 +11,7 @@ import { transformArrayIds, transformId } from '../../common/utils/transformId.u
 
 @Injectable()
 export class NotificationService {
-  constructor(@InjectModel(Notification.name) private readonly notificationModel: Model<Notification>) { }
+  constructor(@InjectModel(Notification.name) private readonly notificationModel: Model<Notification>) {}
 
   async create(createNotificationDto: ICreateNotification): Promise<ServiceResponse> {
     try {
@@ -123,7 +123,7 @@ export class NotificationService {
           {
             message,
             recipients,
-            $pull: { readBy: { $nin: recipients } }
+            $pull: { readBy: { $nin: recipients } },
           },
           {
             new: true,

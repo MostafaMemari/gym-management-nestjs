@@ -6,7 +6,7 @@ import { ICreateNotification, IMarkAsRead, IRemoveNotification, IUpdateNotificat
 
 @Controller()
 export class NotificationController {
-  constructor(private readonly notificationService: NotificationService) { }
+  constructor(private readonly notificationService: NotificationService) {}
 
   @MessagePattern(NotificationPatterns.CreateNotification)
   create(@Payload() data: ICreateNotification) {
