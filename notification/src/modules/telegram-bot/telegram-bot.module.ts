@@ -1,14 +1,15 @@
 import { Module } from '@nestjs/common';
 import { TelegrafModule } from 'nestjs-telegraf';
 import { TelegramBotUpdate } from './telegram-bot.update';
+import { TelegramBotService } from './telegram-bot.service';
 
 @Module({
     imports: [
         TelegrafModule.forRoot({
-            token: '7234274827:AAGt1D4Md37-C1Xzk4poAcEiZaRK6_JxrnM',
+            token: process.env.TELEGRAM_BOT_TOKEN,
         }),
     ],
-    providers: [TelegramBotUpdate],
+    providers: [TelegramBotUpdate, TelegramBotService],
     exports: [TelegramBotModule],
 })
 export class TelegramBotModule { }
