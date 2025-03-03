@@ -5,5 +5,5 @@ export enum StudentPatterns {
   GetStudents = 'get_students',
   GetStudent = 'get_student',
   RemoveUserStudent = 'remove_student',
-  checkExistStudentById = 'check_exist_student_by_id',
+  GetStudentByNationalCode = 'get_student_by_national_code',
 }

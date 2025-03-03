@@ -97,15 +97,6 @@ export class CoachRepository extends Repository<CoachEntity> {
     }
   }
 
-  async findCoachWithRelations(coachId: number): Promise<CoachEntity | null> {
-    return await this.createQueryBuilder(EntityName.Coaches)
-      .leftJoin('coach.coaches', 'student')
-      .leftJoin('coach.clubs', 'club')
-      .where('coach.id = :coachId', { coachId })
-      .andWhere('(student.id IS NOT NULL OR club.id IS NOT NULL)')
-      .getOne();
-  }
-
   async findCoachByNationalCode(nationalCode: string, userId: number): Promise<CoachEntity | null> {
     return await this.createQueryBuilder(EntityName.Coaches)
       .where('coaches.national_code = :nationalCode', { nationalCode })
@@ -114,7 +105,7 @@ export class CoachRepository extends Repository<CoachEntity> {
       .getOne();
   }
 
-  async findCoachByIdAndOwner(coachId: number, userId: number): Promise<CoachEntity | null> {
+  async findByIdAndOwner(coachId: number, userId: number): Promise<CoachEntity | null> {
     return await this.createQueryBuilder(EntityName.Coaches)
       .where('coaches.id = :coachId', { coachId })
       .leftJoinAndSelect('coaches.clubs', 'club')

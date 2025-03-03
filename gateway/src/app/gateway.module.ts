@@ -12,6 +12,7 @@ import { CoachController } from './controllers/club/coach.controller';
 import { ClubController } from './controllers/club/club.controller';
 import { RbacController } from './controllers/auth/rbac.controller';
 import { NotificationController } from './controllers/notification.controller';
+import { BeltController } from './controllers/club/belt.controller';
 
 @Module({
   imports: [
@@ -79,7 +80,16 @@ import { NotificationController } from './controllers/notification.controller';
       },
     ]),
   ],
-  controllers: [AuthController, RbacController, UserController, NotificationController, StudentController, CoachController, ClubController],
+  controllers: [
+    AuthController,
+    RbacController,
+    UserController,
+    NotificationController,
+    StudentController,
+    CoachController,
+    ClubController,
+    BeltController,
+  ],
   providers: [
     {
       provide: APP_PIPE,

@@ -110,16 +110,12 @@ export class StudentRepository extends Repository<StudentEntity> {
       .getManyAndCount();
   }
 
-  async findStudentByOwner(studentId: number, userId: number): Promise<StudentEntity> {
+  async findByIdAndOwner(studentId: number, userId: number): Promise<StudentEntity> {
     const student = await this.createQueryBuilder(EntityName.Students)
       .where('students.id = :studentId', { studentId })
       .leftJoinAndSelect('students.club', 'club')
       .andWhere('club.ownerId = :userId', { userId })
       .getOne();
-
-    if (!student) {
-      throw new BadRequestException(StudentMessages.StudentNotFound);
-    }
 
     return student;
   }

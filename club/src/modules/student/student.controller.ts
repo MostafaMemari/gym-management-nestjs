@@ -51,4 +51,11 @@ export class StudentController {
 
     return this.studentService.removeById(user, studentId);
   }
+
+  @MessagePattern(StudentPatterns.GetStudentByNationalCode)
+  getOneByNationalCode(@Payload() data: { nationalCode: string }) {
+    const { nationalCode } = data;
+
+    return this.studentService.getOneByNationalCode(nationalCode);
+  }
 }

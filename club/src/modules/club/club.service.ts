@@ -1,26 +1,25 @@
-import { BadRequestException, ConflictException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { InjectRepository } from '@nestjs/typeorm';
 import { lastValueFrom, timeout } from 'rxjs';
-import { In, Repository } from 'typeorm';
+
+import { ClubEntity } from './entities/club.entity';
+import { ClubMessages } from './enums/club.message';
+import { ICreateClub, ISearchClubQuery, IUpdateClub } from './interfaces/club.interface';
+import { ClubRepository } from './repositories/club.repository';
+
+import { CacheService } from '../cache/cache.service';
+import { CoachService } from '../coach/coach.service';
+import { CoachEntity } from '../coach/entities/coach.entity';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
-import { EntityName } from '../../common/enums/entity.enum';
+import { CacheKeys, CachePatterns } from '../../common/enums/cache.enum';
+import { Gender } from '../../common/enums/gender.enum';
 import { UserPatterns } from '../../common/enums/patterns.events';
 import { Services } from '../../common/enums/services.enum';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
-import { ResponseUtil } from '../../common/utils/response';
-import { CacheService } from '../cache/cache.service';
-import { CacheKeys, CachePatterns } from '../../common/enums/cache.enum';
-import { ClubEntity } from './entities/club.entity';
-import { ClubMessages } from './enums/club.message';
-import { ICreateClub, ISearchClubQuery, IUpdateClub } from './interfaces/club.interface';
 import { IUser } from '../../common/interfaces/user.interface';
-import { CoachEntity } from '../coach/entities/coach.entity';
-import { Gender } from '../../common/enums/gender.enum';
-import { CoachService } from '../coach/coach.service';
-import { ClubRepository } from './repositories/club.repository';
+import { ResponseUtil } from '../../common/utils/response';
 
 @Injectable()
 export class ClubService {
@@ -40,7 +39,6 @@ export class ClubService {
       throw new RpcException({ message: 'User service is not connected', status: HttpStatus.INTERNAL_SERVER_ERROR });
     }
   }
-
   async create(user: IUser, createClubDto: ICreateClub) {
     try {
       const club = await this.clubRepository.createAndSaveClub(createClubDto, user.id);
@@ -50,14 +48,13 @@ export class ClubService {
       return ResponseUtil.error(error?.message || ClubMessages.FailedToCreateClub, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-
   async update(user: IUser, clubId: number, updateClubDto: IUpdateClub) {
     try {
       const { genders } = updateClubDto;
       const club = await this.checkClubOwnership(clubId, user.id);
 
       if (genders && genders !== club.genders) {
-        await this.checkGenderRemoval(genders, clubId, club.genders);
+        await this.validateGenderRemoval(genders, clubId, club.genders);
       }
 
       const updatedClub = await this.clubRepository.updateClub(club, updateClubDto);
@@ -67,7 +64,6 @@ export class ClubService {
       return ResponseUtil.error(error?.message || ClubMessages.FailedToUpdateClub, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-
   async getAll(user: IUser, query: { queryClubDto: ISearchClubQuery; paginationDto: IPagination }): Promise<PageDto<ClubEntity>> {
     const { take, page } = query.paginationDto;
 
@@ -98,7 +94,7 @@ export class ClubService {
     try {
       const club = await this.checkClubOwnership(clubId, user.id);
 
-      const isClubAssignedToCoaches = await this.coachService.isClubAssignedToCoaches(clubId);
+      const isClubAssignedToCoaches = await this.coachService.existsCoachInClub(clubId);
       if (isClubAssignedToCoaches) throw new BadRequestException(ClubMessages.CannotRemoveClubAssignedToCoaches);
 
       const removedClub = await this.clubRepository.delete(clubId);
@@ -111,11 +107,26 @@ export class ClubService {
     }
   }
 
-  async clearClubsCache(): Promise<void> {
-    await this.cacheService.delByPattern(CachePatterns.CLUB_LIST);
+  async checkClubOwnership(clubId: number, userId: number): Promise<ClubEntity> {
+    const club = await this.clubRepository.findByIdAndOwner(clubId, userId);
+    if (!club) throw new NotFoundException(ClubMessages.ClubNotBelongToUser);
+    return club;
   }
 
-  async findOwnedClubs(clubIds: number[], userId: number): Promise<ClubEntity[]> {
+  async validateGenderRemoval(genders: Gender[], clubId: number, currentGenders: Gender[]): Promise<void> {
+    const removedGenders = currentGenders.filter((gender) => !genders.includes(gender));
+
+    if (removedGenders.includes(Gender.Male)) {
+      const maleCoachExists = await this.coachService.existsCoachWithGenderInClub(clubId, Gender.Male);
+      if (maleCoachExists) throw new BadRequestException(ClubMessages.CannotRemoveMaleCoach);
+    }
+
+    if (removedGenders.includes(Gender.Female)) {
+      const femaleCoachExists = await this.coachService.existsCoachWithGenderInClub(clubId, Gender.Female);
+      if (femaleCoachExists) throw new BadRequestException(ClubMessages.CannotRemoveFemaleCoach);
+    }
+  }
+  async validateOwnedClubs(clubIds: number[], userId: number): Promise<ClubEntity[]> {
     const ownedClubs = await this.clubRepository.findOwnedClubsByIds(clubIds, userId);
 
     if (ownedClubs.length !== clubIds.length) {
@@ -124,25 +135,5 @@ export class ClubService {
     }
 
     return ownedClubs;
-  }
-
-  async checkClubOwnership(clubId: number, userId: number): Promise<ClubEntity> {
-    const club = await this.clubRepository.findByIdAndOwner(clubId, userId);
-    if (!club) throw new BadRequestException(ClubMessages.ClubNotBelongToUser);
-    return club;
-  }
-
-  async checkGenderRemoval(genders: Gender[], clubId: number, currentGenders: Gender[]): Promise<void> {
-    const removedGenders = currentGenders.filter((gender) => !genders.includes(gender));
-
-    if (removedGenders.includes(Gender.Male)) {
-      const maleCoachExists = await this.coachService.isGenderAssignedToCoaches(clubId, Gender.Male);
-      if (maleCoachExists) throw new BadRequestException(ClubMessages.CannotRemoveMaleCoach);
-    }
-
-    if (removedGenders.includes(Gender.Female)) {
-      const femaleCoachExists = await this.coachService.isGenderAssignedToCoaches(clubId, Gender.Female);
-      if (femaleCoachExists) throw new BadRequestException(ClubMessages.CannotRemoveFemaleCoach);
-    }
   }
 }
