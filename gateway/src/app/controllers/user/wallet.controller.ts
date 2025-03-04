@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Param, ParseIntPipe, Post, Put } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, ParseIntPipe, Post, Put } from '@nestjs/common';
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { Roles } from '../../../common/decorators/role.decorator';
 import { Role } from '../../../common/enums/role.enum';
@@ -8,7 +8,12 @@ import { checkConnection } from 'src/common/utils/checkConnection.utils';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 import { WalletPatterns } from 'src/common/enums/wallet.events';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { PaymentDto } from 'src/common/dtos/payment.dto';
+import { SwaggerConsumes } from 'src/common/enums/swagger-consumes.enum';
+import { GetUser } from 'src/common/decorators/get-user.decorator';
+import { User } from 'src/common/interfaces/user.interface';
+import { PaymentPatterns } from 'src/common/enums/payment.events';
 
 @Controller('wallet')
 @ApiTags('wallet')
@@ -16,7 +21,27 @@ import { ApiTags } from '@nestjs/swagger';
 export class WalletController {
   private timeout = 5000;
 
-  constructor(@Inject(Services.USER) private readonly userServiceClient: ClientProxy) {}
+  constructor(@Inject(Services.USER) private readonly userServiceClient: ClientProxy,
+    @Inject(Services.PAYMENT) private readonly paymentServiceClient: ClientProxy) { }
+
+  @Post("pay")
+  @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
+  async pay(@Body() paymentDto: PaymentDto, @GetUser() user: User) {
+    try {
+      await checkConnection(Services.PAYMENT, this.paymentServiceClient);
+
+      const paymentData = {
+        ...paymentDto,
+        user,
+      };
+
+      const data = await lastValueFrom(this.paymentServiceClient.send(PaymentPatterns.CreateGatewayUrl, paymentData).pipe(timeout(this.timeout)));
+
+      return handleServiceResponse(data);
+    } catch (error) {
+      handleError(error, "Failed to pay", Services.USER)
+    }
+  }
 
   @Get()
   @Roles(Role.SUPER_ADMIN)
