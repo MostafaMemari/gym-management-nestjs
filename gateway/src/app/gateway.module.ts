@@ -14,6 +14,7 @@ import { RbacController } from './controllers/auth/rbac.controller';
 import { NotificationController } from './controllers/notification.controller';
 import { BeltController } from './controllers/club/belt.controller';
 import { AgeCategoryController } from './controllers/club/age-category.controller';
+import { PaymentController } from './controllers/payment.controller';
 
 @Module({
   imports: [
@@ -100,6 +101,7 @@ import { AgeCategoryController } from './controllers/club/age-category.controlle
     AuthController,
     RbacController,
     UserController,
+    PaymentController,
     NotificationController,
     StudentController,
     CoachController,
