@@ -3,8 +3,9 @@ import { Gender } from '../../../common/enums/gender.enum';
 
 export interface ICreateBeltExam {
   name: string;
-  description: string;
+  description?: string;
   genders: Gender[];
+  event_place: string[];
   event_date?: Date;
   register_date: Date;
   beltIds: number[];

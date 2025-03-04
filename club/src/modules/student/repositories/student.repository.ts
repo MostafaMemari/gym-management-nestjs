@@ -6,6 +6,7 @@ import { ISeachStudentQuery } from '../interfaces/student.interface';
 import { StudentMessages } from '../enums/student.message';
 import { Gender } from '../../../common/enums/gender.enum';
 import { AgeCategoryEntity } from '../../../modules/age-category/entities/age-category.entity';
+import { BeltExamEntity } from 'src/modules/belt-exam/entities/belt-exam.entity';
 
 @Injectable()
 export class StudentRepository extends Repository<StudentEntity> {
@@ -173,7 +174,14 @@ export class StudentRepository extends Repository<StudentEntity> {
         'ageCategories',
         'students.birth_date BETWEEN ageCategories.start_date AND ageCategories.end_date',
       )
+      .leftJoinAndMapMany(
+        'students.belt_exams',
+        BeltExamEntity,
+        'beltExams',
+        'EXISTS (SELECT 1 FROM belt_exams_belts_belts be WHERE be.beltExamEntityId = beltExams.id AND be.beltEntityId = students.beltId)',
+      )
       .getOne();
+
     return student;
   }
 }

@@ -41,3 +41,11 @@ export enum AgeCategoryPatterns {
   GetAgeCategory = 'get_age_category',
   RemoveAgeCategory = 'remove_age_category',
 }
+export enum BeltExamPatterns {
+  CheckConnection = 'check_connection',
+  CreateBeltExam = 'create_belt-exam',
+  UpdateBeltExam = 'update_belt-exam',
+  GetBeltExams = 'get_belt-exams',
+  GetBeltExam = 'get_belt-exam',
+  RemoveBeltExam = 'remove_belt-exam',
+}
