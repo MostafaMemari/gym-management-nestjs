@@ -6,3 +6,9 @@ export interface ISendRequest {
     mobile?: string;
   };
 }
+
+export interface IVerifyRequest {
+  authority: string;
+  amount: number;
+  merchant_id: string;
+}
