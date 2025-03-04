@@ -1,7 +1,9 @@
 export enum AgeCategoryName {
   BLOSSOM = 'شکوفه‌ها',
+  YOUTH = 'خردسالان',
   CADET = 'نونهالان',
   JUNIOR = 'نوجوانان',
-  YOUTH = 'جوانان',
-  ADULT = 'بزرگسالان',
+  YOUNG = 'جوانان',
+  SENIOR = 'بزرگسالان',
+  ULTRA = 'پیشکسوتان',
 }

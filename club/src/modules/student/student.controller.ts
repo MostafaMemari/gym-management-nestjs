@@ -35,7 +35,8 @@ export class StudentController {
   findOne(@Payload() data: { user: IUser; studentId: number }) {
     const { user, studentId } = data;
 
-    return this.studentService.findOneById(user, studentId);
+    // return this.studentService.findOneById(user, studentId);
+    return this.studentService.getStudentDetails(studentId);
   }
 
   @MessagePattern(StudentPatterns.GetStudents)

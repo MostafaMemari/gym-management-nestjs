@@ -83,10 +83,10 @@ export class StudentService {
     let imageKey: string | null = null;
 
     try {
-      await this.beltService.validateBeltId(beltId);
-
       let student = national_code ? await this.validateUniqueNationalCode(national_code, userId) : null;
       if (!student) student = await this.checkStudentOwnership(studentId, userId);
+
+      if (beltId) await this.beltService.validateBeltId(beltId);
 
       if (clubId || coachId || gender) {
         const { club, coach } = await this.validateClubAndCoachOwnership(userId, clubId ?? student.clubId, coachId ?? student.coachId);
@@ -138,6 +138,16 @@ export class StudentService {
       throw new RpcException(error);
     }
   }
+  async getStudentDetails(studentId: number): Promise<ServiceResponse> {
+    try {
+      const student = await this.studentRepository.findStudentWithRelations(studentId);
+
+      return ResponseUtil.success(student, StudentMessages.GetStudentSuccess);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
   async removeById(user: IUser, studentId: number): Promise<ServiceResponse> {
     try {
       const student = await this.checkStudentOwnership(studentId, user.id);
