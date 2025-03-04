@@ -1,11 +1,11 @@
 import { NestFactory } from '@nestjs/core';
-import { NotificationModule } from './modules/notification/notification.module';
 import { Logger } from '@nestjs/common';
 import { RmqOptions, Transport } from '@nestjs/microservices';
 import { CustomRpcException } from './common/filters/rpeException.filter';
+import { PaymentModule } from './modules/payment/payment.module';
 
 async function bootstrap() {
-  const app = await NestFactory.createMicroservice(NotificationModule, {
+  const app = await NestFactory.createMicroservice(PaymentModule, {
     transport: Transport.RMQ,
     options: {
       urls: [process.env.RABBITMQ_URL],
@@ -18,6 +18,6 @@ async function bootstrap() {
   app.useGlobalFilters(new CustomRpcException());
 
   await app.listen();
-  logger.log('Notification service is running....');
+  logger.log('Payment service is running....');
 }
 bootstrap();

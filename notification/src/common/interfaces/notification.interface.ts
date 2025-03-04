@@ -11,3 +11,15 @@ export interface IMarkAsRead {
   userId: number;
   notificationId: string;
 }
+
+export interface IRemoveNotification {
+  senderId: number;
+  notificationId: string;
+}
+
+export interface IUpdateNotification {
+  message?: string;
+  recipients?: number[];
+  notificationId: string;
+  senderId: number;
+}
