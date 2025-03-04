@@ -1,15 +1,16 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { WalletService } from './wallet.service';
-import { CreateWalletDto } from './dto/create-wallet.dto';
-import { UpdateWalletDto } from './dto/update-wallet.dto';
+import { MessagePattern, Payload } from '@nestjs/microservices';
+import { WalletPatterns } from '../../common/enums/wallet.events';
+import { ICreateWallet } from '../../common/interfaces/wallet.interface';
 
-@Controller('wallet')
+@Controller()
 export class WalletController {
-  constructor(private readonly walletService: WalletService) {}
+  constructor(private readonly walletService: WalletService) { }
 
-  @Post()
-  create(@Body() createWalletDto: CreateWalletDto) {
-    return this.walletService.create(createWalletDto);
+  @MessagePattern(WalletPatterns.CreateWallet)
+  create(@Payload() data: ICreateWallet) {
+    return this.walletService.create(data);
   }
 
   @Get()
@@ -23,7 +24,7 @@ export class WalletController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateWalletDto: UpdateWalletDto) {
+  update(@Param('id') id: string, @Body() updateWalletDto: any) {
     return this.walletService.update(+id, updateWalletDto);
   }
 
