@@ -16,6 +16,7 @@ import { CoachModule } from '../coach/coach.module';
 import { AwsModule } from '../s3AWS/s3AWS.module';
 
 import { Services } from '../../common/enums/services.enum';
+import { AgeCategoryModule } from '../age_categories/age-category.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { Services } from '../../common/enums/services.enum';
     CacheModule,
     ClubModule,
     BeltModule,
+    AgeCategoryModule,
     forwardRef(() => CoachModule),
   ],
   controllers: [StudentController],
