@@ -10,22 +10,6 @@ import { WalletMessages } from '../../common/enums/wallet.messages';
 export class WalletService {
   constructor(private readonly walletRepository: WalletRepository) { }
 
-  async create({ userId }: ICreateWallet): Promise<ServiceResponse> {
-    try {
-      const existingWallet = await this.walletRepository.findOneByUser(userId);
-
-      if (existingWallet) {
-        throw new ConflictException(WalletMessages.AlreadyExistsWallet);
-      }
-
-      const wallet = await this.walletRepository.create({ userId });
-
-      return ResponseUtil.success({ wallet }, WalletMessages.CreatedWalletSuccess, HttpStatus.CREATED);
-    } catch (error) {
-      throw new RpcException(error);
-    }
-  }
-
   async findAll(): Promise<ServiceResponse> {
     try {
       const wallets = await this.walletRepository.findAll();
