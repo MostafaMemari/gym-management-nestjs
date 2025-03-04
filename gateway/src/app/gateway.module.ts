@@ -78,6 +78,21 @@ import { BeltController } from './controllers/club/belt.controller';
           },
         },
       },
+      {
+        name: Services.PAYMENT,
+        transport: Transport.RMQ,
+        options: {
+          urls: [process.env.RABBITMQ_URL],
+          queue: process.env.RABBITMQ_PAYMENT_SERVICE_QUEUE,
+          prefetchCount: 2,
+          isGlobalPrefetchCount: true,
+          noAck: true,
+          persistent: false,
+          queueOptions: {
+            // durable: process.env.NODE_ENV == 'production',
+          },
+        },
+      },
     ]),
   ],
   controllers: [

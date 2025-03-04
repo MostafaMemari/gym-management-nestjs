@@ -21,7 +21,7 @@ import { User } from '../../common/interfaces/user.interface';
 export class NotificationController {
   private readonly timeout = 5000;
 
-  constructor(@Inject(Services.NOTIFICATION) private readonly notificationServiceClient: ClientProxy) { }
+  constructor(@Inject(Services.NOTIFICATION) private readonly notificationServiceClient: ClientProxy) {}
 
   @Post()
   @Roles(Role.SUPER_ADMIN)
@@ -30,8 +30,8 @@ export class NotificationController {
     try {
       await checkConnection(Services.NOTIFICATION, this.notificationServiceClient);
 
-      const notificationData = { ...notificationDto, senderId: user.id }
-      notificationData.recipients = notificationData.recipients.filter(item => typeof item == 'number')
+      const notificationData = { ...notificationDto, senderId: user.id };
+      notificationData.recipients = notificationData.recipients.filter((item) => typeof item == 'number');
 
       const data: ServiceResponse = await lastValueFrom(
         this.notificationServiceClient.send(NotificationPatterns.CreateNotification, notificationData).pipe(timeout(this.timeout)),
@@ -46,73 +46,82 @@ export class NotificationController {
   @Get('user-notifications')
   async getUserNotifications(@GetUser() user: User) {
     try {
-      await checkConnection(Services.NOTIFICATION, this.notificationServiceClient)
+      await checkConnection(Services.NOTIFICATION, this.notificationServiceClient);
 
-      const data: ServiceResponse = await lastValueFrom(this.notificationServiceClient.send(NotificationPatterns.GetUserNOtifications, { userId: user.id }).pipe(timeout(this.timeout)))
+      const data: ServiceResponse = await lastValueFrom(
+        this.notificationServiceClient.send(NotificationPatterns.GetUserNOtifications, { userId: user.id }).pipe(timeout(this.timeout)),
+      );
 
-      return handleServiceResponse(data)
+      return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, "Failed to get notifications", Services.NOTIFICATION)
+      handleError(error, 'Failed to get notifications', Services.NOTIFICATION);
     }
   }
 
   @Get('sent')
   async getSentNotifications(@GetUser() user: User) {
     try {
-      await checkConnection(Services.NOTIFICATION, this.notificationServiceClient)
+      await checkConnection(Services.NOTIFICATION, this.notificationServiceClient);
 
-      const data: ServiceResponse = await lastValueFrom(this.notificationServiceClient.send(NotificationPatterns.GetSentNotifications, { senderId: user.id }).pipe(timeout(this.timeout)))
+      const data: ServiceResponse = await lastValueFrom(
+        this.notificationServiceClient.send(NotificationPatterns.GetSentNotifications, { senderId: user.id }).pipe(timeout(this.timeout)),
+      );
 
-      return handleServiceResponse(data)
+      return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, "Failed to get sent notifications", Services.NOTIFICATION)
+      handleError(error, 'Failed to get sent notifications', Services.NOTIFICATION);
     }
   }
 
   @Put('read/:id')
-  async markAsRead(@Param("id") id: string, @GetUser() user: User) {
+  async markAsRead(@Param('id') id: string, @GetUser() user: User) {
     try {
-      await checkConnection(Services.NOTIFICATION, this.notificationServiceClient)
+      await checkConnection(Services.NOTIFICATION, this.notificationServiceClient);
 
-      const notificationData = { notificationId: id, userId: user.id }
+      const notificationData = { notificationId: id, userId: user.id };
 
-      const data: ServiceResponse = await lastValueFrom(this.notificationServiceClient.send(NotificationPatterns.MarkAsRead, notificationData).pipe(timeout(this.timeout)))
+      const data: ServiceResponse = await lastValueFrom(
+        this.notificationServiceClient.send(NotificationPatterns.MarkAsRead, notificationData).pipe(timeout(this.timeout)),
+      );
 
-      return handleServiceResponse(data)
+      return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, "Failed to mark as read notification", Services.NOTIFICATION)
+      handleError(error, 'Failed to mark as read notification', Services.NOTIFICATION);
     }
   }
 
   @Put(':id')
-  async update(@Param("id") id: string, @Body() updateNotificationDto: UpdateNotificationDto, @GetUser() user: User,) {
+  async update(@Param('id') id: string, @Body() updateNotificationDto: UpdateNotificationDto, @GetUser() user: User) {
     try {
-      await checkConnection(Services.NOTIFICATION, this.notificationServiceClient)
+      await checkConnection(Services.NOTIFICATION, this.notificationServiceClient);
 
-      const notificationData = { notificationId: id, senderId: user.id, ...updateNotificationDto }
-      notificationData.recipients = notificationData.recipients.filter(item => typeof item == 'number')
+      const notificationData = { notificationId: id, senderId: user.id, ...updateNotificationDto };
+      notificationData.recipients = notificationData.recipients.filter((item) => typeof item == 'number');
 
-      const data: ServiceResponse = await lastValueFrom(this.notificationServiceClient.send(NotificationPatterns.UpdateNotification, notificationData).pipe(timeout(this.timeout)))
+      const data: ServiceResponse = await lastValueFrom(
+        this.notificationServiceClient.send(NotificationPatterns.UpdateNotification, notificationData).pipe(timeout(this.timeout)),
+      );
 
-      return handleServiceResponse(data)
+      return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, "Failed to update notification", Services.NOTIFICATION)
+      handleError(error, 'Failed to update notification', Services.NOTIFICATION);
     }
   }
 
   @Delete(':id')
-  async remove(@Param("id") id: string, @GetUser() user: User) {
+  async remove(@Param('id') id: string, @GetUser() user: User) {
     try {
-      await checkConnection(Services.NOTIFICATION, this.notificationServiceClient)
+      await checkConnection(Services.NOTIFICATION, this.notificationServiceClient);
 
-      const notificationData = { notificationId: id, senderId: user.id }
+      const notificationData = { notificationId: id, senderId: user.id };
 
-      const data: ServiceResponse = await lastValueFrom(this.notificationServiceClient.send(NotificationPatterns.RemoveNotification, notificationData).pipe(timeout(this.timeout)))
+      const data: ServiceResponse = await lastValueFrom(
+        this.notificationServiceClient.send(NotificationPatterns.RemoveNotification, notificationData).pipe(timeout(this.timeout)),
+      );
 
-      return handleServiceResponse(data)
+      return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, "Failed to remove notification", Services.NOTIFICATION)
+      handleError(error, 'Failed to remove notification', Services.NOTIFICATION);
     }
   }
-
 }
