@@ -77,6 +77,21 @@ services:
     volumes:
       - ./club/src:/app/src
     
+  ### Payment Service ###
+  payment_service:
+    container_name: payment_service
+    build:
+      context: ./payment
+      dockerfile: Dockerfile
+    networks:
+      - app
+    depends_on:
+      - rabbitmq
+    env_file:
+      - payment/.env
+    volumes:
+      - ./payment/src:/app/src
+    
   ### Redis Insight ###
   redisinsight:
     image: redis/redisinsight:latest
