@@ -18,7 +18,7 @@ export class WalletService {
         throw new ConflictException(WalletMessages.AlreadyExistsWallet);
       }
 
-      const wallet = await this.walletRepository.create(userId);
+      const wallet = await this.walletRepository.create({ userId });
 
       return ResponseUtil.success({ wallet }, WalletMessages.CreatedWalletSuccess, HttpStatus.CREATED);
     } catch (error) {
@@ -41,6 +41,7 @@ export class WalletService {
       const wallet = await this.walletRepository.findOne(walletId);
 
       if (!wallet) throw new NotFoundException(WalletMessages.NotFoundWallet)
+      //TODO: Add message
       if (wallet.isBlocked) throw new BadRequestException()
 
       return ResponseUtil.success({ wallet }, "", HttpStatus.OK)
@@ -56,7 +57,7 @@ export class WalletService {
       if (!wallet) throw new NotFoundException(WalletMessages.NotFoundWallet)
       if (wallet.isBlocked) throw new BadRequestException(WalletMessages.AlreadyBlockedWallet)
 
-      await this.walletRepository.block(walletId)
+      await this.walletRepository.update(wallet.userId, { isBlocked: true })
 
       return ResponseUtil.success({}, WalletMessages.BlockedWalletSuccess, HttpStatus.OK)
     } catch (error) {
@@ -70,11 +71,22 @@ export class WalletService {
 
       if (!wallet) throw new NotFoundException(WalletMessages.NotFoundWallet)
 
-      await this.walletRepository.unblock(walletId)
+      await this.walletRepository.update(wallet.userId, { isBlocked: false })
 
       return ResponseUtil.success({}, WalletMessages.UnBlockedWalletSuccess, HttpStatus.OK)
     } catch (error) {
       throw new RpcException(error)
     }
+  }
+
+  private async charge(userId: number, amount: number): Promise<void | never> {
+    //TODO: Add message
+    if (amount <= 0) throw new BadRequestException()
+
+    let wallet = await this.walletRepository.findOneByUser(userId)
+
+    if (!wallet) {
+      wallet = await this.walletRepository.create({ userId, balance: amount })
+    } else this.walletRepository.update(userId, { balance: wallet.balance += amount })
   }
 }

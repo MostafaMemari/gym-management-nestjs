@@ -35,6 +35,6 @@ model User {
 model Wallet {
   id Int @id() @default(autoincrement()) @db.Integer()
   userId Int @unique 
-  balance Decimal @default(100000)
+  balance Int @default(100000)
   isBlocked Boolean @default(false)
 }

@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma, Wallet } from '@prisma/client';
 
 @Injectable()
 export class WalletRepository {
   constructor(private readonly prisma: PrismaService) { }
 
-  create(userId: number) {
-    return this.prisma.wallet.create({ data: { userId } });
+  create(walletData: Prisma.WalletCreateInput) {
+    return this.prisma.wallet.create({ data: walletData });
   }
 
   findOne(walletId: number) {
@@ -22,11 +22,7 @@ export class WalletRepository {
     return this.prisma.wallet.findMany();
   }
 
-  block(walletId: number) {
-    return this.prisma.wallet.update({ where: { id: walletId }, data: { isBlocked: true } })
-  }
-
-  unblock(walletId: number) {
-    return this.prisma.wallet.update({ where: { id: walletId }, data: { isBlocked: false } })
+  update(userId: number, data: Partial<Wallet>) {
+    return this.prisma.wallet.update({ where: { userId }, data })
   }
 }
