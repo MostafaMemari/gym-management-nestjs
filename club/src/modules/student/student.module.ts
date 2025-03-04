@@ -9,12 +9,14 @@ import { StudentController } from './student.controller';
 import { StudentService } from './student.service';
 import { StudentSubscriber } from './subscribers/student.subscriber';
 
+import { BeltModule } from '../belt/belt.module';
 import { CacheModule } from '../cache/cache.module';
 import { ClubModule } from '../club/club.module';
 import { CoachModule } from '../coach/coach.module';
 import { AwsModule } from '../s3AWS/s3AWS.module';
 
 import { Services } from '../../common/enums/services.enum';
+import { AgeCategoryModule } from '../age_categories/age-category.module';
 
 @Module({
   imports: [
@@ -36,6 +38,8 @@ import { Services } from '../../common/enums/services.enum';
     AwsModule,
     CacheModule,
     ClubModule,
+    BeltModule,
+    AgeCategoryModule,
     forwardRef(() => CoachModule),
   ],
   controllers: [StudentController],

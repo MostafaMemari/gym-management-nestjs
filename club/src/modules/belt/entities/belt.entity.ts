@@ -1,8 +1,10 @@
-import { Entity, Column, ManyToMany, JoinTable } from 'typeorm';
+import { Entity, Column, ManyToMany, JoinTable, OneToMany } from 'typeorm';
 import { BeltName } from '../enums/belt.enum';
 import { AbstractEntity } from 'src/common/abstracts/abstract.entity';
+import { StudentEntity } from 'src/modules/student/entities/student.entity';
+import { EntityName } from 'src/common/enums/entity.enum';
 
-@Entity('belts')
+@Entity(EntityName.Belts)
 export class BeltEntity extends AbstractEntity {
   @Column({ type: 'enum', enum: BeltName, unique: true })
   name: BeltName;
@@ -26,4 +28,7 @@ export class BeltEntity extends AbstractEntity {
     inverseJoinColumn: { name: 'next_belt_id', referencedColumnName: 'id' },
   })
   nextBelt: BeltEntity[];
+
+  @OneToMany(() => StudentEntity, (student) => student.belt)
+  students: StudentEntity[];
 }

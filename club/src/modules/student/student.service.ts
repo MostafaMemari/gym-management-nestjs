@@ -13,6 +13,7 @@ import { ClubEntity } from '../club/entities/club.entity';
 import { CoachService } from '../coach/coach.service';
 import { CoachEntity } from '../coach/entities/coach.entity';
 import { AwsService } from '../s3AWS/s3AWS.service';
+import { BeltService } from '../belt/belt.service';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
 import { CacheKeys } from '../../common/enums/cache.enum';
@@ -34,6 +35,7 @@ export class StudentService {
     private readonly awsService: AwsService,
     private readonly cacheService: CacheService,
     private readonly clubService: ClubService,
+    private readonly beltService: BeltService,
     @Inject(forwardRef(() => CoachService)) private readonly coachService: CoachService,
   ) {}
 
@@ -46,22 +48,20 @@ export class StudentService {
   }
 
   async create(user: IUser, createStudentDto: ICreateStudent) {
-    const { clubId, coachId, national_code, gender, image } = createStudentDto;
+    const { clubId, coachId, beltId, national_code, gender, image } = createStudentDto;
     const userId: number = user.id;
 
     let imageKey: string | null = null;
     let studentUserId: number | null = null;
 
     try {
+      await this.beltService.validateBeltId(beltId);
       if (national_code) await this.validateUniqueNationalCode(national_code, userId);
-
       const { club, coach } = await this.validateClubAndCoachOwnership(userId, clubId, coachId);
       this.checkClubIdInCoachClubs(clubId, coach);
-
       this.validateStudentGender(gender, coach, club);
 
       imageKey = image ? await this.uploadStudentImage(image) : null;
-
       studentUserId = await this.createUserStudent();
 
       const student = await this.studentRepository.createStudentWithTransaction({
@@ -77,12 +77,14 @@ export class StudentService {
     }
   }
   async update(user: IUser, studentId: number, updateStudentDto: IUpdateStudent) {
-    const { clubId, coachId, national_code, gender, image } = updateStudentDto;
+    const { clubId, coachId, beltId, national_code, gender, image } = updateStudentDto;
     const userId: number = user.id;
 
     let imageKey: string | null = null;
 
     try {
+      await this.beltService.validateBeltId(beltId);
+
       let student = national_code ? await this.validateUniqueNationalCode(national_code, userId) : null;
       if (!student) student = await this.checkStudentOwnership(studentId, userId);
 
@@ -170,8 +172,10 @@ export class StudentService {
 
     await this.checkUserServiceConnection();
     const result = await lastValueFrom(
-      this.userServiceClientProxy.send(UserPatterns.CreateUserStudent, username).pipe(timeout(this.timeout)),
+      this.userServiceClientProxy.send(UserPatterns.CreateUserStudent, { username }).pipe(timeout(this.timeout)),
     );
+    console.log(username);
+    console.log(result);
 
     if (result?.error) throw result;
     return result?.data?.user?.id ?? null;

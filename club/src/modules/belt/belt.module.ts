@@ -28,6 +28,6 @@ import { CacheModule } from '../cache/cache.module';
   ],
   controllers: [BeltController],
   providers: [BeltService, BeltRepository, BeltSubscriber],
-  exports: [BeltService],
+  exports: [BeltService, BeltRepository],
 })
 export class BeltModule {}

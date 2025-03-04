@@ -68,6 +68,8 @@ export class StudentRepository extends Repository<StudentEntity> {
       .addSelect(['coach.id', 'coach.full_name'])
       .leftJoin('students.club', 'club')
       .addSelect(['club.id', 'club.name'])
+      .leftJoin('students.belt', 'belt')
+      .addSelect(['belt.id', 'belt.name'])
       .where('club.ownerId = :userId', { userId });
 
     if (filters?.search) {
@@ -90,6 +92,10 @@ export class StudentRepository extends Repository<StudentEntity> {
 
     if (filters?.coach) {
       queryBuilder.andWhere('students.coachId = :coach', { coach: filters?.coach });
+    }
+
+    if (filters?.belt) {
+      queryBuilder.andWhere('students.beltId = :belt', { belt: filters?.belt });
     }
 
     if (filters?.sort_by && validSortFields.includes(filters.sort_by)) {
