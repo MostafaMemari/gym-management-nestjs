@@ -27,18 +27,10 @@ export class WalletService {
   }
 
   findAll() {
-    return `This action returns all wallet`;
+    return this.walletRepository.findAll();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} wallet`;
-  }
-
-  update(id: number, updateWalletDto: any) {
-    return `This action updates a #${id} wallet`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} wallet`;
+  findOne({ walletId }: { walletId: number }) {
+    return this.walletRepository.findOne(walletId);
   }
 }

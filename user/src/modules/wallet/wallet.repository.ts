@@ -16,4 +16,8 @@ export class WalletRepository {
   findOneByUser(userId: number) {
     return this.prisma.wallet.findFirst({ where: { userId } });
   }
+
+  findAll() {
+    return this.prisma.wallet.findMany();
+  }
 }

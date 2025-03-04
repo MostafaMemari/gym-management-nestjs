@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { WalletService } from './wallet.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { WalletPatterns } from '../../common/enums/wallet.events';
@@ -13,23 +13,13 @@ export class WalletController {
     return this.walletService.create(data);
   }
 
-  @Get()
+  @MessagePattern(WalletPatterns.GetWallets)
   findAll() {
     return this.walletService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.walletService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateWalletDto: any) {
-    return this.walletService.update(+id, updateWalletDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.walletService.remove(+id);
+  @MessagePattern(WalletPatterns.GetOneWallet)
+  findOne(@Payload() data: { walletId: number }) {
+    return this.walletService.findOne(data);
   }
 }
