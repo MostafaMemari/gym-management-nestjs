@@ -15,6 +15,7 @@ import { NotificationController } from './controllers/notification.controller';
 import { BeltController } from './controllers/club/belt.controller';
 import { AgeCategoryController } from './controllers/club/age-category.controller';
 import { PaymentController } from './controllers/payment.controller';
+import { BeltExamController } from './controllers/club/belt-exams.controller';
 
 @Module({
   imports: [
@@ -108,6 +109,7 @@ import { PaymentController } from './controllers/payment.controller';
     ClubController,
     BeltController,
     AgeCategoryController,
+    BeltExamController,
   ],
   providers: [
     {

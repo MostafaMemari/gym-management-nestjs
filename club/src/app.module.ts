@@ -8,6 +8,7 @@ import { CoachModule } from './modules/coach/coach.module';
 import { StudentModule } from './modules/student/student.module';
 import { ClubModule } from './modules/club/club.module';
 import { BeltModule } from './modules/belt/belt.module';
+import { BeltExamModule } from './modules/belt-exam/belt-exam.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { BeltModule } from './modules/belt/belt.module';
     CoachModule,
     ClubModule,
     BeltModule,
+    BeltExamModule,
   ],
   controllers: [],
   providers: [],

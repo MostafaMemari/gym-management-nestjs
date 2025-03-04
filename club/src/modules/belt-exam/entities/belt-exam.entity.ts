@@ -10,11 +10,14 @@ export class BeltExamEntity extends AbstractEntity {
   @Column({ type: 'varchar' })
   name: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', nullable: true })
   description: string;
 
   @Column({ type: 'set', enum: Gender })
   genders: Gender[];
+
+  @Column({ type: 'simple-array' })
+  event_place: string[];
 
   @Column({ type: 'date' })
   event_date: Date;

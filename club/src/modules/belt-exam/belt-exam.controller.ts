@@ -19,6 +19,8 @@ export class BeltExamController {
   create(@Payload() data: { createBeltExamDto: ICreateBeltExam }) {
     const { createBeltExamDto } = data;
 
+    console.log(createBeltExamDto);
+
     return this.beltExamService.create(createBeltExamDto);
   }
   @MessagePattern(BeltExamPatterns.UpdateBeltExam)

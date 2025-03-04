@@ -23,10 +23,16 @@ export function ToArray<T = any>(enumType?: T): (target: any, key: string) => vo
     if (!value) return [];
 
     const normalize = (item: any) => {
-      if (typeof item === 'string') item = item.trim();
+      if (typeof item === 'string') {
+        item = item.trim();
+      }
 
       if (enumType && Object.values(enumType).includes(item)) {
         return item as T;
+      }
+
+      if (typeof item === 'string' && isNaN(Number(item))) {
+        return item;
       }
 
       const num = Number(item);
