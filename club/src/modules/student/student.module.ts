@@ -9,6 +9,7 @@ import { StudentController } from './student.controller';
 import { StudentService } from './student.service';
 import { StudentSubscriber } from './subscribers/student.subscriber';
 
+import { BeltModule } from '../belt/belt.module';
 import { CacheModule } from '../cache/cache.module';
 import { ClubModule } from '../club/club.module';
 import { CoachModule } from '../coach/coach.module';
@@ -36,6 +37,7 @@ import { Services } from '../../common/enums/services.enum';
     AwsModule,
     CacheModule,
     ClubModule,
+    BeltModule,
     forwardRef(() => CoachModule),
   ],
   controllers: [StudentController],

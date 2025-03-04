@@ -83,20 +83,26 @@ export class CreateStudentDto {
   @ApiPropertyOptional({ type: String, example: '' })
   expire_image_date?: Date;
 
-  @Transform(({ value }) => parseInt(value, 10))
+  @IsNotEmpty()
   @IsInt()
   @IsPositive()
-  @IsNotEmpty()
   @Transform(({ value }) => parseInt(value, 10))
   @ApiProperty({ type: 'integer', required: true, example: '' })
   coachId: string;
 
+  @IsNotEmpty()
   @IsInt()
   @IsPositive()
-  @IsNotEmpty()
   @Transform(({ value }) => parseInt(value, 10))
   @ApiProperty({ type: 'integer', required: true, example: '' })
   clubId: string;
+
+  @IsOptional()
+  @IsInt()
+  @IsPositive()
+  @Transform(({ value }) => parseInt(value, 10))
+  @ApiPropertyOptional({ type: 'integer', required: true, example: '' })
+  beltId: string;
 }
 
 export class UpdateStudentDto extends PartialType(CreateStudentDto) {}
@@ -132,6 +138,11 @@ export class QueryStudentDto {
   @IsString()
   @ApiPropertyOptional({ type: 'string', example: '' })
   club: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({ type: 'string', example: '' })
+  belt: string;
 
   @IsOptional()
   @IsEnum(SortBy, { message: 'sort_by must be one of "birth_date", "sports_insurance_date", "expire_image_date", "created_at", or "updated_at"' })

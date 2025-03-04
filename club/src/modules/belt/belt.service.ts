@@ -106,7 +106,7 @@ export class BeltService {
 
   async validateBeltId(beltId: number): Promise<BeltEntity> {
     const belt = await this.beltRepository.findOneBy({ id: beltId });
-    if (!belt) throw new NotFoundException(BeltMessages.BeltNotBelongToUser);
+    if (!belt) throw new NotFoundException(BeltMessages.NotFoundBelt);
     return belt;
   }
 

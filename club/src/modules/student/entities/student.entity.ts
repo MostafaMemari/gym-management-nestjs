@@ -6,6 +6,7 @@ import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
 import { ClubEntity } from '../../../modules/club/entities/club.entity';
+import { BeltEntity } from 'src/modules/belt/entities/belt.entity';
 
 @Entity(EntityName.Students)
 @Index(['full_name', 'national_code'])
@@ -55,6 +56,9 @@ export class StudentEntity extends AbstractEntity {
   @Column({ type: 'integer', nullable: true })
   clubId: number;
 
+  @Column({ type: 'integer', nullable: true })
+  beltId: number;
+
   @ManyToOne(() => CoachEntity, (coach) => coach.students, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn()
   coach: CoachEntity;
@@ -62,4 +66,8 @@ export class StudentEntity extends AbstractEntity {
   @ManyToOne(() => ClubEntity, (club) => club.students, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn()
   club: ClubEntity;
+
+  @ManyToOne(() => BeltEntity, (belt) => belt.students, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn()
+  belt: BeltEntity;
 }
