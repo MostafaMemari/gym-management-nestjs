@@ -16,7 +16,7 @@ import { CoachModule } from '../coach/coach.module';
 import { AwsModule } from '../s3AWS/s3AWS.module';
 
 import { Services } from '../../common/enums/services.enum';
-import { AgeCategoryModule } from '../age_categories/age-category.module';
+import { AgeCategoryModule } from '../age-category/age-category.module';
 
 @Module({
   imports: [

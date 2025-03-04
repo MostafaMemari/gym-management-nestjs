@@ -6,7 +6,7 @@ import { AgeCategoryName } from 'src/common/enums/age-category.enum';
 export class CreateAgeCategoryDto {
   @IsNotEmpty()
   @IsEnum(AgeCategoryName)
-  @ApiProperty({ example: AgeCategoryName.ADULT, enum: AgeCategoryName })
+  @ApiProperty({ example: AgeCategoryName.CADET, enum: AgeCategoryName })
   name: AgeCategoryName;
 
   @IsNotEmpty()

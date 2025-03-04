@@ -4,7 +4,8 @@ import { StudentEntity } from '../entities/student.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { ISeachStudentQuery } from '../interfaces/student.interface';
 import { StudentMessages } from '../enums/student.message';
-import { Gender } from 'src/common/enums/gender.enum';
+import { Gender } from '../../../common/enums/gender.enum';
+import { AgeCategoryEntity } from '../../../modules/age-category/entities/age-category.entity';
 
 @Injectable()
 export class StudentRepository extends Repository<StudentEntity> {
@@ -110,10 +111,18 @@ export class StudentRepository extends Repository<StudentEntity> {
       queryBuilder.orderBy('students.updated_at', 'DESC');
     }
 
-    return queryBuilder
-      .skip((page - 1) * take)
-      .take(take)
-      .getManyAndCount();
+    return (
+      queryBuilder
+        // .leftJoinAndMapMany(
+        //   'students.age_category',
+        //   AgeCategoryEntity,
+        //   'ageCategories',
+        //   'students.birth_date BETWEEN ageCategories.start_date AND ageCategories.end_date',
+        // )
+        // .skip((page - 1) * take)
+        .take(take)
+        .getManyAndCount()
+    );
   }
 
   async findByIdAndOwner(studentId: number, userId: number): Promise<StudentEntity> {
@@ -150,6 +159,22 @@ export class StudentRepository extends Repository<StudentEntity> {
   async existsByCoachIdAndCoachGender(coachId: number, gender: Gender): Promise<boolean> {
     const studentExists = await this.findOne({ where: { coachId, gender } });
     return !!studentExists;
+  }
+
+  async findStudentWithRelations(studentId: number): Promise<StudentEntity> {
+    const student = await this.createQueryBuilder(EntityName.Students)
+      .where('students.id = :studentId', { studentId })
+      .leftJoinAndSelect('students.club', 'club')
+      .leftJoinAndSelect('students.coach', 'coach')
+      .leftJoinAndSelect('students.belt', 'belt')
+      .leftJoinAndMapMany(
+        'students.age_category',
+        AgeCategoryEntity,
+        'ageCategories',
+        'students.birth_date BETWEEN ageCategories.start_date AND ageCategories.end_date',
+      )
+      .getOne();
+    return student;
   }
 }
 
