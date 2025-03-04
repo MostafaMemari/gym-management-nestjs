@@ -123,4 +123,4 @@ import { WalletController } from './controllers/user/wallet.controller';
     UserController,
   ],
 })
-export class GatewayModule { }
+export class GatewayModule {}

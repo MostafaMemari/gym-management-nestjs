@@ -20,7 +20,7 @@ import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 @ApiTags('User')
 @AuthDecorator()
 export class UserController {
-  constructor(@Inject(Services.USER) private readonly userServiceClient: ClientProxy) { }
+  constructor(@Inject(Services.USER) private readonly userServiceClient: ClientProxy) {}
 
   @Roles(Role.SUPER_ADMIN)
   @Get()
