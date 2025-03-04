@@ -13,6 +13,7 @@ import { ClubController } from './controllers/club/club.controller';
 import { RbacController } from './controllers/auth/rbac.controller';
 import { NotificationController } from './controllers/notification.controller';
 import { BeltController } from './controllers/club/belt.controller';
+import { AgeCategoryController } from './controllers/club/age-category.controller';
 
 @Module({
   imports: [
@@ -89,6 +90,7 @@ import { BeltController } from './controllers/club/belt.controller';
     CoachController,
     ClubController,
     BeltController,
+    AgeCategoryController,
   ],
   providers: [
     {
