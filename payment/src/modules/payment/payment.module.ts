@@ -3,9 +3,10 @@ import { PaymentController } from './payment.controller';
 import { PaymentService } from './payment.service';
 import { ConfigModule } from '@nestjs/config';
 import envConfig from '../../configs/env.config';
+import { HttpApiModule } from '../http/http.module';
 
 @Module({
-  imports: [ConfigModule.forRoot(envConfig())],
+  imports: [ConfigModule.forRoot(envConfig()),HttpApiModule],
   controllers: [PaymentController],
   providers: [PaymentService],
 })

@@ -6,7 +6,7 @@ export class PaymentDto {
   @IsNumber()
   @IsPositive()
   @ApiProperty({
-    type: 'string',
+    type: 'number',
     required: true,
     nullable: false,
     minimum: 2000,

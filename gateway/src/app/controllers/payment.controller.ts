@@ -1,4 +1,4 @@
-import { Body, Controller, Inject, Post } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Post, Query } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { Services } from '../../common/enums/services.enum';
@@ -37,5 +37,30 @@ export class PaymentController {
     } catch (error) {
       handleError(error, 'Failed to get gateway url', Services.PAYMENT);
     }
+  }
+
+  @Get('verify')
+  @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
+  async verifyPayment(@Query('Authority') authority: string, @Query('Status') status: string) {
+    try {
+      await checkConnection(Services.PAYMENT, this.paymentServiceClient);
+
+      const verifyData = {
+        authority,
+        status,
+        frontendUrl: 'http://localhost:4000/payment/success',
+      };
+
+      const data = await lastValueFrom(this.paymentServiceClient.send(PaymentPatterns.VerifyPayment, verifyData).pipe(timeout(this.timeout)));
+
+      return handleServiceResponse(data);
+    } catch (error) {
+      handleError(error, 'Failed to verify payment', Services.PAYMENT);
+    }
+  }
+
+  @Get('success')
+  successResponse() {
+    return 'payment successfully';
   }
 }
