@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Param, Post } from '@nestjs/common';
+import { Controller, Get, Inject, Param, ParseIntPipe, Post, Put } from '@nestjs/common';
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { Roles } from '../../../common/decorators/role.decorator';
 import { Role } from '../../../common/enums/role.enum';
@@ -63,6 +63,38 @@ export class WalletController {
       return handleServiceResponse(data);
     } catch (error) {
       handleError(error, 'Failed to get wallet', Services.USER);
+    }
+  }
+
+  @Put('block/:id')
+  @Roles(Role.SUPER_ADMIN)
+  async block(@Param('id', ParseIntPipe) id: number) {
+    try {
+      await checkConnection(Services.USER, this.userServiceClient);
+
+      const walletData = { walletId: id };
+
+      const data = await lastValueFrom(this.userServiceClient.send(WalletPatterns.BlockWallet, walletData).pipe(timeout(this.timeout)));
+
+      return handleServiceResponse(data);
+    } catch (error) {
+      handleError(error, 'Failed to block wallet', Services.USER);
+    }
+  }
+
+  @Put('block/:id')
+  @Roles(Role.SUPER_ADMIN)
+  async unblock(@Param('id', ParseIntPipe) id: number) {
+    try {
+      await checkConnection(Services.USER, this.userServiceClient);
+
+      const walletData = { walletId: id };
+
+      const data = await lastValueFrom(this.userServiceClient.send(WalletPatterns.UnblockWallet, walletData).pipe(timeout(this.timeout)));
+
+      return handleServiceResponse(data);
+    } catch (error) {
+      handleError(error, 'Failed to unblock wallet', Services.USER);
     }
   }
 }
