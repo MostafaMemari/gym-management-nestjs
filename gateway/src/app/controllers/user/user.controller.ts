@@ -1,26 +1,26 @@
 import { BadRequestException, Body, Controller, Delete, Get, HttpStatus, Inject, Param, ParseIntPipe, Put, Query } from '@nestjs/common';
-import { Services } from '../../common/enums/services.enum';
+import { Services } from '../../../common/enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
-import { UserPatterns } from '../../common/enums/user.events';
-import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
-import { PaginationDto, SearchDto } from '../../common/dtos/shared.dto';
-import { handleError, handleServiceResponse } from '../../common/utils/handleError.utils';
-import { AuthDecorator } from '../../common/decorators/auth.decorator';
-import { checkConnection } from '../../common/utils/checkConnection.utils';
-import { Roles } from '../../common/decorators/role.decorator';
-import { Role } from '../../common/enums/role.enum';
-import { GetUser } from '../../common/decorators/get-user.decorator';
-import { UpdateUserDto } from '../../common/dtos/user.dto';
-import { User } from '../../common/interfaces/user.interface';
-import { SwaggerConsumes } from '../../common/enums/swagger-consumes.enum';
+import { UserPatterns } from '../../../common/enums/user.events';
+import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
+import { PaginationDto, SearchDto } from '../../../common/dtos/shared.dto';
+import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
+import { AuthDecorator } from '../../../common/decorators/auth.decorator';
+import { checkConnection } from '../../../common/utils/checkConnection.utils';
+import { Roles } from '../../../common/decorators/role.decorator';
+import { Role } from '../../../common/enums/role.enum';
+import { GetUser } from '../../../common/decorators/get-user.decorator';
+import { UpdateUserDto } from '../../../common/dtos/user.dto';
+import { User } from '../../../common/interfaces/user.interface';
+import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 
 @Controller('user')
 @ApiTags('User')
 @AuthDecorator()
 export class UserController {
-  constructor(@Inject(Services.USER) private readonly userServiceClient: ClientProxy) {}
+  constructor(@Inject(Services.USER) private readonly userServiceClient: ClientProxy) { }
 
   @Roles(Role.SUPER_ADMIN)
   @Get()
