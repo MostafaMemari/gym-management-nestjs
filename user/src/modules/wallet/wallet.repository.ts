@@ -1,17 +1,19 @@
-import { PrismaService } from "../prisma/prisma.service";
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 
+@Injectable()
 export class WalletRepository {
-    constructor(private readonly prismaService: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
-    create(userId: number) {
-        return this.prismaService.wallet.create({ data: { userId } })
-    }
+  create(userId: number) {
+    return this.prisma.wallet.create({ data: { userId } });
+  }
 
-    findOne(walletId: number) {
-        return this.prismaService.wallet.findFirst({ where: { id: walletId } })
-    }
+  findOne(walletId: number) {
+    return this.prisma.wallet.findFirst({ where: { id: walletId } });
+  }
 
-    findOneByUser(userId: number) {
-        return this.prismaService.wallet.findFirst({ where: { userId } })
-    }
+  findOneByUser(userId: number) {
+    return this.prisma.wallet.findFirst({ where: { userId } });
+  }
 }

@@ -6,7 +6,7 @@ import { IGetUserByArgs } from '../../common/interfaces/user.interface';
 
 @Injectable()
 export class UserRepository {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   findAll(args: Prisma.UserFindManyArgs = {}): Promise<User[]> {
     return this.prisma.user.findMany({ ...args });

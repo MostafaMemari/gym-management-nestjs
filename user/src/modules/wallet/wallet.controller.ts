@@ -6,7 +6,7 @@ import { ICreateWallet } from '../../common/interfaces/wallet.interface';
 
 @Controller()
 export class WalletController {
-  constructor(private readonly walletService: WalletService) { }
+  constructor(private readonly walletService: WalletService) {}
 
   @MessagePattern(WalletPatterns.CreateWallet)
   create(@Payload() data: ICreateWallet) {

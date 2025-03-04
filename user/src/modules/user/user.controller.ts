@@ -15,7 +15,7 @@ import {
 
 @Controller()
 export class UserController {
-  constructor(private readonly userService: UserService) { }
+  constructor(private readonly userService: UserService) {}
 
   @MessagePattern(UserPatterns.CheckConnection)
   checkConnection() {

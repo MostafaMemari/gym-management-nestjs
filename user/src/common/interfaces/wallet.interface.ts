@@ -1,3 +1,3 @@
 export interface ICreateWallet {
-    userId: number
+  userId: number;
 }

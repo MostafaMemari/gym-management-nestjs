@@ -8,22 +8,21 @@ import { WalletMessages } from '../../common/enums/wallet.messages';
 
 @Injectable()
 export class WalletService {
-  constructor(private readonly walletRepository: WalletRepository) { }
-
+  constructor(private readonly walletRepository: WalletRepository) {}
 
   async create({ userId }: ICreateWallet): Promise<ServiceResponse> {
     try {
-      const existingWallet = await this.walletRepository.findOneByUser(userId)
+      const existingWallet = await this.walletRepository.findOneByUser(userId);
 
       if (existingWallet) {
-        throw new ConflictException(WalletMessages.AlreadyExistsWallet)
+        throw new ConflictException(WalletMessages.AlreadyExistsWallet);
       }
 
-      const wallet = await this.walletRepository.create(userId)
+      const wallet = await this.walletRepository.create(userId);
 
-      return ResponseUtil.success({ wallet }, WalletMessages.CreatedWalletSuccess, HttpStatus.CREATED)
+      return ResponseUtil.success({ wallet }, WalletMessages.CreatedWalletSuccess, HttpStatus.CREATED);
     } catch (error) {
-      throw new RpcException(error)
+      throw new RpcException(error);
     }
   }
 

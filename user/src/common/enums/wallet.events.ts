@@ -1,3 +1,3 @@
 export enum WalletPatterns {
-    CreateWallet = "create_wallet",
+  CreateWallet = 'create_wallet',
 }

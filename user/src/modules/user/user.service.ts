@@ -6,7 +6,7 @@ import { IChangeRole, IGetUserByArgs, IPagination, ISearchUser, IUpdateUser } fr
 import { pagination } from '../../common/utils/pagination.utils';
 import { RpcException } from '@nestjs/microservices';
 import { UserRepository } from './user.repository';
-import { CacheService } from '../../cache/cache.service';
+import { CacheService } from '../cache/cache.service';
 import { CacheKeys } from '../../common/enums/cache.enum';
 import { ResponseUtil } from '../../common/utils/response.utils';
 
@@ -15,7 +15,7 @@ export class UserService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly cache: CacheService,
-  ) { }
+  ) {}
 
   async create(userDto: Prisma.UserCreateInput): Promise<ServiceResponse> {
     try {

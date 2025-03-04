@@ -1,7 +1,7 @@
 import { forwardRef, Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { CacheService } from '../cache/cache.service';
-import { CachePatterns } from '../common/enums/cache.enum';
+import { CachePatterns } from '../../common/enums/cache.enum';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
