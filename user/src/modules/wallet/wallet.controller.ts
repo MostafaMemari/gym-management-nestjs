@@ -6,7 +6,7 @@ import { ICreateWallet } from '../../common/interfaces/wallet.interface';
 
 @Controller()
 export class WalletController {
-  constructor(private readonly walletService: WalletService) {}
+  constructor(private readonly walletService: WalletService) { }
 
   @MessagePattern(WalletPatterns.CreateWallet)
   create(@Payload() data: ICreateWallet) {
@@ -21,5 +21,15 @@ export class WalletController {
   @MessagePattern(WalletPatterns.GetOneWallet)
   findOne(@Payload() data: { walletId: number }) {
     return this.walletService.findOne(data);
+  }
+
+  @MessagePattern(WalletPatterns.BlockWallet)
+  block(@Payload() data: { walletId: number }) {
+    return this.walletService.block(data);
+  }
+
+  @MessagePattern(WalletPatterns.UnblockWallet)
+  unblock(@Payload() data: { walletId: number }) {
+    return this.walletService.unblock(data);
   }
 }
