@@ -48,7 +48,7 @@ export class PaymentController {
       const verifyData = {
         authority,
         status,
-        frontendUrl: 'http://localhost:4000/payment/success',
+        frontendUrl: 'http://localhost:4000/api/v1/payment/success',
       };
 
       const data = await lastValueFrom(this.paymentServiceClient.send(PaymentPatterns.VerifyPayment, verifyData).pipe(timeout(this.timeout)));
