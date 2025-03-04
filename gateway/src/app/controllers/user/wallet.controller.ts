@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, ParseIntPipe, Post, Put } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { Roles } from '../../../common/decorators/role.decorator';
 import { Role } from '../../../common/enums/role.enum';
@@ -33,6 +33,7 @@ export class WalletController {
       const paymentData = {
         ...paymentDto,
         user,
+        callbackUrl: `${process.env.BASE_URL}/wallet/verify`
       };
 
       const data = await lastValueFrom(this.paymentServiceClient.send(PaymentPatterns.CreateGatewayUrl, paymentData).pipe(timeout(this.timeout)));
@@ -40,6 +41,29 @@ export class WalletController {
       return handleServiceResponse(data);
     } catch (error) {
       handleError(error, "Failed to pay", Services.USER)
+    }
+  }
+
+  @Get("verify")
+  async verify(
+    @Query("Authority") authority: string,
+    @Query("Status") status: string
+  ) {
+    try {
+      await checkConnection(Services.USER, this.userServiceClient)
+      await checkConnection(Services.PAYMENT, this.paymentServiceClient)
+
+      const verifyData = {
+        authority,
+        status,
+        frontendUrl: process.env.PAYMENT_FRONTEND_URL,
+      };
+
+      const data = await lastValueFrom(this.paymentServiceClient.send(PaymentPatterns.VerifyPayment, verifyData).pipe(timeout(this.timeout)));
+
+      return handleServiceResponse(data);
+    } catch (error) {
+      handleError(error, "Failed to verify pay", Services.USER)
     }
   }
 
