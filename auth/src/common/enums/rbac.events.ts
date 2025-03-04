@@ -1,3 +1,3 @@
 export enum RbacPatterns {
-    AssignRole = "assign_role"
+  AssignRole = 'assign_role',
 }

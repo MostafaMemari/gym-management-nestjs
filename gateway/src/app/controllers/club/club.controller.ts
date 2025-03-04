@@ -5,14 +5,16 @@ import { lastValueFrom, timeout } from 'rxjs';
 
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { GetUser } from '../../../common/decorators/get-user.decorator';
-import { CreateClubDto, UpdateClubDto } from '../../../common/dtos/club-service/club.dto';
-import { PaginationDto, QueryClubDto } from '../../../common/dtos/shared.dto';
+import { CreateClubDto, QueryClubDto, UpdateClubDto } from '../../../common/dtos/club-service/club.dto';
+import { PaginationDto } from '../../../common/dtos/shared.dto';
 import { User } from '../../../common/interfaces/user.interface';
 import { ClubPatterns } from '../../../common/enums/club.events';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
+import { Roles } from '../../../common/decorators/role.decorator';
+import { Role } from '../../../common/enums/role.enum';
 
 @Controller('clubs')
 @ApiTags('clubs')
@@ -29,6 +31,7 @@ export class ClubController {
   }
 
   @Post()
+  @Roles(Role.ADMIN_CLUB)
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
   async create(@GetUser() user: User, @Body() createClubDto: CreateClubDto) {
     try {
@@ -50,6 +53,7 @@ export class ClubController {
   }
 
   @Put(':id')
+  @Roles(Role.ADMIN_CLUB)
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
   async update(@GetUser() user: User, @Param('id', ParseIntPipe) id: number, @Body() updateClubDto: UpdateClubDto) {
     try {
@@ -65,17 +69,20 @@ export class ClubController {
   }
 
   @Get()
-  async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto, @Query() queryDto: QueryClubDto): Promise<any> {
+  @Roles(Role.ADMIN_CLUB)
+  async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto, @Query() queryClubDto: QueryClubDto): Promise<any> {
     try {
       await this.checkConnection();
+
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(ClubPatterns.GetClubs, { user, queryDto, paginationDto }).pipe(timeout(5000)),
+        this.clubServiceClient.send(ClubPatterns.GetClubs, { user, queryClubDto, paginationDto }).pipe(timeout(5000)),
       );
       return handleServiceResponse(data);
     } catch (error) {}
   }
 
   @Get(':id')
+  @Roles(Role.ADMIN_CLUB)
   async findOne(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
       await this.checkConnection();
@@ -89,6 +96,7 @@ export class ClubController {
   }
 
   @Delete(':id')
+  @Roles(Role.ADMIN_CLUB)
   async remove(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
       await this.checkConnection();

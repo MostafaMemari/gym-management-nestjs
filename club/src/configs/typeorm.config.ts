@@ -1,5 +1,8 @@
 import { TypeOrmModuleOptions, TypeOrmModuleAsyncOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ClubSubscriber } from '../modules/club/subscribers/club.subscriber';
+import { CoachSubscriber } from '../modules/coach/subscribers/coach.subscriber';
+import { StudentSubscriber } from '../modules/student/subscribers/student.subscriber';
 
 export const typeOrmConfig = (configService: ConfigService): TypeOrmModuleOptions => {
   const isProduction = configService.get<string>('NODE_ENV') === 'production';

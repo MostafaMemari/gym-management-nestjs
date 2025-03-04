@@ -90,6 +90,7 @@ export class ForgetPasswordDto {
 export class RestPasswordDto {
   @IsString()
   @IsNotEmpty()
+  @IsPhoneNumber('IR')
   @ApiProperty({
     type: 'string',
     nullable: false,
@@ -115,4 +116,23 @@ export class RestPasswordDto {
     nullable: false,
   })
   newPassword: string;
+}
+
+export class VerifyOtpDto {
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    type: 'string',
+    nullable: false,
+  })
+  otp: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsPhoneNumber('IR')
+  @ApiProperty({
+    type: 'string',
+    nullable: false,
+  })
+  mobile: string;
 }

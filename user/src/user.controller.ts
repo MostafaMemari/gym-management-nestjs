@@ -2,11 +2,20 @@ import { Controller } from '@nestjs/common';
 import { UserService } from './user.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { UserPatterns } from './common/enums/user.events';
-import { IChangeRole, ICreateUser, ICreateUserCoach, ICreateUserStudent, IPagination, ISearchUser, IUpdateUser } from './common/interfaces/user.interface';
+import {
+  IChangeRole,
+  ICreateUser,
+  ICreateUserCoach,
+  ICreateUserStudent,
+  IGetUserByArgs,
+  IPagination,
+  ISearchUser,
+  IUpdateUser,
+} from './common/interfaces/user.interface';
 
 @Controller()
 export class UserController {
-  constructor(private readonly userService: UserService) { }
+  constructor(private readonly userService: UserService) {}
 
   @MessagePattern(UserPatterns.CheckConnection)
   checkConnection() {
@@ -55,7 +64,7 @@ export class UserController {
 
   @MessagePattern(UserPatterns.GetUserByMobile)
   getByMobile(@Payload() data: { mobile: string }) {
-    return this.userService.findByMobile(data)
+    return this.userService.findByMobile(data);
   }
 
   @MessagePattern(UserPatterns.SearchUser)
@@ -65,11 +74,16 @@ export class UserController {
 
   @MessagePattern(UserPatterns.ChangeUserRole)
   changeRole(@Payload() data: IChangeRole) {
-    return this.userService.changeRole(data)
+    return this.userService.changeRole(data);
   }
 
   @MessagePattern(UserPatterns.UpdateUser)
   update(@Payload() data: IUpdateUser) {
-    return this.userService.update(data)
+    return this.userService.update(data);
+  }
+
+  @MessagePattern(UserPatterns.GetUserByArgs)
+  getOneByArgs(@Payload() data: IGetUserByArgs) {
+    return this.userService.findByArgs(data);
   }
 }

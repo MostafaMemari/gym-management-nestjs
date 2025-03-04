@@ -34,21 +34,12 @@ export class CoachEntity extends AbstractEntity {
   @Column({ type: 'varchar', length: 15, nullable: true })
   phone_number?: string;
 
-  @Column({ type: 'varchar', length: 12, nullable: true })
-  landline_number?: string;
-
-  @Column({ type: 'varchar', length: 200, nullable: true })
-  address?: string;
-
-  @Column({ type: 'date' })
+  @Column({ type: 'timestamp', nullable: true })
   birth_date: Date;
-
-  @Column({ type: 'date', nullable: true })
-  sports_insurance_date?: Date;
 
   @OneToMany(() => StudentEntity, (student) => student.coach)
   students: StudentEntity[];
 
-  @ManyToMany(() => ClubEntity, (club) => club.coaches)
+  @ManyToMany(() => ClubEntity, (club) => club.coaches, { onDelete: 'CASCADE' })
   clubs: ClubEntity[];
 }

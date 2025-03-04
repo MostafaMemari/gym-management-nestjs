@@ -4,6 +4,7 @@ import { StudentEntity } from '../entities/student.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { ISeachStudentQuery } from '../interfaces/student.interface';
 import { StudentMessages } from '../enums/student.message';
+import { Gender } from 'src/common/enums/gender.enum';
 
 @Injectable()
 export class StudentRepository extends Repository<StudentEntity> {
@@ -109,22 +110,18 @@ export class StudentRepository extends Repository<StudentEntity> {
       .getManyAndCount();
   }
 
-  async findStudentByOwner(studentId: number, userId: number): Promise<StudentEntity> {
-    const student = await this.createQueryBuilder('students')
+  async findByIdAndOwner(studentId: number, userId: number): Promise<StudentEntity> {
+    const student = await this.createQueryBuilder(EntityName.Students)
       .where('students.id = :studentId', { studentId })
       .leftJoinAndSelect('students.club', 'club')
       .andWhere('club.ownerId = :userId', { userId })
       .getOne();
 
-    if (!student) {
-      throw new BadRequestException(StudentMessages.StudentNotFound);
-    }
-
     return student;
   }
 
   async findStudentByNationalCode(nationalCode: string, userId: number): Promise<StudentEntity> {
-    const student = await this.createQueryBuilder('students')
+    const student = await this.createQueryBuilder(EntityName.Students)
       .where('students.national_code = :nationalCode', { nationalCode })
       .leftJoinAndSelect('students.club', 'club')
       .andWhere('club.ownerId = :userId', { userId })
@@ -133,17 +130,20 @@ export class StudentRepository extends Repository<StudentEntity> {
     return student;
   }
 
-  async countStudentsInClubs(clubIds: number[], coachId: number): Promise<{ clubId: number; clubName: string }[]> {
-    const studentsInClubs = await this.createQueryBuilder('students')
-      .innerJoin('students.club', 'club')
-      .innerJoin('students.coach', 'coach')
-      .where('club.id IN (:...clubIds)', { clubIds })
-      .andWhere('coach.id = :coachId', { coachId })
-      .select(['club.id AS clubId', 'club.name AS clubName'])
-      .groupBy('club.id, club.name')
-      .getRawMany();
+  async existsStudentsInClub(clubId: number, coachId: number): Promise<boolean> {
+    const count = await this.count({ where: { club: { id: clubId }, coach: { id: coachId } } });
 
-    return studentsInClubs;
+    return count > 0;
+  }
+
+  async existsByCoachId(coachId: number): Promise<boolean> {
+    const count = await this.count({ where: { coach: { id: coachId } } });
+    return count > 0;
+  }
+
+  async existsByCoachIdAndCoachGender(coachId: number, gender: Gender): Promise<boolean> {
+    const studentExists = await this.findOne({ where: { coachId, gender } });
+    return !!studentExists;
   }
 }
 

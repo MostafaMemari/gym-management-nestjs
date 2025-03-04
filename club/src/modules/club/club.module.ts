@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 
@@ -7,6 +7,9 @@ import { ClubEntity } from './entities/club.entity';
 import { ClubController } from './club.controller';
 import { ClubService } from './club.service';
 import { CacheModule } from '../cache/cache.module';
+import { CoachModule } from '../coach/coach.module';
+import { ClubRepository } from './repositories/club.repository';
+import { ClubSubscriber } from './subscribers/club.subscriber';
 
 @Module({
   imports: [
@@ -22,9 +25,10 @@ import { CacheModule } from '../cache/cache.module';
     ]),
     TypeOrmModule.forFeature([ClubEntity]),
     CacheModule,
+    forwardRef(() => CoachModule),
   ],
   controllers: [ClubController],
-  providers: [ClubService],
+  providers: [ClubService, ClubRepository, ClubSubscriber],
   exports: [ClubService],
 })
 export class ClubModule {}

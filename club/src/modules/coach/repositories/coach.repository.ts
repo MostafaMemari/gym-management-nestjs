@@ -1,9 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { CoachEntity } from '../entities/coach.entity';
-import { CoachMessages } from '../enums/coach.message';
 import { ISeachCoachQuery } from '../interfaces/coach.interface';
-import { EntityName } from 'src/common/enums/entity.enum';
+import { EntityName } from '../../../common/enums/entity.enum';
+import { Gender } from '../../../common/enums/gender.enum';
 
 @Injectable()
 export class CoachRepository extends Repository<CoachEntity> {
@@ -97,15 +97,6 @@ export class CoachRepository extends Repository<CoachEntity> {
     }
   }
 
-  async findCoachWithRelations(coachId: number): Promise<CoachEntity | null> {
-    return await this.createQueryBuilder(EntityName.Coaches)
-      .leftJoin('coach.coaches', 'student')
-      .leftJoin('coach.clubs', 'club')
-      .where('coach.id = :coachId', { coachId })
-      .andWhere('(student.id IS NOT NULL OR club.id IS NOT NULL)')
-      .getOne();
-  }
-
   async findCoachByNationalCode(nationalCode: string, userId: number): Promise<CoachEntity | null> {
     return await this.createQueryBuilder(EntityName.Coaches)
       .where('coaches.national_code = :nationalCode', { nationalCode })
@@ -114,12 +105,26 @@ export class CoachRepository extends Repository<CoachEntity> {
       .getOne();
   }
 
-  async findCoachByIdAndOwner(coachId: number, userId: number): Promise<CoachEntity | null> {
+  async findByIdAndOwner(coachId: number, userId: number): Promise<CoachEntity | null> {
     return await this.createQueryBuilder(EntityName.Coaches)
       .where('coaches.id = :coachId', { coachId })
       .leftJoinAndSelect('coaches.clubs', 'club')
       .andWhere('club.ownerId = :userId', { userId })
       .getOne();
+  }
+
+  async existsCoachByGenderInClub(clubId: number, gender: Gender): Promise<boolean> {
+    const count = await this.createQueryBuilder(EntityName.Coaches)
+      .innerJoin('coaches.clubs', 'club')
+      .where('club.id = :clubId', { clubId })
+      .andWhere('coaches.gender = :gender', { gender })
+      .getCount();
+
+    return count > 0;
+  }
+  async existsCoachByClubId(clubId: number): Promise<boolean> {
+    const count = await this.count({ where: { clubs: { id: clubId } } });
+    return count > 0;
   }
 }
 

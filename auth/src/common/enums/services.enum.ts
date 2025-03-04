@@ -1,3 +1,3 @@
 export enum Services {
-    USER = "USER_SERVICE"
+  USER = 'USER_SERVICE',
 }

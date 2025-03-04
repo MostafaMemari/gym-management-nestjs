@@ -7,6 +7,6 @@ import { AuthModule } from '../auth/auth.module';
 @Module({
   imports: [forwardRef(() => AuthModule)],
   controllers: [RbacController],
-  providers: [RbacService , AuthService],
+  providers: [RbacService, AuthService],
 })
-export class RbacModule { }
+export class RbacModule {}

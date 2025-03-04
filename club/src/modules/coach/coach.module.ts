@@ -34,7 +34,7 @@ import { StudentModule } from '../student/student.module';
     TypeOrmModule.forFeature([CoachEntity]),
     CacheModule,
     AwsModule,
-    ClubModule,
+    forwardRef(() => ClubModule),
     forwardRef(() => StudentModule),
   ],
   controllers: [CoachController],

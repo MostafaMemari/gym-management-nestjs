@@ -1,9 +1,9 @@
 export enum CachePatterns {
-    UsersList = "users*",
-    SearchUsersList = "search_users*"
+  UsersList = 'users*',
+  SearchUsersList = 'search_users*',
 }
 
 export enum CacheKeys {
-    Users = "users",
-    SearchUsers = "search_users"
+  Users = 'users',
+  SearchUsers = 'search_users',
 }

@@ -25,3 +25,11 @@ export enum ClubPatterns {
   RemoveClub = 'remove_club',
   checkExistClubById = 'check_exist_club_by_id',
 }
+export enum BeltPatterns {
+  CheckConnection = 'check_connection',
+  CreateBelt = 'create_belt',
+  UpdateBelt = 'update_belt',
+  GetBelts = 'get_belts',
+  GetBelt = 'get_belt',
+  RemoveBelt = 'remove_belt',
+}

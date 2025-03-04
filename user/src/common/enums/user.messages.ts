@@ -6,5 +6,5 @@ export enum UserMessages {
   RemovedUserSuccess = 'User removed successfully',
   ChangedRoleSuccess = 'Role changed successfully',
   AlreadyAssignedRole = 'This role is already assigned to the user.',
-  UpdatedUser = "User Updated successfully."
+  UpdatedUser = 'User Updated successfully.',
 }

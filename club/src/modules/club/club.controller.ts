@@ -1,7 +1,7 @@
 import { Controller, UsePipes } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
-import { ICreateClub, IUpdateClub, IQuery } from './interfaces/club.interface';
+import { ICreateClub, IUpdateClub, ISearchClubQuery } from './interfaces/club.interface';
 import { ClubPatterns } from './patterns/club.pattern';
 import { ClubService } from './club.service';
 import { IUser } from '../../common/interfaces/user.interface';
@@ -26,14 +26,14 @@ export class ClubController {
   update(@Payload() data: { user: IUser; clubId: number; updateClubDto: IUpdateClub }) {
     const { user, clubId, updateClubDto } = data;
 
-    return this.clubService.updateById(user, clubId, updateClubDto);
+    return this.clubService.update(user, clubId, updateClubDto);
   }
 
   @MessagePattern(ClubPatterns.GetClubs)
-  findAll(@Payload() data: { user: IUser; queryDto: IQuery; paginationDto: IPagination }) {
-    const { user, queryDto, paginationDto } = data;
+  findAll(@Payload() data: { user: IUser; queryClubDto: ISearchClubQuery; paginationDto: IPagination }) {
+    const { user, queryClubDto, paginationDto } = data;
 
-    return this.clubService.getAll(user, { queryDto, paginationDto });
+    return this.clubService.getAll(user, { queryClubDto, paginationDto });
   }
 
   @MessagePattern(ClubPatterns.GetClub)
@@ -48,10 +48,5 @@ export class ClubController {
     const { user, clubId } = data;
 
     return this.clubService.removeById(user, clubId);
-  }
-
-  @MessagePattern(ClubPatterns.checkExistClubById)
-  checkExistById(@Payload() data: { user: IUser; clubId: number }) {
-    return this.clubService.findClubById(data.clubId, {});
   }
 }

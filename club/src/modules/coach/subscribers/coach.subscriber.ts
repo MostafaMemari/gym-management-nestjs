@@ -1,12 +1,16 @@
-import { EntitySubscriberInterface, EventSubscriber, InsertEvent, RemoveEvent, UpdateEvent } from 'typeorm';
+import { Injectable } from '@nestjs/common';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource, EntitySubscriberInterface, InsertEvent, UpdateEvent, RemoveEvent } from 'typeorm';
 
-import { CacheService } from '../../cache/cache.service';
-import { CachePatterns } from '../../../common/enums/cache.enum';
+import { CacheService } from '../../../modules/cache/cache.service';
+import { CachePatterns } from 'src/common/enums/cache.enum';
 import { CoachEntity } from '../entities/coach.entity';
 
-@EventSubscriber()
+@Injectable()
 export class CoachSubscriber implements EntitySubscriberInterface<CoachEntity> {
-  constructor(private readonly cacheService: CacheService) {}
+  constructor(@InjectDataSource() private readonly dataSource: DataSource, private readonly cacheService: CacheService) {
+    this.dataSource.subscribers.push(this);
+  }
 
   listenTo() {
     return CoachEntity;
@@ -25,6 +29,6 @@ export class CoachSubscriber implements EntitySubscriberInterface<CoachEntity> {
   }
 
   private async clearCache() {
-    await this.cacheService.delByPattern(CachePatterns.STUDENT_LIST);
+    await this.cacheService.delByPattern(CachePatterns.COACH_LIST);
   }
 }

@@ -8,12 +8,8 @@ import { UserRepository } from './user.repository';
 import { CacheModule } from './cache/cache.module';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot(envConfig()),
-    CacheModule,
-    PrismaModule,
-  ],
+  imports: [ConfigModule.forRoot(envConfig()), CacheModule, PrismaModule],
   controllers: [UserController],
-  providers: [UserService, UserRepository]
+  providers: [UserService, UserRepository],
 })
-export class UserModule { }
+export class UserModule {}

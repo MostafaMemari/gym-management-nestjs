@@ -7,6 +7,7 @@ import { typeOrmConfigAsync } from './configs/typeorm.config';
 import { CoachModule } from './modules/coach/coach.module';
 import { StudentModule } from './modules/student/student.module';
 import { ClubModule } from './modules/club/club.module';
+import { BeltModule } from './modules/belt/belt.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { ClubModule } from './modules/club/club.module';
     StudentModule,
     CoachModule,
     ClubModule,
+    BeltModule,
   ],
   controllers: [],
   providers: [],
