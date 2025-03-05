@@ -52,11 +52,11 @@ export class ZarinpalService {
   }
 
   async verifyRequest(data: IVerifyRequest) {
-    const { amount, authority, merchant_id } = data;
+    const { authority, merchant_id } = data;
 
     const options = {
       authority,
-      amount: amount * 10,
+      amount: 10000, //TODO: Make amount
       merchant_id,
     };
 
@@ -73,6 +73,6 @@ export class ZarinpalService {
         ),
     );
 
-    return result;
+    return { code: result.data.code, message: result.data.message };
   }
 }

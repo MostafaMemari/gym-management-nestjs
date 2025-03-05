@@ -28,12 +28,16 @@ export class PaymentService {
     }
   }
 
-  verify(data: IVerifyPayment) {
+  async verify(data: IVerifyPayment) {
     try {
       const { authority, status } = data;
       let redirectUrl = `${data.frontendUrl}?status=success`;
 
-      if (status !== 'OK') redirectUrl = `${data.frontendUrl}?status=failed`;
+      const merchantId = process.env.ZARINPAL_MERCHANT_ID
+
+      const { code } = await this.zarinpalService.verifyRequest({ authority, merchant_id: merchantId })
+
+      if (status !== 'OK' || code !== 100) redirectUrl = `${data.frontendUrl}?status=failed`;
 
       return {
         data: { redirectUrl },
