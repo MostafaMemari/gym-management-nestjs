@@ -25,7 +25,7 @@ export class WalletController {
   constructor(
     @Inject(Services.USER) private readonly userServiceClient: ClientProxy,
     @Inject(Services.PAYMENT) private readonly paymentServiceClient: ClientProxy,
-  ) {}
+  ) { }
 
   @Post('pay')
   @Roles(Role.ADMIN_CLUB)
@@ -95,8 +95,23 @@ export class WalletController {
     }
   }
 
-  @Get(':id')
+  @Get("my-wallet")
   @Roles(Role.ADMIN_CLUB)
+  async getMyWallet(@GetUser() user: User) {
+    try {
+      await checkConnection(Services.USER, this.userServiceClient);
+
+      const data = await lastValueFrom(this.userServiceClient.send(WalletPatterns.GetWalletByUser, { userId: user.id }).pipe(timeout(this.timeout)));
+
+      return handleServiceResponse(data);
+    } catch (error) {
+      handleError(error, 'Failed to get my wallet', Services.USER);
+    }
+  }
+
+
+  @Get(':id')
+  @Roles(Role.SUPER_ADMIN)
   async findOne(@Param('id', ParseIntPipe) id: number) {
     try {
       await checkConnection(Services.USER, this.userServiceClient);
