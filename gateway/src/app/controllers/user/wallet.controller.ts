@@ -22,10 +22,12 @@ import { ServiceResponse } from 'src/common/interfaces/serviceResponse.interface
 export class WalletController {
   private timeout = 5000;
 
-  constructor(@Inject(Services.USER) private readonly userServiceClient: ClientProxy,
-    @Inject(Services.PAYMENT) private readonly paymentServiceClient: ClientProxy) { }
+  constructor(
+    @Inject(Services.USER) private readonly userServiceClient: ClientProxy,
+    @Inject(Services.PAYMENT) private readonly paymentServiceClient: ClientProxy,
+  ) {}
 
-  @Post("pay")
+  @Post('pay')
   @Roles(Role.ADMIN_CLUB)
   @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
   async pay(@Body() paymentDto: PaymentDto, @GetUser() user: User) {
@@ -43,20 +45,16 @@ export class WalletController {
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, "Failed to pay", Services.USER)
+      handleError(error, 'Failed to pay', Services.USER);
     }
   }
 
-  @Get("verify")
+  @Get('verify')
   @Roles(Role.ADMIN_CLUB)
-  async verify(
-    @Query("Authority") authority: string,
-    @Query("Status") status: string,
-    @GetUser() user: User
-  ) {
+  async verify(@Query('Authority') authority: string, @Query('Status') status: string, @GetUser() user: User) {
     try {
-      await checkConnection(Services.USER, this.userServiceClient)
-      await checkConnection(Services.PAYMENT, this.paymentServiceClient)
+      await checkConnection(Services.USER, this.userServiceClient);
+      await checkConnection(Services.PAYMENT, this.paymentServiceClient);
 
       const verifyData = {
         authority,
@@ -64,18 +62,22 @@ export class WalletController {
         frontendUrl: process.env.PAYMENT_FRONTEND_URL,
       };
 
-      const data: ServiceResponse = await lastValueFrom(this.paymentServiceClient.send(PaymentPatterns.VerifyPayment, verifyData).pipe(timeout(this.timeout)));
+      const data: ServiceResponse = await lastValueFrom(
+        this.paymentServiceClient.send(PaymentPatterns.VerifyPayment, verifyData).pipe(timeout(this.timeout)),
+      );
 
-      const { data: paymentData } = handleServiceResponse(data)
-      const walletData = { userId: user.id, amount: paymentData.payment.amount / 10 }
+      const { data: paymentData } = handleServiceResponse(data);
+      const walletData = { userId: user.id, amount: paymentData.payment.amount / 10 };
 
-      const result: ServiceResponse = await lastValueFrom(this.userServiceClient.send(WalletPatterns.ChargeWallet, walletData).pipe(timeout(this.timeout)))
+      const result: ServiceResponse = await lastValueFrom(
+        this.userServiceClient.send(WalletPatterns.ChargeWallet, walletData).pipe(timeout(this.timeout)),
+      );
 
-      result.data.payment = paymentData.payment
+      result.data.payment = paymentData.payment;
 
       return handleServiceResponse(result);
     } catch (error) {
-      handleError(error, "Failed to verify pay", Services.USER)
+      handleError(error, 'Failed to verify pay', Services.USER);
     }
   }
 
@@ -95,7 +97,7 @@ export class WalletController {
 
   @Get(':id')
   @Roles(Role.ADMIN_CLUB)
-  async findOne(@Param('id') id: number) {
+  async findOne(@Param('id', ParseIntPipe) id: number) {
     try {
       await checkConnection(Services.USER, this.userServiceClient);
 

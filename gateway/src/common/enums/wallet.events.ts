@@ -3,5 +3,5 @@ export enum WalletPatterns {
   GetOneWallet = 'get_one_wallet',
   BlockWallet = 'block_wallet',
   UnblockWallet = 'unblock_wallet',
-  ChargeWallet = "charge_wallet"
+  ChargeWallet = 'charge_wallet',
 }
