@@ -134,7 +134,7 @@ export class AuthService {
       const { mobile, otp } = verifyOtpDto;
 
       await this.enforceOtpRequestLimit(`${OtpKeys.RequestsOtp}${mobile}`);
-      await this.validateOtp(mobile, otp);
+      await this.validateOtp(`${OtpKeys.SignupOtp}${mobile}`, otp);
       const userData = await this.getPendingUser(mobile);
       const result = await this.createUser(userData);
 
