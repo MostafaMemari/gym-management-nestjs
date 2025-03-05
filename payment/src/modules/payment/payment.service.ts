@@ -6,7 +6,7 @@ import { IVerifyPayment } from 'src/common/interfaces/payment.interface';
 
 @Injectable()
 export class PaymentService {
-  constructor(private readonly zarinpalService: ZarinpalService) {}
+  constructor(private readonly zarinpalService: ZarinpalService) { }
 
   async getGatewayUrl(data: ISendRequest) {
     try {
@@ -14,6 +14,7 @@ export class PaymentService {
         amount: data.amount,
         description: data.description,
         user: data?.user,
+        callbackUrl: data.callbackUrl
       });
 
       return {

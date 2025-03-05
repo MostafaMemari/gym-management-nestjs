@@ -1,6 +1,7 @@
 export interface ISendRequest {
   amount: number;
   description: string;
+  callbackUrl?: string
   user?: {
     email?: string;
     mobile?: string;
