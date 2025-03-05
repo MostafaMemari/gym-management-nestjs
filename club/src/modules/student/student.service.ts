@@ -187,6 +187,15 @@ export class StudentService {
       throw new RpcException(error);
     }
   }
+  async getCountStudentsByOwner(ownerId: number) {
+    try {
+      const count = await this.studentRepository.countStudentsByOwner(ownerId);
+
+      return ResponseUtil.success({ count }, StudentMessages.GetCountStudentSuccessfully);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
 
   private async checkStudentOwnership(studentId: number, userId: number): Promise<StudentEntity> {
     const student = await this.studentRepository.findByIdAndOwner(studentId, userId);

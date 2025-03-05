@@ -101,7 +101,7 @@ export class ClubService {
 
       if (removedClub.affected) return ResponseUtil.success(club, ClubMessages.RemovedClubSuccess);
 
-      return ResponseUtil.success('club', ClubMessages.RemovedClubSuccess);
+      return ResponseUtil.success(removedClub, ClubMessages.RemovedClubSuccess);
     } catch (error) {
       throw new RpcException(error);
     }

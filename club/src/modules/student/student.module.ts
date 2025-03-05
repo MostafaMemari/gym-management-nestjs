@@ -17,6 +17,8 @@ import { AwsModule } from '../s3AWS/s3AWS.module';
 
 import { Services } from '../../common/enums/services.enum';
 import { AgeCategoryModule } from '../age-category/age-category.module';
+import { StudentBeltRepository } from './repositories/student-belt.repository';
+import { StudentBeltEntity } from './entities/student-belt.entity';
 
 @Module({
   imports: [
@@ -34,7 +36,7 @@ import { AgeCategoryModule } from '../age-category/age-category.module';
         }),
       },
     ]),
-    TypeOrmModule.forFeature([StudentEntity]),
+    TypeOrmModule.forFeature([StudentEntity, StudentBeltEntity]),
     AwsModule,
     CacheModule,
     ClubModule,
@@ -43,7 +45,7 @@ import { AgeCategoryModule } from '../age-category/age-category.module';
     forwardRef(() => CoachModule),
   ],
   controllers: [StudentController],
-  providers: [StudentService, StudentRepository, StudentSubscriber],
+  providers: [StudentService, StudentRepository, StudentBeltRepository, StudentSubscriber],
   exports: [StudentService, StudentRepository],
 })
 export class StudentModule {}

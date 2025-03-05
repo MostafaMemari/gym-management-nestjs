@@ -10,7 +10,7 @@ export class StudentBeltEntity extends AbstractEntity {
   @JoinColumn()
   student: StudentEntity;
 
-  @ManyToOne(() => BeltEntity, { nullable: false, onDelete: 'SET NULL' })
+  @ManyToOne(() => BeltEntity, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn()
   belt: BeltEntity;
 

@@ -57,8 +57,8 @@ export class StudentRepository extends Repository<StudentEntity> {
       .addSelect(['coach.id', 'coach.full_name'])
       .leftJoin('students.club', 'club')
       .addSelect(['club.id', 'club.name'])
-      .leftJoin('students.belt', 'belt')
-      .addSelect(['belt.id', 'belt.name'])
+      // .leftJoin('students.belt', 'belt')
+      // .addSelect(['belt.id', 'belt.name'])
       .where('club.ownerId = :userId', { userId });
 
     if (filters?.search) {
@@ -73,7 +73,7 @@ export class StudentRepository extends Repository<StudentEntity> {
 
     if (filters?.club) queryBuilder.andWhere('students.clubId = :club', { club: filters?.club });
     if (filters?.coach) queryBuilder.andWhere('students.coachId = :coach', { coach: filters?.coach });
-    if (filters?.belt) queryBuilder.andWhere('students.beltId = :belt', { belt: filters?.belt });
+    // if (filters?.belt) queryBuilder.andWhere('students.beltId = :belt', { belt: filters?.belt });
 
     if (filters?.sort_by && validSortFields.includes(filters.sort_by)) {
       queryBuilder.orderBy(`students.${filters.sort_by}`, filters.sort_order === 'asc' ? 'ASC' : 'DESC');
@@ -95,7 +95,7 @@ export class StudentRepository extends Repository<StudentEntity> {
         //   'ageCategories',
         //   'students.birth_date BETWEEN ageCategories.start_date AND ageCategories.end_date',
         // )
-        // .skip((page - 1) * take)
+        .skip((page - 1) * take)
         .take(take)
         .getManyAndCount()
     );
@@ -149,15 +149,22 @@ export class StudentRepository extends Repository<StudentEntity> {
         'ageCategories',
         'students.birth_date BETWEEN ageCategories.start_date AND ageCategories.end_date',
       )
-      .leftJoinAndMapMany(
-        'students.belt_exams',
-        BeltExamEntity,
-        'beltExams',
-        'EXISTS (SELECT 1 FROM belt_exams_belts be WHERE be.beltExamEntityId = beltExams.id AND be.beltEntityId = students.beltId)',
-      )
+      // .leftJoinAndMapMany(
+      //   'students.belt_exams',
+      //   BeltExamEntity,
+      //   'beltExams',
+      //   'EXISTS (SELECT 1 FROM belt_exams_belts be WHERE be.beltExamEntityId = beltExams.id AND be.beltEntityId = students.beltId)',
+      // )
       .getOne();
 
     return student;
+  }
+
+  async countStudentsByOwner(ownerId: number): Promise<number> {
+    return this.createQueryBuilder(EntityName.Students)
+      .leftJoin('students.club', 'club')
+      .where('club.ownerId = :ownerId', { ownerId })
+      .getCount();
   }
 }
 

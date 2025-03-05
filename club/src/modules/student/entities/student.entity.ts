@@ -57,9 +57,6 @@ export class StudentEntity extends AbstractEntity {
   @Column({ type: 'integer', nullable: true })
   clubId: number;
 
-  @Column({ type: 'integer', nullable: true })
-  beltId: number;
-
   @ManyToOne(() => CoachEntity, (coach) => coach.students, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn()
   coach: CoachEntity;
