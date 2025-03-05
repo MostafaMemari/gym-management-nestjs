@@ -24,6 +24,7 @@ model Transaction {
   userId Int
   amount Int
   status TransactionStatus @default(PENDING)
-  refId String?
+  authority String
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
 }

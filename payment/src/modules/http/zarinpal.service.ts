@@ -8,7 +8,7 @@ import { catchError, lastValueFrom, map } from 'rxjs';
 export class ZarinpalService {
   constructor(private readonly httpService: HttpService) { }
 
-  async sendRequest(data: ISendRequest) {
+  async sendRequest(data: Omit<ISendRequest, "userId">) {
     try {
       const { amount, description, user, callbackUrl } = data;
 
