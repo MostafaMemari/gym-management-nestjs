@@ -1,5 +1,6 @@
 export enum EntityName {
   Students = 'students',
+  StudentBelts = 'student_belts',
   Coaches = 'coaches',
   Clubs = 'clubs',
   Belts = 'belts',

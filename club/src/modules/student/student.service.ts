@@ -25,6 +25,7 @@ import { ServiceResponse } from '../../common/interfaces/serviceResponse.interfa
 import { IUser } from '../../common/interfaces/user.interface';
 import { isGenderAllowed, isSameGender } from '../../common/utils/functions';
 import { ResponseUtil } from '../../common/utils/response';
+import { DataSource } from 'typeorm';
 
 @Injectable()
 export class StudentService {
@@ -36,6 +37,7 @@ export class StudentService {
     private readonly cacheService: CacheService,
     private readonly clubService: ClubService,
     private readonly beltService: BeltService,
+    private readonly dataSource: DataSource,
     @Inject(forwardRef(() => CoachService)) private readonly coachService: CoachService,
   ) {}
 
@@ -48,6 +50,10 @@ export class StudentService {
   }
 
   async create(user: IUser, createStudentDto: ICreateStudent) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
     const { clubId, coachId, beltId, national_code, gender, image } = createStudentDto;
     const userId: number = user.id;
 
@@ -55,7 +61,6 @@ export class StudentService {
     let studentUserId: number | null = null;
 
     try {
-      await this.beltService.validateBeltId(beltId);
       if (national_code) await this.validateUniqueNationalCode(national_code, userId);
       const { club, coach } = await this.validateClubAndCoachOwnership(userId, clubId, coachId);
       this.checkClubIdInCoachClubs(clubId, coach);
@@ -64,11 +69,23 @@ export class StudentService {
       imageKey = image ? await this.uploadStudentImage(image) : null;
       studentUserId = await this.createUserStudent();
 
-      const student = await this.studentRepository.createStudentWithTransaction({
-        ...createStudentDto,
-        image_url: imageKey,
-        userId: studentUserId,
-      });
+      const student = await this.studentRepository.createStudent(
+        {
+          ...createStudentDto,
+          image_url: imageKey,
+          userId: studentUserId,
+        },
+        queryRunner,
+      );
+
+      // if (beltId) {
+      //   const belt = await this.beltService.validateBeltId(beltId);
+
+      //   const nextBelt = await this.beltRepository.getNextBelt(beltId);
+      //   const nextBeltDate = this.calculateNextBeltDate(belt_date);
+
+      //   await this.studentBeltRepository.createStudentBelt(student, belt, belt_date, nextBelt, nextBeltDate, queryRunner);
+      // }
 
       return ResponseUtil.success({ ...student, userId: studentUserId }, StudentMessages.CreatedStudent);
     } catch (error) {

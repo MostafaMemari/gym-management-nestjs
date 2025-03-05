@@ -28,7 +28,4 @@ export class BeltEntity extends AbstractEntity {
     inverseJoinColumn: { name: 'next_belt_id', referencedColumnName: 'id' },
   })
   nextBelt: BeltEntity[];
-
-  @OneToMany(() => StudentEntity, (student) => student.belt)
-  students: StudentEntity[];
 }
