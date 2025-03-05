@@ -14,6 +14,7 @@ import { SwaggerConsumes } from 'src/common/enums/swagger-consumes.enum';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { User } from 'src/common/interfaces/user.interface';
 import { PaymentPatterns } from 'src/common/enums/payment.events';
+import { ServiceResponse } from 'src/common/interfaces/serviceResponse.interface';
 
 @Controller('wallet')
 @ApiTags('wallet')
@@ -25,6 +26,7 @@ export class WalletController {
     @Inject(Services.PAYMENT) private readonly paymentServiceClient: ClientProxy) { }
 
   @Post("pay")
+  @Roles(Role.ADMIN_CLUB)
   @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
   async pay(@Body() paymentDto: PaymentDto, @GetUser() user: User) {
     try {
@@ -33,7 +35,8 @@ export class WalletController {
       const paymentData = {
         ...paymentDto,
         user,
-        callbackUrl: `${process.env.BASE_URL}/wallet/verify`
+        callbackUrl: `${process.env.BASE_URL}/wallet/verify`,
+        userId: user.id,
       };
 
       const data = await lastValueFrom(this.paymentServiceClient.send(PaymentPatterns.CreateGatewayUrl, paymentData).pipe(timeout(this.timeout)));
@@ -45,9 +48,11 @@ export class WalletController {
   }
 
   @Get("verify")
+  @Roles(Role.ADMIN_CLUB)
   async verify(
     @Query("Authority") authority: string,
-    @Query("Status") status: string
+    @Query("Status") status: string,
+    @GetUser() user: User
   ) {
     try {
       await checkConnection(Services.USER, this.userServiceClient)
@@ -59,9 +64,16 @@ export class WalletController {
         frontendUrl: process.env.PAYMENT_FRONTEND_URL,
       };
 
-      const data = await lastValueFrom(this.paymentServiceClient.send(PaymentPatterns.VerifyPayment, verifyData).pipe(timeout(this.timeout)));
+      const data: ServiceResponse = await lastValueFrom(this.paymentServiceClient.send(PaymentPatterns.VerifyPayment, verifyData).pipe(timeout(this.timeout)));
 
-      return handleServiceResponse(data);
+      const { data: paymentData } = handleServiceResponse(data)
+      const walletData = { userId: user.id, amount: paymentData.payment.amount / 10 }
+
+      const result: ServiceResponse = await lastValueFrom(this.userServiceClient.send(WalletPatterns.ChargeWallet, walletData).pipe(timeout(this.timeout)))
+
+      result.data.payment = paymentData.payment
+
+      return handleServiceResponse(result);
     } catch (error) {
       handleError(error, "Failed to verify pay", Services.USER)
     }
