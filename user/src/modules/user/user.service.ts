@@ -1,14 +1,14 @@
 import { ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Role, User } from '@prisma/client';
-import { ServiceResponse } from './common/interfaces/serviceResponse.interface';
-import { UserMessages } from './common/enums/user.messages';
-import { IChangeRole, IGetUserByArgs, IPagination, ISearchUser, IUpdateUser } from './common/interfaces/user.interface';
-import { pagination } from './common/utils/pagination.utils';
+import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
+import { UserMessages } from '../../common/enums/user.messages';
+import { IChangeRole, IGetUserByArgs, IPagination, ISearchUser, IUpdateUser } from '../../common/interfaces/user.interface';
+import { pagination } from '../../common/utils/pagination.utils';
 import { RpcException } from '@nestjs/microservices';
 import { UserRepository } from './user.repository';
-import { CacheService } from './cache/cache.service';
-import { CacheKeys } from './common/enums/cache.enum';
-import { ResponseUtil } from './common/utils/response.utils';
+import { CacheService } from '../cache/cache.service';
+import { CacheKeys } from '../../common/enums/cache.enum';
+import { ResponseUtil } from '../../common/utils/response.utils';
 
 @Injectable()
 export class UserService {

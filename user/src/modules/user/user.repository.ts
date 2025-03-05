@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from './prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { Prisma, Role, User } from '@prisma/client';
-import { UserMessages } from './common/enums/user.messages';
-import { IGetUserByArgs } from './common/interfaces/user.interface';
+import { UserMessages } from '../../common/enums/user.messages';
+import { IGetUserByArgs } from '../../common/interfaces/user.interface';
 
 @Injectable()
 export class UserRepository {

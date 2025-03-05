@@ -13,28 +13,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  STUDENT
-  ADMIN_CLUB
-  COACH
-  SUPER_ADMIN
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
 }
 
-model User {
-  id Int @id() @default(autoincrement()) @db.Integer()
-  username String @db.VarChar(100) @unique
-  role Role @default(STUDENT)
-  mobile String?
-  password String? 
-  lastPasswordChange DateTime? 
+model Transaction {
+  id Int @id @default(autoincrement())
+  userId Int
+  amount Int
+  status TransactionStatus @default(PENDING)
+  authority String
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
-}
-
-
-model Wallet {
-  id Int @id() @default(autoincrement()) @db.Integer()
-  userId Int @unique 
-  balance Int @default(100000)
-  isBlocked Boolean @default(false)
 }

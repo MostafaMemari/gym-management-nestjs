@@ -3,7 +3,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { AuthController } from './controllers/auth/auth.controller';
 import { ConfigModule } from '@nestjs/config';
 import envConfig from '../configs/env.config';
-import { UserController } from './controllers/user.controller';
+import { UserController } from './controllers/user/user.controller';
 import { APP_PIPE } from '@nestjs/core';
 import { StudentController } from './controllers/club/student.controller';
 import { Services } from '../common/enums/services.enum';
@@ -16,6 +16,7 @@ import { BeltController } from './controllers/club/belt.controller';
 import { AgeCategoryController } from './controllers/club/age-category.controller';
 import { PaymentController } from './controllers/payment.controller';
 import { BeltExamController } from './controllers/club/belt-exams.controller';
+import { WalletController } from './controllers/user/wallet.controller';
 
 @Module({
   imports: [
@@ -102,6 +103,7 @@ import { BeltExamController } from './controllers/club/belt-exams.controller';
     AuthController,
     RbacController,
     UserController,
+    WalletController,
     PaymentController,
     NotificationController,
     StudentController,

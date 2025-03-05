@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { UserService } from './user.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { UserPatterns } from './common/enums/user.events';
+import { UserPatterns } from '../../common/enums/user.events';
 import {
   IChangeRole,
   ICreateUser,
@@ -11,7 +11,7 @@ import {
   IPagination,
   ISearchUser,
   IUpdateUser,
-} from './common/interfaces/user.interface';
+} from '../../common/interfaces/user.interface';
 
 @Controller()
 export class UserController {

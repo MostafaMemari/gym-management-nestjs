@@ -6,21 +6,21 @@ import { catchError, lastValueFrom, map } from 'rxjs';
 
 @Injectable()
 export class ZarinpalService {
-  constructor(private readonly httpService: HttpService) {}
+  constructor(private readonly httpService: HttpService) { }
 
-  async sendRequest(data: ISendRequest) {
+  async sendRequest(data: Omit<ISendRequest, "userId">) {
     try {
-      const { amount, description, user } = data;
+      const { amount, description, user, callbackUrl } = data;
 
       const options = {
         merchant_id: process.env.ZARINPAL_MERCHANT_ID,
-        amount: amount * 10,
+        amount: amount,
         description,
         metadata: {
           email: user?.email ?? 'example@gmail.com',
           mobile: user?.mobile ?? '',
         },
-        callback_url: process.env.ZARINPAL_CALLBACK_URL,
+        callback_url: callbackUrl ?? process.env.ZARINPAL_CALLBACK_URL,
       };
       const requestURL = process.env.ZARINPAL_REQUEST_URL;
 
@@ -52,11 +52,11 @@ export class ZarinpalService {
   }
 
   async verifyRequest(data: IVerifyRequest) {
-    const { amount, authority, merchant_id } = data;
+    const { authority, merchant_id, amount } = data;
 
     const options = {
       authority,
-      amount: amount * 10,
+      amount,
       merchant_id,
     };
 
@@ -68,11 +68,12 @@ export class ZarinpalService {
         .pipe(map((res) => res.data))
         .pipe(
           catchError((err) => {
-            throw new InternalServerErrorException('Zarinpal failed');
+            const errMessage = err?.response?.data?.errors?.message
+            throw new InternalServerErrorException(`Zarinpal failed ${errMessage || ""}`);
           }),
         ),
     );
 
-    return result;
+    return { code: result.data.code, message: result.data.message };
   }
 }
