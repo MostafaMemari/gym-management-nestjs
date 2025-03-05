@@ -22,4 +22,5 @@ export enum StudentMessages {
   CannotRemoveClubsInArray = 'Cannot remove clubs:',
   NotAssignedToClub = 'Coach is not assigned to the specified club:',
   CheckCoachAssignmentFailed = 'Failed to check if the coach is assigned to students',
+  GetCountStudentSuccessfully = 'get count students successfully',
 }

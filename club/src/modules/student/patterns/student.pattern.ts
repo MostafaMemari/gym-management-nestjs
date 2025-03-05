@@ -6,4 +6,5 @@ export enum StudentPatterns {
   GetStudent = 'get_student',
   RemoveUserStudent = 'remove_student',
   GetStudentByNationalCode = 'get_student_by_national_code',
+  getCountStudentsByOwner = 'get_count_student_by_owner',
 }

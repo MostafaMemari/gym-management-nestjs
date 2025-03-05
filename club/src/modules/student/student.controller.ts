@@ -59,4 +59,11 @@ export class StudentController {
 
     return this.studentService.getOneByNationalCode(nationalCode);
   }
+
+  @MessagePattern(StudentPatterns.getCountStudentsByOwner)
+  getCountStudentByOwner(@Payload() data: { userId: number }) {
+    const { userId } = data;
+
+    return this.studentService.getCountStudentsByOwner(userId);
+  }
 }

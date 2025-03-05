@@ -1,9 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { StudentEntity } from '../entities/student.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { ISeachStudentQuery } from '../interfaces/student.interface';
-import { StudentMessages } from '../enums/student.message';
 import { Gender } from '../../../common/enums/gender.enum';
 import { AgeCategoryEntity } from '../../../modules/age-category/entities/age-category.entity';
 import { BeltExamEntity } from 'src/modules/belt-exam/entities/belt-exam.entity';
@@ -14,21 +13,9 @@ export class StudentRepository extends Repository<StudentEntity> {
     super(StudentEntity, dataSource.createEntityManager());
   }
 
-  async createStudentWithTransaction(studentData: Partial<StudentEntity>) {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.startTransaction();
-
-    try {
-      const student = this.create(studentData);
-      await queryRunner.manager.save(student);
-      await queryRunner.commitTransaction();
-      return student;
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } finally {
-      await queryRunner.release();
-    }
+  async createStudent(data: Partial<StudentEntity>, queryRunner?: QueryRunner): Promise<StudentEntity> {
+    const student = this.create(data);
+    return queryRunner ? await queryRunner.manager.save(student) : await this.save(student);
   }
 
   async updateStudent(student: StudentEntity, updateData: Partial<StudentEntity>) {
@@ -70,35 +57,23 @@ export class StudentRepository extends Repository<StudentEntity> {
       .addSelect(['coach.id', 'coach.full_name'])
       .leftJoin('students.club', 'club')
       .addSelect(['club.id', 'club.name'])
-      .leftJoin('students.belt', 'belt')
-      .addSelect(['belt.id', 'belt.name'])
+      // .leftJoin('students.belt', 'belt')
+      // .addSelect(['belt.id', 'belt.name'])
       .where('club.ownerId = :userId', { userId });
 
     if (filters?.search) {
       queryBuilder.andWhere('(students.full_name LIKE :search OR students.national_code LIKE :search)', { search: `%${filters.search}%` });
     }
-    if (filters?.gender) {
-      queryBuilder.andWhere('students.gender = :gender', { gender: filters?.gender });
-    }
-    if (filters?.is_active !== undefined) {
-      queryBuilder.andWhere('students.is_active = :isActive', { isActive: filters?.is_active });
-    }
+    if (filters?.gender) queryBuilder.andWhere('students.gender = :gender', { gender: filters?.gender });
+    if (filters?.is_active !== undefined) queryBuilder.andWhere('students.is_active = :isActive', { isActive: filters?.is_active });
 
     if (filters?.phone_number) {
       queryBuilder.andWhere('students.phone_number LIKE :phoneNumber', { phoneNumber: `%${filters?.phone_number}%` });
     }
 
-    if (filters?.club) {
-      queryBuilder.andWhere('students.clubId = :club', { club: filters?.club });
-    }
-
-    if (filters?.coach) {
-      queryBuilder.andWhere('students.coachId = :coach', { coach: filters?.coach });
-    }
-
-    if (filters?.belt) {
-      queryBuilder.andWhere('students.beltId = :belt', { belt: filters?.belt });
-    }
+    if (filters?.club) queryBuilder.andWhere('students.clubId = :club', { club: filters?.club });
+    if (filters?.coach) queryBuilder.andWhere('students.coachId = :coach', { coach: filters?.coach });
+    // if (filters?.belt) queryBuilder.andWhere('students.beltId = :belt', { belt: filters?.belt });
 
     if (filters?.sort_by && validSortFields.includes(filters.sort_by)) {
       queryBuilder.orderBy(`students.${filters.sort_by}`, filters.sort_order === 'asc' ? 'ASC' : 'DESC');
@@ -120,7 +95,7 @@ export class StudentRepository extends Repository<StudentEntity> {
         //   'ageCategories',
         //   'students.birth_date BETWEEN ageCategories.start_date AND ageCategories.end_date',
         // )
-        // .skip((page - 1) * take)
+        .skip((page - 1) * take)
         .take(take)
         .getManyAndCount()
     );
@@ -174,15 +149,22 @@ export class StudentRepository extends Repository<StudentEntity> {
         'ageCategories',
         'students.birth_date BETWEEN ageCategories.start_date AND ageCategories.end_date',
       )
-      .leftJoinAndMapMany(
-        'students.belt_exams',
-        BeltExamEntity,
-        'beltExams',
-        'EXISTS (SELECT 1 FROM belt_exams_belts_belts be WHERE be.beltExamEntityId = beltExams.id AND be.beltEntityId = students.beltId)',
-      )
+      // .leftJoinAndMapMany(
+      //   'students.belt_exams',
+      //   BeltExamEntity,
+      //   'beltExams',
+      //   'EXISTS (SELECT 1 FROM belt_exams_belts be WHERE be.beltExamEntityId = beltExams.id AND be.beltEntityId = students.beltId)',
+      // )
       .getOne();
 
     return student;
+  }
+
+  async countStudentsByOwner(ownerId: number): Promise<number> {
+    return this.createQueryBuilder(EntityName.Students)
+      .leftJoin('students.club', 'club')
+      .where('club.ownerId = :ownerId', { ownerId })
+      .getCount();
   }
 }
 
