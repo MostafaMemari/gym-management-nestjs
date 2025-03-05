@@ -1,5 +1,5 @@
 import { forwardRef, Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Role } from '@prisma/client';
 import { CacheService } from '../cache/cache.service';
 import { CachePatterns } from '../../common/enums/cache.enum';
 
@@ -24,12 +24,27 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   useMiddleware(): void {
     this.$use(async (params, next) => {
-      const { action } = params;
+      const { action, model } = params;
 
       if (['create', 'update', 'delete'].includes(action)) {
         //* Clear user cache on create, update, or delete
         await this.cacheService.delByPattern(CachePatterns.UsersList);
         await this.cacheService.delByPattern(CachePatterns.SearchUsersList);
+      }
+
+      if (model == 'User' && action == 'update') {
+        const beforeUser = await this.user.findFirst({ where: { id: params.args.where.id } });
+        const wallet = await this.wallet.findFirst({ where: { userId: params.args.where.id } });
+
+        const result = await next(params);
+
+        if (wallet) return result;
+
+        if (beforeUser && result.role == Role.ADMIN_CLUB) {
+          await this.wallet.create({ data: { userId: beforeUser.id } });
+        }
+
+        return result;
       }
 
       return next(params);

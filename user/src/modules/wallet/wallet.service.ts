@@ -1,4 +1,4 @@
-import { BadRequestException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { IChargeWallet, IWithdrawWallet } from '../../common/interfaces/wallet.interface';
 import { WalletRepository } from './wallet.repository';
 import { RpcException } from '@nestjs/microservices';
@@ -40,7 +40,7 @@ export class WalletService {
 
       if (!wallet) throw new NotFoundException(WalletMessages.NotFoundWallet);
       //TODO: Add message
-      if (wallet.isBlocked) throw new BadRequestException();
+      if (wallet.isBlocked) throw new ForbiddenException();
 
       return ResponseUtil.success({ wallet }, '', HttpStatus.OK);
     } catch (error) {
@@ -102,7 +102,7 @@ export class WalletService {
       if (!wallet) throw new NotFoundException(WalletMessages.NotFoundWallet);
 
       //TODO: Add message
-      if (wallet.isBlocked) throw new BadRequestException();
+      if (wallet.isBlocked) throw new ForbiddenException();
       if (wallet.balance < withdrawDto.amount) throw new BadRequestException();
 
       const updatedWallet = await this.walletRepository.update(withdrawDto.userId, { balance: wallet.balance - withdrawDto.amount });
