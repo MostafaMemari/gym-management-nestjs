@@ -18,6 +18,11 @@ export class WalletController {
     return this.walletService.findOne(data);
   }
 
+  @MessagePattern(WalletPatterns.GetWalletByUser)
+  getWalletByUser(@Payload() data: { userId: number }) {
+    return this.walletService.findOneByUser(data);
+  }
+
   @MessagePattern(WalletPatterns.BlockWallet)
   block(@Payload() data: { walletId: number }) {
     return this.walletService.block(data);

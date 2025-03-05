@@ -34,6 +34,20 @@ export class WalletService {
     }
   }
 
+  async findOneByUser({ userId }: { userId: number }) {
+    try {
+      const wallet = await this.walletRepository.findOneByUser(userId);
+
+      if (!wallet) throw new NotFoundException(WalletMessages.NotFoundWallet);
+      //TODO: Add message
+      if (wallet.isBlocked) throw new BadRequestException();
+
+      return ResponseUtil.success({ wallet }, '', HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
   async block({ walletId }: { walletId: number }) {
     try {
       const wallet = await this.walletRepository.findOne(walletId);
