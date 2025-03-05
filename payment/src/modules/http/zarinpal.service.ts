@@ -68,7 +68,8 @@ export class ZarinpalService {
         .pipe(map((res) => res.data))
         .pipe(
           catchError((err) => {
-            throw new InternalServerErrorException('Zarinpal failed');
+            const errMessage = err?.response?.data?.errors?.message
+            throw new InternalServerErrorException(`Zarinpal failed ${errMessage || ""}`);
           }),
         ),
     );
