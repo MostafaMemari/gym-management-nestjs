@@ -13,13 +13,13 @@ export class PaymentService {
   async getGatewayUrl(data: ISendRequest) {
     try {
       const { authority, code, gatewayURL } = await this.zarinpalService.sendRequest({
-        amount: data.amount,
+        amount: data.amount * 10,
         description: data.description,
         user: data?.user,
         callbackUrl: data.callbackUrl
       });
 
-      await this.paymentRepository.create({ amount: data.amount, userId: data.userId, authority })
+      await this.paymentRepository.create({ amount: data.amount * 10, userId: data.userId, authority })
 
       return {
         data: { authority, code, gatewayURL },
@@ -48,7 +48,7 @@ export class PaymentService {
 
       const merchantId = process.env.ZARINPAL_MERCHANT_ID
 
-      const { code } = await this.zarinpalService.verifyRequest({ authority, merchant_id: merchantId })
+      const { code } = await this.zarinpalService.verifyRequest({ authority, merchant_id: merchantId, amount: payment.amount })
 
       if (status !== 'OK' || code !== 100) {
         payment = await this.paymentRepository.update(payment.id, { status: TransactionStatus.FAILED })

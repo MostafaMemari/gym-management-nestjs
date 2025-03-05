@@ -14,7 +14,7 @@ export class ZarinpalService {
 
       const options = {
         merchant_id: process.env.ZARINPAL_MERCHANT_ID,
-        amount: amount * 10,
+        amount: amount,
         description,
         metadata: {
           email: user?.email ?? 'example@gmail.com',
@@ -52,11 +52,11 @@ export class ZarinpalService {
   }
 
   async verifyRequest(data: IVerifyRequest) {
-    const { authority, merchant_id } = data;
+    const { authority, merchant_id, amount } = data;
 
     const options = {
       authority,
-      amount: 10000, //TODO: Make amount
+      amount,
       merchant_id,
     };
 
