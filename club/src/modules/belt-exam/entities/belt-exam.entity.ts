@@ -26,6 +26,16 @@ export class BeltExamEntity extends AbstractEntity {
   register_date: Date;
 
   @ManyToMany(() => BeltEntity)
-  @JoinTable()
+  @JoinTable({
+    name: 'belt_exams_belts',
+    joinColumn: {
+      name: 'beltExamEntityId',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'beltEntityId',
+      referencedColumnName: 'id',
+    },
+  })
   belts: BeltEntity[];
 }
