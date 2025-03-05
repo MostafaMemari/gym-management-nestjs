@@ -6,7 +6,7 @@ import { IChargeWallet, IWithdrawWallet } from '../../common/interfaces/wallet.i
 
 @Controller()
 export class WalletController {
-  constructor(private readonly walletService: WalletService) { }
+  constructor(private readonly walletService: WalletService) {}
 
   @MessagePattern(WalletPatterns.GetWallets)
   findAll() {
@@ -30,11 +30,11 @@ export class WalletController {
 
   @MessagePattern(WalletPatterns.ChargeWallet)
   charge(@Payload() data: IChargeWallet) {
-    return this.walletService.charge(data)
+    return this.walletService.charge(data);
   }
 
   @MessagePattern(WalletPatterns.WithdrawWallet)
   withdraw(@Payload() data: IWithdrawWallet) {
-    return this.walletService.withdraw(data)
+    return this.walletService.withdraw(data);
   }
 }

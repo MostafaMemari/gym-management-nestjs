@@ -4,7 +4,7 @@ import { Prisma, Wallet } from '@prisma/client';
 
 @Injectable()
 export class WalletRepository {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   create(walletData: Prisma.WalletCreateInput) {
     return this.prisma.wallet.create({ data: walletData });
@@ -23,6 +23,6 @@ export class WalletRepository {
   }
 
   update(userId: number, data: Partial<Wallet>) {
-    return this.prisma.wallet.update({ where: { userId }, data })
+    return this.prisma.wallet.update({ where: { userId }, data });
   }
 }
