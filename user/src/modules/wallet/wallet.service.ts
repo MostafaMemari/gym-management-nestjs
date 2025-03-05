@@ -1,5 +1,5 @@
-import { BadRequestException, ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { IChargeWallet, ICreateWallet } from '../../common/interfaces/wallet.interface';
+import { BadRequestException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { IChargeWallet, IWithdrawWallet } from '../../common/interfaces/wallet.interface';
 import { WalletRepository } from './wallet.repository';
 import { RpcException } from '@nestjs/microservices';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
@@ -80,6 +80,23 @@ export class WalletService {
     } catch (error) {
       throw new RpcException(error)
     }
+  }
 
+  async withdraw(withdrawDto: IWithdrawWallet): Promise<ServiceResponse> {
+    try {
+      const wallet = await this.walletRepository.findOneByUser(withdrawDto.userId)
+      if (!wallet) throw new NotFoundException(WalletMessages.NotFoundWallet)
+
+      //TODO: Add message
+      if (wallet.isBlocked) throw new BadRequestException()
+      if (wallet.balance < withdrawDto.amount) throw new BadRequestException()
+
+      const updatedWallet = await this.walletRepository.update(withdrawDto.userId, { balance: wallet.balance - withdrawDto.amount })
+
+      //TODO: Add message
+      return ResponseUtil.success({ wallet: updatedWallet }, "", HttpStatus.OK)
+    } catch (error) {
+      throw new RpcException(error)
+    }
   }
 }
