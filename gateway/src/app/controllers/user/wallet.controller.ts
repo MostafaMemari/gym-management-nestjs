@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Get, Inject, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { Roles } from '../../../common/decorators/role.decorator';
 import { Role } from '../../../common/enums/role.enum';
@@ -33,6 +33,15 @@ export class WalletController {
   async pay(@Body() paymentDto: PaymentDto, @GetUser() user: User) {
     try {
       await checkConnection(Services.PAYMENT, this.paymentServiceClient);
+
+      const blockedWallet: ServiceResponse = await lastValueFrom(this.userServiceClient.send(WalletPatterns.GetWalletByUser, { userId: user.id }).pipe(timeout(this.timeout)))
+
+      if (blockedWallet.error) throw blockedWallet
+
+      if (blockedWallet.data.isBlocked) {
+        //TODO: Add message
+        throw new ForbiddenException()
+      }
 
       const paymentData = {
         ...paymentDto,
