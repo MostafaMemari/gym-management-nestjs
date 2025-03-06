@@ -87,7 +87,23 @@ export class PaymentService {
     }
   }
 
-  findOneTransaction() {}
+  async findOneTransaction({ transactionId }: { transactionId: number }): Promise<ServiceResponse> {
+    try {
+      const payment = await this.paymentRepository.findOneByArgs({ id: transactionId });
+
+      //TODO: Add message
+      if (!payment) throw new NotFoundException();
+
+      return {
+        data: { payment },
+        error: false,
+        message: '',
+        status: HttpStatus.OK,
+      };
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
 
   findAllTransaction() {}
 }

@@ -19,9 +19,14 @@ export class PaymentController {
     return this.paymentService.verify(data);
   }
 
-  @MessagePattern(PaymentPatterns.GetUserPayments)
-  getUserPayments(@Payload() data: { userId: number }) {
+  @MessagePattern(PaymentPatterns.GetUserTransactions)
+  getUserTransactions(@Payload() data: { userId: number }) {
     return this.paymentService.findUserTransaction(data);
+  }
+
+  @MessagePattern(PaymentPatterns.GetOneTransaction)
+  getOneTransaction(@Payload() data: { transactionId: number }) {
+    return this.paymentService.findOneTransaction(data);
   }
 
   @MessagePattern(PaymentPatterns.CheckConnection)

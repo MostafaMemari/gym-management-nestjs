@@ -1,8 +1,8 @@
 export enum PaymentPatterns {
   CreateGatewayUrl = 'create_gateway_url',
-  GetUserPayments = 'get_user_payments',
-  GetPayments = 'get_payments',
-  GetOnePayment = 'get_one_payment',
+  GetUserTransactions = 'get_user_transactions',
+  GetTransactions = 'get_transactions',
+  GetOneTransaction = 'get_one_transaction',
   VerifyPayment = 'verify_payment',
   CheckConnection = 'check_connection',
 }
