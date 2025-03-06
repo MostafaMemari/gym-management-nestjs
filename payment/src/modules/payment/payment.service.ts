@@ -2,17 +2,19 @@ import { BadRequestException, HttpStatus, Injectable, NotFoundException } from '
 import { ZarinpalService } from '../http/zarinpal.service';
 import { RpcException } from '@nestjs/microservices';
 import { ISendRequest } from '../../common/interfaces/http.interface';
-import { IVerifyPayment } from 'src/common/interfaces/payment.interface';
+import { IVerifyPayment } from '../../common/interfaces/payment.interface';
 import { PaymentRepository } from './payment.repository';
-import { TransactionStatus } from '@prisma/client';
-import { ServiceResponse } from 'src/common/interfaces/serviceResponse.interface';
+import { Transaction, TransactionStatus } from '@prisma/client';
+import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
+import { ResponseUtil } from '../../common/utils/response.utils';
+import { PaymentMessages } from '../../common/enums/payment.messages';
 
 @Injectable()
 export class PaymentService {
   constructor(
     private readonly zarinpalService: ZarinpalService,
     private readonly paymentRepository: PaymentRepository,
-  ) { }
+  ) {}
 
   async getGatewayUrl(data: ISendRequest) {
     try {
@@ -25,12 +27,7 @@ export class PaymentService {
 
       await this.paymentRepository.create({ amount: data.amount * 10, userId: data.userId, authority });
 
-      return {
-        data: { authority, code, gatewayURL },
-        error: false,
-        message: '',
-        status: HttpStatus.OK,
-      };
+      return ResponseUtil.success({ authority, code, gatewayURL }, '', HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }
@@ -41,14 +38,10 @@ export class PaymentService {
       const { authority, status } = data;
       let redirectUrl = `${data.frontendUrl}?status=success`;
 
-      let payment = await this.paymentRepository.findOneByArgs({ authority });
+      let payment = await this.findOneOrThrow({ authority });
 
-      //TODO: Add message to enum
-      if (!payment) throw new NotFoundException('Payment not found');
-
-      //TODO: Add message to enum
       if (payment.status == TransactionStatus.SUCCESS || payment.status == TransactionStatus.FAILED)
-        throw new BadRequestException('Failed or already verified payment');
+        throw new BadRequestException(PaymentMessages.FailedOrVerified);
 
       const merchantId = process.env.ZARINPAL_MERCHANT_ID;
 
@@ -61,12 +54,7 @@ export class PaymentService {
         payment = await this.paymentRepository.update(payment.id, { status: TransactionStatus.SUCCESS });
       }
 
-      return {
-        data: { redirectUrl, payment },
-        error: false,
-        message: '',
-        status: HttpStatus.OK,
-      };
+      return ResponseUtil.success({ redirectUrl, payment }, PaymentMessages.VerifiedSuccess, HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }
@@ -76,12 +64,7 @@ export class PaymentService {
     try {
       const transactions = await this.paymentRepository.findByArgs({ userId });
 
-      return {
-        data: { transactions },
-        error: false,
-        message: '',
-        status: HttpStatus.OK,
-      };
+      return ResponseUtil.success({ transactions }, '', HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }
@@ -89,17 +72,9 @@ export class PaymentService {
 
   async findOneTransaction({ transactionId }: { transactionId: number }): Promise<ServiceResponse> {
     try {
-      const transaction = await this.paymentRepository.findOneByArgs({ id: transactionId });
+      const transaction = await this.findOneOrThrow({ id: transactionId });
 
-      //TODO: Add message
-      if (!transaction) throw new NotFoundException();
-
-      return {
-        data: { transaction },
-        error: false,
-        message: '',
-        status: HttpStatus.OK,
-      };
+      return ResponseUtil.success({ transaction }, '', HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }
@@ -107,16 +82,19 @@ export class PaymentService {
 
   async findAllTransaction(): Promise<ServiceResponse> {
     try {
-      const transactions = await this.paymentRepository.findByArgs()
+      const transactions = await this.paymentRepository.findByArgs();
 
-      return {
-        data: { transactions },
-        error: false,
-        message: '',
-        status: HttpStatus.OK
-      }
+      return ResponseUtil.success({ transactions }, '', HttpStatus.OK);
     } catch (error) {
-      throw new RpcException(error)
+      throw new RpcException(error);
     }
+  }
+
+  private async findOneOrThrow(args: Partial<Transaction>): Promise<Transaction | never> {
+    const transaction = await this.paymentRepository.findOneByArgs({ ...args });
+
+    if (!transaction) throw new NotFoundException(PaymentMessages.NotFoundTransaction);
+
+    return transaction;
   }
 }

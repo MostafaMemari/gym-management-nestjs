@@ -4,7 +4,7 @@ import { Prisma, Transaction } from '@prisma/client';
 
 @Injectable()
 export class PaymentRepository {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   create(data: Prisma.TransactionCreateInput) {
     return this.prisma.transaction.create({ data });

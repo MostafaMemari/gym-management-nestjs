@@ -7,7 +7,7 @@ import { IVerifyPayment } from '../../common/interfaces/payment.interface';
 
 @Controller()
 export class PaymentController {
-  constructor(private readonly paymentService: PaymentService) { }
+  constructor(private readonly paymentService: PaymentService) {}
 
   @MessagePattern(PaymentPatterns.CreateGatewayUrl)
   gatewayUrl(@Payload() data: ISendRequest) {
@@ -31,7 +31,7 @@ export class PaymentController {
 
   @MessagePattern(PaymentPatterns.GetTransactions)
   getTransactions() {
-    return this.paymentService.findAllTransaction()
+    return this.paymentService.findAllTransaction();
   }
 
   @MessagePattern(PaymentPatterns.CheckConnection)
