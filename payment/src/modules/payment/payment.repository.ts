@@ -14,8 +14,8 @@ export class PaymentRepository {
     return this.prisma.transaction.findFirst({ where: { ...args } });
   }
 
-  findByArgs(args: Partial<Transaction> = {}) {
-    return this.prisma.transaction.findMany({ where: { ...args } });
+  findByArgs(args: Partial<Transaction> = {}, filters: Prisma.TransactionFindManyArgs = {}) {
+    return this.prisma.transaction.findMany({ where: { ...args }, orderBy: { createdAt: 'desc' }, ...filters });
   }
 
   update(transactionId: number, data: Partial<Transaction>) {

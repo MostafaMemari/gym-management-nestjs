@@ -2,18 +2,22 @@ import { BadRequestException, HttpStatus, Injectable, NotFoundException } from '
 import { ZarinpalService } from '../http/zarinpal.service';
 import { RpcException } from '@nestjs/microservices';
 import { ISendRequest } from '../../common/interfaces/http.interface';
-import { IVerifyPayment } from '../../common/interfaces/payment.interface';
+import { IPagination, IVerifyPayment } from '../../common/interfaces/payment.interface';
 import { PaymentRepository } from './payment.repository';
-import { Transaction, TransactionStatus } from '@prisma/client';
+import { Prisma, Transaction, TransactionStatus } from '@prisma/client';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from '../../common/utils/response.utils';
 import { PaymentMessages } from '../../common/enums/payment.messages';
+import { CacheService } from '../cache/cache.service';
+import { pagination } from '../../common/utils/pagination.utils';
+import { CacheKeys } from 'src/common/enums/cache.enum';
 
 @Injectable()
 export class PaymentService {
   constructor(
     private readonly zarinpalService: ZarinpalService,
     private readonly paymentRepository: PaymentRepository,
+    private readonly cacheService: CacheService,
   ) {}
 
   async getGatewayUrl(data: ISendRequest) {
@@ -60,11 +64,26 @@ export class PaymentService {
     }
   }
 
-  async findUserTransaction({ userId }: { userId: number }): Promise<ServiceResponse> {
+  async findUserTransaction({ userId, ...paginationDto }: IPagination & { userId: number }): Promise<ServiceResponse> {
     try {
+      const cacheKey = `${CacheKeys.Transaction}_${paginationDto.page || 1}_${paginationDto.take || 20}_${userId}`;
+
+      const cacheData = await this.cacheService.get<null | Transaction[]>(cacheKey);
+
+      if (cacheData) {
+        return {
+          data: { ...pagination(paginationDto, cacheData) },
+          error: false,
+          message: '',
+          status: HttpStatus.OK,
+        };
+      }
+
       const transactions = await this.paymentRepository.findByArgs({ userId });
 
-      return ResponseUtil.success({ transactions }, '', HttpStatus.OK);
+      await this.cacheService.set(cacheKey, transactions, 600); //Seconds
+
+      return ResponseUtil.success({ transactions: pagination(paginationDto, transactions) }, '', HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }
@@ -80,11 +99,26 @@ export class PaymentService {
     }
   }
 
-  async findAllTransaction(): Promise<ServiceResponse> {
+  async findAllTransaction(paginationDto: IPagination): Promise<ServiceResponse> {
     try {
+      const cacheKey = `${CacheKeys.Transaction}_${paginationDto.page || 1}_${paginationDto.take || 20}`;
+
+      const cacheData = await this.cacheService.get<null | Transaction[]>(cacheKey);
+
+      if (cacheData) {
+        return {
+          data: { ...pagination(paginationDto, cacheData) },
+          error: false,
+          message: '',
+          status: HttpStatus.OK,
+        };
+      }
+
       const transactions = await this.paymentRepository.findByArgs();
 
-      return ResponseUtil.success({ transactions }, '', HttpStatus.OK);
+      await this.cacheService.set(cacheKey, transactions, 600); //Seconds
+
+      return ResponseUtil.success({ transactions: pagination(paginationDto, transactions) }, '', HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }

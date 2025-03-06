@@ -3,7 +3,7 @@ import { PaymentService } from './payment.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { PaymentPatterns } from '../../common/enums/payment.events';
 import { ISendRequest } from '../../common/interfaces/http.interface';
-import { IVerifyPayment } from '../../common/interfaces/payment.interface';
+import { IGetUserTransactions, IPagination, IVerifyPayment } from '../../common/interfaces/payment.interface';
 
 @Controller()
 export class PaymentController {
@@ -20,7 +20,7 @@ export class PaymentController {
   }
 
   @MessagePattern(PaymentPatterns.GetUserTransactions)
-  getUserTransactions(@Payload() data: { userId: number }) {
+  getUserTransactions(@Payload() data: IGetUserTransactions) {
     return this.paymentService.findUserTransaction(data);
   }
 
@@ -30,8 +30,8 @@ export class PaymentController {
   }
 
   @MessagePattern(PaymentPatterns.GetTransactions)
-  getTransactions() {
-    return this.paymentService.findAllTransaction();
+  getTransactions(@Payload() data: IPagination) {
+    return this.paymentService.findAllTransaction(data);
   }
 
   @MessagePattern(PaymentPatterns.CheckConnection)
