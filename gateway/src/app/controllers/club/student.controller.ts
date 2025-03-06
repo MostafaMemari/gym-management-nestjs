@@ -7,6 +7,7 @@ import {
   InternalServerErrorException,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Put,
   Query,
@@ -135,6 +136,18 @@ export class StudentController {
       const data: ServiceResponse = await lastValueFrom(
         this.clubServiceClient.send(StudentPatterns.RemoveUserStudent, { user, studentId: id }).pipe(timeout(5000)),
       );
+
+      return handleServiceResponse(data);
+    } catch (error) {
+      handleError(error, 'Failed to remove student', 'StudentService');
+    }
+  }
+  @Patch('test')
+  async test() {
+    try {
+      await this.checkConnection();
+
+      const data: ServiceResponse = await lastValueFrom(this.clubServiceClient.emit('test', {}).pipe(timeout(5000)));
 
       return handleServiceResponse(data);
     } catch (error) {

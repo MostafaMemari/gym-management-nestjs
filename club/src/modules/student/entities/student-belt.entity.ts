@@ -6,6 +6,12 @@ import { StudentEntity } from './student.entity';
 
 @Entity(EntityName.StudentBelts)
 export class StudentBeltEntity extends AbstractEntity {
+  @Column({ type: 'date', nullable: true })
+  belt_date: Date;
+
+  @Column({ type: 'date', nullable: true })
+  next_belt_date: Date;
+
   @OneToOne(() => StudentEntity, (student) => student.beltInfo, { onDelete: 'CASCADE' })
   @JoinColumn()
   student: StudentEntity;
@@ -13,14 +19,4 @@ export class StudentBeltEntity extends AbstractEntity {
   @ManyToOne(() => BeltEntity, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn()
   belt: BeltEntity;
-
-  @Column({ type: 'date', nullable: true })
-  belt_date: Date;
-
-  @Column({ type: 'date', nullable: true })
-  next_belt_date: Date;
-
-  @ManyToOne(() => BeltEntity, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn()
-  next_belt: BeltEntity;
 }

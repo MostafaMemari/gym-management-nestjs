@@ -8,24 +8,25 @@ import { BeltEntity } from 'src/modules/belt/entities/belt.entity';
 @Injectable()
 export class StudentBeltRepository extends Repository<StudentBeltEntity> {
   constructor(private readonly dataSource: DataSource) {
-    super(StudentEntity, dataSource.createEntityManager());
+    super(StudentBeltEntity, dataSource.createEntityManager());
   }
 
   async createStudentBelt(
     student: StudentEntity,
     belt: BeltEntity,
-    belt_date: string,
-    next_belt?: BeltEntity,
-    next_belt_date?: string,
+    belt_date: Date,
+    next_belt_date?: Date,
     queryRunner?: QueryRunner,
   ): Promise<StudentBeltEntity> {
     const studentBelt = this.create({
       student,
       belt,
       belt_date,
-      next_belt,
       next_belt_date,
     });
+    console.log(queryRunner);
+
+    // return await this.save(studentBelt);
 
     return queryRunner ? await queryRunner.manager.save(studentBelt) : await this.save(studentBelt);
   }

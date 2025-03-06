@@ -1,6 +1,7 @@
 import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
+import { DataSource } from 'typeorm';
 
 import { StudentEntity } from './entities/student.entity';
 import { StudentMessages } from './enums/student.message';
@@ -25,7 +26,10 @@ import { ServiceResponse } from '../../common/interfaces/serviceResponse.interfa
 import { IUser } from '../../common/interfaces/user.interface';
 import { isGenderAllowed, isSameGender } from '../../common/utils/functions';
 import { ResponseUtil } from '../../common/utils/response';
-import { DataSource } from 'typeorm';
+
+import { addMonthsToDateShamsi } from '../../common/utils/date/addMonths';
+import { mildadiToShamsi, shmasiToMiladi } from 'src/common/utils/date/convertDate';
+import { StudentBeltRepository } from './repositories/student-belt.repository';
 
 @Injectable()
 export class StudentService {
@@ -33,6 +37,7 @@ export class StudentService {
   constructor(
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
     private readonly studentRepository: StudentRepository,
+    private readonly studentBeltRepository: StudentBeltRepository,
     private readonly awsService: AwsService,
     private readonly cacheService: CacheService,
     private readonly clubService: ClubService,
@@ -54,7 +59,7 @@ export class StudentService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
-    const { clubId, coachId, beltId, national_code, gender, image } = createStudentDto;
+    const { clubId, coachId, beltId, belt_date, national_code, gender, image } = createStudentDto;
     const userId: number = user.id;
 
     let imageKey: string | null = null;
@@ -78,14 +83,11 @@ export class StudentService {
         queryRunner,
       );
 
-      // if (beltId) {
-      //   const belt = await this.beltService.validateBeltId(beltId);
-
-      //   const nextBelt = await this.beltRepository.getNextBelt(beltId);
-      //   const nextBeltDate = this.calculateNextBeltDate(belt_date);
-
-      //   await this.studentBeltRepository.createStudentBelt(student, belt, belt_date, nextBelt, nextBeltDate, queryRunner);
-      // }
+      if (beltId && belt_date) {
+        const belt = await this.beltService.findBeltWithRelationsOrThrow(beltId);
+        const nextBeltDate = this.calculateNextBeltDate(belt_date, belt.duration_month);
+        await this.studentBeltRepository.createStudentBelt(student, belt, belt_date, nextBeltDate, queryRunner);
+      }
 
       return ResponseUtil.success({ ...student, userId: studentUserId }, StudentMessages.CreatedStudent);
     } catch (error) {
@@ -103,7 +105,7 @@ export class StudentService {
       let student = national_code ? await this.validateUniqueNationalCode(national_code, userId) : null;
       if (!student) student = await this.checkStudentOwnership(studentId, userId);
 
-      if (beltId) await this.beltService.validateBeltId(beltId);
+      if (beltId) await this.beltService.findBeltByIdOrThrow(beltId);
 
       if (clubId || coachId || gender) {
         const { club, coach } = await this.validateClubAndCoachOwnership(userId, clubId ?? student.clubId, coachId ?? student.coachId);
@@ -210,8 +212,6 @@ export class StudentService {
     const result = await lastValueFrom(
       this.userServiceClientProxy.send(UserPatterns.CreateUserStudent, { username }).pipe(timeout(this.timeout)),
     );
-    console.log(username);
-    console.log(result);
 
     if (result?.error) throw result;
     return result?.data?.user?.id ?? null;
@@ -288,5 +288,19 @@ export class StudentService {
   }
   async hasStudentsByGender(coachId: number, gender: Gender): Promise<boolean> {
     return await this.studentRepository.existsByCoachIdAndCoachGender(coachId, gender);
+  }
+
+  calculateNextBeltDate(beltDate: Date, durationMonths: number): Date {
+    const shamsiBeltDate = mildadiToShamsi(beltDate);
+    const nextBeltDateShamsi = addMonthsToDateShamsi(shamsiBeltDate, durationMonths);
+    const nextBeltDateMiladi = shmasiToMiladi(nextBeltDateShamsi);
+    return new Date(nextBeltDateMiladi);
+  }
+
+  async test() {
+    const date = new Date('1999-09-13');
+    console.log();
+    // console.log(addMonthsToDateShamsi);
+    return 'tes';
   }
 }
