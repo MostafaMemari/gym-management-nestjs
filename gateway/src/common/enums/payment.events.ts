@@ -3,5 +3,5 @@ export enum PaymentPatterns {
   VerifyPayment = 'verify_payment',
   GetUserTransactions = 'get_user_transactions',
   GetTransactions = 'get_transactions',
-  GetOneTransaction = 'get_one_transaction'
+  GetOneTransaction = 'get_one_transaction',
 }

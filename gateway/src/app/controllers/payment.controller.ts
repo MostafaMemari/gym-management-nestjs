@@ -20,7 +20,7 @@ import { Role } from '../../common/enums/role.enum';
 export class PaymentController {
   private timeout = 5000;
 
-  constructor(@Inject(Services.PAYMENT) private readonly paymentServiceClient: ClientProxy) { }
+  constructor(@Inject(Services.PAYMENT) private readonly paymentServiceClient: ClientProxy) {}
 
   @Post()
   @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
@@ -66,7 +66,9 @@ export class PaymentController {
     try {
       await checkConnection(Services.PAYMENT, this.paymentServiceClient);
 
-      const data = await lastValueFrom(this.paymentServiceClient.send(PaymentPatterns.GetUserTransactions, { userId: user.id }).pipe(timeout(this.timeout)));
+      const data = await lastValueFrom(
+        this.paymentServiceClient.send(PaymentPatterns.GetUserTransactions, { userId: user.id }).pipe(timeout(this.timeout)),
+      );
 
       return handleServiceResponse(data);
     } catch (error) {
@@ -94,7 +96,9 @@ export class PaymentController {
     try {
       await checkConnection(Services.PAYMENT, this.paymentServiceClient);
 
-      const data = await lastValueFrom(this.paymentServiceClient.send(PaymentPatterns.GetOneTransaction, { transactionIid: id }).pipe(timeout(this.timeout)));
+      const data = await lastValueFrom(
+        this.paymentServiceClient.send(PaymentPatterns.GetOneTransaction, { transactionIid: id }).pipe(timeout(this.timeout)),
+      );
 
       return handleServiceResponse(data);
     } catch (error) {

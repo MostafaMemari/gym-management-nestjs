@@ -25,7 +25,7 @@ export class WalletController {
   constructor(
     @Inject(Services.USER) private readonly userServiceClient: ClientProxy,
     @Inject(Services.PAYMENT) private readonly paymentServiceClient: ClientProxy,
-  ) { }
+  ) {}
 
   @Post('pay')
   @Roles(Role.ADMIN_CLUB)
@@ -33,11 +33,13 @@ export class WalletController {
   async pay(@Body() paymentDto: PaymentDto, @GetUser() user: User) {
     try {
       await checkConnection(Services.PAYMENT, this.paymentServiceClient);
-      await checkConnection(Services.USER, this.userServiceClient)
+      await checkConnection(Services.USER, this.userServiceClient);
 
-      const wallet: ServiceResponse = await lastValueFrom(this.userServiceClient.send(WalletPatterns.GetWalletByUser, { userId: user.id }).pipe(timeout(this.timeout)))
+      const wallet: ServiceResponse = await lastValueFrom(
+        this.userServiceClient.send(WalletPatterns.GetWalletByUser, { userId: user.id }).pipe(timeout(this.timeout)),
+      );
 
-      if (wallet.error) throw wallet
+      if (wallet.error) throw wallet;
 
       const paymentData = {
         ...paymentDto,
@@ -100,7 +102,7 @@ export class WalletController {
     }
   }
 
-  @Get("my-wallet")
+  @Get('my-wallet')
   @Roles(Role.ADMIN_CLUB)
   async getMyWallet(@GetUser() user: User) {
     try {
@@ -113,7 +115,6 @@ export class WalletController {
       handleError(error, 'Failed to get my wallet', Services.USER);
     }
   }
-
 
   @Get(':id')
   @Roles(Role.SUPER_ADMIN)
