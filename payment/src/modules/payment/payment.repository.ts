@@ -4,7 +4,7 @@ import { Prisma, Transaction } from '@prisma/client';
 
 @Injectable()
 export class PaymentRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   create(data: Prisma.TransactionCreateInput) {
     return this.prisma.transaction.create({ data });
@@ -14,7 +14,7 @@ export class PaymentRepository {
     return this.prisma.transaction.findFirst({ where: { ...args } });
   }
 
-  findByArgs(args: Partial<Transaction>) {
+  findByArgs(args: Partial<Transaction> = {}) {
     return this.prisma.transaction.findMany({ where: { ...args } });
   }
 

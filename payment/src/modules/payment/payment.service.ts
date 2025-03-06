@@ -12,7 +12,7 @@ export class PaymentService {
   constructor(
     private readonly zarinpalService: ZarinpalService,
     private readonly paymentRepository: PaymentRepository,
-  ) {}
+  ) { }
 
   async getGatewayUrl(data: ISendRequest) {
     try {
@@ -74,10 +74,10 @@ export class PaymentService {
 
   async findUserTransaction({ userId }: { userId: number }): Promise<ServiceResponse> {
     try {
-      const payments = await this.paymentRepository.findByArgs({ userId });
+      const transactions = await this.paymentRepository.findByArgs({ userId });
 
       return {
-        data: { payments },
+        data: { transactions },
         error: false,
         message: '',
         status: HttpStatus.OK,
@@ -89,13 +89,13 @@ export class PaymentService {
 
   async findOneTransaction({ transactionId }: { transactionId: number }): Promise<ServiceResponse> {
     try {
-      const payment = await this.paymentRepository.findOneByArgs({ id: transactionId });
+      const transaction = await this.paymentRepository.findOneByArgs({ id: transactionId });
 
       //TODO: Add message
-      if (!payment) throw new NotFoundException();
+      if (!transaction) throw new NotFoundException();
 
       return {
-        data: { payment },
+        data: { transaction },
         error: false,
         message: '',
         status: HttpStatus.OK,
@@ -105,5 +105,18 @@ export class PaymentService {
     }
   }
 
-  findAllTransaction() {}
+  async findAllTransaction(): Promise<ServiceResponse> {
+    try {
+      const transactions = await this.paymentRepository.findByArgs()
+
+      return {
+        data: { transactions },
+        error: false,
+        message: '',
+        status: HttpStatus.OK
+      }
+    } catch (error) {
+      throw new RpcException(error)
+    }
+  }
 }
