@@ -13,6 +13,7 @@ import { checkConnection } from '../../common/utils/checkConnection.utils';
 import { PaymentPatterns } from '../../common/enums/payment.events';
 import { Roles } from '../../common/decorators/role.decorator';
 import { Role } from '../../common/enums/role.enum';
+import { PaginationDto } from '../../common/dtos/shared.dto';
 
 @Controller('payment')
 @ApiTags('payment')
@@ -31,6 +32,7 @@ export class PaymentController {
       const paymentData = {
         ...paymentDto,
         user,
+        userId: user.id,
       };
 
       const data = await lastValueFrom(this.paymentServiceClient.send(PaymentPatterns.CreateGatewayUrl, paymentData).pipe(timeout(this.timeout)));
@@ -62,12 +64,14 @@ export class PaymentController {
   }
 
   @Get('my/transactions')
-  async getMyTransactions(@GetUser() user: User) {
+  async getMyTransactions(@GetUser() user: User, @Query() paginationDto: PaginationDto) {
     try {
       await checkConnection(Services.PAYMENT, this.paymentServiceClient);
 
+      const transactionsData = { userId: user.id, ...paginationDto };
+
       const data = await lastValueFrom(
-        this.paymentServiceClient.send(PaymentPatterns.GetUserTransactions, { userId: user.id }).pipe(timeout(this.timeout)),
+        this.paymentServiceClient.send(PaymentPatterns.GetUserTransactions, transactionsData).pipe(timeout(this.timeout)),
       );
 
       return handleServiceResponse(data);
@@ -78,11 +82,11 @@ export class PaymentController {
 
   @Get('transactions')
   @Roles(Role.SUPER_ADMIN)
-  async getTransactions() {
+  async getTransactions(@Query() paginationDto: PaginationDto) {
     try {
       await checkConnection(Services.PAYMENT, this.paymentServiceClient);
 
-      const data = await lastValueFrom(this.paymentServiceClient.send(PaymentPatterns.GetTransactions, {}).pipe(timeout(this.timeout)));
+      const data = await lastValueFrom(this.paymentServiceClient.send(PaymentPatterns.GetTransactions, paginationDto).pipe(timeout(this.timeout)));
 
       return handleServiceResponse(data);
     } catch (error) {
