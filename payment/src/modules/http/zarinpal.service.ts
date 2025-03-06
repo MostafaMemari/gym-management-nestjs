@@ -6,9 +6,9 @@ import { catchError, lastValueFrom, map } from 'rxjs';
 
 @Injectable()
 export class ZarinpalService {
-  constructor(private readonly httpService: HttpService) { }
+  constructor(private readonly httpService: HttpService) {}
 
-  async sendRequest(data: Omit<ISendRequest, "userId">) {
+  async sendRequest(data: Omit<ISendRequest, 'userId'>) {
     try {
       const { amount, description, user, callbackUrl } = data;
 
@@ -68,8 +68,8 @@ export class ZarinpalService {
         .pipe(map((res) => res.data))
         .pipe(
           catchError((err) => {
-            const errMessage = err?.response?.data?.errors?.message
-            throw new InternalServerErrorException(`Zarinpal failed ${errMessage || ""}`);
+            const errMessage = err?.response?.data?.errors?.message;
+            throw new InternalServerErrorException(`Zarinpal failed ${errMessage || ''}`);
           }),
         ),
     );

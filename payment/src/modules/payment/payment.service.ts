@@ -5,10 +5,14 @@ import { ISendRequest } from '../../common/interfaces/http.interface';
 import { IVerifyPayment } from 'src/common/interfaces/payment.interface';
 import { PaymentRepository } from './payment.repository';
 import { TransactionStatus } from '@prisma/client';
+import { ServiceResponse } from 'src/common/interfaces/serviceResponse.interface';
 
 @Injectable()
 export class PaymentService {
-  constructor(private readonly zarinpalService: ZarinpalService, private readonly paymentRepository: PaymentRepository) { }
+  constructor(
+    private readonly zarinpalService: ZarinpalService,
+    private readonly paymentRepository: PaymentRepository,
+  ) {}
 
   async getGatewayUrl(data: ISendRequest) {
     try {
@@ -16,10 +20,10 @@ export class PaymentService {
         amount: data.amount * 10,
         description: data.description,
         user: data?.user,
-        callbackUrl: data.callbackUrl
+        callbackUrl: data.callbackUrl,
       });
 
-      await this.paymentRepository.create({ amount: data.amount * 10, userId: data.userId, authority })
+      await this.paymentRepository.create({ amount: data.amount * 10, userId: data.userId, authority });
 
       return {
         data: { authority, code, gatewayURL },
@@ -37,26 +41,25 @@ export class PaymentService {
       const { authority, status } = data;
       let redirectUrl = `${data.frontendUrl}?status=success`;
 
-      let payment = await this.paymentRepository.findOneByArgs({ authority })
+      let payment = await this.paymentRepository.findOneByArgs({ authority });
 
       //TODO: Add message to enum
-      if (!payment) throw new NotFoundException("Payment not found")
+      if (!payment) throw new NotFoundException('Payment not found');
 
       //TODO: Add message to enum
       if (payment.status == TransactionStatus.SUCCESS || payment.status == TransactionStatus.FAILED)
-        throw new BadRequestException("Failed or already verified payment")
+        throw new BadRequestException('Failed or already verified payment');
 
-      const merchantId = process.env.ZARINPAL_MERCHANT_ID
+      const merchantId = process.env.ZARINPAL_MERCHANT_ID;
 
-      const { code } = await this.zarinpalService.verifyRequest({ authority, merchant_id: merchantId, amount: payment.amount })
+      const { code } = await this.zarinpalService.verifyRequest({ authority, merchant_id: merchantId, amount: payment.amount });
 
       if (status !== 'OK' || code !== 100) {
-        payment = await this.paymentRepository.update(payment.id, { status: TransactionStatus.FAILED })
+        payment = await this.paymentRepository.update(payment.id, { status: TransactionStatus.FAILED });
         redirectUrl = `${data.frontendUrl}?status=failed`;
       } else {
-        payment = await this.paymentRepository.update(payment.id, { status: TransactionStatus.SUCCESS })
+        payment = await this.paymentRepository.update(payment.id, { status: TransactionStatus.SUCCESS });
       }
-
 
       return {
         data: { redirectUrl, payment },
@@ -68,4 +71,23 @@ export class PaymentService {
       throw new RpcException(error);
     }
   }
+
+  async findUserTransaction({ userId }: { userId: number }): Promise<ServiceResponse> {
+    try {
+      const payments = await this.paymentRepository.findByArgs({ userId });
+
+      return {
+        data: { payments },
+        error: false,
+        message: '',
+        status: HttpStatus.OK,
+      };
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
+  findOneTransaction() {}
+
+  findAllTransaction() {}
 }
