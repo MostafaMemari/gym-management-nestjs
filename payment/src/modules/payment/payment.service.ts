@@ -38,11 +38,12 @@ export class PaymentService {
   }
 
   async verify(data: IVerifyPayment) {
+    let payment: null | Transaction = null;
     try {
       const { authority, status } = data;
       let redirectUrl = `${data.frontendUrl}?status=success`;
 
-      let payment = await this.findOneOrThrow({ authority });
+      payment = await this.findOneOrThrow({ authority });
 
       if (payment.status == TransactionStatus.SUCCESS || payment.status == TransactionStatus.FAILED)
         throw new BadRequestException(PaymentMessages.FailedOrVerified);
@@ -52,14 +53,15 @@ export class PaymentService {
       const { code } = await this.zarinpalService.verifyRequest({ authority, merchant_id: merchantId, amount: payment.amount });
 
       if (status !== 'OK' || code !== 100) {
-        payment = await this.paymentRepository.update(payment.id, { status: TransactionStatus.FAILED });
         redirectUrl = `${data.frontendUrl}?status=failed`;
+        payment = await this.paymentRepository.update(payment.id, { status: TransactionStatus.FAILED });
       } else {
         payment = await this.paymentRepository.update(payment.id, { status: TransactionStatus.SUCCESS });
       }
 
       return ResponseUtil.success({ redirectUrl, payment }, PaymentMessages.VerifiedSuccess, HttpStatus.OK);
     } catch (error) {
+      await this.paymentRepository.update(payment.id, { status: TransactionStatus.FAILED });
       throw new RpcException(error);
     }
   }
