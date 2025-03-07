@@ -25,7 +25,7 @@ export class WalletService {
     private readonly userRepository: UserRepository,
     @Inject(Services.CLUB) private readonly clubServiceClient: ClientProxy,
     @Inject(Services.NOTIFICATION) private readonly notificationServiceClient: ClientProxy,
-  ) { }
+  ) {}
 
   async findAll(): Promise<ServiceResponse> {
     try {
@@ -194,7 +194,7 @@ export class WalletService {
   private async getStudentCount(userId: number): Promise<number> {
     try {
       const result: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(ClubPatterns.GetCountStudentByOwner, { userId }).pipe(timeout(this.timeout))
+        this.clubServiceClient.send(ClubPatterns.GetCountStudentByOwner, { userId }).pipe(timeout(this.timeout)),
       );
       return result?.data?.count || 0;
     } catch (error) {
@@ -214,7 +214,7 @@ export class WalletService {
   private async notifyWalletDepletion(userId: number, isDepleted: boolean) {
     try {
       await lastValueFrom(
-        this.clubServiceClient.send(ClubPatterns.WalletDepletedClub, { userId, isWalletDepleted: isDepleted }).pipe(timeout(this.timeout))
+        this.clubServiceClient.send(ClubPatterns.WalletDepletedClub, { userId, isWalletDepleted: isDepleted }).pipe(timeout(this.timeout)),
       );
     } catch (error) {
       this.logger.error(`Failed to notify club service about wallet depletion for user ${userId}: ${error.message}`);
@@ -226,7 +226,9 @@ export class WalletService {
 
     try {
       await lastValueFrom(
-        this.notificationServiceClient.send(NotificationPatterns.CreateNotification, { type, message, recipients: [userId] }).pipe(timeout(this.timeout))
+        this.notificationServiceClient
+          .send(NotificationPatterns.CreateNotification, { type, message, recipients: [userId] })
+          .pipe(timeout(this.timeout)),
       );
     } catch (error) {
       this.logger.error(`Failed to send notification to user ${userId}: ${error.message}`);

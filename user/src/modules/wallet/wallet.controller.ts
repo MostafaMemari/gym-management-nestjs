@@ -35,6 +35,6 @@ export class WalletController {
 
   @MessagePattern(WalletPatterns.ChargeWallet)
   charge(@Payload() data: IChargeWallet) {
-    return this.walletService.charge(data);
+    return this.walletService.chargeWallet(data);
   }
 }
