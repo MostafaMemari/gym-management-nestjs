@@ -55,7 +55,7 @@ export class UserController {
     return handleServiceResponse({ data: { user }, error: false, message: '', status: HttpStatus.OK });
   }
 
-  @Put('profile/update')
+  @Put('profile')
   @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
   async updateProfile(@Body() updateUserDto: UpdateUserDto, @GetUser() user: User) {
     try {
