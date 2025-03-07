@@ -38,4 +38,5 @@ model Wallet {
   balance Int @default(100000)
   isBlocked Boolean @default(false)
   lastWithdrawalDate DateTime @default(now())
+  isWalletDepleted Boolean @default(false)
 }
