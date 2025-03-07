@@ -89,6 +89,8 @@ export class StudentService {
         await this.studentBeltRepository.createStudentBelt(student, belt, belt_date, nextBeltDate, queryRunner);
       }
 
+      await queryRunner.commitTransaction();
+
       return ResponseUtil.success({ ...student, userId: studentUserId }, StudentMessages.CreatedStudent);
     } catch (error) {
       await this.removeStudentData(studentUserId, imageKey);

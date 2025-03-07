@@ -12,6 +12,12 @@ export class StudentBeltEntity extends AbstractEntity {
   @Column({ type: 'date', nullable: true })
   next_belt_date: Date;
 
+  @Column({ type: 'integer', nullable: true })
+  studentId: number;
+
+  @Column({ type: 'integer', nullable: true })
+  beltId: number;
+
   @OneToOne(() => StudentEntity, (student) => student.beltInfo, { onDelete: 'CASCADE' })
   @JoinColumn()
   student: StudentEntity;

@@ -139,11 +139,24 @@ export class StudentRepository extends Repository<StudentEntity> {
   }
 
   async findStudentWithRelations(studentId: number): Promise<StudentEntity> {
+    const currentDate = new Date();
+
     const student = await this.createQueryBuilder(EntityName.Students)
       .where('students.id = :studentId', { studentId })
-      .leftJoinAndSelect('students.club', 'club')
-      .leftJoinAndSelect('students.coach', 'coach')
-      .leftJoinAndSelect('students.belt', 'belt')
+      .leftJoin('students.club', 'club')
+      .leftJoin('students.coach', 'coach')
+      .select(['students', 'club.id', 'club.name', 'coach.id', 'coach.full_name'])
+      .leftJoinAndSelect('students.beltInfo', 'beltInfo')
+      .leftJoinAndSelect('beltInfo.belt', 'belt')
+      .leftJoinAndSelect(
+        'belt.nextBelt',
+        'nextBelt',
+        `
+        nextBelt.min_age <= TIMESTAMPDIFF(YEAR, students.birth_date, :currentDate) 
+        AND (nextBelt.max_age IS NULL OR nextBelt.max_age >= TIMESTAMPDIFF(YEAR, students.birth_date, :currentDate))
+      `,
+        { currentDate },
+      )
       .leftJoinAndMapMany(
         'students.age_category',
         AgeCategoryEntity,

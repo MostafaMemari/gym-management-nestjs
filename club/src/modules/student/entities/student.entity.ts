@@ -8,6 +8,7 @@ import { Gender } from '../../../common/enums/gender.enum';
 import { ClubEntity } from '../../../modules/club/entities/club.entity';
 import { BeltEntity } from 'src/modules/belt/entities/belt.entity';
 import { StudentBeltEntity } from './student-belt.entity';
+import { Expose } from 'class-transformer';
 
 @Entity(EntityName.Students)
 @Index(['full_name', 'national_code'])
