@@ -1,0 +1,4 @@
+export enum Services {
+  CLUB = 'CLUB_SERVICE',
+  NOTIFICATION = 'NOTIFICATION_SERVICE',
+}
