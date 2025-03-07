@@ -18,8 +18,8 @@ export class WalletRepository {
     return this.prisma.wallet.findFirst({ where: { userId } });
   }
 
-  findAll() {
-    return this.prisma.wallet.findMany();
+  findAll(args: Prisma.WalletFindManyArgs = {}) {
+    return this.prisma.wallet.findMany(args);
   }
 
   update(userId: number, data: Partial<Wallet>) {
