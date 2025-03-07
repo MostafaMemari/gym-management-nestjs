@@ -43,10 +43,10 @@ export class ClubController {
     return this.clubService.findOneById(user, clubId);
   }
 
-  @MessagePattern(ClubPatterns.RemoveClub)
-  remove(@Payload() data: { user: IUser; clubId: number }) {
-    const { user, clubId } = data;
+  @MessagePattern(ClubPatterns.walletDepleted)
+  updateWalletDepletionStatus(@Payload() data: { userId: number; isWalletDepleted: boolean }) {
+    const { userId, isWalletDepleted } = data;
 
-    return this.clubService.removeById(user, clubId);
+    return this.clubService.updateWalletDepletionStatus(userId, isWalletDepleted);
   }
 }

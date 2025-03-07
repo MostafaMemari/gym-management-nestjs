@@ -13,7 +13,7 @@ import {
   MinLength,
 } from 'class-validator';
 
-import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
 import { ToBoolean } from '../../../common/decorators/transformers.decorator';
 import { Gender, SortBy, SortOrder } from '../../../common/enums/shared.enum';
 import { IsDependentOn } from '../../../common/decorators/dependent-fields.decorator';
@@ -114,7 +114,7 @@ export class CreateStudentDto {
 }
 
 export class UpdateStudentDto extends PartialType(CreateStudentDto) {}
-
+// export class UpdateStudentDto extends PartialType(OmitType(CreateStudentDto, ['beltId', 'belt_date', 'expire_image_date'] as const)) {}
 export class QueryStudentDto {
   @IsOptional()
   @IsString()

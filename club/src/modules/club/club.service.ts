@@ -107,6 +107,19 @@ export class ClubService {
     }
   }
 
+  async updateWalletDepletionStatus(ownerId: number, isWalletDepleted: boolean): Promise<ServiceResponse> {
+    try {
+      const clubs = await this.clubRepository.findByOwnerId(ownerId);
+      if (!clubs || clubs.length === 0) throw new BadRequestException(ClubMessages.ClubNotFound);
+
+      await this.clubRepository.setWalletDepletionByOwnerId(ownerId, isWalletDepleted);
+
+      return ResponseUtil.success(null, ClubMessages.WalletDepletionUpdated);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
   async checkClubOwnership(clubId: number, userId: number): Promise<ClubEntity> {
     const club = await this.clubRepository.findByIdAndOwner(clubId, userId);
     if (!club) throw new NotFoundException(ClubMessages.ClubNotBelongToUser);

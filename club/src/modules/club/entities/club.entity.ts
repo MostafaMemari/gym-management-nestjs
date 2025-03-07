@@ -11,6 +11,9 @@ export class ClubEntity extends AbstractEntity {
   @Column({ type: 'varchar', length: 120 })
   name: string;
 
+  @Column({ type: 'boolean', default: true })
+  is_wallet_depleted: boolean;
+
   @Column({ type: 'set', enum: Gender })
   genders: Gender[];
 

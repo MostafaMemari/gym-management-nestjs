@@ -1,4 +1,4 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
+import { AfterLoad, Column, Entity, Index, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
 
 import { CoachEntity } from '../../coach/entities/coach.entity';
 
@@ -8,6 +8,7 @@ import { Gender } from '../../../common/enums/gender.enum';
 import { ClubEntity } from '../../../modules/club/entities/club.entity';
 import { BeltEntity } from 'src/modules/belt/entities/belt.entity';
 import { StudentBeltEntity } from './student-belt.entity';
+import { Expose } from 'class-transformer';
 
 @Entity(EntityName.Students)
 @Index(['full_name', 'national_code'])
@@ -67,4 +68,13 @@ export class StudentEntity extends AbstractEntity {
 
   @OneToOne(() => StudentBeltEntity, (beltInfo) => beltInfo.student, { nullable: true })
   beltInfo: StudentBeltEntity | null;
+
+  @AfterLoad()
+  map() {
+    if (this.image_url) {
+      this.image_url = `https://node-bucket.storage.c2.liara.space/${this.image_url}`;
+    } else {
+      this.image_url = null;
+    }
+  }
 }

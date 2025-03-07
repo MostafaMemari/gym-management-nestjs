@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { StudentEntity } from '../entities/student.entity';
 
@@ -24,10 +24,15 @@ export class StudentBeltRepository extends Repository<StudentBeltEntity> {
       belt_date,
       next_belt_date,
     });
-    console.log(queryRunner);
 
-    // return await this.save(studentBelt);
-
-    return queryRunner ? await queryRunner.manager.save(studentBelt) : await this.save(studentBelt);
+    try {
+      if (queryRunner) {
+        return await queryRunner.manager.save(studentBelt);
+      }
+      return await this.save(studentBelt);
+    } catch (error) {
+      console.log(error);
+      throw new InternalServerErrorException('Failed to create student belt');
+    }
   }
 }

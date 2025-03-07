@@ -51,4 +51,16 @@ export class ClubRepository extends Repository<ClubEntity> {
       where: { ownerId, id: In(clubIds) },
     });
   }
+
+  async findByOwnerId(ownerId: number): Promise<ClubEntity[]> {
+    return this.findBy({ ownerId });
+  }
+
+  async setWalletDepletionByOwnerId(ownerId: number, isWalletDepleted: boolean): Promise<void> {
+    await this.createQueryBuilder()
+      .update(ClubEntity)
+      .set({ is_wallet_depleted: isWalletDepleted })
+      .where('ownerId = :ownerId', { ownerId })
+      .execute();
+  }
 }
