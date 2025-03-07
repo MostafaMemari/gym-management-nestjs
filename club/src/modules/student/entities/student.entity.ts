@@ -1,4 +1,4 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
+import { AfterLoad, Column, Entity, Index, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
 
 import { CoachEntity } from '../../coach/entities/coach.entity';
 
@@ -68,4 +68,13 @@ export class StudentEntity extends AbstractEntity {
 
   @OneToOne(() => StudentBeltEntity, (beltInfo) => beltInfo.student, { nullable: true })
   beltInfo: StudentBeltEntity | null;
+
+  @AfterLoad()
+  map() {
+    if (this.image_url) {
+      this.image_url = `https://node-bucket.storage.c2.liara.space/${this.image_url}`;
+    } else {
+      this.image_url = null;
+    }
+  }
 }

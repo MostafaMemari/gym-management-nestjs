@@ -139,8 +139,6 @@ export class StudentRepository extends Repository<StudentEntity> {
   }
 
   async findStudentWithRelations(studentId: number): Promise<StudentEntity> {
-    const currentDate = new Date();
-
     const student = await this.createQueryBuilder(EntityName.Students)
       .where('students.id = :studentId', { studentId })
       .leftJoin('students.club', 'club')
@@ -152,10 +150,26 @@ export class StudentRepository extends Repository<StudentEntity> {
         'belt.nextBelt',
         'nextBelt',
         `
-        nextBelt.min_age <= TIMESTAMPDIFF(YEAR, students.birth_date, :currentDate) 
-        AND (nextBelt.max_age IS NULL OR nextBelt.max_age >= TIMESTAMPDIFF(YEAR, students.birth_date, :currentDate))
+        nextBelt.min_age <= ROUND(DATEDIFF(NOW(), students.birth_date) / 365.25, 2)
+        AND (nextBelt.max_age IS NULL OR nextBelt.max_age >= ROUND(DATEDIFF(NOW(), students.birth_date) / 365.25, 2))
       `,
-        { currentDate },
+      )
+      .leftJoinAndMapMany(
+        'students.beltExams',
+        BeltExamEntity,
+        'beltExams',
+        `
+          EXISTS (
+            SELECT 1 
+            FROM belt_exams_belts be 
+            WHERE 
+              be.beltExamEntityId = beltExams.id 
+              AND be.beltEntityId = nextBelt.id
+          ) 
+          AND FIND_IN_SET(students.gender, beltExams.genders) > 0  
+          AND beltExams.event_date > beltInfo.next_belt_date 
+          AND beltExams.register_date > NOW()
+        `,
       )
       .leftJoinAndMapMany(
         'students.age_category',
@@ -163,12 +177,7 @@ export class StudentRepository extends Repository<StudentEntity> {
         'ageCategories',
         'students.birth_date BETWEEN ageCategories.start_date AND ageCategories.end_date',
       )
-      // .leftJoinAndMapMany(
-      //   'students.belt_exams',
-      //   BeltExamEntity,
-      //   'beltExams',
-      //   'EXISTS (SELECT 1 FROM belt_exams_belts be WHERE be.beltExamEntityId = beltExams.id AND be.beltEntityId = students.beltId)',
-      // )
+
       .getOne();
 
     return student;
