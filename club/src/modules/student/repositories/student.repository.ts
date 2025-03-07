@@ -15,6 +15,7 @@ export class StudentRepository extends Repository<StudentEntity> {
 
   async createStudent(data: Partial<StudentEntity>, queryRunner?: QueryRunner): Promise<StudentEntity> {
     const student = this.create(data);
+
     return queryRunner ? await queryRunner.manager.save(student) : await this.save(student);
   }
 

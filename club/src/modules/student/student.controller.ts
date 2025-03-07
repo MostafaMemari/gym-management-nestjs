@@ -66,4 +66,8 @@ export class StudentController {
 
     return this.studentService.getCountStudentsByOwner(userId);
   }
+  @MessagePattern('test')
+  test() {
+    return this.studentService.test();
+  }
 }

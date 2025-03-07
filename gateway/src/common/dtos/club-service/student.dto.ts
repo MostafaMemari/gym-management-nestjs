@@ -16,6 +16,7 @@ import {
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { ToBoolean } from '../../../common/decorators/transformers.decorator';
 import { Gender, SortBy, SortOrder } from '../../../common/enums/shared.enum';
+import { IsDependentOn } from '../../../common/decorators/dependent-fields.decorator';
 
 export class CreateStudentDto {
   @IsNotEmpty()
@@ -83,26 +84,33 @@ export class CreateStudentDto {
   @ApiPropertyOptional({ type: String, example: '' })
   expire_image_date?: Date;
 
-  @IsNotEmpty()
-  @IsInt()
-  @IsPositive()
-  @Transform(({ value }) => parseInt(value, 10))
-  @ApiProperty({ type: 'integer', required: true, example: '' })
-  coachId: string;
+  @IsOptional()
+  @IsDateString()
+  @IsDependentOn('beltId')
+  @ApiPropertyOptional({ type: String, example: '' })
+  belt_date?: Date;
 
   @IsNotEmpty()
   @IsInt()
   @IsPositive()
   @Transform(({ value }) => parseInt(value, 10))
   @ApiProperty({ type: 'integer', required: true, example: '' })
-  clubId: string;
+  coachId: number;
+
+  @IsNotEmpty()
+  @IsInt()
+  @IsPositive()
+  @Transform(({ value }) => parseInt(value, 10))
+  @ApiProperty({ type: 'integer', required: true, example: '' })
+  clubId: number;
 
   @IsOptional()
   @IsInt()
   @IsPositive()
   @Transform(({ value }) => parseInt(value, 10))
+  @IsDependentOn('belt_date')
   @ApiPropertyOptional({ type: 'integer', required: true, example: '' })
-  beltId: string;
+  beltId?: number;
 }
 
 export class UpdateStudentDto extends PartialType(CreateStudentDto) {}

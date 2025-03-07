@@ -52,7 +52,7 @@ export class BeltService {
   async update(beltId: number, updateBeltDto: IUpdateBelt) {
     try {
       const { nextBeltIds } = updateBeltDto;
-      const belt = await this.validateBeltId(beltId);
+      const belt = await this.findBeltByIdOrThrow(beltId);
 
       if (nextBeltIds) {
         const nextBelt = await this.validateBeltIds(nextBeltIds);
@@ -85,7 +85,7 @@ export class BeltService {
   }
   async findOneById(beltId: number): Promise<ServiceResponse> {
     try {
-      const belt = await this.validateBeltId(beltId);
+      const belt = await this.findBeltByIdOrThrow(beltId);
 
       return ResponseUtil.success(belt, BeltMessages.GetBeltSuccess);
     } catch (error) {
@@ -94,7 +94,7 @@ export class BeltService {
   }
   async removeById(beltId: number): Promise<ServiceResponse> {
     try {
-      const belt = await this.validateBeltId(beltId);
+      const belt = await this.findBeltByIdOrThrow(beltId);
 
       const removedBelt = await this.beltRepository.delete(beltId);
 
@@ -104,8 +104,14 @@ export class BeltService {
     }
   }
 
-  async validateBeltId(beltId: number): Promise<BeltEntity> {
+  async findBeltByIdOrThrow(beltId: number): Promise<BeltEntity> {
     const belt = await this.beltRepository.findOneBy({ id: beltId });
+    if (!belt) throw new NotFoundException(BeltMessages.NotFoundBelt);
+    return belt;
+  }
+
+  async findBeltWithRelationsOrThrow(beltId: number): Promise<BeltEntity> {
+    const belt = await this.beltRepository.findOne({ where: { id: beltId }, relations: ['nextBelt'] });
     if (!belt) throw new NotFoundException(BeltMessages.NotFoundBelt);
     return belt;
   }

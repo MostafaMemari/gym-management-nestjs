@@ -14,6 +14,7 @@ export interface ICreateStudent {
   birth_date: Date;
   sports_insurance_date?: Date;
   expire_image_date?: Date;
+  belt_date?: Date;
   userId?: number;
   coachId?: number;
   clubId?: number;
