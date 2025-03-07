@@ -91,4 +91,8 @@ export class UserRepository {
   async findByArgs(data: IGetUserByArgs = {}): Promise<User> {
     return this.prisma.user.findFirst({ where: { OR: [{ username: data.username }, { mobile: data.mobile }] } });
   }
+
+  findOneByRole(role: Role): Promise<Omit<User, 'password'> | null> {
+    return this.prisma.user.findFirst({ where: { role }, omit: { password: true } });
+  }
 }
