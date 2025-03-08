@@ -277,9 +277,9 @@ export class UserService {
     }
   }
 
-  async removeUsersByStudents({ studentIds = [] }: { studentIds: number[] }): Promise<ServiceResponse> {
+  async removeUsers({ userIds = [] }: { userIds: number[] }): Promise<ServiceResponse> {
     try {
-      const result = await this.userRepository.deleteMany(studentIds);
+      const result = await this.userRepository.deleteMany(userIds);
 
       return ResponseUtil.success({ count: result.count }, '', HttpStatus.OK);
     } catch (error) {

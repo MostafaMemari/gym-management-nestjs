@@ -87,8 +87,8 @@ export class UserController {
     return this.userService.findByArgs(data);
   }
 
-  @MessagePattern(UserPatterns.RemoveUsersByStudentIds)
-  removeUsersByStudents(@Payload() data: { studentIds: number[] }) {
-    return this.userService.removeUsersByStudents(data);
+  @MessagePattern(UserPatterns.RemoveUsers)
+  removeUsers(@Payload() data: { userIds: number[] }) {
+    return this.userService.removeUsers(data);
   }
 }
