@@ -95,4 +95,8 @@ export class UserRepository {
   findOneByRole(role: Role): Promise<Omit<User, 'password'> | null> {
     return this.prisma.user.findFirst({ where: { role }, omit: { password: true } });
   }
+
+  deleteMany(ids: number[]): Promise<Prisma.BatchPayload> {
+    return this.prisma.user.deleteMany({ where: { id: { in: ids } } });
+  }
 }

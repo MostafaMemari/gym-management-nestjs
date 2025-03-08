@@ -276,4 +276,14 @@ export class UserService {
       throw new RpcException(error);
     }
   }
+
+  async removeUsersByStudents({ studentIds = [] }: { studentIds: number[] }): Promise<ServiceResponse> {
+    try {
+      const result = await this.userRepository.deleteMany(studentIds);
+
+      return ResponseUtil.success({ count: result.count }, '', HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
 }

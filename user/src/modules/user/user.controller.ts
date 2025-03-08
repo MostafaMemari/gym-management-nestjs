@@ -86,4 +86,9 @@ export class UserController {
   getOneByArgs(@Payload() data: IGetUserByArgs) {
     return this.userService.findByArgs(data);
   }
+
+  @MessagePattern(UserPatterns.RemoveUsersByStudentIds)
+  removeUsersByStudents(@Payload() data: { studentIds: number[] }) {
+    return this.userService.removeUsersByStudents(data);
+  }
 }
