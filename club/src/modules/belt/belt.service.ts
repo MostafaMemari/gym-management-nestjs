@@ -34,7 +34,7 @@ export class BeltService {
       throw new RpcException({ message: 'User service is not connected', status: HttpStatus.INTERNAL_SERVER_ERROR });
     }
   }
-  async create(createBeltDto: ICreateBelt) {
+  async create(createBeltDto: ICreateBelt): Promise<ServiceResponse> {
     try {
       const { nextBeltIds } = createBeltDto;
       if (nextBeltIds) {
@@ -46,10 +46,10 @@ export class BeltService {
 
       return ResponseUtil.success(belt, BeltMessages.CreatedBelt);
     } catch (error) {
-      return ResponseUtil.error(error?.message || BeltMessages.FailedToCreateBelt, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new RpcException(error);
     }
   }
-  async update(beltId: number, updateBeltDto: IUpdateBelt) {
+  async update(beltId: number, updateBeltDto: IUpdateBelt): Promise<ServiceResponse> {
     try {
       const { nextBeltIds } = updateBeltDto;
       const belt = await this.findBeltByIdOrThrow(beltId);
@@ -63,25 +63,29 @@ export class BeltService {
 
       return ResponseUtil.success({ ...updatedBelt }, BeltMessages.UpdatedBelt);
     } catch (error) {
-      return ResponseUtil.error(error?.message || BeltMessages.FailedToUpdateBelt, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new RpcException(error);
     }
   }
-  async getAll(query: { queryBeltDto: ISearchBeltQuery; paginationDto: IPagination }): Promise<PageDto<BeltEntity>> {
+  async getAll(query: { queryBeltDto: ISearchBeltQuery; paginationDto: IPagination }): Promise<ServiceResponse> {
     const { take, page } = query.paginationDto;
 
-    // const cacheKey = `${CacheKeys.BELT_LIST}-${page}-${take}-${JSON.stringify(query.queryBeltDto)}`;
+    try {
+      // const cacheKey = `${CacheKeys.BELT_LIST}-${page}-${take}-${JSON.stringify(query.queryBeltDto)}`;
 
-    // const cachedData = await this.cacheService.get<PageDto<BeltEntity>>(cacheKey);
-    // if (cachedData) return cachedData;
+      // const cachedData = await this.cacheService.get<PageDto<BeltEntity>>(cacheKey);
+      // if (cachedData) return cachedData;
 
-    const [belts, count] = await this.beltRepository.getBeltsWithFilters(query.queryBeltDto, page, take);
+      const [belts, count] = await this.beltRepository.getBeltsWithFilters(query.queryBeltDto, page, take);
 
-    const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
-    const result = new PageDto(belts, pageMetaDto);
+      const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
+      const result = new PageDto(belts, pageMetaDto);
 
-    // await this.cacheService.set(cacheKey, result, 600);
+      // await this.cacheService.set(cacheKey, result, 600);
 
-    return result;
+      return ResponseUtil.success(result, BeltMessages.GetBeltSuccess);
+    } catch (error) {
+      throw new RpcException(error);
+    }
   }
   async findOneById(beltId: number): Promise<ServiceResponse> {
     try {
@@ -126,5 +130,9 @@ export class BeltService {
     }
 
     return foundBelts;
+  }
+
+  async getNamesAndIds() {
+    return await this.beltRepository.getBeltNamesAndIds();
   }
 }

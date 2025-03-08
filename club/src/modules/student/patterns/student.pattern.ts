@@ -1,6 +1,7 @@
 export enum StudentPatterns {
   CheckConnection = 'check_connection',
   CreateStudent = 'create_student',
+  BulkCreateStudents = 'bulk_create_students',
   UpdateStudent = 'update_student',
   GetStudents = 'get_students',
   GetStudent = 'get_student',

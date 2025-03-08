@@ -51,3 +51,10 @@ export function validateCoachGender(coachGender: Gender, clubs: ICreateClub[]): 
 
   if (invalidClubs.length > 0) throw new BadRequestException(`${CoachMessages.CoachGenderMismatch} ${invalidClubs.join(', ')}`);
 }
+
+export function replaceYaWithYe(input: string): string {
+  return input.replace(/ي/g, 'ی');
+}
+function normalizeNationalCode(nationalCode: string): string {
+  return nationalCode ? nationalCode.padStart(10, '0') : '';
+}

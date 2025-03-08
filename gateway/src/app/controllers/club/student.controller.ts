@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -15,18 +16,18 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { lastValueFrom, timeout } from 'rxjs';
 
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { GetUser } from '../../../common/decorators/get-user.decorator';
-import { CreateStudentDto, QueryStudentDto, UpdateStudentDto } from '../../../common/dtos/club-service/student.dto';
+import { BulkCreateStudentsDto, CreateStudentDto, QueryStudentDto, UpdateStudentDto } from '../../../common/dtos/club-service/student.dto';
 import { PaginationDto } from '../../../common/dtos/shared.dto';
 import { User } from '../../../common/interfaces/user.interface';
 import { StudentPatterns } from '../../../common/enums/club.events';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
-import { UploadFileS3 } from '../../../common/interceptors/upload-file.interceptor';
+import { UploadFile } from '../../../common/interceptors/upload-file.interceptor';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
 import { UploadFileValidationPipe } from '../../../common/pipes/upload-file.pipe';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
@@ -46,7 +47,7 @@ export class StudentController {
   }
 
   @Post()
-  @UseInterceptors(UploadFileS3('image'))
+  @UseInterceptors(UploadFile('image'))
   @ApiConsumes(SwaggerConsumes.MultipartData)
   async create(
     @GetUser() user: User,
@@ -73,7 +74,7 @@ export class StudentController {
   }
 
   @Put(':id')
-  @UseInterceptors(UploadFileS3('image'))
+  @UseInterceptors(UploadFile('image'))
   @ApiConsumes(SwaggerConsumes.MultipartData)
   async update(
     @GetUser() user: User,
@@ -142,6 +143,7 @@ export class StudentController {
       handleError(error, 'Failed to remove student', 'StudentService');
     }
   }
+
   @Patch('test')
   async test() {
     try {
@@ -152,6 +154,35 @@ export class StudentController {
       return handleServiceResponse(data);
     } catch (error) {
       handleError(error, 'Failed to remove student', 'StudentService');
+    }
+  }
+
+  @Post('bulk')
+  @ApiConsumes(SwaggerConsumes.MultipartData)
+  @UseInterceptors(UploadFile('studentsFile'))
+  async bulkUpload(
+    @GetUser() user: User,
+    @Body() bulkStudentsDto: BulkCreateStudentsDto,
+    @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'application/json'))
+    studentsFile: Express.Multer.File,
+  ) {
+    try {
+      if (!studentsFile) throw new BadRequestException('student file required');
+      await this.checkConnection();
+
+      const data: ServiceResponse = await lastValueFrom(
+        this.clubServiceClient
+          .emit(StudentPatterns.BulkCreateStudents, {
+            user,
+            studentData: { ...bulkStudentsDto },
+            studentsJson: studentsFile,
+          })
+          .pipe(timeout(10000)),
+      );
+
+      return handleServiceResponse(data);
+    } catch (error) {
+      handleError(error, 'Failed to bulk upload students', 'StudentService');
     }
   }
 }

@@ -15,6 +15,7 @@ export interface ICreateStudent {
   sports_insurance_date?: Date;
   expire_image_date?: Date;
   belt_date?: Date;
+  membership_year?: number;
   userId?: number;
   coachId?: number;
   clubId?: number;
@@ -22,6 +23,8 @@ export interface ICreateStudent {
 }
 
 export type IUpdateStudent = Partial<ICreateStudent>;
+
+export interface IBulkCreateStudent extends Pick<ICreateStudent, 'clubId' | 'coachId' | 'gender'> {}
 
 export interface ISeachStudentQuery {
   search?: string;
