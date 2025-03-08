@@ -51,7 +51,7 @@ export class CreateStudentDto {
   @IsNotEmpty()
   @IsString()
   @MinLength(10)
-  @ApiProperty({ type: String, example: '4900782343', minLength: 10, maxLength: 10 })
+  @ApiProperty({ type: String, example: '', minLength: 10, maxLength: 10 })
   national_code: string;
 
   @IsOptional()
