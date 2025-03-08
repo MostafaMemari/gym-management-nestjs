@@ -2,6 +2,7 @@ export enum AuthPatterns {
   CheckConnection = 'check_connection',
   Signup = 'signup',
   Signin = 'signin',
+  SigninStudent = 'signin_student',
   Signout = 'signout',
   VerifyAccessToken = 'verify_access_token',
   RefreshToken = 'refresh_token',

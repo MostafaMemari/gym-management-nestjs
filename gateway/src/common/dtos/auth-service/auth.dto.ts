@@ -136,3 +136,16 @@ export class VerifyOtpDto {
   })
   mobile: string;
 }
+
+export class SigninStudentDto {
+  @IsNotEmpty()
+  @IsString()
+  @MinLength(10)
+  @ApiProperty({
+    type: 'string',
+    example: '',
+    minLength: 10,
+    maxLength: 10,
+  })
+  national_code: string;
+}
