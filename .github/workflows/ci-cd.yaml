@@ -1,0 +1,47 @@
+name: Format Code in Microservices
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js and pnpm
+        uses: actions/setup-node@v18
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run Prettier in each microservice
+        run: |
+          for dir in auth club gateway notification payment user; do
+            if [ -d "$dir" ]; then
+              echo "Running format in $dir..."
+              cd $dir
+              pnpm format
+              cd ..
+            fi
+          done
+
+      - name: Commit formatted files
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "chore: auto-format code in microservices" || echo "No changes to commit"
+
+      - name: Push changes
+        run: git push origin HEAD:main
