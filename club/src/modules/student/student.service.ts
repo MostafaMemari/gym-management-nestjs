@@ -5,16 +5,17 @@ import { DataSource } from 'typeorm';
 
 import { StudentEntity } from './entities/student.entity';
 import { StudentMessages } from './enums/student.message';
-import { ICreateStudent, ISeachStudentQuery, IUpdateStudent } from './interfaces/student.interface';
+import { IBulkCreateStudent, ICreateStudent, ISeachStudentQuery, IUpdateStudent } from './interfaces/student.interface';
+import { StudentBeltRepository } from './repositories/student-belt.repository';
 import { StudentRepository } from './repositories/student.repository';
 
+import { BeltService } from '../belt/belt.service';
 import { CacheService } from '../cache/cache.service';
 import { ClubService } from '../club/club.service';
 import { ClubEntity } from '../club/entities/club.entity';
 import { CoachService } from '../coach/coach.service';
 import { CoachEntity } from '../coach/entities/coach.entity';
 import { AwsService } from '../s3AWS/s3AWS.service';
-import { BeltService } from '../belt/belt.service';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
 import { CacheKeys } from '../../common/enums/cache.enum';
@@ -24,12 +25,10 @@ import { Services } from '../../common/enums/services.enum';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { IUser } from '../../common/interfaces/user.interface';
+import { addMonthsToDateShamsi } from '../../common/utils/date/addMonths';
+import { mildadiToShamsi, shmasiToMiladi } from '../../common/utils/date/convertDate';
 import { isGenderAllowed, isSameGender } from '../../common/utils/functions';
 import { ResponseUtil } from '../../common/utils/response';
-
-import { addMonthsToDateShamsi } from '../../common/utils/date/addMonths';
-import { mildadiToShamsi, shmasiToMiladi } from 'src/common/utils/date/convertDate';
-import { StudentBeltRepository } from './repositories/student-belt.repository';
 
 @Injectable()
 export class StudentService {
@@ -90,13 +89,16 @@ export class StudentService {
       }
 
       await queryRunner.commitTransaction();
-
       return ResponseUtil.success({ ...student, userId: studentUserId }, StudentMessages.CreatedStudent);
     } catch (error) {
+      await queryRunner.rollbackTransaction();
       await this.removeStudentData(studentUserId, imageKey);
       return ResponseUtil.error(error?.message || StudentMessages.FailedToCreateStudent, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
+    } finally {
+      await queryRunner.release();
     }
   }
+
   async update(user: IUser, studentId: number, updateStudentDto: IUpdateStudent) {
     const { clubId, coachId, beltId, national_code, gender, image } = updateStudentDto;
     const userId: number = user.id;
@@ -182,6 +184,68 @@ export class StudentService {
       throw new RpcException(error);
     }
   }
+
+  async bulkCreate(user: IUser, studentData: IBulkCreateStudent, studentsJson: Express.Multer.File): Promise<void> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    const { clubId, coachId, gender } = studentData;
+    const userId: number = user.id;
+    const studentUserIds = [];
+
+    try {
+      const belts = await this.beltService.getNamesAndIds();
+
+      const { club, coach } = await this.validateClubAndCoachOwnership(userId, clubId, coachId);
+      this.checkClubIdInCoachClubs(clubId, coach);
+      this.validateStudentGender(gender, coach, club);
+
+      const students: any = JSON.parse(Buffer.from(studentsJson.buffer).toString('utf-8'));
+
+      for (const student of students) {
+        const fullName = student.full_name.replace(/ي/g, 'ی');
+        const nationalCode = `${student.national_code}`.padStart(10, '0');
+        const birthDate = shmasiToMiladi(student.birth_date as any);
+
+        const userStudentId = await this.createUserStudent();
+        if (userStudentId) studentUserIds.push(userStudentId);
+
+        const beltId = belts.find((belt) => belt.name === student.belt)?.id;
+        const betlDate = shmasiToMiladi(student.belt_date as any);
+
+        await this.validateUniqueNationalCode(student.national_code, userId);
+
+        const studentCreate = await this.studentRepository.createStudent(
+          {
+            full_name: fullName,
+            national_code: nationalCode,
+            birth_date: birthDate,
+            gender,
+            coachId,
+            clubId,
+            userId: userStudentId,
+          },
+          queryRunner,
+        );
+
+        if (beltId && betlDate) {
+          const belt = await this.beltService.findBeltWithRelationsOrThrow(beltId);
+          const nextBeltDate = this.calculateNextBeltDate(betlDate, belt.duration_month);
+          await this.studentBeltRepository.createStudentBelt(studentCreate, belt, betlDate, nextBeltDate, queryRunner);
+        }
+      }
+      await queryRunner.commitTransaction();
+      // return ResponseUtil.success({ ...student, userId: studentUserId }, StudentMessages.CreatedStudent);
+    } catch (error) {
+      console.log(studentUserIds);
+      await queryRunner.rollbackTransaction();
+      await this.removeStudentsUserByIds(studentUserIds);
+      return ResponseUtil.error(error?.message || StudentMessages.FailedToCreateStudent, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
+    } finally {
+      await queryRunner.release();
+    }
+  }
   async getOneByNationalCode(nationalCode: string): Promise<ServiceResponse> {
     try {
       const student = await this.studentRepository.findOneBy({ national_code: nationalCode });
@@ -223,6 +287,13 @@ export class StudentService {
 
     await this.checkUserServiceConnection();
     const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.RemoveUser, { userId }).pipe(timeout(this.timeout)));
+    if (result?.error) throw result;
+  }
+  private async removeStudentsUserByIds(userIds: number[]): Promise<void> {
+    if (!userIds.length) return null;
+
+    await this.checkUserServiceConnection();
+    const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.RemoveUsers, { userIds }).pipe(timeout(this.timeout)));
     if (result?.error) throw result;
   }
   private async uploadStudentImage(image: Express.Multer.File): Promise<string | undefined> {

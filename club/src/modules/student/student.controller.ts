@@ -1,7 +1,7 @@
 import { Controller, UsePipes } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
-import { ICreateStudent, ISeachStudentQuery, IUpdateStudent } from './interfaces/student.interface';
+import { IBulkCreateStudent, ICreateStudent, ISeachStudentQuery, IUpdateStudent } from './interfaces/student.interface';
 import { StudentPatterns } from './patterns/student.pattern';
 import { StudentService } from './student.service';
 
@@ -51,6 +51,13 @@ export class StudentController {
     const { user, studentId } = data;
 
     return this.studentService.removeById(user, studentId);
+  }
+
+  @MessagePattern(StudentPatterns.BulkCreateStudents)
+  bulkCreate(@Payload() data: { user: IUser; studentData: IBulkCreateStudent; studentsJson: Express.Multer.File }) {
+    const { user, studentData, studentsJson } = data;
+
+    return this.studentService.bulkCreate(user, studentData, studentsJson);
   }
 
   @MessagePattern(StudentPatterns.GetStudentByNationalCode)

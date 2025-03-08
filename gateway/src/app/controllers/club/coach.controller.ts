@@ -25,7 +25,7 @@ import { User } from '../../../common/interfaces/user.interface';
 import { CoachPatterns } from '../../../common/enums/club.events';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
-import { UploadFileS3 } from '../../../common/interceptors/upload-file.interceptor';
+import { UploadFile } from '../../../common/interceptors/upload-file.interceptor';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
 import { UploadFileValidationPipe } from '../../../common/pipes/upload-file.pipe';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
@@ -45,7 +45,7 @@ export class CoachController {
   }
 
   @Post()
-  @UseInterceptors(UploadFileS3('image'))
+  @UseInterceptors(UploadFile('image'))
   @ApiConsumes(SwaggerConsumes.MultipartData)
   async create(
     @GetUser() user: User,
@@ -72,7 +72,7 @@ export class CoachController {
   }
 
   @Put(':id')
-  @UseInterceptors(UploadFileS3('image'))
+  @UseInterceptors(UploadFile('image'))
   @ApiConsumes(SwaggerConsumes.MultipartData)
   async update(
     @GetUser() user: User,

@@ -10,10 +10,12 @@ import {
   IsPositive,
   IsString,
   Length,
+  Max,
+  Min,
   MinLength,
 } from 'class-validator';
 
-import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, OmitType, PartialType, PickType } from '@nestjs/swagger';
 import { ToBoolean } from '../../../common/decorators/transformers.decorator';
 import { Gender, SortBy, SortOrder } from '../../../common/enums/shared.enum';
 import { IsDependentOn } from '../../../common/decorators/dependent-fields.decorator';
@@ -49,7 +51,7 @@ export class CreateStudentDto {
   @IsNotEmpty()
   @IsString()
   @MinLength(10)
-  @ApiProperty({ type: String, example: '4900782343', minLength: 10, maxLength: 10 })
+  @ApiProperty({ type: String, example: '', minLength: 10, maxLength: 10 })
   national_code: string;
 
   @IsOptional()
@@ -90,6 +92,14 @@ export class CreateStudentDto {
   @ApiPropertyOptional({ type: String, example: '' })
   belt_date?: Date;
 
+  @IsOptional()
+  @IsInt()
+  @Min(1371)
+  @Max(1449)
+  @Transform(({ value }) => (value ? parseInt(value, 10) : null))
+  @ApiPropertyOptional({ type: 'integer', required: false, example: 1402 })
+  membership_year?: number;
+
   @IsNotEmpty()
   @IsInt()
   @IsPositive()
@@ -115,6 +125,13 @@ export class CreateStudentDto {
 
 export class UpdateStudentDto extends PartialType(CreateStudentDto) {}
 // export class UpdateStudentDto extends PartialType(OmitType(CreateStudentDto, ['beltId', 'belt_date', 'expire_image_date'] as const)) {}
+
+export class BulkCreateStudentsDto extends PickType(CreateStudentDto, ['gender', 'coachId', 'clubId'] as const) {
+  @IsOptional()
+  @ApiPropertyOptional({ type: 'string', format: 'binary' })
+  studentsFile?: string;
+}
+
 export class QueryStudentDto {
   @IsOptional()
   @IsString()
