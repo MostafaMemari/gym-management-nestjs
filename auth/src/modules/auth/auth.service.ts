@@ -7,6 +7,7 @@ import {
   Inject,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { GenerateTokens, IForgetPassword, IResetPassword, ISignin, ISignup, IVerifyOtp } from '../../common/interfaces/auth.interface';
@@ -25,6 +26,7 @@ import { Smsir } from 'sms-typescript/lib';
 import { OtpKeys } from '../../common/enums/redis.keys';
 import { ResponseUtil } from '../../common/utils/response.utils';
 import { checkConnection } from '../../common/utils/checkConnection.utils';
+import { ClubPatterns } from 'src/common/enums/club.events';
 
 @Injectable()
 export class AuthService {
@@ -37,6 +39,7 @@ export class AuthService {
   constructor(
     @Inject(forwardRef(() => JwtService)) private readonly jwtService: JwtService,
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
+    @Inject(Services.CLUB) private readonly clubServiceClientProxy: ClientProxy,
     @InjectRedis() private readonly redis: Redis,
   ) {}
 
@@ -142,6 +145,26 @@ export class AuthService {
       await this.clearOtpData(mobile);
 
       return ResponseUtil.success({ ...tokens }, AuthMessages.SignupSuccess, HttpStatus.CREATED);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
+  async signinStudent({ nationalCode }: { nationalCode: string }) {
+    try {
+      await checkConnection(Services.CLUB, this.clubServiceClientProxy);
+
+      const result: ServiceResponse = await lastValueFrom(
+        this.clubServiceClientProxy.send(ClubPatterns.GetStudentByNationalCode, { nationalCode }).pipe(timeout(this.TIMEOUT_MS)),
+      );
+
+      if (result.error) throw result;
+
+      if (!result.data?.student) throw new NotFoundException(AuthMessages.NotFoundStudent);
+
+      const tokens = this.generateTokens({ id: result.data.student?.userId });
+
+      return ResponseUtil.success({ ...tokens }, AuthMessages.SigninSuccess, HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }
