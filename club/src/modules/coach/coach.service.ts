@@ -53,12 +53,15 @@ export class CoachService {
 
     let imageKey: string | null = null;
     let coachUserId: number | null = null;
+    let ownedClubs: ClubEntity[] | null;
 
     try {
       if (national_code) await this.validateUniqueNationalCode(national_code, userId);
 
-      const ownedClubs = await this.clubService.validateOwnedClubs(clubIds, userId);
-      await this.validateCoachGender(gender, ownedClubs);
+      if (clubIds) {
+        ownedClubs = await this.clubService.validateOwnedClubs(clubIds, userId);
+        await this.validateCoachGender(gender, ownedClubs);
+      }
 
       imageKey = image ? await this.uploadCoachImage(image) : null;
 
@@ -69,6 +72,7 @@ export class CoachService {
         image_url: imageKey,
         clubs: ownedClubs,
         userId: coachUserId,
+        ownerId: userId,
       });
 
       return ResponseUtil.success({ ...coach, userId: coachUserId }, CoachMessages.CreatedCoach);
@@ -97,7 +101,9 @@ export class CoachService {
         updateData.clubs = ownedClubs;
       }
 
-      if (gender !== coach.gender) await this.validateCoachGender(gender, updateData.clubs ?? coach.clubs, coachId);
+      if (gender && gender !== coach.gender) {
+        await this.validateCoachGender(gender, updateData.clubs ?? coach.clubs, coachId);
+      }
 
       if (image) updateData.image_url = await this.uploadCoachImage(image);
 

@@ -96,7 +96,7 @@ export class CreateStudentDto {
   @IsInt()
   @Min(1371)
   @Max(1449)
-  @Transform(({ value }) => (value ? parseInt(value, 10) : null))
+  @Transform(({ value }) => (value !== null && value !== undefined ? parseInt(value, 10) : null))
   @ApiPropertyOptional({ type: 'integer', required: false, example: 1402 })
   membership_year?: number;
 

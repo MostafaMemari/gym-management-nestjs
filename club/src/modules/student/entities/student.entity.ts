@@ -43,6 +43,9 @@ export class StudentEntity extends AbstractEntity {
   @Column({ type: 'varchar', length: 200, nullable: true })
   address?: string;
 
+  @Column({ type: 'int', nullable: true })
+  membership_year?: number;
+
   @Column({ type: 'date' })
   birth_date: Date;
 
