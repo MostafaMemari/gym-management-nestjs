@@ -172,12 +172,12 @@ export class StudentController {
 
       const data: ServiceResponse = await lastValueFrom(
         this.clubServiceClient
-          .emit(StudentPatterns.BulkCreateStudents, {
+          .send(StudentPatterns.BulkCreateStudents, {
             user,
             studentData: { ...bulkStudentsDto },
             studentsJson: studentsFile,
           })
-          .pipe(timeout(10000)),
+          .pipe(timeout(40000)),
       );
 
       return handleServiceResponse(data);

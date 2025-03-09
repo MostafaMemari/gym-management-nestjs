@@ -185,7 +185,7 @@ export class StudentService {
     }
   }
 
-  async bulkCreate(user: IUser, studentData: IBulkCreateStudent, studentsJson: Express.Multer.File): Promise<void> {
+  async bulkCreate(user: IUser, studentData: IBulkCreateStudent, studentsJson: Express.Multer.File) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -207,6 +207,7 @@ export class StudentService {
         const fullName = student.full_name.replace(/ي/g, 'ی');
         const nationalCode = `${student.national_code}`.padStart(10, '0');
         const birthDate = shmasiToMiladi(student.birth_date as any);
+        const membershipYear = student.membership_year;
 
         const userStudentId = await this.createUserStudent();
         if (userStudentId) studentUserIds.push(userStudentId);
@@ -221,6 +222,7 @@ export class StudentService {
             full_name: fullName,
             national_code: nationalCode,
             birth_date: birthDate,
+            membership_year: membershipYear,
             gender,
             coachId,
             clubId,
@@ -236,7 +238,7 @@ export class StudentService {
         }
       }
       await queryRunner.commitTransaction();
-      // return ResponseUtil.success({ ...student, userId: studentUserId }, StudentMessages.CreatedStudent);
+      return ResponseUtil.success({ count: studentUserIds.length + 1 }, StudentMessages.CreatedStudent);
     } catch (error) {
       console.log(studentUserIds);
       await queryRunner.rollbackTransaction();
