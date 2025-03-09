@@ -41,7 +41,6 @@ export class BeltExamService {
       const { beltIds } = createBeltExamDto;
       if (beltIds) {
         const belts = await this.beltService.validateBeltIds(beltIds);
-        console.log(belts);
         createBeltExamDto.belts = belts;
       }
 

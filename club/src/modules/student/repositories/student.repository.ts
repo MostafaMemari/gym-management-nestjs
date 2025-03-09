@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { DataSource, QueryRunner, Repository } from 'typeorm';
+import { DataSource, In, QueryRunner, Repository } from 'typeorm';
 import { StudentEntity } from '../entities/student.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { ISeachStudentQuery } from '../interfaces/student.interface';
@@ -188,6 +188,14 @@ export class StudentRepository extends Repository<StudentEntity> {
       .leftJoin('students.club', 'club')
       .where('club.ownerId = :ownerId', { ownerId })
       .getCount();
+  }
+
+  async findByIds(ids: number[]): Promise<StudentEntity[]> {
+    return this.find({ where: { id: In(ids) } });
+  }
+
+  async findByIdsAndCoachAndGender(ids: number[], coachId: number, gender: Gender): Promise<StudentEntity[]> {
+    return this.find({ where: { id: In(ids), gender, coachId } });
   }
 }
 

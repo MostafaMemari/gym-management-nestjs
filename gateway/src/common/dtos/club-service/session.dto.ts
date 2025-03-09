@@ -1,4 +1,4 @@
-import { IsDateString, IsEnum, IsInt, IsNotEmpty, IsOptional, IsPositive, IsString, Length } from 'class-validator';
+import { IsDateString, IsEnum, IsInt, IsNotEmpty, IsOptional, IsPositive, IsString, Length, Matches } from 'class-validator';
 
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
@@ -16,14 +16,18 @@ export class CreateSessionDto {
   days: DayOfWeek[];
 
   @IsOptional()
-  @IsDateString()
-  @ApiPropertyOptional({ type: Date, example: '' })
-  start_time: Date;
+  @Matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+    message: 'start_time must be in HH:MM format (00:00 to 23:59)',
+  })
+  @ApiPropertyOptional({ type: String, example: '00:00' })
+  start_time: string;
 
   @IsOptional()
-  @IsDateString()
-  @ApiPropertyOptional({ type: Date, example: '' })
-  end_time: Date;
+  @Matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+    message: 'end_time must be in HH:MM format (00:00 to 23:59)',
+  })
+  @ApiPropertyOptional({ type: String, example: '23:59' })
+  end_time: string;
 
   @IsOptional()
   @IsString()

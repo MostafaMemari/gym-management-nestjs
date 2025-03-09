@@ -126,7 +126,7 @@ export class BeltService {
     const invalidIds = beltIds.filter((id) => !foundIds.includes(id));
 
     if (invalidIds.length > 0) {
-      throw new NotFoundException(BeltMessages.BeltNotFound.replace('{ids}', invalidIds.join(', ')));
+      throw new NotFoundException(BeltMessages.BeltNotFounds.replace('{ids}', invalidIds.join(', ')));
     }
 
     return foundBelts;

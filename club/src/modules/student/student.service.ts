@@ -213,7 +213,7 @@ export class StudentService {
         if (userStudentId) studentUserIds.push(userStudentId);
 
         const beltId = belts.find((belt) => belt.name === student.belt)?.id;
-        const betlDate = shmasiToMiladi(student.belt_date as any);
+        const beltDate = shmasiToMiladi(student.belt_date as any);
 
         await this.validateUniqueNationalCode(student.national_code, userId);
 
@@ -231,10 +231,10 @@ export class StudentService {
           queryRunner,
         );
 
-        if (beltId && betlDate) {
+        if (beltId && beltDate) {
           const belt = await this.beltService.findBeltWithRelationsOrThrow(beltId);
-          const nextBeltDate = this.calculateNextBeltDate(betlDate, belt.duration_month);
-          await this.studentBeltRepository.createStudentBelt(studentCreate, belt, betlDate, nextBeltDate, queryRunner);
+          const nextBeltDate = this.calculateNextBeltDate(beltDate, belt.duration_month);
+          await this.studentBeltRepository.createStudentBelt(studentCreate, belt, beltDate, nextBeltDate, queryRunner);
         }
       }
       await queryRunner.commitTransaction();
@@ -370,6 +370,18 @@ export class StudentService {
     const nextBeltDateShamsi = addMonthsToDateShamsi(shamsiBeltDate, durationMonths);
     const nextBeltDateMiladi = shmasiToMiladi(nextBeltDateShamsi);
     return new Date(nextBeltDateMiladi);
+  }
+
+  async validateStudentIds(studentIds: number[], coachId: number, gender: Gender): Promise<StudentEntity[]> {
+    const foundStudents = await this.studentRepository.findByIdsAndCoachAndGender(studentIds, coachId, gender);
+    const foundIds = foundStudents.map((student) => student.id);
+    const invalidIds = studentIds.filter((id) => !foundIds.includes(id));
+
+    if (invalidIds.length > 0) {
+      throw new NotFoundException(StudentMessages.StudentNotFounds.replace('{ids}', invalidIds.join(', ')));
+    }
+
+    return foundStudents;
   }
 
   async test() {

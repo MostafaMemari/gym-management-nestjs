@@ -23,4 +23,5 @@ export enum StudentMessages {
   NotAssignedToClub = 'Coach is not assigned to the specified club:',
   CheckCoachAssignmentFailed = 'Failed to check if the coach is assigned to students',
   GetCountStudentSuccessfully = 'get count students successfully',
+  StudentNotFounds = 'Students with IDs {ids} were not found',
 }

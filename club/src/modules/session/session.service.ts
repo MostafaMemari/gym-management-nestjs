@@ -20,6 +20,7 @@ import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { IUser } from '../../common/interfaces/user.interface';
 import { ResponseUtil } from '../../common/utils/response';
+import { StudentService } from '../student/student.service';
 
 @Injectable()
 export class SessionService {
@@ -29,6 +30,7 @@ export class SessionService {
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
     private readonly sessionRepository: SessionRepository,
     private readonly cacheService: CacheService,
+    private readonly studentService: StudentService,
     @Inject(forwardRef(() => CoachService)) private readonly coachService: CoachService,
   ) {}
 
@@ -41,7 +43,11 @@ export class SessionService {
   }
   async create(user: IUser, createSessionDto: ICreateSession) {
     try {
-      const session = await this.sessionRepository.createAndSaveSession(createSessionDto);
+      const { coachId, studentIds } = createSessionDto;
+
+      const coach = await this.coachService.checkCoachOwnership(coachId, user.id);
+      const students = studentIds ? await this.studentService.validateStudentIds(studentIds, coach.id, coach.gender) : null;
+      const session = await this.sessionRepository.createAndSaveSession({ ...createSessionDto, students });
 
       return ResponseUtil.success(session, SessionMessages.CreatedSession);
     } catch (error) {

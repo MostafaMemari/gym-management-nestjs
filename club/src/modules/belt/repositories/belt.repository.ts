@@ -45,8 +45,8 @@ export class BeltRepository extends Repository<BeltEntity> {
     );
   }
 
-  async findByIds(clubIds: number[]): Promise<BeltEntity[]> {
-    return this.find({ where: { id: In(clubIds) } });
+  async findByIds(ids: number[]): Promise<BeltEntity[]> {
+    return this.find({ where: { id: In(ids) } });
   }
 
   async getBeltNamesAndIds() {
