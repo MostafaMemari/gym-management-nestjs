@@ -15,7 +15,7 @@ import { BeltPatterns } from '../../../common/enums/club.events';
 import { CreateBeltDto, QueryBeltDto, UpdateBeltDto } from '../../../common/dtos/club-service/belt.dto';
 
 @Controller('belts')
-@ApiTags('belts')
+@ApiTags('Belts')
 @AuthDecorator()
 export class BeltController {
   constructor(@Inject(Services.CLUB) private readonly beltServiceClient: ClientProxy) {}

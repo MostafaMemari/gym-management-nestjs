@@ -11,13 +11,16 @@ export class SessionEntity extends AbstractEntity {
   @Column({ type: 'set', enum: DayOfWeek })
   days: DayOfWeek[];
 
-  @Column({ type: 'time' })
+  @Column({ type: 'time', nullable: true })
   start_time: string;
 
-  @Column({ type: 'time' })
+  @Column({ type: 'time', nullable: true })
   end_time: string;
 
-  @Column({ type: 'integer', nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  description?: string;
+
+  @Column({ type: 'integer', nullable: false })
   coachId: number;
 
   @ManyToOne(() => CoachEntity, (coach) => coach.sessions, { nullable: false })

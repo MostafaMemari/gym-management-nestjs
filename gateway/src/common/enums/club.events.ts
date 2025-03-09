@@ -50,3 +50,11 @@ export enum BeltExamPatterns {
   GetBeltExam = 'get_belt-exam',
   RemoveBeltExam = 'remove_belt-exam',
 }
+export enum SessionPatterns {
+  CheckConnection = 'check_connection',
+  CreateSession = 'create_session',
+  UpdateSession = 'update_session',
+  GetSessions = 'get_sessions',
+  GetSession = 'get_session',
+  RemoveSession = 'remove_session',
+}

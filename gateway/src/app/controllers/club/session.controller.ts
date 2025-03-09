@@ -11,65 +11,64 @@ import { ServiceResponse } from '../../../common/interfaces/serviceResponse.inte
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
 import { Roles } from '../../../common/decorators/role.decorator';
 import { Role } from '../../../common/enums/role.enum';
-import { BeltExamPatterns } from '../../../common/enums/club.events';
-import { CreateBeltExamDto, QueryBeltExamDto, UpdateBeltExamDto } from '../../../common/dtos/club-service/belt-exam.dto';
+import { SessionPatterns } from '../../../common/enums/club.events';
+import { CreateSessionDto, QuerySessionDto, UpdateSessionDto } from '../../../common/dtos/club-service/session.dto';
 
-@Controller('belt-exams')
-@ApiTags('Belt Exams')
+@Controller('sessions')
+@ApiTags('Sessions')
 @AuthDecorator()
-export class BeltExamController {
-  constructor(@Inject(Services.CLUB) private readonly beltExamServiceClient: ClientProxy) {}
+export class SessionController {
+  constructor(@Inject(Services.CLUB) private readonly sessionServiceClient: ClientProxy) {}
 
   private async checkConnection(): Promise<boolean> {
     try {
-      return await lastValueFrom(this.beltExamServiceClient.send(BeltExamPatterns.CheckConnection, {}).pipe(timeout(5000)));
+      return await lastValueFrom(this.sessionServiceClient.send(SessionPatterns.CheckConnection, {}).pipe(timeout(5000)));
     } catch (error) {
-      throw new InternalServerErrorException('BeltExam service is not connected');
+      throw new InternalServerErrorException('Session service is not connected');
     }
   }
 
   @Post()
   @Roles(Role.SUPER_ADMIN)
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
-  async create(@Body() createBeltExamDto: CreateBeltExamDto) {
+  async create(@Body() createSessionDto: CreateSessionDto) {
     try {
       await this.checkConnection();
       const data: ServiceResponse = await lastValueFrom(
-        this.beltExamServiceClient.send(BeltExamPatterns.CreateBeltExam, { createBeltExamDto: { ...createBeltExamDto } }).pipe(timeout(10000)),
+        this.sessionServiceClient.send(SessionPatterns.CreateSession, { createSessionDto: { ...createSessionDto } }).pipe(timeout(10000)),
       );
-
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to create beltExam', 'BeltExamService');
+      handleError(error, 'Failed to create session', 'SessionService');
     }
   }
 
   @Put(':id')
   @Roles(Role.SUPER_ADMIN)
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
-  async update(@Param('id', ParseIntPipe) id: number, @Body() updateBeltExamDto: UpdateBeltExamDto) {
+  async update(@Param('id', ParseIntPipe) id: number, @Body() updateSessionDto: UpdateSessionDto) {
     try {
       await this.checkConnection();
       const data: ServiceResponse = await lastValueFrom(
-        this.beltExamServiceClient
-          .send(BeltExamPatterns.UpdateBeltExam, { beltExamId: id, updateBeltExamDto: { ...updateBeltExamDto } })
+        this.sessionServiceClient
+          .send(SessionPatterns.UpdateSession, { sessionId: id, updateSessionDto: { ...updateSessionDto } })
           .pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to updated beltExam', 'BeltExamService');
+      handleError(error, 'Failed to updated session', 'SessionService');
     }
   }
 
   @Get()
   @Roles(Role.SUPER_ADMIN)
-  async findAll(@Query() paginationDto: PaginationDto, @Query() queryBeltExamDto: QueryBeltExamDto): Promise<any> {
+  async findAll(@Query() paginationDto: PaginationDto, @Query() querySessionDto: QuerySessionDto): Promise<any> {
     try {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.beltExamServiceClient.send(BeltExamPatterns.GetBeltExams, { queryBeltExamDto, paginationDto }).pipe(timeout(5000)),
+        this.sessionServiceClient.send(SessionPatterns.GetSessions, { querySessionDto, paginationDto }).pipe(timeout(5000)),
       );
       return handleServiceResponse(data);
     } catch (error) {}
@@ -82,12 +81,12 @@ export class BeltExamController {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.beltExamServiceClient.send(BeltExamPatterns.GetBeltExam, { beltExamId: id }).pipe(timeout(5000)),
+        this.sessionServiceClient.send(SessionPatterns.GetSession, { sessionId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to get beltExam', 'BeltExamService');
+      handleError(error, 'Failed to get session', 'SessionService');
     }
   }
 
@@ -98,12 +97,12 @@ export class BeltExamController {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.beltExamServiceClient.send(BeltExamPatterns.RemoveBeltExam, { beltExamId: id }).pipe(timeout(5000)),
+        this.sessionServiceClient.send(SessionPatterns.RemoveSession, { sessionId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to remove beltExam', 'BeltExamService');
+      handleError(error, 'Failed to remove session', 'SessionService');
     }
   }
 }

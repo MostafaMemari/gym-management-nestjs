@@ -15,7 +15,7 @@ import { AgeCategoryPatterns } from '../../../common/enums/club.events';
 import { CreateAgeCategoryDto, QueryAgeCategoryDto, UpdateAgeCategoryDto } from '../../../common/dtos/club-service/age-category.dto';
 
 @Controller('age-categories')
-@ApiTags('age categories')
+@ApiTags('Age Categories')
 @AuthDecorator()
 export class AgeCategoryController {
   constructor(@Inject(Services.CLUB) private readonly ageCategoryServiceClient: ClientProxy) {}

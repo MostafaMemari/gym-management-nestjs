@@ -17,7 +17,7 @@ import { Roles } from '../../../common/decorators/role.decorator';
 import { Role } from '../../../common/enums/role.enum';
 
 @Controller('clubs')
-@ApiTags('clubs')
+@ApiTags('Clubs')
 @AuthDecorator()
 export class ClubController {
   constructor(@Inject(Services.CLUB) private readonly clubServiceClient: ClientProxy) {}

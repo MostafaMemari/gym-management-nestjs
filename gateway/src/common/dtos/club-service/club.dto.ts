@@ -15,7 +15,7 @@ export class CreateClubDto {
     minLength: 2,
     maxLength: 120,
     required: true,
-    example: 'آکادمی تکواندو یاری',
+    example: '',
   })
   name: string;
 
