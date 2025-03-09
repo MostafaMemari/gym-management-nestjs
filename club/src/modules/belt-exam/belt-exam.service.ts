@@ -79,7 +79,7 @@ export class BeltExamService {
   async getAll(query: { queryBeltExamDto: ISearchBeltExamQuery; paginationDto: IPagination }): Promise<PageDto<BeltExamEntity>> {
     const { take, page } = query.paginationDto;
 
-    // const cacheKey = `${CacheKeys.BELT_LIST}-${page}-${take}-${JSON.stringify(query.queryBeltExamDto)}`;
+    // const cacheKey = `${CacheKeys.SESSION_LIST}-${page}-${take}-${JSON.stringify(query.queryBeltExamDto)}`;
 
     // const cachedData = await this.cacheService.get<PageDto<BeltExamEntity>>(cacheKey);
     // if (cachedData) return cachedData;

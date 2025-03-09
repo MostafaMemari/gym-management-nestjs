@@ -9,6 +9,7 @@ import { StudentModule } from './modules/student/student.module';
 import { ClubModule } from './modules/club/club.module';
 import { BeltModule } from './modules/belt/belt.module';
 import { BeltExamModule } from './modules/belt-exam/belt-exam.module';
+import { SessionModule } from './modules/session/session.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { BeltExamModule } from './modules/belt-exam/belt-exam.module';
     ClubModule,
     BeltModule,
     BeltExamModule,
+    SessionModule,
   ],
   controllers: [],
   providers: [],

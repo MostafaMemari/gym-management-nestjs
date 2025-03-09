@@ -1,4 +1,4 @@
-import { AfterLoad, Column, Entity, Index, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
+import { AfterLoad, Column, Entity, Index, JoinColumn, ManyToMany, ManyToOne, OneToOne } from 'typeorm';
 
 import { CoachEntity } from '../../coach/entities/coach.entity';
 
@@ -6,9 +6,8 @@ import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
 import { ClubEntity } from '../../../modules/club/entities/club.entity';
-import { BeltEntity } from 'src/modules/belt/entities/belt.entity';
 import { StudentBeltEntity } from './student-belt.entity';
-import { Expose } from 'class-transformer';
+import { SessionEntity } from '../../../modules/session/entities/session.entity';
 
 @Entity(EntityName.Students)
 @Index(['full_name', 'national_code'])
@@ -71,6 +70,9 @@ export class StudentEntity extends AbstractEntity {
 
   @OneToOne(() => StudentBeltEntity, (beltInfo) => beltInfo.student, { nullable: true })
   beltInfo: StudentBeltEntity | null;
+
+  @ManyToMany(() => SessionEntity, (session) => session.students)
+  sessions: SessionEntity[];
 
   @AfterLoad()
   map() {

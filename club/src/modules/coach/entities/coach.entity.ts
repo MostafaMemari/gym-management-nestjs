@@ -2,6 +2,7 @@ import { Column, Entity, Index, ManyToMany, OneToMany } from 'typeorm';
 
 import { StudentEntity } from '../../student/entities/student.entity';
 
+import { SessionEntity } from '../../../modules/session/entities/session.entity';
 import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
@@ -45,4 +46,7 @@ export class CoachEntity extends AbstractEntity {
 
   @ManyToMany(() => ClubEntity, (club) => club.coaches)
   clubs: ClubEntity[];
+
+  @OneToMany(() => SessionEntity, (session) => session.coach)
+  sessions: SessionEntity;
 }
