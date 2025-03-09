@@ -97,20 +97,12 @@ export class CoachRepository extends Repository<CoachEntity> {
     }
   }
 
-  async findCoachByNationalCode(nationalCode: string, userId: number): Promise<CoachEntity | null> {
-    return await this.createQueryBuilder(EntityName.Coaches)
-      .where('coaches.national_code = :nationalCode', { nationalCode })
-      .leftJoinAndSelect('coaches.clubs', 'club')
-      .andWhere('club.ownerId = :userId', { userId })
-      .getOne();
+  async findCoachByNationalCode(nationalCode: string, ownerId: number): Promise<CoachEntity | null> {
+    return this.findOne({ where: { national_code: nationalCode, ownerId }, relations: ['clubs'] });
   }
 
-  async findByIdAndOwner(coachId: number, userId: number): Promise<CoachEntity | null> {
-    return await this.createQueryBuilder(EntityName.Coaches)
-      .where('coaches.id = :coachId', { coachId })
-      .leftJoinAndSelect('coaches.clubs', 'club')
-      .andWhere('club.ownerId = :userId', { userId })
-      .getOne();
+  async findByIdAndOwner(coachId: number, ownerId: number): Promise<CoachEntity | null> {
+    return this.findOne({ where: { id: coachId, ownerId }, relations: ['clubs'] });
   }
 
   async existsCoachByGenderInClub(clubId: number, gender: Gender): Promise<boolean> {

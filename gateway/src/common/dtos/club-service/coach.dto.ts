@@ -71,10 +71,10 @@ export class CreateCoachDto {
   @ApiPropertyOptional({ type: Date, example: '' })
   birth_date: Date;
 
+  @IsOptional()
   @ToArray()
-  @IsNotEmpty()
   @IsInt({ each: true })
-  @ApiProperty({ type: 'array' })
+  @ApiPropertyOptional({ type: 'array' })
   clubIds: number[];
 }
 
