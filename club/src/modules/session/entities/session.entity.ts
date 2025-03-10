@@ -6,7 +6,7 @@ import { CoachEntity } from '../../coach/entities/coach.entity';
 import { DayOfWeek } from '../enums/days-of-week.enum';
 import { StudentEntity } from '../../../modules/student/entities/student.entity';
 import { ClubEntity } from '../../../modules/club/entities/club.entity';
-import { AttendanceSessionEntity } from 'src/modules/attendance/entities/attendance-sessions.entity';
+import { AttendanceSessionEntity } from '../../../modules/attendance/entities/attendance-sessions.entity';
 
 @Entity(EntityName.Sessions)
 export class SessionEntity extends AbstractEntity {

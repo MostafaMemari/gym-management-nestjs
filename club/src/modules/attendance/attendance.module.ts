@@ -12,6 +12,7 @@ import { AttendanceRepository } from './repositories/attendance.repository';
 import { AttendanceSubscriber } from './subscribers/attendance.subscriber';
 import { StudentModule } from '../student/student.module';
 import { ClubModule } from '../club/club.module';
+import { AttendanceSessionEntity } from './entities/attendance-sessions.entity';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import { ClubModule } from '../club/club.module';
         },
       },
     ]),
-    TypeOrmModule.forFeature([AttendanceEntity]),
+    TypeOrmModule.forFeature([AttendanceEntity, AttendanceSessionEntity]),
     ClubModule,
     CacheModule,
     StudentModule,
