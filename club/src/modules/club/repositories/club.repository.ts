@@ -22,7 +22,7 @@ export class ClubRepository extends Repository<ClubEntity> {
   }
 
   async getClubsWithFilters(userId: number, filters: ISearchClubQuery, page: number, take: number): Promise<[ClubEntity[], number]> {
-    const queryBuilder = this.createQueryBuilder(EntityName.Clubs).where('clubs.ownerId = :ownerId', { ownerId: userId });
+    const queryBuilder = this.createQueryBuilder(EntityName.CLUBS).where('clubs.ownerId = :ownerId', { ownerId: userId });
 
     if (filters?.search) {
       queryBuilder.andWhere('clubs.name LIKE :search', { search: `%${filters.search}%` });

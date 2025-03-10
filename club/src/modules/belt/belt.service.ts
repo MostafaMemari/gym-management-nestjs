@@ -1,6 +1,4 @@
-import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { lastValueFrom, timeout } from 'rxjs';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { BeltEntity } from './entities/belt.entity';
 import { BeltMessages } from './enums/belt.message';
@@ -11,21 +9,13 @@ import { CacheService } from '../cache/cache.service';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
 import { CacheKeys } from '../../common/enums/cache.enum';
-import { UserPatterns } from '../../common/enums/patterns.events';
-import { Services } from '../../common/enums/services.enum';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from '../../common/utils/response';
 
 @Injectable()
 export class BeltService {
-  private readonly timeout: number = 4500;
-
-  constructor(
-    @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
-    private readonly beltRepository: BeltRepository,
-    private readonly cacheService: CacheService,
-  ) {}
+  constructor(private readonly beltRepository: BeltRepository, private readonly cacheService: CacheService) {}
 
   async create(createBeltDto: IBeltCreateDto): Promise<ServiceResponse> {
     try {

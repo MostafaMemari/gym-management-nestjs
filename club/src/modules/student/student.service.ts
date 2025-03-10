@@ -29,6 +29,7 @@ import { addMonthsToDateShamsi } from '../../common/utils/date/addMonths';
 import { mildadiToShamsi, shmasiToMiladi } from '../../common/utils/date/convertDate';
 import { isGenderAllowed, isSameGender } from '../../common/utils/functions';
 import { ResponseUtil } from '../../common/utils/response';
+import { checkConnection } from '../../common/utils/checkConnection.utils';
 
 @Injectable()
 export class StudentService {
@@ -44,14 +45,6 @@ export class StudentService {
     private readonly dataSource: DataSource,
     @Inject(forwardRef(() => CoachService)) private readonly coachService: CoachService,
   ) {}
-
-  async checkUserServiceConnection(): Promise<ServiceResponse | void> {
-    try {
-      await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CheckConnection, {}).pipe(timeout(this.timeout)));
-    } catch (error) {
-      throw new RpcException({ message: 'User service is not connected', status: HttpStatus.INTERNAL_SERVER_ERROR });
-    }
-  }
 
   async create(user: IUser, createStudentDto: ICreateStudent) {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -89,11 +82,11 @@ export class StudentService {
       }
 
       await queryRunner.commitTransaction();
-      return ResponseUtil.success({ ...student, userId: studentUserId }, StudentMessages.CreatedStudent);
+      return ResponseUtil.success({ ...student, userId: studentUserId }, StudentMessages.CREATE_SUCCESS);
     } catch (error) {
       await queryRunner.rollbackTransaction();
       await this.removeStudentData(studentUserId, imageKey);
-      return ResponseUtil.error(error?.message || StudentMessages.FailedToCreateStudent, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
+      return ResponseUtil.error(error?.message || StudentMessages.GET_FAILURE, error?.status);
     } finally {
       await queryRunner.release();
     }
@@ -129,10 +122,10 @@ export class StudentService {
         await this.awsService.deleteFile(student.image_url);
       }
 
-      return ResponseUtil.success({ ...student, ...updateData }, StudentMessages.UpdatedStudent);
+      return ResponseUtil.success({ ...student, ...updateData }, StudentMessages.UPDATE_SUCCESS);
     } catch (error) {
       await this.removeStudentImage(imageKey);
-      return ResponseUtil.error(error?.message || StudentMessages.FailedToUpdateStudent, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
+      return ResponseUtil.error(error?.message || StudentMessages.UPDATE_FAILURE, error?.status);
     }
   }
   async getAll(user: IUser, query: { queryStudentDto: ISeachStudentQuery; paginationDto: IPagination }): Promise<PageDto<StudentEntity>> {
@@ -156,18 +149,18 @@ export class StudentService {
     try {
       const student = await this.checkStudentOwnership(studentId, user.id);
 
-      return ResponseUtil.success(student, StudentMessages.GetStudentSuccess);
+      return ResponseUtil.success(student, StudentMessages.GET_SUCCESS);
     } catch (error) {
-      throw new RpcException(error);
+      ResponseUtil.error(error?.message || StudentMessages.GET_ALL_FAILURE, error?.status);
     }
   }
   async getStudentDetails(studentId: number): Promise<ServiceResponse> {
     try {
       const student = await this.studentRepository.findStudentWithRelations(studentId);
 
-      return ResponseUtil.success(student, StudentMessages.GetStudentSuccess);
+      return ResponseUtil.success(student, StudentMessages.GET_SUCCESS);
     } catch (error) {
-      throw new RpcException(error);
+      ResponseUtil.error(error?.message || StudentMessages.GET_FAILURE, error?.status);
     }
   }
 
@@ -179,9 +172,9 @@ export class StudentService {
 
       if (isRemoved) this.removeStudentData(Number(student.userId), student.image_url);
 
-      return ResponseUtil.success(student, StudentMessages.RemovedStudentSuccess);
+      return ResponseUtil.success(student, StudentMessages.REMOVE_SUCCESS);
     } catch (error) {
-      throw new RpcException(error);
+      ResponseUtil.error(error?.message || StudentMessages.REMOVE_FAILURE, error?.status);
     }
   }
 
@@ -238,12 +231,16 @@ export class StudentService {
         }
       }
       await queryRunner.commitTransaction();
-      return ResponseUtil.success({ count: studentUserIds.length + 1 }, StudentMessages.CreatedStudent);
+
+      return ResponseUtil.success(
+        { count: studentUserIds.length + 1 },
+        StudentMessages.BULK_CREATE_SUCCESS.replace('{count}', (studentUserIds.length + 1).toString()),
+      );
     } catch (error) {
       console.log(studentUserIds);
       await queryRunner.rollbackTransaction();
       await this.removeStudentsUserByIds(studentUserIds);
-      return ResponseUtil.error(error?.message || StudentMessages.FailedToCreateStudent, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
+      return ResponseUtil.error(error?.message || StudentMessages.BULK_CREATE_FAILURE, error?.status);
     } finally {
       await queryRunner.release();
     }
@@ -251,32 +248,33 @@ export class StudentService {
   async getOneByNationalCode(nationalCode: string): Promise<ServiceResponse> {
     try {
       const student = await this.studentRepository.findOneBy({ national_code: nationalCode });
-      if (!student) throw new NotFoundException(StudentMessages.StudentNotFound);
-      return ResponseUtil.success(student, StudentMessages.GetStudentSuccess);
+      if (!student) throw new NotFoundException(StudentMessages.NOT_FOUND);
+      return ResponseUtil.success(student, StudentMessages.GET_SUCCESS);
     } catch (error) {
-      throw new RpcException(error);
+      ResponseUtil.error(error?.message || StudentMessages.UPDATE_FAILURE, error?.status);
     }
   }
-  async getCountStudentsByOwner(ownerId: number) {
+  async getCountStudentsByOwner(ownerId: number): Promise<ServiceResponse> {
     try {
       const count = await this.studentRepository.countStudentsByOwner(ownerId);
 
-      return ResponseUtil.success({ count }, StudentMessages.GetCountStudentSuccessfully);
+      return ResponseUtil.success({ count }, StudentMessages.GET_COUNT_SUCCESS.replace('{count}', count.toString()));
     } catch (error) {
-      throw new RpcException(error);
+      ResponseUtil.error(error?.message || StudentMessages.GET_COUNT_FAILURE, error?.status);
     }
   }
 
   private async checkStudentOwnership(studentId: number, userId: number): Promise<StudentEntity> {
     const student = await this.studentRepository.findByIdAndOwner(studentId, userId);
-    if (!student) throw new NotFoundException(StudentMessages.StudentNotFound);
+    if (!student) throw new NotFoundException(StudentMessages.NOT_FOUND);
     return student;
   }
 
   private async createUserStudent(): Promise<number | null> {
     const username = `STU_${Math.random().toString(36).slice(2, 8)}`;
 
-    await this.checkUserServiceConnection();
+    await checkConnection(Services.USER, this.userServiceClientProxy);
+
     const result = await lastValueFrom(
       this.userServiceClientProxy.send(UserPatterns.CreateUserStudent, { username }).pipe(timeout(this.timeout)),
     );
@@ -287,14 +285,16 @@ export class StudentService {
   private async removeStudentUserById(userId: number): Promise<void> {
     if (!userId) return null;
 
-    await this.checkUserServiceConnection();
+    await checkConnection(Services.USER, this.userServiceClientProxy);
+
     const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.RemoveUser, { userId }).pipe(timeout(this.timeout)));
     if (result?.error) throw result;
   }
   private async removeStudentsUserByIds(userIds: number[]): Promise<void> {
     if (!userIds.length) return null;
 
-    await this.checkUserServiceConnection();
+    await checkConnection(Services.USER, this.userServiceClientProxy);
+
     const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.RemoveUsers, { userIds }).pipe(timeout(this.timeout)));
     if (result?.error) throw result;
   }
@@ -310,7 +310,7 @@ export class StudentService {
   }
   private async validateUniqueNationalCode(nationalCode: string, userId: number): Promise<StudentEntity> {
     const student = await this.studentRepository.findStudentByNationalCode(nationalCode, userId);
-    if (student) throw new BadRequestException(StudentMessages.DuplicateNationalCode);
+    if (student) throw new BadRequestException(StudentMessages.DUPLICATE_ENTRY);
     return student;
   }
 
@@ -321,8 +321,8 @@ export class StudentService {
   }
 
   private validateStudentGender(gender: Gender, coach: CoachEntity | null, club: ClubEntity | null) {
-    if (coach && !isSameGender(gender, coach.gender)) throw new BadRequestException(StudentMessages.CoachGenderMismatch);
-    if (club && !isGenderAllowed(gender, club.genders)) throw new BadRequestException(StudentMessages.ClubGenderMismatch);
+    if (coach && !isSameGender(gender, coach.gender)) throw new BadRequestException(StudentMessages.COACH_GENDER_MISMATCH);
+    if (club && !isGenderAllowed(gender, club.genders)) throw new BadRequestException(StudentMessages.CLUB_GENDER_MISMATCH);
   }
 
   private prepareUpdateData(updateDto: IUpdateStudent, student: StudentEntity): Partial<StudentEntity> {
@@ -343,7 +343,11 @@ export class StudentService {
 
   private checkClubIdInCoachClubs(clubId: number, coach: CoachEntity): void {
     const exists = coach.clubs.some((club) => club.id === clubId);
-    if (!exists) throw new BadRequestException(`Coach (ID: ${coach.id}) is not associated with Club (ID: ${clubId})`);
+    if (!exists) {
+      throw new BadRequestException(
+        StudentMessages.COACH_NOT_IN_CLUB.replace('{coachId}', coach.id.toString()).replace('{clubId}', clubId.toString()),
+      );
+    }
   }
 
   async hasStudentsAssignedToCoach(coachId: number): Promise<boolean> {
@@ -358,7 +362,7 @@ export class StudentService {
     }
 
     if (clubsWithStudents.length > 0) {
-      throw new BadRequestException(`${StudentMessages.CannotRemoveClubsInArray} ${clubsWithStudents.join(', ')}`);
+      throw new BadRequestException(StudentMessages.MULTIPLE_NOT_FOUND.replace('{ids}', clubsWithStudents.join(', ')));
     }
   }
   async hasStudentsByGender(coachId: number, gender: Gender): Promise<boolean> {
@@ -378,7 +382,7 @@ export class StudentService {
     const invalidIds = studentIds.filter((id) => !foundIds.includes(id));
 
     if (invalidIds.length > 0) {
-      throw new NotFoundException(StudentMessages.StudentNotFounds.replace('{ids}', invalidIds.join(', ')));
+      throw new NotFoundException(StudentMessages.MULTIPLE_NOT_FOUND.replace('{ids}', invalidIds.join(', ')));
     }
 
     return foundStudents;

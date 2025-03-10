@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { CoachEntity } from '../entities/coach.entity';
-import { ISeachCoachQuery } from '../interfaces/coach.interface';
+import { ICoachFilter } from '../interfaces/coach.interface';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
 
@@ -43,7 +43,7 @@ export class CoachRepository extends Repository<CoachEntity> {
     }
   }
 
-  async getCoachesWithFilters(userId: number, filters: ISeachCoachQuery, page: number, take: number): Promise<[CoachEntity[], number]> {
+  async getCoachesWithFilters(userId: number, filters: ICoachFilter, page: number, take: number): Promise<[CoachEntity[], number]> {
     const queryBuilder = this.createQueryBuilder(EntityName.Coaches)
       .leftJoinAndSelect('coaches.clubs', 'club')
       .where('club.ownerId = :userId', { userId });

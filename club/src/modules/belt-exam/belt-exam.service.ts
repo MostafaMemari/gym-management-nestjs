@@ -1,41 +1,27 @@
-import { HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { lastValueFrom, timeout } from 'rxjs';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { BeltExamEntity } from './entities/belt-exam.entity';
 import { BeltExamMessages } from './enums/belt-exam.message';
-import { IBeltCreateDtoExam, ISearchBeltExamQuery, IBeltUpdateDtoExam } from './interfaces/belt-exam.interface';
+import { IBeltCreateDtoExam, IBeltUpdateDtoExam, ISearchBeltExamQuery } from './interfaces/belt-exam.interface';
 import { BeltExamRepository } from './repositories/belt-exam.repository';
+import { CacheKeys } from './enums/cache.enum';
 
-import { CacheService } from '../cache/cache.service';
 import { BeltService } from '../belt/belt.service';
+import { CacheService } from '../cache/cache.service';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
-import { UserPatterns } from '../../common/enums/patterns.events';
-import { Services } from '../../common/enums/services.enum';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from '../../common/utils/response';
-import { CacheKeys } from './enums/cache.enum';
 
 @Injectable()
 export class BeltExamService {
-  private readonly timeout: number = 4500;
-
   constructor(
-    @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
     private readonly beltExamRepository: BeltExamRepository,
     private readonly cacheService: CacheService,
     private readonly beltService: BeltService,
   ) {}
 
-  async checkUserServiceConnection(): Promise<ServiceResponse | void> {
-    try {
-      await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CheckConnection, {}).pipe(timeout(this.timeout)));
-    } catch (error) {
-      throw new RpcException({ message: 'User service is not connected', status: HttpStatus.INTERNAL_SERVER_ERROR });
-    }
-  }
   async create(createBeltExamDto: IBeltCreateDtoExam) {
     try {
       const { beltIds } = createBeltExamDto;

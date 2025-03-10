@@ -1,34 +1,18 @@
-import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { lastValueFrom, timeout } from 'rxjs';
+import { Inject, Injectable } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 
-import { AttendanceEntity } from './entities/attendance.entity';
-import { AttendanceMessages } from './enums/attendance.message';
-import { IRecordAttendance, ISearchAttendanceQuery } from './interfaces/attendance.interface';
 import { AttendanceRepository } from './repositories/attendance.repository';
 
 import { CacheService } from '../cache/cache.service';
-import { CoachService } from '../coach/coach.service';
-import { CoachEntity } from '../coach/entities/coach.entity';
 
-import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
-import { CacheKeys } from '../../common/enums/cache.enum';
-import { Gender } from '../../common/enums/gender.enum';
-import { UserPatterns } from '../../common/enums/patterns.events';
 import { Services } from '../../common/enums/services.enum';
-import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
-import { IUser } from '../../common/interfaces/user.interface';
-import { ResponseUtil } from '../../common/utils/response';
 import { StudentService } from '../student/student.service';
 import { ClubService } from '../club/club.service';
 
 @Injectable()
 export class AttendanceService {
-  private readonly timeout: number = 4500;
-
   constructor(
-    @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
     private readonly attendanceRepository: AttendanceRepository,
     private readonly cacheService: CacheService,
     private readonly clubService: ClubService,

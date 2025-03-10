@@ -1,6 +1,6 @@
 import { Gender } from '../../../common/enums/gender.enum';
 
-export interface ICreateCoach {
+export interface ICoachCreateDto {
   full_name: string;
   gender: Gender;
   is_active?: boolean;
@@ -13,9 +13,9 @@ export interface ICreateCoach {
   clubIds?: number[];
 }
 
-export type IUpdateCoach = Partial<ICreateCoach>;
+export type ICoachUpdateDto = Partial<ICoachCreateDto>;
 
-export interface ISeachCoachQuery {
+export interface ICoachFilter {
   search?: string;
   gender?: Gender;
   is_active?: boolean;

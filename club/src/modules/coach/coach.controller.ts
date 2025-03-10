@@ -2,7 +2,7 @@ import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
 import { CoachService } from './coach.service';
-import { ICreateCoach, ISeachCoachQuery, IUpdateCoach } from './interfaces/coach.interface';
+import { ICoachCreateDto, ICoachFilter, ICoachUpdateDto } from './interfaces/coach.interface';
 import { CoachPatterns } from './patterns/coach.pattern';
 
 import { IPagination } from '../../common/interfaces/pagination.interface';
@@ -18,20 +18,20 @@ export class CoachController {
   }
 
   @MessagePattern(CoachPatterns.CreateCoach)
-  create(@Payload() data: { user: IUser; createCoachDto: ICreateCoach }) {
+  create(@Payload() data: { user: IUser; createCoachDto: ICoachCreateDto }) {
     const { user, createCoachDto } = data;
 
     return this.coachService.create(user, createCoachDto);
   }
   @MessagePattern(CoachPatterns.UpdateCoach)
-  update(@Payload() data: { user: IUser; coachId: number; updateCoachDto: IUpdateCoach }) {
+  update(@Payload() data: { user: IUser; coachId: number; updateCoachDto: ICoachUpdateDto }) {
     const { user, coachId, updateCoachDto } = data;
 
     return this.coachService.update(user, coachId, updateCoachDto);
   }
 
   @MessagePattern(CoachPatterns.GetCoaches)
-  findAll(@Payload() data: { user: IUser; queryCoachDto: ISeachCoachQuery; paginationDto: IPagination }) {
+  findAll(@Payload() data: { user: IUser; queryCoachDto: ICoachFilter; paginationDto: IPagination }) {
     const { user, queryCoachDto, paginationDto } = data;
 
     return this.coachService.getAll(user, { queryCoachDto, paginationDto });

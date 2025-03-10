@@ -4,7 +4,7 @@ import { lastValueFrom, timeout } from 'rxjs';
 
 import { CoachEntity } from './entities/coach.entity';
 import { CoachMessages } from './enums/coach.message';
-import { ICreateCoach, ISeachCoachQuery, IUpdateCoach } from './interfaces/coach.interface';
+import { ICoachCreateDto, ICoachFilter, ICoachUpdateDto } from './interfaces/coach.interface';
 import { CoachRepository } from './repositories/coach.repository';
 
 import { CacheService } from '../cache/cache.service';
@@ -24,6 +24,7 @@ import { ServiceResponse } from '../../common/interfaces/serviceResponse.interfa
 import { IUser } from '../../common/interfaces/user.interface';
 import { isGenderAllowed } from '../../common/utils/functions';
 import { ResponseUtil } from '../../common/utils/response';
+import { checkConnection } from '../../common/utils/checkConnection.utils';
 
 @Injectable()
 export class CoachService {
@@ -39,15 +40,7 @@ export class CoachService {
     @Inject(forwardRef(() => StudentService)) private readonly studentService: StudentService,
   ) {}
 
-  async checkUserServiceConnection(): Promise<ServiceResponse | void> {
-    try {
-      await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CheckConnection, {}).pipe(timeout(this.timeout)));
-    } catch (error) {
-      throw new RpcException({ message: 'User service is not connected', status: HttpStatus.INTERNAL_SERVER_ERROR });
-    }
-  }
-
-  async create(user: IUser, createCoachDto: ICreateCoach) {
+  async create(user: IUser, createCoachDto: ICoachCreateDto) {
     const { clubIds, national_code, gender, image } = createCoachDto;
     const userId: number = user.id;
 
@@ -81,7 +74,7 @@ export class CoachService {
       return ResponseUtil.error(error?.message || CoachMessages.FailedToCreateCoach, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-  async update(user: IUser, coachId: number, updateCoachDto: IUpdateCoach) {
+  async update(user: IUser, coachId: number, updateCoachDto: ICoachUpdateDto) {
     const { clubIds = [], national_code, gender, image } = updateCoachDto;
     const userId: number = user.id;
 
@@ -117,7 +110,7 @@ export class CoachService {
       return ResponseUtil.error(error?.message || CoachMessages.FailedToUpdateCoach, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-  async getAll(user: IUser, query: { queryCoachDto: ISeachCoachQuery; paginationDto: IPagination }): Promise<PageDto<CoachEntity>> {
+  async getAll(user: IUser, query: { queryCoachDto: ICoachFilter; paginationDto: IPagination }): Promise<PageDto<CoachEntity>> {
     const { take, page } = query.paginationDto;
     const userId: number = user.id;
 
@@ -170,7 +163,8 @@ export class CoachService {
   private async createUserCoach(): Promise<number> {
     const username = `COA_${Math.random().toString(36).slice(2, 8)}`;
 
-    await this.checkUserServiceConnection();
+    await checkConnection(Services.USER, this.userServiceClientProxy);
+
     const result = await lastValueFrom(
       this.userServiceClientProxy.send(UserPatterns.CreateUserCoach, { username }).pipe(timeout(this.timeout)),
     );
@@ -181,7 +175,8 @@ export class CoachService {
   private async removeCoachUserById(userId: number): Promise<void> {
     if (!userId) return;
 
-    await this.checkUserServiceConnection();
+    await checkConnection(Services.USER, this.userServiceClientProxy);
+
     const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.RemoveUser, { userId }).pipe(timeout(this.timeout)));
 
     if (result?.error) throw new BadRequestException(result.error);
@@ -216,7 +211,7 @@ export class CoachService {
     }
   }
 
-  private prepareUpdateData(updateDto: IUpdateCoach, coach: CoachEntity): Partial<CoachEntity> {
+  private prepareUpdateData(updateDto: ICoachUpdateDto, coach: CoachEntity): Partial<CoachEntity> {
     return Object.fromEntries(
       Object.entries(updateDto).filter(
         ([key, value]) => key !== 'image' && key !== 'clubIds' && value !== undefined && value !== coach[key],
