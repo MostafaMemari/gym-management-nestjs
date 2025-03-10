@@ -86,7 +86,7 @@ export class StudentService {
     } catch (error) {
       await queryRunner.rollbackTransaction();
       await this.removeStudentData(studentUserId, imageKey);
-      return ResponseUtil.error(error?.message || StudentMessages.GET_FAILURE, error?.status);
+      return ResponseUtil.error(error?.message || StudentMessages.CREATE_FAILURE, error?.status);
     } finally {
       await queryRunner.release();
     }
