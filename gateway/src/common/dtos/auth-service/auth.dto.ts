@@ -147,5 +147,5 @@ export class SigninStudentDto {
     minLength: 10,
     maxLength: 10,
   })
-  national_code: string;
+  nationalCode: string;
 }

@@ -160,9 +160,9 @@ export class AuthService {
 
       if (result.error) throw result;
 
-      if (!result.data?.student) throw new NotFoundException(AuthMessages.NotFoundStudent);
+      if (!result.data) throw new NotFoundException(AuthMessages.NotFoundStudent);
 
-      const tokens = this.generateTokens({ id: result.data.student?.userId });
+      const tokens = await this.generateTokens({ id: result.data?.userId });
 
       return ResponseUtil.success({ ...tokens }, AuthMessages.SigninSuccess, HttpStatus.OK);
     } catch (error) {
