@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany } from 'typeorm';
 
 import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
@@ -6,6 +6,7 @@ import { CoachEntity } from '../../coach/entities/coach.entity';
 import { DayOfWeek } from '../enums/days-of-week.enum';
 import { StudentEntity } from '../../../modules/student/entities/student.entity';
 import { ClubEntity } from '../../../modules/club/entities/club.entity';
+import { AttendanceSessionEntity } from 'src/modules/attendance/entities/attendance-sessions.entity';
 
 @Entity(EntityName.Sessions)
 export class SessionEntity extends AbstractEntity {
@@ -38,6 +39,7 @@ export class SessionEntity extends AbstractEntity {
   @ManyToOne(() => ClubEntity, (club) => club.sessions, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn()
   club: ClubEntity;
+
+  @OneToMany(() => AttendanceSessionEntity, (attendanceSession) => attendanceSession.session)
+  attendanceSessions: AttendanceSessionEntity[];
 }
-// @OneToMany(() => AttendanceEntity, (attendance) => attendance.session)
-// attendances: AttendanceEntity[];
