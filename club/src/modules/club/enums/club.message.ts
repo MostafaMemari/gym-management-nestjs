@@ -24,4 +24,5 @@ export enum ClubMessages {
   CannotRemoveFemaleCoach = 'Cannot remove female gender while assigned coaches exist',
   CannotRemoveClubAssignedToCoaches = 'The club has assigned coaches and cannot be removed',
   WalletDepletionUpdated = 'Wallet depletion status updated successfully',
+  CoachNotInClubs = 'Coach is not assigned to any club',
 }

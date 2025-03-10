@@ -45,6 +45,9 @@ export class ClubRepository extends Repository<ClubEntity> {
   async findByIdAndOwner(clubId: number, ownerId: number): Promise<ClubEntity | null> {
     return this.findOne({ where: { id: clubId, ownerId } });
   }
+  async findByIdAndOwnerRelationCoaches(clubId: number, ownerId: number): Promise<ClubEntity | null> {
+    return this.findOne({ where: { id: clubId, ownerId }, relations: ['coaches'] });
+  }
 
   async findOwnedClubsByIds(clubIds: number[], ownerId: number): Promise<ClubEntity[]> {
     return this.find({

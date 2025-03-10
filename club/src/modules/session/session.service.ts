@@ -21,6 +21,7 @@ import { ServiceResponse } from '../../common/interfaces/serviceResponse.interfa
 import { IUser } from '../../common/interfaces/user.interface';
 import { ResponseUtil } from '../../common/utils/response';
 import { StudentService } from '../student/student.service';
+import { ClubService } from '../club/club.service';
 
 @Injectable()
 export class SessionService {
@@ -30,8 +31,8 @@ export class SessionService {
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
     private readonly sessionRepository: SessionRepository,
     private readonly cacheService: CacheService,
+    private readonly clubService: ClubService,
     private readonly studentService: StudentService,
-    @Inject(forwardRef(() => CoachService)) private readonly coachService: CoachService,
   ) {}
 
   async checkUserServiceConnection(): Promise<ServiceResponse | void> {
@@ -43,9 +44,12 @@ export class SessionService {
   }
   async create(user: IUser, createSessionDto: ICreateSession) {
     try {
-      const { coachId, studentIds } = createSessionDto;
+      const { clubId, coachId, studentIds } = createSessionDto;
 
-      const coach = await this.coachService.checkCoachOwnership(coachId, user.id);
+      const club = await this.clubService.checkClubOwnershipWithCoaches(clubId, user.id);
+      await this.clubService.validateCoachInClub(club, coachId);
+      const coach = club.coaches.find((coach) => coach.id === coachId);
+
       const students = studentIds ? await this.studentService.validateStudentIds(studentIds, coach.id, coach.gender) : null;
       const session = await this.sessionRepository.createAndSaveSession({ ...createSessionDto, students });
 

@@ -4,7 +4,8 @@ import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
 import { CoachEntity } from '../../coach/entities/coach.entity';
-import { StudentEntity } from 'src/modules/student/entities/student.entity';
+import { StudentEntity } from '../../../modules/student/entities/student.entity';
+import { SessionEntity } from '../../../modules/session/entities/session.entity';
 
 @Entity(EntityName.Clubs)
 export class ClubEntity extends AbstractEntity {
@@ -32,4 +33,7 @@ export class ClubEntity extends AbstractEntity {
 
   @OneToMany(() => StudentEntity, (student) => student.club)
   students: StudentEntity[];
+
+  @OneToMany(() => SessionEntity, (session) => session.club)
+  sessions: SessionEntity[];
 }

@@ -11,6 +11,7 @@ import { CoachModule } from '../coach/coach.module';
 import { SessionRepository } from './repositories/session.repository';
 import { SessionSubscriber } from './subscribers/session.subscriber';
 import { StudentModule } from '../student/student.module';
+import { ClubModule } from '../club/club.module';
 
 @Module({
   imports: [
@@ -25,9 +26,9 @@ import { StudentModule } from '../student/student.module';
       },
     ]),
     TypeOrmModule.forFeature([SessionEntity]),
+    ClubModule,
     CacheModule,
     StudentModule,
-    forwardRef(() => CoachModule),
   ],
   controllers: [SessionController],
   providers: [SessionService, SessionRepository, SessionSubscriber],

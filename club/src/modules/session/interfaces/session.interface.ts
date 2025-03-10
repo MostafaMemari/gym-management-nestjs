@@ -5,6 +5,7 @@ export interface ICreateSession {
   days: DayOfWeek[];
   start_time: string;
   end_time: string;
+  clubId: number;
   coachId: number;
   studentIds: number[];
   students: StudentEntity[];

@@ -125,6 +125,11 @@ export class ClubService {
     if (!club) throw new NotFoundException(ClubMessages.ClubNotBelongToUser);
     return club;
   }
+  async checkClubOwnershipWithCoaches(clubId: number, userId: number): Promise<ClubEntity> {
+    const club = await this.clubRepository.findByIdAndOwnerRelationCoaches(clubId, userId);
+    if (!club) throw new NotFoundException(ClubMessages.ClubNotBelongToUser);
+    return club;
+  }
 
   async validateGenderRemoval(genders: Gender[], clubId: number, currentGenders: Gender[]): Promise<void> {
     const removedGenders = currentGenders.filter((gender) => !genders.includes(gender));
@@ -148,5 +153,10 @@ export class ClubService {
     }
 
     return ownedClubs;
+  }
+
+  async validateCoachInClub(club: ClubEntity, coachId: number): Promise<void> {
+    const coach = club.coaches.find((coach) => coach.id === coachId);
+    if (!coach) throw new BadRequestException(ClubMessages.CoachNotInClubs);
   }
 }
