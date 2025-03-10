@@ -4,7 +4,7 @@ import { lastValueFrom, timeout } from 'rxjs';
 
 import { BeltExamEntity } from './entities/belt-exam.entity';
 import { BeltExamMessages } from './enums/belt-exam.message';
-import { ICreateBeltExam, ISearchBeltExamQuery, IUpdateBeltExam } from './interfaces/belt-exam.interface';
+import { IBeltCreateDtoExam, ISearchBeltExamQuery, IBeltUpdateDtoExam } from './interfaces/belt-exam.interface';
 import { BeltExamRepository } from './repositories/belt-exam.repository';
 
 import { CacheService } from '../cache/cache.service';
@@ -36,7 +36,7 @@ export class BeltExamService {
       throw new RpcException({ message: 'User service is not connected', status: HttpStatus.INTERNAL_SERVER_ERROR });
     }
   }
-  async create(createBeltExamDto: ICreateBeltExam) {
+  async create(createBeltExamDto: IBeltCreateDtoExam) {
     try {
       const { beltIds } = createBeltExamDto;
       if (beltIds) {
@@ -54,7 +54,7 @@ export class BeltExamService {
       );
     }
   }
-  async update(beltExamId: number, updateBeltExamDto: IUpdateBeltExam) {
+  async update(beltExamId: number, updateBeltExamDto: IBeltUpdateDtoExam) {
     try {
       const { beltIds } = updateBeltExamDto;
 

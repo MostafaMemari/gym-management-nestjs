@@ -1,7 +1,7 @@
 import { BeltEntity } from '../../../modules/belt/entities/belt.entity';
 import { Gender } from '../../../common/enums/gender.enum';
 
-export interface ICreateBeltExam {
+export interface IBeltCreateDtoExam {
   name: string;
   description?: string;
   genders: Gender[];
@@ -12,7 +12,7 @@ export interface ICreateBeltExam {
   belts: BeltEntity[];
 }
 
-export type IUpdateBeltExam = Partial<ICreateBeltExam>;
+export type IBeltUpdateDtoExam = Partial<IBeltCreateDtoExam>;
 
 export interface ISearchBeltExamQuery {
   // search?: string;

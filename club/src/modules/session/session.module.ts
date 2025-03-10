@@ -7,7 +7,6 @@ import { SessionEntity } from './entities/session.entity';
 import { SessionController } from './session.controller';
 import { SessionService } from './session.service';
 import { CacheModule } from '../cache/cache.module';
-import { CoachModule } from '../coach/coach.module';
 import { SessionRepository } from './repositories/session.repository';
 import { SessionSubscriber } from './subscribers/session.subscriber';
 import { StudentModule } from '../student/student.module';

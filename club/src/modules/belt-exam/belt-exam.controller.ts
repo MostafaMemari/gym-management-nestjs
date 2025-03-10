@@ -4,7 +4,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { BeltExamService } from './belt-exam.service';
 import { BeltExamPatterns } from './patterns/belt-exam.pattern';
-import { ICreateBeltExam, ISearchBeltExamQuery, IUpdateBeltExam } from './interfaces/belt-exam.interface';
+import { IBeltCreateDtoExam, ISearchBeltExamQuery, IBeltUpdateDtoExam } from './interfaces/belt-exam.interface';
 
 @Controller()
 export class BeltExamController {
@@ -16,7 +16,7 @@ export class BeltExamController {
   }
 
   @MessagePattern(BeltExamPatterns.CreateBeltExam)
-  create(@Payload() data: { createBeltExamDto: ICreateBeltExam }) {
+  create(@Payload() data: { createBeltExamDto: IBeltCreateDtoExam }) {
     const { createBeltExamDto } = data;
 
     console.log(createBeltExamDto);
@@ -24,7 +24,7 @@ export class BeltExamController {
     return this.beltExamService.create(createBeltExamDto);
   }
   @MessagePattern(BeltExamPatterns.UpdateBeltExam)
-  update(@Payload() data: { beltExamId: number; updateBeltExamDto: IUpdateBeltExam }) {
+  update(@Payload() data: { beltExamId: number; updateBeltExamDto: IBeltUpdateDtoExam }) {
     const { beltExamId, updateBeltExamDto } = data;
 
     return this.beltExamService.update(beltExamId, updateBeltExamDto);

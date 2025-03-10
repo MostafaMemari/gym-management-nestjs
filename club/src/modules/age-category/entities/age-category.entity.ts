@@ -3,7 +3,7 @@ import { AgeCategoryName } from '../enums/age-category.enum';
 import { AbstractEntity } from 'src/common/abstracts/abstract.entity';
 import { EntityName } from 'src/common/enums/entity.enum';
 
-@Entity(EntityName.AgeCategories)
+@Entity(EntityName.AGE_CATEGORIES)
 export class AgeCategoryEntity extends AbstractEntity {
   @Column({ type: 'enum', enum: AgeCategoryName, unique: true })
   name: AgeCategoryName;

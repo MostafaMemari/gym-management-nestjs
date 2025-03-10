@@ -3,7 +3,7 @@ import { DataSource, In, Repository } from 'typeorm';
 
 import { EntityName } from 'src/common/enums/entity.enum';
 import { BeltExamEntity } from '../entities/belt-exam.entity';
-import { ICreateBeltExam, ISearchBeltExamQuery, IUpdateBeltExam } from '../interfaces/belt-exam.interface';
+import { IBeltCreateDtoExam, ISearchBeltExamQuery, IBeltUpdateDtoExam } from '../interfaces/belt-exam.interface';
 
 @Injectable()
 export class BeltExamRepository extends Repository<BeltExamEntity> {
@@ -11,12 +11,12 @@ export class BeltExamRepository extends Repository<BeltExamEntity> {
     super(BeltExamEntity, dataSource.createEntityManager());
   }
 
-  async createAndSaveBeltExam(createBeltExamDto: ICreateBeltExam): Promise<BeltExamEntity> {
+  async createAndSaveBeltExam(createBeltExamDto: IBeltCreateDtoExam): Promise<BeltExamEntity> {
     const beltExam = this.create({ ...createBeltExamDto });
     return await this.save(beltExam);
   }
 
-  async updateBeltExam(beltExam: BeltExamEntity, updateBeltExamDto: IUpdateBeltExam): Promise<BeltExamEntity> {
+  async updateBeltExam(beltExam: BeltExamEntity, updateBeltExamDto: IBeltUpdateDtoExam): Promise<BeltExamEntity> {
     const updatedBeltExam = this.merge(beltExam, { ...updateBeltExamDto });
     return await this.save(updatedBeltExam);
   }

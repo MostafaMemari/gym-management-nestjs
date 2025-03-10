@@ -22,7 +22,7 @@ export class AgeCategoryRepository extends Repository<AgeCategoryEntity> {
   }
 
   async getAgeCategoriesWithFilters(filters: IAgeCategoryFilter, page: number, take: number): Promise<[AgeCategoryEntity[], number]> {
-    const queryBuilder = this.createQueryBuilder(EntityName.AgeCategories);
+    const queryBuilder = this.createQueryBuilder(EntityName.AGE_CATEGORIES);
 
     // if (filters?.search) {
     //   queryBuilder.andWhere('age-categories.name LIKE :search', { search: `%${filters.search}%` });

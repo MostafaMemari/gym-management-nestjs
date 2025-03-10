@@ -1,7 +1,9 @@
 import { BeltEntity } from '../entities/belt.entity';
-import { BeltName } from '../enums/belt.enum';
+import { BeltName } from '../enums/belt-name.enum';
 
-export interface ICreateBelt {
+import { Gender } from '../../../common/enums/gender.enum';
+
+export interface IBeltCreateDto {
   name: BeltName;
   level: number;
   min_age?: number;
@@ -11,10 +13,10 @@ export interface ICreateBelt {
   nextBelt: BeltEntity[];
 }
 
-export type IUpdateBelt = Partial<ICreateBelt>;
+export type IBeltUpdateDto = Partial<IBeltCreateDto>;
 
-export interface ISearchBeltQuery {
-  // search?: string;
-  // gender?: Gender;
-  // sort_order?: 'asc' | 'desc';
+export interface IBeltFilter {
+  search?: string;
+  gender?: Gender;
+  sort_order?: 'asc' | 'desc';
 }
