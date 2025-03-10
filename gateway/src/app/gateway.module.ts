@@ -18,6 +18,7 @@ import { PaymentController } from './controllers/payment.controller';
 import { BeltExamController } from './controllers/club/belt-exams.controller';
 import { WalletController } from './controllers/user/wallet.controller';
 import { SessionController } from './controllers/club/session.controller';
+import { AttendanceController } from './controllers/club/attendance.controller';
 
 @Module({
   imports: [
@@ -114,6 +115,7 @@ import { SessionController } from './controllers/club/session.controller';
     AgeCategoryController,
     BeltExamController,
     SessionController,
+    AttendanceController,
   ],
   providers: [
     {

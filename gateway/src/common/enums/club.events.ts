@@ -58,3 +58,11 @@ export enum SessionPatterns {
   GetSession = 'get_session',
   RemoveSession = 'remove_session',
 }
+export enum AttendancePatterns {
+  CheckConnection = 'check_connection',
+  CreateAttendance = 'create_attendance',
+  UpdateAttendance = 'update_attendance',
+  GetAttendances = 'get_attendances',
+  GetAttendance = 'get_attendance',
+  RemoveAttendance = 'remove_attendance',
+}
