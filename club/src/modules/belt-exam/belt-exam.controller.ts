@@ -10,12 +10,12 @@ import { IBeltCreateDtoExam, ISearchBeltExamQuery, IBeltUpdateDtoExam } from './
 export class BeltExamController {
   constructor(private readonly beltExamService: BeltExamService) {}
 
-  @MessagePattern(BeltExamPatterns.CheckConnection)
+  @MessagePattern(BeltExamPatterns.CHECK_CONNECTION)
   checkConnection() {
     return true;
   }
 
-  @MessagePattern(BeltExamPatterns.CreateBeltExam)
+  @MessagePattern(BeltExamPatterns.CREATE)
   create(@Payload() data: { createBeltExamDto: IBeltCreateDtoExam }) {
     const { createBeltExamDto } = data;
 
@@ -23,28 +23,28 @@ export class BeltExamController {
 
     return this.beltExamService.create(createBeltExamDto);
   }
-  @MessagePattern(BeltExamPatterns.UpdateBeltExam)
+  @MessagePattern(BeltExamPatterns.UPDATE)
   update(@Payload() data: { beltExamId: number; updateBeltExamDto: IBeltUpdateDtoExam }) {
     const { beltExamId, updateBeltExamDto } = data;
 
     return this.beltExamService.update(beltExamId, updateBeltExamDto);
   }
 
-  @MessagePattern(BeltExamPatterns.GetBeltExams)
+  @MessagePattern(BeltExamPatterns.GET_ALL)
   findAll(@Payload() data: { queryBeltExamDto: ISearchBeltExamQuery; paginationDto: IPagination }) {
     const { queryBeltExamDto, paginationDto } = data;
 
     return this.beltExamService.getAll({ queryBeltExamDto, paginationDto });
   }
 
-  @MessagePattern(BeltExamPatterns.GetBeltExam)
+  @MessagePattern(BeltExamPatterns.GET_ONE)
   findOne(@Payload() data: { beltExamId: number }) {
     const { beltExamId } = data;
 
     return this.beltExamService.findOneById(beltExamId);
   }
 
-  @MessagePattern(BeltExamPatterns.RemoveBeltExam)
+  @MessagePattern(BeltExamPatterns.REMOVE)
   remove(@Payload() data: { beltExamId: number }) {
     const { beltExamId } = data;
 

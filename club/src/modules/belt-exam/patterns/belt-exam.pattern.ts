@@ -1,8 +1,8 @@
 export enum BeltExamPatterns {
-  CheckConnection = 'check_connection',
-  CreateBeltExam = 'create_belt-exam',
-  UpdateBeltExam = 'update_belt-exam',
-  GetBeltExams = 'get_belt-exams',
-  GetBeltExam = 'get_belt-exam',
-  RemoveBeltExam = 'remove_belt-exam',
+  CHECK_CONNECTION = 'check_connection',
+  CREATE = 'create_belt-exam',
+  UPDATE = 'update_belt-exam',
+  GET_ALL = 'get_belt-exams',
+  GET_ONE = 'get_belt-exam',
+  REMOVE = 'remove_belt-exam',
 }

@@ -5,7 +5,7 @@ export enum EntityName {
   Clubs = 'clubs',
   BELTS = 'belts',
   Sessions = 'sessions',
-  BeltExams = 'belt-exams',
+  BELT_EXAMS = 'belt-exams',
   AGE_CATEGORIES = 'age_categories',
   Attendances = 'attendances',
   AttendanceSessions = 'attendance_sessions',

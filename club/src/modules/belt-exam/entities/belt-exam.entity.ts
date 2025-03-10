@@ -5,7 +5,7 @@ import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
 import { BeltEntity } from '../../../modules/belt/entities/belt.entity';
 
-@Entity(EntityName.BeltExams)
+@Entity(EntityName.BELT_EXAMS)
 export class BeltExamEntity extends AbstractEntity {
   @Column({ type: 'varchar' })
   name: string;

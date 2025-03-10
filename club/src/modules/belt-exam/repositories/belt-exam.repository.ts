@@ -22,7 +22,7 @@ export class BeltExamRepository extends Repository<BeltExamEntity> {
   }
 
   async getBeltExamsWithFilters(filters: ISearchBeltExamQuery, page: number, take: number): Promise<[BeltExamEntity[], number]> {
-    const queryBuilder = this.createQueryBuilder(EntityName.BeltExams);
+    const queryBuilder = this.createQueryBuilder(EntityName.BELT_EXAMS);
 
     // if (filters?.search) {
     //   queryBuilder.andWhere('beltExams.name LIKE :search', { search: `%${filters.search}%` });

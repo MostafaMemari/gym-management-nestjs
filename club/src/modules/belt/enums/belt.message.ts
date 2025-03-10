@@ -8,7 +8,7 @@ export enum BeltMessages {
   GET_SUCCESS = 'Belt retrieved successfully',
   GET_FAILURE = 'Failed to retrieve belt',
 
-  GET_ALL_SUCCESS = 'Age categories retrieved successfully',
+  GET_ALL_SUCCESS = 'Belts retrieved successfully',
   GET_ALL_FAILURE = 'Failed to retrieve belts',
 
   REMOVE_SUCCESS = 'Belt removed successfully',

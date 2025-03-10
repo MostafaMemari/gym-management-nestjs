@@ -1,19 +1,18 @@
 export enum BeltExamMessages {
-  CreatedBeltExam = 'BeltExam created successfully',
-  UpdatedBeltExam = 'BeltExam updated successfully',
-  NotFoundBeltExam = 'BeltExam not found',
-  RemovedBeltExamSuccess = 'BeltExam removed successfully',
-  FailedToCreateBeltExam = 'Failed to create belt exam. Try again later',
-  FailedToRemoveBeltExam = 'Failed to remove belt exam. Try again',
-  InvalidBeltExamData = 'Invalid belt exam data',
-  BeltExamUpdateSuccess = 'BeltExam updated successfully',
-  FailedToUpdateBeltExam = 'Failed to update belt exam. Try again',
-  BeltExamListFetchError = 'Error fetching belt exam list',
-  DuplicateBeltExamEntry = 'This belt exam is already registered',
-  BeltExamNotFound = 'BeltExam not found',
-  UnauthorizedBeltExams = 'These belt exam IDs do not belong to this user',
-  BeltExamNotBelongToUser = 'This belt exam does not belong to the user',
-  GetBeltExamSuccess = 'BeltExam data retrieved successfully',
-  BeltExamHasRelations = 'Cannot delete belt exam relations with students',
-  BeltExamNotFounds = 'BeltExams with IDs {ids} were not found',
+  CREATE_SUCCESS = 'Belt Exams created successfully',
+  CREATE_FAILURE = 'Failed to create belt. Try again later',
+
+  UPDATE_SUCCESS = 'Belt Exams updated successfully',
+  UPDATE_FAILURE = 'Failed to update belt. Try again',
+
+  GET_SUCCESS = 'Belt Exams retrieved successfully',
+  GET_FAILURE = 'Failed to retrieve belt',
+
+  GET_ALL_SUCCESS = 'Belts retrieved successfully',
+  GET_ALL_FAILURE = 'Failed to retrieve belts',
+
+  REMOVE_SUCCESS = 'Belt Exams removed successfully',
+  REMOVE_FAILURE = 'Failed to remove belt',
+
+  NOT_FOUND = 'Belt Exams not found',
 }
