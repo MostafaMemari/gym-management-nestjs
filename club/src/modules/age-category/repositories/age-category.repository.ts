@@ -24,25 +24,22 @@ export class AgeCategoryRepository extends Repository<AgeCategoryEntity> {
   async getAgeCategoriesWithFilters(filters: IAgeCategoryFilter, page: number, take: number): Promise<[AgeCategoryEntity[], number]> {
     const queryBuilder = this.createQueryBuilder(EntityName.AGE_CATEGORIES);
 
-    // if (filters?.search) {
-    //   queryBuilder.andWhere('age-categories.name LIKE :search', { search: `%${filters.search}%` });
-    // }
+    if (filters?.search) {
+      queryBuilder.andWhere('age-categories.name LIKE :search', { search: `%${filters.search}%` });
+    }
 
-    // if (filters?.gender) {
-    //   queryBuilder.andWhere(`FIND_IN_SET(:gender, age-categories.genders)`, { gender: filters.gender });
-    // }
+    if (filters?.gender) {
+      queryBuilder.andWhere(`FIND_IN_SET(:gender, age-categories.genders)`, { gender: filters.gender });
+    }
 
-    // if (filters?.sort_order) {
-    //   queryBuilder.orderBy('age-categories.updated_at', filters.sort_order === 'asc' ? 'ASC' : 'DESC');
-    // }
+    if (filters?.sort_order) {
+      queryBuilder.orderBy('age-categories.updated_at', filters.sort_order === 'asc' ? 'ASC' : 'DESC');
+    }
 
-    return (
-      queryBuilder
-        // .leftJoinAndSelect('age-categories.nextAgeCategories', 'nextAgeCategories')
-        .skip((page - 1) * take)
-        .take(take)
-        .getManyAndCount()
-    );
+    return queryBuilder
+      .skip((page - 1) * take)
+      .take(take)
+      .getManyAndCount();
   }
 
   async findByIds(clubIds: number[]): Promise<AgeCategoryEntity[]> {

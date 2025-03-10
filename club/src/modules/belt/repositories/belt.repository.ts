@@ -24,25 +24,22 @@ export class BeltRepository extends Repository<BeltEntity> {
   async getBeltsWithFilters(filters: IBeltFilter, page: number, take: number): Promise<[BeltEntity[], number]> {
     const queryBuilder = this.createQueryBuilder(EntityName.BELTS);
 
-    // if (filters?.search) {
-    //   queryBuilder.andWhere('belts.name LIKE :search', { search: `%${filters.search}%` });
-    // }
+    if (filters?.search) {
+      queryBuilder.andWhere('belts.name LIKE :search', { search: `%${filters.search}%` });
+    }
 
-    // if (filters?.gender) {
-    //   queryBuilder.andWhere(`FIND_IN_SET(:gender, belts.genders)`, { gender: filters.gender });
-    // }
+    if (filters?.gender) {
+      queryBuilder.andWhere(`FIND_IN_SET(:gender, belts.genders)`, { gender: filters.gender });
+    }
 
-    // if (filters?.sort_order) {
-    //   queryBuilder.orderBy('belts.updated_at', filters.sort_order === 'asc' ? 'ASC' : 'DESC');
-    // }
+    if (filters?.sort_order) {
+      queryBuilder.orderBy('belts.updated_at', filters.sort_order === 'asc' ? 'ASC' : 'DESC');
+    }
 
-    return (
-      queryBuilder
-        // .leftJoinAndSelect('belts.nextBelt', 'nextBelt')
-        .skip((page - 1) * take)
-        .take(take)
-        .getManyAndCount()
-    );
+    return queryBuilder
+      .skip((page - 1) * take)
+      .take(take)
+      .getManyAndCount();
   }
 
   async findByIds(ids: number[]): Promise<BeltEntity[]> {
