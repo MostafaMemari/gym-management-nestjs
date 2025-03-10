@@ -8,8 +8,9 @@ import { BeltEntity } from './entities/belt.entity';
 import { BeltRepository } from './repositories/belt.repository';
 import { BeltSubscriber } from './subscribers/club.subscriber';
 
-import { Services } from '../../common/enums/services.enum';
 import { CacheModule } from '../cache/cache.module';
+
+import { Services } from '../../common/enums/services.enum';
 
 @Module({
   imports: [
