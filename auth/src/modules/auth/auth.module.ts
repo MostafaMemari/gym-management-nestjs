@@ -26,6 +26,14 @@ import { RbacService } from '../rbac/rbac.service';
           queue: process.env.RABBITMQ_USER_QUEUE_NAME,
         },
       },
+      {
+        name: Services.CLUB,
+        transport: Transport.RMQ,
+        options: {
+          urls: [process.env.RABBITMQ_URL],
+          queue: process.env.RABBITMQ_CLUB_QUEUE_NAME,
+        },
+      },
     ]),
     forwardRef(() => RbacModule),
   ],

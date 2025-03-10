@@ -10,6 +10,7 @@ import {
   RefreshTokenDto,
   RestPasswordDto,
   SigninDto,
+  SigninStudentDto,
   SignoutDto,
   SignupDto,
   VerifyOtpDto,
@@ -51,6 +52,22 @@ export class AuthController {
       return handleServiceResponse(data);
     } catch (error) {
       handleError(error, 'Failed to signin', 'AuthService');
+    }
+  }
+
+  @Post('signin-student')
+  @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
+  async signinStudent(@Body() signinStudentDto: SigninStudentDto) {
+    try {
+      await checkConnection(Services.AUTH, this.authServiceClient);
+
+      const data: ServiceResponse = await lastValueFrom(
+        this.authServiceClient.send(AuthPatterns.SigninStudent, signinStudentDto).pipe(timeout(this.timeout)),
+      );
+
+      return handleServiceResponse(data);
+    } catch (error) {
+      handleError(error, 'Failed to signin student', 'AuthService');
     }
   }
 

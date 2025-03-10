@@ -279,6 +279,8 @@ export class UserService {
 
   async removeUsers({ userIds = [] }: { userIds: number[] }): Promise<ServiceResponse> {
     try {
+      userIds = userIds.filter((id) => id);
+
       const result = await this.userRepository.deleteMany(userIds);
 
       return ResponseUtil.success({ count: result.count }, '', HttpStatus.OK);
