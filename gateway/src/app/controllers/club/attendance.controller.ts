@@ -30,7 +30,7 @@ export class AttendanceController {
     }
   }
 
-  @Post()
+  @Post('record')
   @Roles(Role.ADMIN_CLUB)
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
   async create(@GetUser() user: User, @Body() createAttendanceDto: RecordAttendanceDto) {

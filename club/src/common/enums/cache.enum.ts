@@ -1,4 +1,5 @@
 export enum CacheKeys {
+  AGE_CATEGORIES = 'age_categories_list',
   STUDENT_LIST = 'students_list',
   COACH_LIST = 'coaches_list',
   CLUB_LIST = 'clubs_list',
@@ -8,6 +9,7 @@ export enum CacheKeys {
   ATTENDANCE_LIST = 'attendance_list',
 }
 export enum CachePatterns {
+  AGE_CATEGORIES = 'age_categories_list*',
   STUDENT_LIST = 'students_list*',
   COACH_LIST = 'coaches_list*',
   CLUB_LIST = 'clubs_list*',

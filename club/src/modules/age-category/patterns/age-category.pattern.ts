@@ -1,8 +1,8 @@
 export enum AgeCategoryPatterns {
-  CheckConnection = 'check_connection',
-  CreateAgeCategory = 'create_age_category',
-  UpdateAgeCategory = 'update_age_category',
-  GetAgeCategories = 'get_age_categories',
-  GetAgeCategory = 'get_age_category',
-  RemoveAgeCategory = 'remove_age_category',
+  CHECK_CONNECTION = 'check_connection',
+  CREATE = 'create_age_category',
+  UPDATE = 'update_age_category',
+  GET_ALL = 'get_age_categories',
+  GET_ONE = 'get_age_category',
+  REMOVE = 'remove_age_category',
 }

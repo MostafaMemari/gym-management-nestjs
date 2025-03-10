@@ -9,13 +9,12 @@ export enum AttendanceStatus {
 }
 
 export class StudentAttendanceDto {
-  @ApiProperty({ example: 101, description: 'شناسه هنرجو' })
+  @ApiProperty({ example: 101 })
   @IsInt()
   studentId: number;
 
   @ApiProperty({
     example: AttendanceStatus.PRESENT,
-    description: 'وضعیت حضور هنرجو',
     enum: AttendanceStatus,
   })
   @IsEnum(AttendanceStatus)
@@ -23,7 +22,7 @@ export class StudentAttendanceDto {
 }
 
 export class RecordAttendanceDto {
-  @ApiProperty({ example: 1, description: 'شناسه سانس' })
+  @ApiProperty({ example: 1 })
   @IsInt()
   sessionId: number;
 
@@ -33,7 +32,6 @@ export class RecordAttendanceDto {
 
   @ApiProperty({
     type: [StudentAttendanceDto],
-    description: 'لیست هنرجویان و وضعیت حضور آن‌ها',
   })
   @IsArray()
   @ValidateNested({ each: true })

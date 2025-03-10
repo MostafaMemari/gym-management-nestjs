@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, In, Repository } from 'typeorm';
 
-import { EntityName } from 'src/common/enums/entity.enum';
+import { EntityName } from '../../../common/enums/entity.enum';
 import { AgeCategoryEntity } from '../entities/age-category.entity';
-import { ICreateAgeCategory, ISearchAgeCategoryQuery, IUpdateAgeCategory } from '../interfaces/age-category.interface';
+import { IAgeCategoryCreateDto, IAgeCategoryFilter, IAgeCategoryUpdateDto } from '../interfaces/age-category.interface';
 
 @Injectable()
 export class AgeCategoryRepository extends Repository<AgeCategoryEntity> {
@@ -11,17 +11,17 @@ export class AgeCategoryRepository extends Repository<AgeCategoryEntity> {
     super(AgeCategoryEntity, dataSource.createEntityManager());
   }
 
-  async createAndSaveAgeCategory(cateAgeCategoryDto: ICreateAgeCategory): Promise<AgeCategoryEntity> {
+  async createAndSaveAgeCategory(cateAgeCategoryDto: IAgeCategoryCreateDto): Promise<AgeCategoryEntity> {
     const ageCategory = this.create({ ...cateAgeCategoryDto });
     return await this.save(ageCategory);
   }
 
-  async updateAgeCategory(ageCategory: AgeCategoryEntity, updateAgeCategoryDto: IUpdateAgeCategory): Promise<AgeCategoryEntity> {
+  async updateAgeCategory(ageCategory: AgeCategoryEntity, updateAgeCategoryDto: IAgeCategoryUpdateDto): Promise<AgeCategoryEntity> {
     const updatedAgeCategory = this.merge(ageCategory, { ...updateAgeCategoryDto });
     return await this.save(updatedAgeCategory);
   }
 
-  async getAgeCategoriesWithFilters(filters: ISearchAgeCategoryQuery, page: number, take: number): Promise<[AgeCategoryEntity[], number]> {
+  async getAgeCategoriesWithFilters(filters: IAgeCategoryFilter, page: number, take: number): Promise<[AgeCategoryEntity[], number]> {
     const queryBuilder = this.createQueryBuilder(EntityName.AgeCategories);
 
     // if (filters?.search) {

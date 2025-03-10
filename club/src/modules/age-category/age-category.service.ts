@@ -1,91 +1,72 @@
-import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { lastValueFrom, timeout } from 'rxjs';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 
 import { AgeCategoryEntity } from './entities/age-category.entity';
 import { AgeCategoryMessages } from './enums/age-category.message';
-import { ICreateAgeCategory, ISearchAgeCategoryQuery, IUpdateAgeCategory } from './interfaces/age-category.interface';
+import { CacheKeys } from './enums/cache.enum';
+import { IAgeCategoryCreateDto, IAgeCategoryFilter, IAgeCategoryUpdateDto } from './interfaces/age-category.interface';
 import { AgeCategoryRepository } from './repositories/age-category.repository';
 
-import { CacheService } from '../cache/cache.service';
-
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
-import { UserPatterns } from '../../common/enums/patterns.events';
-import { Services } from '../../common/enums/services.enum';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from '../../common/utils/response';
+import { CacheService } from '../cache/cache.service';
 
 @Injectable()
 export class AgeCategoryService {
-  private readonly timeout: number = 4500;
+  constructor(private readonly cacheService: CacheService, private readonly ageCategoryRepository: AgeCategoryRepository) {}
 
-  constructor(
-    @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
-    private readonly ageCategoryRepository: AgeCategoryRepository,
-    private readonly cacheService: CacheService,
-  ) {}
-
-  async checkUserServiceConnection(): Promise<ServiceResponse | void> {
-    try {
-      await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CheckConnection, {}).pipe(timeout(this.timeout)));
-    } catch (error) {
-      throw new RpcException({ message: 'User service is not connected', status: HttpStatus.INTERNAL_SERVER_ERROR });
-    }
-  }
-
-  async create(createAgeCategoryDto: ICreateAgeCategory) {
+  async create(createAgeCategoryDto: IAgeCategoryCreateDto): Promise<ServiceResponse> {
     try {
       const ageCategory = await this.ageCategoryRepository.createAndSaveAgeCategory(createAgeCategoryDto);
 
-      return ResponseUtil.success(ageCategory, AgeCategoryMessages.CreatedAgeCategory);
+      return ResponseUtil.success(ageCategory, AgeCategoryMessages.CREATE_SUCCESS);
     } catch (error) {
-      return ResponseUtil.error(
-        error?.message || AgeCategoryMessages.FailedToCreateAgeCategory,
-        error?.status || HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      ResponseUtil.error(error?.message || AgeCategoryMessages.CREATE_FAILURE, error?.status);
     }
   }
 
-  async update(ageCategoryId: number, updateAgeCategoryDto: IUpdateAgeCategory) {
+  async update(ageCategoryId: number, updateAgeCategoryDto: IAgeCategoryUpdateDto) {
     try {
       const ageCategory = await this.validateAgeCategoryId(ageCategoryId);
 
       const updatedAgeCategory = await this.ageCategoryRepository.updateAgeCategory(ageCategory, updateAgeCategoryDto);
 
-      return ResponseUtil.success({ ...updatedAgeCategory }, AgeCategoryMessages.UpdatedAgeCategory);
+      return ResponseUtil.success({ ...updatedAgeCategory }, AgeCategoryMessages.UPDATE_SUCCESS);
     } catch (error) {
-      return ResponseUtil.error(
-        error?.message || AgeCategoryMessages.FailedToUpdateAgeCategory,
-        error?.status || HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      ResponseUtil.error(error?.message || AgeCategoryMessages.UPDATE_FAILURE, error?.status);
     }
   }
 
-  async getAll(query: { queryAgeCategoryDto: ISearchAgeCategoryQuery; paginationDto: IPagination }): Promise<PageDto<AgeCategoryEntity>> {
+  async getAll(query: { queryAgeCategoryDto: IAgeCategoryFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
     const { take, page } = query.paginationDto;
 
-    // const cacheKey = `${CacheKeys.BELT_LIST}-${page}-${take}-${JSON.stringify(query.queryAgeCategoryDto)}`;
+    try {
+      const cacheKey = `${CacheKeys.AGE_CATEGORIES}-${page}-${take}-${JSON.stringify(query.queryAgeCategoryDto)}`;
 
-    // const cachedData = await this.cacheService.get<PageDto<AgeCategoryEntity>>(cacheKey);
-    // if (cachedData) return cachedData;
+      const cachedData = await this.cacheService.get<Promise<ServiceResponse>>(cacheKey);
+      if (cachedData) return cachedData;
 
-    const [ageCategories, count] = await this.ageCategoryRepository.getAgeCategoriesWithFilters(query.queryAgeCategoryDto, page, take);
+      const [ageCategories, count] = await this.ageCategoryRepository.getAgeCategoriesWithFilters(query.queryAgeCategoryDto, page, take);
 
-    const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
-    const result = new PageDto(ageCategories, pageMetaDto);
+      const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
+      const result = new PageDto(ageCategories, pageMetaDto);
 
-    // await this.cacheService.set(cacheKey, result, 600);
+      await this.cacheService.set(cacheKey, result, 600);
 
-    return result;
+      return ResponseUtil.success({ ...result }, AgeCategoryMessages.GET_SUCCESS);
+    } catch (error) {
+      ResponseUtil.error(error?.message || AgeCategoryMessages.GET_ALL_FAILURE, error?.status);
+    }
   }
   async findOneById(ageCategoryId: number): Promise<ServiceResponse> {
     try {
       const ageCategory = await this.validateAgeCategoryId(ageCategoryId);
 
-      return ResponseUtil.success(ageCategory, AgeCategoryMessages.GetAgeCategorySuccess);
+      return ResponseUtil.success(ageCategory, AgeCategoryMessages.GET_SUCCESS);
     } catch (error) {
-      throw new RpcException(error);
+      ResponseUtil.error(error?.message || AgeCategoryMessages.GET_FAILURE, error?.status);
     }
   }
   async removeById(ageCategoryId: number): Promise<ServiceResponse> {
@@ -93,15 +74,15 @@ export class AgeCategoryService {
       const ageCategory = await this.validateAgeCategoryId(ageCategoryId);
       const removedAgeCategory = await this.ageCategoryRepository.delete(ageCategoryId);
 
-      if (removedAgeCategory.affected) return ResponseUtil.success(ageCategory, AgeCategoryMessages.RemovedAgeCategorySuccess);
+      if (removedAgeCategory.affected) return ResponseUtil.success(ageCategory, AgeCategoryMessages.REMOVE_SUCCESS);
     } catch (error) {
-      throw new RpcException(error);
+      ResponseUtil.error(error?.message || AgeCategoryMessages.REMOVE_FAILURE, error?.status);
     }
   }
 
   async validateAgeCategoryId(ageCategoryId: number): Promise<AgeCategoryEntity> {
     const ageCategory = await this.ageCategoryRepository.findOneBy({ id: ageCategoryId });
-    if (!ageCategory) throw new NotFoundException(AgeCategoryMessages.NotFoundAgeCategory);
+    if (!ageCategory) throw new NotFoundException(AgeCategoryMessages.NOT_FOUND);
     return ageCategory;
   }
 }

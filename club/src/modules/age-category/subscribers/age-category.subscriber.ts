@@ -4,8 +4,7 @@ import { DataSource, EntitySubscriberInterface, InsertEvent, UpdateEvent, Remove
 
 import { AgeCategoryEntity } from '../entities/age-category.entity';
 import { CacheService } from '../../cache/cache.service';
-
-import { CachePatterns } from '../../../common/enums/cache.enum';
+import { CachePatterns } from '../enums/cache.enum';
 
 @Injectable()
 export class AgeCategorySubscriber implements EntitySubscriberInterface<AgeCategoryEntity> {
@@ -30,6 +29,6 @@ export class AgeCategorySubscriber implements EntitySubscriberInterface<AgeCateg
   }
 
   private async clearCache() {
-    await this.cacheService.delByPattern(CachePatterns.CLUB_LIST);
+    await this.cacheService.delByPattern(CachePatterns.AGE_CATEGORIES);
   }
 }

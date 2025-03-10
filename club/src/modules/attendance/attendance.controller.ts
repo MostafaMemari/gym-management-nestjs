@@ -16,12 +16,12 @@ export class AttendanceController {
     return true;
   }
 
-  @MessagePattern(AttendancePatterns.CreateAttendance)
-  create(@Payload() data: { user: IUser; createAttendanceDto: IRecordAttendance }) {
-    const { user, createAttendanceDto } = data;
+  // @MessagePattern(AttendancePatterns.CreateAttendance)
+  // create(@Payload() data: { user: IUser; createAttendanceDto: IRecordAttendance }) {
+  //   const { user, createAttendanceDto } = data;
 
-    return this.clubService.create(user, createAttendanceDto);
-  }
+  //   return this.clubService.create(user, createAttendanceDto);
+  // }
   // @MessagePattern(AttendancePatterns.UpdateAttendance)
   // update(@Payload() data: { user: IUser; clubId: number; updateAttendanceDto: IUpdateAttendance }) {
   //   const { user, clubId, updateAttendanceDto } = data;
@@ -29,17 +29,17 @@ export class AttendanceController {
   //   return this.clubService.update(user, clubId, updateAttendanceDto);
   // }
 
-  @MessagePattern(AttendancePatterns.GetAttendances)
-  findAll(@Payload() data: { user: IUser; queryAttendanceDto: ISearchAttendanceQuery; paginationDto: IPagination }) {
-    const { user, queryAttendanceDto, paginationDto } = data;
+  // @MessagePattern(AttendancePatterns.GetAttendances)
+  // findAll(@Payload() data: { user: IUser; queryAttendanceDto: ISearchAttendanceQuery; paginationDto: IPagination }) {
+  //   const { user, queryAttendanceDto, paginationDto } = data;
 
-    return this.clubService.getAll(user, { queryAttendanceDto, paginationDto });
-  }
+  //   return this.clubService.getAll(user, { queryAttendanceDto, paginationDto });
+  // }
 
-  @MessagePattern(AttendancePatterns.GetAttendance)
-  findOne(@Payload() data: { user: IUser; clubId: number }) {
-    const { user, clubId } = data;
+  // @MessagePattern(AttendancePatterns.GetAttendance)
+  // findOne(@Payload() data: { user: IUser; clubId: number }) {
+  //   const { user, clubId } = data;
 
-    return this.clubService.findOneById(user, clubId);
-  }
+  //   return this.clubService.findOneById(user, clubId);
+  // }
 }

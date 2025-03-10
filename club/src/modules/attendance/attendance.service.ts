@@ -36,94 +36,83 @@ export class AttendanceService {
   ) {}
 
   async checkUserServiceConnection(): Promise<ServiceResponse | void> {
-    try {
-      await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CheckConnection, {}).pipe(timeout(this.timeout)));
-    } catch (error) {
-      throw new RpcException({ message: 'User service is not connected', status: HttpStatus.INTERNAL_SERVER_ERROR });
-    }
-  }
-  async create(user: IUser, createAttendanceDto: IRecordAttendance) {
     // try {
-    //   const attendance = await this.attendanceRepository.createAndSaveAttendance({ ...createAttendanceDto });
-    //   return ResponseUtil.success(attendance, AttendanceMessages.CreatedAttendance);
+    //   await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CheckConnection, {}).pipe(timeout(this.timeout)));
     // } catch (error) {
-    //   return ResponseUtil.error(
-    //     error?.message || AttendanceMessages.FailedToCreateAttendance,
-    //     error?.status || HttpStatus.INTERNAL_SERVER_ERROR,
-    //   );
+    //   throw new RpcException({ message: 'User service is not connected', status: HttpStatus.INTERNAL_SERVER_ERROR });
     // }
   }
-  // async update(user: IUser, attendanceId: number, updateAttendanceDto: IUpdateAttendance) {
-  //   try {
-  //     const attendance = await this.checkAttendanceOwnership(attendanceId);
+  // async recordAttendance(input: AttendanceInputDto): Promise<void> {
+  //   const { sessionId, date, attendances } = input;
 
-  //     const updatedAttendance = await this.attendanceRepository.updateAttendance(attendance, updateAttendanceDto);
+  //   const session = await this.sessionRepository.findOne({
+  //     where: { id: sessionId },
+  //     relations: ['students'],
+  //   });
 
-  //     return ResponseUtil.success({ ...updatedAttendance }, AttendanceMessages.UpdatedAttendance);
-  //   } catch (error) {
-  //     return ResponseUtil.error(
-  //       error?.message || AttendanceMessages.FailedToUpdateAttendance,
-  //       error?.status || HttpStatus.INTERNAL_SERVER_ERROR,
-  //     );
+  //   if (!session) {
+  //     throw new Error('سانس مورد نظر پیدا نشد');
   //   }
+
+  //   const inputDate = new Date(date);
+  //   const dayOfWeek = inputDate.toLocaleString('en-US', { weekday: 'long' }) as DayOfWeek;
+  //   if (!session.days.includes(dayOfWeek)) {
+  //     throw new Error(`سانس در روز ${dayOfWeek} برگزار نمی‌شود`);
+  //   }
+
+  //   let attendanceSession = await this.attendanceSessionRepository.findOne({
+  //     where: { sessionId, date: inputDate },
+  //   });
+
+  //   if (!attendanceSession) {
+  //     attendanceSession = new AttendanceSessionEntity();
+  //     attendanceSession.sessionId = sessionId;
+  //     attendanceSession.date = inputDate;
+  //     await this.attendanceSessionRepository.save(attendanceSession);
+  //   }
+
+  //   const validStudentIds = session.students.map((student) => student.id);
+  //   const attendanceEntities = attendances
+  //     .filter((att) => validStudentIds.includes(att.studentId))
+  //     .map((att) => {
+  //       const attendance = new AttendanceEntity();
+  //       attendance.studentId = att.studentId;
+  //       attendance.attendanceSession = attendanceSession;
+  //       attendance.status = att.status;
+  //       attendance.note = att.note;
+  //       attendance.attendanceDateTime = new Date();
+  //       return attendance;
+  //     });
+
+  //   if (attendanceEntities.length === 0) {
+  //     throw new Error('هیچ دانشجوی معتبری برای این سانس پیدا نشد');
+  //   }
+
+  //   await this.attendanceRepository.save(attendanceEntities);
   // }
-  async getAll(
-    user: IUser,
-    query: { queryAttendanceDto: ISearchAttendanceQuery; paginationDto: IPagination },
-  ): Promise<PageDto<AttendanceEntity>> {
-    const { take, page } = query.paginationDto;
 
-    const cacheKey = `${CacheKeys.CLUB_LIST}-${user.id}-${page}-${take}-${JSON.stringify(query.queryAttendanceDto)}`;
+  // async getAttendanceReport(sessionId: number, startDate: string, endDate: string): Promise<AttendanceReportDto> {
+  //   const attendanceSessions = await this.attendanceSessionRepository.find({
+  //     where: {
+  //       sessionId,
+  //       date: Between(new Date(startDate), new Date(endDate)),
+  //     },
+  //     relations: ['attendances', 'attendances.student'],
+  //     order: { date: 'ASC' },
+  //   });
 
-    const cachedData = await this.cacheService.get<PageDto<AttendanceEntity>>(cacheKey);
-    if (cachedData) return cachedData;
+  //   const report: AttendanceReportDto = attendanceSessions.reduce((acc, session) => {
+  //     const dateStr = session.date.toISOString().split('T')[0];
+  //     acc[dateStr] = session.attendances.map((att) => ({
+  //       studentId: att.studentId,
+  //       fullName: att.student.full_name,
+  //       status: att.status,
+  //       note: att.note,
+  //       attendanceDateTime: att.attendanceDateTime.toISOString(),
+  //     }));
+  //     return acc;
+  //   }, {} as AttendanceReportDto);
 
-    const [attendances, count] = await this.attendanceRepository.getAttendancesWithFilters(user.id, query.queryAttendanceDto, page, take);
-
-    const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
-    const result = new PageDto(attendances, pageMetaDto);
-
-    await this.cacheService.set(cacheKey, result, 600);
-
-    return result;
-  }
-  async findOneById(user: IUser, attendanceId: number): Promise<ServiceResponse> {
-    try {
-      const attendance = await this.checkAttendanceOwnership(attendanceId);
-
-      return ResponseUtil.success(attendance, AttendanceMessages.GetAttendanceSuccess);
-    } catch (error) {
-      throw new RpcException(error);
-    }
-  }
-  async removeById(user: IUser, attendanceId: number): Promise<ServiceResponse> {
-    try {
-      const attendance = await this.checkAttendanceOwnership(attendanceId);
-
-      const removedAttendance = await this.attendanceRepository.delete(attendanceId);
-
-      if (removedAttendance.affected) return ResponseUtil.success(attendance, AttendanceMessages.RemovedAttendanceSuccess);
-
-      return ResponseUtil.success(removedAttendance, AttendanceMessages.RemovedAttendanceSuccess);
-    } catch (error) {
-      throw new RpcException(error);
-    }
-  }
-
-  async checkAttendanceOwnership(attendanceId: number): Promise<AttendanceEntity> {
-    const attendance = await this.attendanceRepository.findByIdAndOwner(attendanceId);
-    if (!attendance) throw new NotFoundException(AttendanceMessages.AttendanceNotBelongToUser);
-    return attendance;
-  }
-
-  async validateOwnedAttendances(attendanceIds: number[], userId: number): Promise<AttendanceEntity[]> {
-    const ownedAttendances = await this.attendanceRepository.findOwnedAttendancesByIds(attendanceIds);
-
-    if (ownedAttendances.length !== attendanceIds.length) {
-      const notOwnedAttendanceIds = attendanceIds.filter((id) => !ownedAttendances.some((attendance) => attendance.id === id));
-      throw new BadRequestException(`${AttendanceMessages.UnauthorizedAttendances} ${notOwnedAttendanceIds.join(', ')}`);
-    }
-
-    return ownedAttendances;
-  }
+  //   return report;
+  // }
 }
