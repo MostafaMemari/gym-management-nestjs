@@ -28,14 +28,17 @@ export class BeltRepository extends Repository<BeltEntity> {
       queryBuilder.andWhere('belts.name LIKE :search', { search: `%${filters.search}%` });
     }
 
-    if (filters?.gender) {
-      queryBuilder.andWhere(`FIND_IN_SET(:gender, belts.genders)`, { gender: filters.gender });
+    if (filters?.sort_by && validSortFields.includes(filters.sort_by)) {
+      queryBuilder.orderBy(`belts.${filters.sort_by}`, filters.sort_order === 'asc' ? 'ASC' : 'DESC');
+    } else {
+      queryBuilder.orderBy('belts.created_at', 'DESC');
     }
 
-    if (filters?.sort_order) {
-      queryBuilder.orderBy('belts.updated_at', filters.sort_order === 'asc' ? 'ASC' : 'DESC');
+    if (filters?.sort_by) {
+      queryBuilder.orderBy(`belts.${filters.sort_by}`, filters.sort_order === 'asc' ? 'ASC' : 'DESC');
+    } else {
+      queryBuilder.orderBy('belts.updated_at', 'DESC');
     }
-
     return queryBuilder
       .skip((page - 1) * take)
       .take(take)
@@ -50,3 +53,5 @@ export class BeltRepository extends Repository<BeltEntity> {
     return await this.find({ select: ['id', 'name'] });
   }
 }
+
+const validSortFields = ['level'];

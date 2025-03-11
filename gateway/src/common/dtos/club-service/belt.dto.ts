@@ -4,6 +4,7 @@ import { Transform } from 'class-transformer';
 
 import { BeltName } from '../../../common/enums/belt.enum';
 import { ToArray } from '../../../common/decorators/transformers.decorator';
+import { SortOrder } from '../../../common/enums/shared.enum';
 
 export class CreateBeltDto {
   @IsNotEmpty()
@@ -46,17 +47,24 @@ export class CreateBeltDto {
 
 export class UpdateBeltDto extends PartialType(CreateBeltDto) {}
 
+enum SortBy {
+  LEVEL = 'level',
+  CREATED_AT = 'created_at',
+  UPDATED_AT = 'updated_at',
+}
 export class QueryBeltDto {
-  //   @IsOptional()
-  //   @IsString()
-  //   @ApiPropertyOptional({ type: 'string', example: '', description: '' })
-  //   search?: string;
-  //   @IsOptional()
-  //   @IsEnum(Gender)
-  //   @ApiPropertyOptional({ example: 'male', enum: Gender })
-  //   gender?: Gender;
-  //   @IsOptional()
-  //   @IsEnum(SortOrder, { message: 'sort_order must be either "asc" or "desc"' })
-  //   @ApiPropertyOptional({ example: 'desc', enum: SortOrder })
-  //   sort_order?: SortOrder;
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({ type: 'string', example: '', description: '' })
+  search?: string;
+
+  @IsOptional()
+  @IsEnum(SortBy, { message: 'sort_by must be one of "level", "created_at" or "updated_at"' })
+  @ApiPropertyOptional({ example: 'birth_date', enum: SortBy })
+  sort_by?: SortBy;
+
+  @IsOptional()
+  @IsEnum(SortOrder, { message: 'sort_order must be either "asc" or "desc"' })
+  @ApiPropertyOptional({ example: 'desc', enum: SortOrder })
+  sort_order?: SortOrder;
 }
