@@ -3,9 +3,9 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, EntitySubscriberInterface, InsertEvent, UpdateEvent, RemoveEvent } from 'typeorm';
 
 import { StudentEntity } from '../entities/student.entity';
+import { CachePatterns } from '../enums/cache.enum';
 
 import { CacheService } from '../../../modules/cache/cache.service';
-import { CachePatterns } from '../../../common/enums/cache.enum';
 
 @Injectable()
 export class StudentSubscriber implements EntitySubscriberInterface<StudentEntity> {

@@ -3,12 +3,15 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { StudentBeltEntity } from './entities/student-belt.entity';
 import { StudentEntity } from './entities/student.entity';
+import { StudentBeltRepository } from './repositories/student-belt.repository';
 import { StudentRepository } from './repositories/student.repository';
 import { StudentController } from './student.controller';
 import { StudentService } from './student.service';
 import { StudentSubscriber } from './subscribers/student.subscriber';
 
+import { AgeCategoryModule } from '../age-category/age-category.module';
 import { BeltModule } from '../belt/belt.module';
 import { CacheModule } from '../cache/cache.module';
 import { ClubModule } from '../club/club.module';
@@ -16,9 +19,6 @@ import { CoachModule } from '../coach/coach.module';
 import { AwsModule } from '../s3AWS/s3AWS.module';
 
 import { Services } from '../../common/enums/services.enum';
-import { AgeCategoryModule } from '../age-category/age-category.module';
-import { StudentBeltRepository } from './repositories/student-belt.repository';
-import { StudentBeltEntity } from './entities/student-belt.entity';
 
 @Module({
   imports: [

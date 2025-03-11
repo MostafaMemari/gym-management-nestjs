@@ -1,11 +1,13 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { DataSource, In, QueryRunner, Repository } from 'typeorm';
+
 import { StudentEntity } from '../entities/student.entity';
-import { EntityName } from '../../../common/enums/entity.enum';
 import { ISeachStudentQuery } from '../interfaces/student.interface';
+
+import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
 import { AgeCategoryEntity } from '../../../modules/age-category/entities/age-category.entity';
-import { BeltExamEntity } from 'src/modules/belt-exam/entities/belt-exam.entity';
+import { BeltExamEntity } from '../../../modules/belt-exam/entities/belt-exam.entity';
 
 @Injectable()
 export class StudentRepository extends Repository<StudentEntity> {

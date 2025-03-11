@@ -1,9 +1,10 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { DataSource, QueryRunner, Repository } from 'typeorm';
-import { StudentEntity } from '../entities/student.entity';
 
 import { StudentBeltEntity } from '../entities/student-belt.entity';
-import { BeltEntity } from 'src/modules/belt/entities/belt.entity';
+import { StudentEntity } from '../entities/student.entity';
+
+import { BeltEntity } from '../../../modules/belt/entities/belt.entity';
 
 @Injectable()
 export class StudentBeltRepository extends Repository<StudentBeltEntity> {

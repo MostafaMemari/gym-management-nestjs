@@ -144,19 +144,6 @@ export class StudentController {
     }
   }
 
-  @Patch('test')
-  async test() {
-    try {
-      await this.checkConnection();
-
-      const data: ServiceResponse = await lastValueFrom(this.clubServiceClient.emit('test', {}).pipe(timeout(5000)));
-
-      return handleServiceResponse(data);
-    } catch (error) {
-      handleError(error, 'Failed to remove student', 'StudentService');
-    }
-  }
-
   @Post('bulk')
   @ApiConsumes(SwaggerConsumes.MultipartData)
   @UseInterceptors(UploadFile('studentsFile'))

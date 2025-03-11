@@ -1,9 +1,10 @@
-import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 import { DataSource } from 'typeorm';
 
 import { StudentEntity } from './entities/student.entity';
+import { CacheKeys } from './enums/cache.enum';
 import { StudentMessages } from './enums/student.message';
 import { IBulkCreateStudent, ICreateStudent, ISeachStudentQuery, IUpdateStudent } from './interfaces/student.interface';
 import { StudentBeltRepository } from './repositories/student-belt.repository';
@@ -18,18 +19,17 @@ import { CoachEntity } from '../coach/entities/coach.entity';
 import { AwsService } from '../s3AWS/s3AWS.service';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
-import { CacheKeys } from '../../common/enums/cache.enum';
 import { Gender } from '../../common/enums/gender.enum';
 import { UserPatterns } from '../../common/enums/patterns.events';
 import { Services } from '../../common/enums/services.enum';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { IUser } from '../../common/interfaces/user.interface';
+import { checkConnection } from '../../common/utils/checkConnection.utils';
 import { addMonthsToDateShamsi } from '../../common/utils/date/addMonths';
 import { mildadiToShamsi, shmasiToMiladi } from '../../common/utils/date/convertDate';
 import { isGenderAllowed, isSameGender } from '../../common/utils/functions';
 import { ResponseUtil } from '../../common/utils/response';
-import { checkConnection } from '../../common/utils/checkConnection.utils';
 
 @Injectable()
 export class StudentService {
@@ -390,12 +390,5 @@ export class StudentService {
     }
 
     return foundStudents;
-  }
-
-  async test() {
-    const date = new Date('1999-09-13');
-    console.log();
-    // console.log(addMonthsToDateShamsi);
-    return 'tes';
   }
 }
