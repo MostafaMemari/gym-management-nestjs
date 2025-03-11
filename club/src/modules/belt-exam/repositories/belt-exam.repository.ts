@@ -3,7 +3,7 @@ import { DataSource, In, Repository } from 'typeorm';
 
 import { EntityName } from 'src/common/enums/entity.enum';
 import { BeltExamEntity } from '../entities/belt-exam.entity';
-import { IBeltCreateDtoExam, ISearchBeltExamQuery, IBeltUpdateDtoExam } from '../interfaces/belt-exam.interface';
+import { IBeltExamCreateDto, IBeltExamFilter, IBeltExamUpdateDto } from '../interfaces/belt-exam.interface';
 
 @Injectable()
 export class BeltExamRepository extends Repository<BeltExamEntity> {
@@ -11,34 +11,42 @@ export class BeltExamRepository extends Repository<BeltExamEntity> {
     super(BeltExamEntity, dataSource.createEntityManager());
   }
 
-  async createAndSaveBeltExam(createBeltExamDto: IBeltCreateDtoExam): Promise<BeltExamEntity> {
+  async createAndSaveBeltExam(createBeltExamDto: IBeltExamCreateDto): Promise<BeltExamEntity> {
     const beltExam = this.create({ ...createBeltExamDto });
     return await this.save(beltExam);
   }
 
-  async updateBeltExam(beltExam: BeltExamEntity, updateBeltExamDto: IBeltUpdateDtoExam): Promise<BeltExamEntity> {
+  async updateBeltExam(beltExam: BeltExamEntity, updateBeltExamDto: IBeltExamUpdateDto): Promise<BeltExamEntity> {
     const updatedBeltExam = this.merge(beltExam, { ...updateBeltExamDto });
     return await this.save(updatedBeltExam);
   }
 
-  async getBeltExamsWithFilters(filters: ISearchBeltExamQuery, page: number, take: number): Promise<[BeltExamEntity[], number]> {
-    const queryBuilder = this.createQueryBuilder(EntityName.BELT_EXAMS);
+  async getBeltExamsWithFilters(filters: IBeltExamFilter, page: number, take: number): Promise<[BeltExamEntity[], number]> {
+    const queryBuilder = this.createQueryBuilder(EntityName.BELT_EXAMS).innerJoin('belt_exams.belts', 'belts');
+    // .leftJoin('belt_exams.belts', 'belts')
 
-    // if (filters?.search) {
-    //   queryBuilder.andWhere('beltExams.name LIKE :search', { search: `%${filters.search}%` });
-    // }
+    if (filters?.search) {
+      queryBuilder.andWhere('belt_exams.name LIKE :search OR belt_exams.description LIKE :search', { search: `%${filters.search}%` });
+    }
 
-    // if (filters?.gender) {
-    //   queryBuilder.andWhere(`FIND_IN_SET(:gender, beltExams.genders)`, { gender: filters.gender });
-    // }
+    if (filters?.gender) {
+      queryBuilder.andWhere(`FIND_IN_SET(:gender, belt_exams.genders)`, { gender: filters.gender });
+    }
+    if (filters?.event_places?.length) {
+      queryBuilder.andWhere(`belt_exams.event_places REGEXP :eventPlaces`, { eventPlaces: filters.event_places.join('|') });
+    }
+    if (filters?.beltIds?.length) {
+      queryBuilder.andWhere('belts.id IN (:...beltIds)', { beltIds: filters.beltIds });
+    }
 
-    // if (filters?.sort_order) {
-    //   queryBuilder.orderBy('beltExams.updated_at', filters.sort_order === 'asc' ? 'ASC' : 'DESC');
-    // }
+    if (filters?.sort_order) {
+      queryBuilder.orderBy('belt_exams.updated_at', filters.sort_order === 'asc' ? 'ASC' : 'DESC');
+    }
 
     return (
       queryBuilder
-        // .leftJoinAndSelect('beltExams.nextBeltExam', 'nextBeltExam')
+        // .leftJoinAndSelect('belt_exams.nextBeltExam', 'nextBeltExam')
+
         .skip((page - 1) * take)
         .take(take)
         .getManyAndCount()

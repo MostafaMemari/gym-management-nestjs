@@ -1,7 +1,7 @@
 import { BeltEntity } from '../../../modules/belt/entities/belt.entity';
 import { Gender } from '../../../common/enums/gender.enum';
 
-export interface IBeltCreateDtoExam {
+export interface IBeltExamCreateDto {
   name: string;
   description?: string;
   genders: Gender[];
@@ -12,10 +12,13 @@ export interface IBeltCreateDtoExam {
   belts: BeltEntity[];
 }
 
-export type IBeltUpdateDtoExam = Partial<IBeltCreateDtoExam>;
+export type IBeltExamUpdateDto = Partial<IBeltExamCreateDto>;
 
-export interface ISearchBeltExamQuery {
-  // search?: string;
-  // gender?: Gender;
-  // sort_order?: 'asc' | 'desc';
+export interface IBeltExamFilter {
+  search?: string;
+  gender?: Gender;
+  event_places?: string[];
+  beltIds?: number[];
+  sort_by: 'register_date' | 'event_date' | 'created_at' | 'updated_at';
+  sort_order?: 'asc' | 'desc';
 }

@@ -17,7 +17,10 @@ export class BeltExamEntity extends AbstractEntity {
   genders: Gender[];
 
   @Column({ type: 'simple-array' })
-  event_place: string[];
+  event_places: string[];
+
+  // @Column('text', { array: true })
+  // event_places: string[];
 
   @Column({ type: 'date' })
   event_date: Date;

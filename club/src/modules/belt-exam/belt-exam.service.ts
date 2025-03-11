@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { BeltExamEntity } from './entities/belt-exam.entity';
 import { BeltExamMessages } from './enums/belt-exam.message';
-import { IBeltCreateDtoExam, IBeltUpdateDtoExam, ISearchBeltExamQuery } from './interfaces/belt-exam.interface';
+import { IBeltExamCreateDto, IBeltExamUpdateDto, IBeltExamFilter } from './interfaces/belt-exam.interface';
 import { BeltExamRepository } from './repositories/belt-exam.repository';
 import { CacheKeys } from './enums/cache.enum';
 
@@ -22,9 +22,9 @@ export class BeltExamService {
     private readonly beltService: BeltService,
   ) {}
 
-  private readonly cacheTTLSeconds = 3600;
+  private readonly cacheTTLSeconds = 1;
 
-  async create(createBeltExamDto: IBeltCreateDtoExam) {
+  async create(createBeltExamDto: IBeltExamCreateDto) {
     try {
       const { beltIds } = createBeltExamDto;
       if (beltIds) {
@@ -39,7 +39,7 @@ export class BeltExamService {
       return ResponseUtil.error(error?.message || BeltExamMessages.CREATE_FAILURE, error?.status);
     }
   }
-  async update(beltExamId: number, updateBeltExamDto: IBeltUpdateDtoExam) {
+  async update(beltExamId: number, updateBeltExamDto: IBeltExamUpdateDto) {
     try {
       const { beltIds } = updateBeltExamDto;
 
@@ -57,7 +57,7 @@ export class BeltExamService {
       ResponseUtil.error(error?.message || BeltExamMessages.UPDATE_FAILURE, error?.status);
     }
   }
-  async getAll(query: { queryBeltExamDto: ISearchBeltExamQuery; paginationDto: IPagination }): Promise<ServiceResponse> {
+  async getAll(query: { queryBeltExamDto: IBeltExamFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
     const { take, page } = query.paginationDto;
     try {
       const cacheKey = `${CacheKeys.BELT_EXAMS}-${page}-${take}-${JSON.stringify(query.queryBeltExamDto)}`;
@@ -71,7 +71,7 @@ export class BeltExamService {
 
       await this.cacheService.set(cacheKey, result, this.cacheTTLSeconds);
 
-      return ResponseUtil.success(cachedData.data, BeltExamMessages.GET_ALL_SUCCESS);
+      return ResponseUtil.success(result.data, BeltExamMessages.GET_ALL_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || BeltExamMessages.UPDATE_FAILURE, error?.status);
     }

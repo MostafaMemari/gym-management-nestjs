@@ -4,7 +4,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { BeltExamService } from './belt-exam.service';
 import { BeltExamPatterns } from './patterns/belt-exam.pattern';
-import { IBeltCreateDtoExam, ISearchBeltExamQuery, IBeltUpdateDtoExam } from './interfaces/belt-exam.interface';
+import { IBeltExamCreateDto, IBeltExamFilter, IBeltExamUpdateDto } from './interfaces/belt-exam.interface';
 
 @Controller()
 export class BeltExamController {
@@ -16,7 +16,7 @@ export class BeltExamController {
   }
 
   @MessagePattern(BeltExamPatterns.CREATE)
-  create(@Payload() data: { createBeltExamDto: IBeltCreateDtoExam }) {
+  create(@Payload() data: { createBeltExamDto: IBeltExamCreateDto }) {
     const { createBeltExamDto } = data;
 
     console.log(createBeltExamDto);
@@ -24,14 +24,14 @@ export class BeltExamController {
     return this.beltExamService.create(createBeltExamDto);
   }
   @MessagePattern(BeltExamPatterns.UPDATE)
-  update(@Payload() data: { beltExamId: number; updateBeltExamDto: IBeltUpdateDtoExam }) {
+  update(@Payload() data: { beltExamId: number; updateBeltExamDto: IBeltExamUpdateDto }) {
     const { beltExamId, updateBeltExamDto } = data;
 
     return this.beltExamService.update(beltExamId, updateBeltExamDto);
   }
 
   @MessagePattern(BeltExamPatterns.GET_ALL)
-  findAll(@Payload() data: { queryBeltExamDto: ISearchBeltExamQuery; paginationDto: IPagination }) {
+  findAll(@Payload() data: { queryBeltExamDto: IBeltExamFilter; paginationDto: IPagination }) {
     const { queryBeltExamDto, paginationDto } = data;
 
     return this.beltExamService.getAll({ queryBeltExamDto, paginationDto });
