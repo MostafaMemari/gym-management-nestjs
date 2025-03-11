@@ -40,7 +40,7 @@ export class StudentController {
 
   private async checkConnection(): Promise<boolean> {
     try {
-      return await lastValueFrom(this.clubServiceClient.send(StudentPatterns.CheckConnection, {}).pipe(timeout(5000)));
+      return await lastValueFrom(this.clubServiceClient.send(StudentPatterns.CHECK_CONNECTION, {}).pipe(timeout(5000)));
     } catch (error) {
       throw new InternalServerErrorException('Student service is not connected');
     }
@@ -60,7 +60,7 @@ export class StudentController {
 
       const data: ServiceResponse = await lastValueFrom(
         this.clubServiceClient
-          .send(StudentPatterns.CreateStudent, {
+          .send(StudentPatterns.CREATE, {
             user,
             createStudentDto: { ...createStudentDto, image },
           })
@@ -87,7 +87,7 @@ export class StudentController {
       await this.checkConnection();
       const data: ServiceResponse = await lastValueFrom(
         this.clubServiceClient
-          .send(StudentPatterns.UpdateStudent, {
+          .send(StudentPatterns.UPDATE, {
             user,
             studentId: id,
             updateStudentDto: { ...updateStudentDto, image },
@@ -107,7 +107,7 @@ export class StudentController {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(StudentPatterns.GetStudents, { user, queryStudentDto, paginationDto }).pipe(timeout(5000)),
+        this.clubServiceClient.send(StudentPatterns.GET_ALL, { user, queryStudentDto, paginationDto }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -120,7 +120,7 @@ export class StudentController {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(StudentPatterns.GetStudent, { user, studentId: id }).pipe(timeout(5000)),
+        this.clubServiceClient.send(StudentPatterns.GET_ONE, { user, studentId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -135,7 +135,7 @@ export class StudentController {
       await this.checkConnection();
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(StudentPatterns.RemoveUserStudent, { user, studentId: id }).pipe(timeout(5000)),
+        this.clubServiceClient.send(StudentPatterns.REMOVE, { user, studentId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -159,7 +159,7 @@ export class StudentController {
 
       const data: ServiceResponse = await lastValueFrom(
         this.clubServiceClient
-          .send(StudentPatterns.BulkCreateStudents, {
+          .send(StudentPatterns.BULK_CREATE, {
             user,
             studentData: { ...bulkStudentsDto },
             studentsJson: studentsFile,

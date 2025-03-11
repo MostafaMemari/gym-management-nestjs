@@ -1,12 +1,11 @@
 export enum StudentPatterns {
-  CheckConnection = 'check_connection',
-  CreateStudent = 'create_student',
-  BulkCreateStudents = 'bulk_create_students',
-  UpdateStudent = 'update_student',
-  GetStudents = 'get_students',
-  GetStudent = 'get_student',
-  RemoveUserStudent = 'remove_student',
-  checkExistStudentById = 'check_exist_student_by_id',
+  CHECK_CONNECTION = 'check_connection',
+  CREATE = 'create_student',
+  BULK_CREATE = 'bulk_create_students',
+  UPDATE = 'update_student',
+  GET_ALL = 'get_students',
+  GET_ONE = 'get_student',
+  REMOVE = 'remove_student',
 }
 export enum CoachPatterns {
   CheckConnection = 'check_connection',
