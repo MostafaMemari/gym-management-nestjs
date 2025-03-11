@@ -25,15 +25,19 @@ export class AgeCategoryRepository extends Repository<AgeCategoryEntity> {
     const queryBuilder = this.createQueryBuilder(EntityName.AGE_CATEGORIES);
 
     if (filters?.search) {
-      queryBuilder.andWhere('age-categories.name LIKE :search', { search: `%${filters.search}%` });
+      queryBuilder.andWhere('age_categories.name LIKE :search', { search: `%${filters.search}%` });
     }
 
-    if (filters?.gender) {
-      queryBuilder.andWhere(`FIND_IN_SET(:gender, age-categories.genders)`, { gender: filters.gender });
+    if (filters?.sort_by && validSortFields.includes(filters.sort_by)) {
+      queryBuilder.orderBy(`age_categories.${filters.sort_by}`, filters.sort_order === 'asc' ? 'ASC' : 'DESC');
+    } else {
+      queryBuilder.orderBy('age_categories.created_at', 'DESC');
     }
 
-    if (filters?.sort_order) {
-      queryBuilder.orderBy('age-categories.updated_at', filters.sort_order === 'asc' ? 'ASC' : 'DESC');
+    if (filters?.sort_by) {
+      queryBuilder.orderBy(`age_categories.${filters.sort_by}`, filters.sort_order === 'asc' ? 'ASC' : 'DESC');
+    } else {
+      queryBuilder.orderBy('age_categories.updated_at', 'DESC');
     }
 
     return queryBuilder
@@ -46,3 +50,5 @@ export class AgeCategoryRepository extends Repository<AgeCategoryEntity> {
     return this.find({ where: { id: In(clubIds) } });
   }
 }
+
+const validSortFields = ['start_date', 'end_date'];

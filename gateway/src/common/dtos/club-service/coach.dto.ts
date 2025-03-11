@@ -2,7 +2,7 @@ import { IsNotEmpty, IsOptional, IsString, IsEnum, IsPhoneNumber, IsDateString, 
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { ToArray, ToBoolean } from '../../../common/decorators/transformers.decorator';
 import { Transform } from 'class-transformer';
-import { Gender, SortBy, SortOrder } from '../../../common/enums/shared.enum';
+import { Gender, SortOrder } from '../../../common/enums/shared.enum';
 
 export class CreateCoachDto {
   @IsNotEmpty()
@@ -107,10 +107,10 @@ export class QueryCoachDto {
   // @ApiPropertyOptional({ type: 'string', example: '' })
   // club: string;
 
-  @IsOptional()
-  @IsEnum(SortBy, { message: 'sort_by must be one of "birth_date", "sports_insurance_date", "expire_image_date", "created_at", or "updated_at"' })
-  @ApiPropertyOptional({ example: 'birth_date', enum: SortBy })
-  sort_by?: SortBy;
+  // @IsOptional()
+  // @IsEnum(SortBy, { message: 'sort_by must be one of "birth_date", "sports_insurance_date", "expire_image_date", "created_at", or "updated_at"' })
+  // @ApiPropertyOptional({ example: 'birth_date', enum: SortBy })
+  // sort_by?: SortBy;
 
   @IsOptional()
   @IsEnum(SortOrder, { message: 'sort_order must be either "asc" or "desc"' })

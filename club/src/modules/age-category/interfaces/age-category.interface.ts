@@ -1,5 +1,4 @@
 import { AgeCategoryName } from '../enums/age-category.enum';
-import { Gender } from '../../../common/enums/gender.enum';
 
 export interface IAgeCategoryCreateDto {
   name: AgeCategoryName;
@@ -11,6 +10,6 @@ export type IAgeCategoryUpdateDto = Partial<IAgeCategoryCreateDto>;
 
 export interface IAgeCategoryFilter {
   search?: string;
-  gender?: Gender;
+  sort_by?: 'start_date' | 'end_date';
   sort_order?: 'asc' | 'desc';
 }

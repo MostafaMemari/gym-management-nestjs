@@ -1,7 +1,8 @@
-import { IsNotEmpty, IsEnum, IsDateString } from 'class-validator';
-import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { IsNotEmpty, IsEnum, IsDateString, IsOptional, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 
 import { AgeCategoryName } from 'src/common/enums/age-category.enum';
+import { SortOrder } from 'src/common/enums/shared.enum';
 
 export class CreateAgeCategoryDto {
   @IsNotEmpty()
@@ -22,17 +23,25 @@ export class CreateAgeCategoryDto {
 
 export class UpdateAgeCategoryDto extends PartialType(CreateAgeCategoryDto) {}
 
+enum SortBy {
+  START_DATE = 'start_date',
+  END_DATE = 'end_date',
+  CREATED_AT = 'created_at',
+  UPDATED_AT = 'updated_at',
+}
 export class QueryAgeCategoryDto {
-  //   @IsOptional()
-  //   @IsString()
-  //   @ApiPropertyOptional({ type: 'string', example: '', description: '' })
-  //   search?: string;
-  //   @IsOptional()
-  //   @IsEnum(Gender)
-  //   @ApiPropertyOptional({ example: 'male', enum: Gender })
-  //   gender?: Gender;
-  //   @IsOptional()
-  //   @IsEnum(SortOrder, { message: 'sort_order must be either "asc" or "desc"' })
-  //   @ApiPropertyOptional({ example: 'desc', enum: SortOrder })
-  //   sort_order?: SortOrder;
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({ type: 'string', example: '', description: '' })
+  search?: string;
+
+  @IsOptional()
+  @IsEnum(SortBy, { message: 'sort_by must be one of "start_date", "end_date", "created_at" or "updated_at"' })
+  @ApiPropertyOptional({ example: 'birth_date', enum: SortBy })
+  sort_by?: SortBy;
+
+  @IsOptional()
+  @IsEnum(SortOrder, { message: 'sort_order must be either "asc" or "desc"' })
+  @ApiPropertyOptional({ example: 'desc', enum: SortOrder })
+  sort_order?: SortOrder;
 }

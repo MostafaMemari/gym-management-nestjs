@@ -17,7 +17,7 @@ import {
 
 import { ApiProperty, ApiPropertyOptional, OmitType, PartialType, PickType } from '@nestjs/swagger';
 import { ToBoolean } from '../../../common/decorators/transformers.decorator';
-import { Gender, SortBy, SortOrder } from '../../../common/enums/shared.enum';
+import { Gender, SortOrder } from '../../../common/enums/shared.enum';
 import { IsDependentOn } from '../../../common/decorators/dependent-fields.decorator';
 
 export class CreateStudentDto {
@@ -132,6 +132,13 @@ export class BulkCreateStudentsDto extends PickType(CreateStudentDto, ['gender',
   studentsFile?: string;
 }
 
+enum SortBy {
+  BIRTH_DATE = 'birth_date',
+  SPORTS_INSURANCE_DATE = 'sports_insurance_date',
+  EXPIRE_IMAGE_DATE = 'expire_image_date',
+  CREATED_AT = 'created_at',
+  UPDATED_AT = 'updated_at',
+}
 export class QueryStudentDto {
   @IsOptional()
   @IsString()

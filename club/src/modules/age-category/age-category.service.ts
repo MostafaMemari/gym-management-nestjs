@@ -26,7 +26,7 @@ export class AgeCategoryService {
     }
   }
 
-  async update(ageCategoryId: number, updateAgeCategoryDto: IAgeCategoryUpdateDto) {
+  async update(ageCategoryId: number, updateAgeCategoryDto: IAgeCategoryUpdateDto): Promise<ServiceResponse> {
     try {
       const ageCategory = await this.validateAgeCategoryId(ageCategoryId);
 
@@ -44,17 +44,17 @@ export class AgeCategoryService {
     try {
       const cacheKey = `${CacheKeys.AGE_CATEGORIES}-${page}-${take}-${JSON.stringify(query.queryAgeCategoryDto)}`;
 
-      const cachedData = await this.cacheService.get<Promise<ServiceResponse>>(cacheKey);
-      if (cachedData) return cachedData;
+      const cachedData = await this.cacheService.get<PageDto<AgeCategoryEntity>>(cacheKey);
+      if (cachedData) return ResponseUtil.success(cachedData.data, AgeCategoryMessages.GET_ALL_SUCCESS);
 
       const [ageCategories, count] = await this.ageCategoryRepository.getAgeCategoriesWithFilters(query.queryAgeCategoryDto, page, take);
 
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(ageCategories, pageMetaDto);
 
-      await this.cacheService.set(cacheKey, result, 600);
+      await this.cacheService.set(cacheKey, result, 1);
 
-      return ResponseUtil.success({ ...result }, AgeCategoryMessages.GET_SUCCESS);
+      return ResponseUtil.success(result.data, AgeCategoryMessages.GET_ALL_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || AgeCategoryMessages.GET_ALL_FAILURE, error?.status);
     }

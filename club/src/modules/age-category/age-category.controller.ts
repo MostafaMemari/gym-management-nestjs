@@ -1,9 +1,9 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
-import { IAgeCategoryCreateDto, IAgeCategoryUpdateDto, IAgeCategoryFilter } from './interfaces/age-category.interface';
-
 import { IPagination } from '../../common/interfaces/pagination.interface';
+import { IAgeCategoryCreateDto, IAgeCategoryFilter, IAgeCategoryUpdateDto } from './interfaces/age-category.interface';
+
 import { AgeCategoryService } from './age-category.service';
 import { AgeCategoryPatterns } from './patterns/age-category.pattern';
 
