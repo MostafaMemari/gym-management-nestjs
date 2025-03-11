@@ -5,13 +5,13 @@ import { ClubEntity } from './entities/club.entity';
 import { ClubMessages } from './enums/club.message';
 import { ICreateClub, ISearchClubQuery, IUpdateClub } from './interfaces/club.interface';
 import { ClubRepository } from './repositories/club.repository';
+import { CacheKeys } from './enums/cache.enum';
 
 import { CacheService } from '../cache/cache.service';
 import { CoachService } from '../coach/coach.service';
 import { CoachEntity } from '../coach/entities/coach.entity';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
-import { CacheKeys } from '../../common/enums/cache.enum';
 import { Gender } from '../../common/enums/gender.enum';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';

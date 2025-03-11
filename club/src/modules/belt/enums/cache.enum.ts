@@ -1,6 +1,6 @@
 export enum CacheKeys {
-  BELTS = 'belts_list',
+  BELT_LIST = 'belts_list',
 }
 export enum CachePatterns {
-  BELTS = 'belts_list*',
+  BELT_LIST = 'belt_list*',
 }

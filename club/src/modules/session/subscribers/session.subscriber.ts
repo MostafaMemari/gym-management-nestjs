@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, EntitySubscriberInterface, InsertEvent, UpdateEvent, RemoveEvent } from 'typeorm';
 
-import { CacheService } from '../../cache/cache.service';
-
-import { CachePatterns } from '../../../common/enums/cache.enum';
 import { SessionEntity } from '../entities/session.entity';
+import { CachePatterns } from '../enums/cache.enum';
+
+import { CacheService } from '../../cache/cache.service';
 
 @Injectable()
 export class SessionSubscriber implements EntitySubscriberInterface<SessionEntity> {
@@ -30,6 +30,6 @@ export class SessionSubscriber implements EntitySubscriberInterface<SessionEntit
   }
 
   private async clearCache() {
-    await this.cacheService.delByPattern(CachePatterns.CLUB_LIST);
+    await this.cacheService.delByPattern(CachePatterns.SESSION_LIST);
   }
 }

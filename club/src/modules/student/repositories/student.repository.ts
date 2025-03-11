@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, In, QueryRunner, Repository } from 'typeorm';
 
 import { StudentEntity } from '../entities/student.entity';
-import { ISeachStudentQuery } from '../interfaces/student.interface';
+import { IStudentFilter } from '../interfaces/student.interface';
 
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
@@ -49,12 +49,7 @@ export class StudentRepository extends Repository<StudentEntity> {
     }
   }
 
-  async getStudentsWithFilters(
-    userId: number,
-    filters: ISeachStudentQuery,
-    page: number,
-    take: number,
-  ): Promise<[StudentEntity[], number]> {
+  async getStudentsWithFilters(userId: number, filters: IStudentFilter, page: number, take: number): Promise<[StudentEntity[], number]> {
     const queryBuilder = this.createQueryBuilder(EntityName.Students)
       .leftJoin('students.coach', 'coach')
       .addSelect(['coach.id', 'coach.full_name'])

@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, EntitySubscriberInterface, InsertEvent, UpdateEvent, RemoveEvent } from 'typeorm';
 
-import { CacheService } from '../../cache/cache.service';
-
-import { CachePatterns } from '../../../common/enums/cache.enum';
+import { CachePatterns } from '../enums/cache.enum';
 import { AttendanceEntity } from '../entities/attendance.entity';
+
+import { CacheService } from '../../cache/cache.service';
 
 @Injectable()
 export class AttendanceSubscriber implements EntitySubscriberInterface<AttendanceEntity> {

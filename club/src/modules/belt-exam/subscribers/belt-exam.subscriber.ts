@@ -2,11 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, EntitySubscriberInterface, InsertEvent, UpdateEvent, RemoveEvent } from 'typeorm';
 
+import { CachePatterns } from '../enums/cache.enum';
+
 import { BeltExamEntity } from '../entities/belt-exam.entity';
-
 import { CacheService } from '../../cache/cache.service';
-
-import { CachePatterns } from '../../../common/enums/cache.enum';
 
 @Injectable()
 export class BeltExamSubscriber implements EntitySubscriberInterface<BeltExamEntity> {
@@ -31,6 +30,6 @@ export class BeltExamSubscriber implements EntitySubscriberInterface<BeltExamEnt
   }
 
   private async clearCache() {
-    await this.cacheService.delByPattern(CachePatterns.SESSION_LIST);
+    await this.cacheService.delByPattern(CachePatterns.BELT_EXAMS);
   }
 }

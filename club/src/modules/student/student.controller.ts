@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
-import { IBulkCreateStudent, ICreateStudent, ISeachStudentQuery, IUpdateStudent } from './interfaces/student.interface';
+import { IStudentBulkCreateDto, IStudentCreateDto, IStudentFilter, IStudentUpdateDto } from './interfaces/student.interface';
 import { StudentPatterns } from './patterns/student.pattern';
 import { StudentService } from './student.service';
 
@@ -18,13 +18,13 @@ export class StudentController {
   }
 
   @MessagePattern(StudentPatterns.CREATE)
-  create(@Payload() data: { user: IUser; createStudentDto: ICreateStudent }) {
+  create(@Payload() data: { user: IUser; createStudentDto: IStudentCreateDto }) {
     const { user, createStudentDto } = data;
 
     return this.studentService.create(user, createStudentDto);
   }
   @MessagePattern(StudentPatterns.UPDATE)
-  update(@Payload() data: { user: IUser; studentId: number; updateStudentDto: IUpdateStudent }) {
+  update(@Payload() data: { user: IUser; studentId: number; updateStudentDto: IStudentUpdateDto }) {
     const { user, studentId, updateStudentDto } = data;
 
     return this.studentService.update(user, studentId, updateStudentDto);
@@ -39,7 +39,7 @@ export class StudentController {
   }
 
   @MessagePattern(StudentPatterns.GET_ALL)
-  findAll(@Payload() data: { user: IUser; queryStudentDto: ISeachStudentQuery; paginationDto: IPagination }) {
+  findAll(@Payload() data: { user: IUser; queryStudentDto: IStudentFilter; paginationDto: IPagination }) {
     const { user, queryStudentDto, paginationDto } = data;
 
     return this.studentService.getAll(user, { queryStudentDto, paginationDto });
@@ -53,7 +53,7 @@ export class StudentController {
   }
 
   @MessagePattern(StudentPatterns.BULK_CREATE)
-  bulkCreate(@Payload() data: { user: IUser; studentData: IBulkCreateStudent; studentsJson: Express.Multer.File }) {
+  bulkCreate(@Payload() data: { user: IUser; studentData: IStudentBulkCreateDto; studentsJson: Express.Multer.File }) {
     const { user, studentData, studentsJson } = data;
 
     return this.studentService.bulkCreate(user, studentData, studentsJson);

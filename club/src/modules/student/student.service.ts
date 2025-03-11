@@ -6,7 +6,7 @@ import { DataSource } from 'typeorm';
 import { StudentEntity } from './entities/student.entity';
 import { CacheKeys } from './enums/cache.enum';
 import { StudentMessages } from './enums/student.message';
-import { IBulkCreateStudent, ICreateStudent, ISeachStudentQuery, IUpdateStudent } from './interfaces/student.interface';
+import { IStudentBulkCreateDto, IStudentCreateDto, IStudentFilter, IStudentUpdateDto } from './interfaces/student.interface';
 import { StudentBeltRepository } from './repositories/student-belt.repository';
 import { StudentRepository } from './repositories/student.repository';
 
@@ -46,7 +46,7 @@ export class StudentService {
     @Inject(forwardRef(() => CoachService)) private readonly coachService: CoachService,
   ) {}
 
-  async create(user: IUser, createStudentDto: ICreateStudent): Promise<ServiceResponse> {
+  async create(user: IUser, createStudentDto: IStudentCreateDto): Promise<ServiceResponse> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -92,7 +92,7 @@ export class StudentService {
     }
   }
 
-  async update(user: IUser, studentId: number, updateStudentDto: IUpdateStudent): Promise<ServiceResponse> {
+  async update(user: IUser, studentId: number, updateStudentDto: IStudentUpdateDto): Promise<ServiceResponse> {
     const { clubId, coachId, beltId, national_code, gender, image } = updateStudentDto;
     const userId: number = user.id;
 
@@ -128,7 +128,7 @@ export class StudentService {
       ResponseUtil.error(error?.message || StudentMessages.UPDATE_FAILURE, error?.status);
     }
   }
-  async getAll(user: IUser, query: { queryStudentDto: ISeachStudentQuery; paginationDto: IPagination }): Promise<ServiceResponse> {
+  async getAll(user: IUser, query: { queryStudentDto: IStudentFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
     const { take, page } = query.paginationDto;
 
     try {
@@ -182,7 +182,7 @@ export class StudentService {
     }
   }
 
-  async bulkCreate(user: IUser, studentData: IBulkCreateStudent, studentsJson: Express.Multer.File) {
+  async bulkCreate(user: IUser, studentData: IStudentBulkCreateDto, studentsJson: Express.Multer.File) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -329,7 +329,7 @@ export class StudentService {
     if (club && !isGenderAllowed(gender, club.genders)) throw new BadRequestException(StudentMessages.CLUB_GENDER_MISMATCH);
   }
 
-  private prepareUpdateData(updateDto: IUpdateStudent, student: StudentEntity): Partial<StudentEntity> {
+  private prepareUpdateData(updateDto: IStudentUpdateDto, student: StudentEntity): Partial<StudentEntity> {
     return Object.keys(updateDto).reduce((acc, key) => {
       if (key !== 'image' && updateDto[key] !== undefined && updateDto[key] !== student[key]) {
         acc[key] = updateDto[key];

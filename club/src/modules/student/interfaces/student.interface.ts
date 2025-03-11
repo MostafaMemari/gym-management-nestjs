@@ -1,7 +1,6 @@
-import { IPagination } from '../../../common/interfaces/pagination.interface';
 import { Gender } from '../../../common/enums/gender.enum';
 
-export interface ICreateStudent {
+export interface IStudentCreateDto {
   full_name: string;
   gender: Gender;
   is_active?: boolean;
@@ -22,11 +21,11 @@ export interface ICreateStudent {
   beltId?: number;
 }
 
-export type IUpdateStudent = Partial<ICreateStudent>;
+export type IStudentUpdateDto = Partial<IStudentCreateDto>;
 
-export interface IBulkCreateStudent extends Pick<ICreateStudent, 'clubId' | 'coachId' | 'gender'> {}
+export interface IStudentBulkCreateDto extends Pick<IStudentCreateDto, 'clubId' | 'coachId' | 'gender'> {}
 
-export interface ISeachStudentQuery {
+export interface IStudentFilter {
   search?: string;
   gender?: Gender;
   is_active?: boolean;

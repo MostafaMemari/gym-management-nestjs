@@ -6,6 +6,7 @@ import { CoachEntity } from './entities/coach.entity';
 import { CoachMessages } from './enums/coach.message';
 import { ICoachCreateDto, ICoachFilter, ICoachUpdateDto } from './interfaces/coach.interface';
 import { CoachRepository } from './repositories/coach.repository';
+import { CacheKeys } from './enums/cache.enum';
 
 import { CacheService } from '../cache/cache.service';
 import { ClubService } from '../club/club.service';
@@ -15,7 +16,6 @@ import { StudentService } from '../student/student.service';
 import { ClubEntity } from '../club/entities/club.entity';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
-import { CacheKeys } from '../../common/enums/cache.enum';
 import { Gender } from '../../common/enums/gender.enum';
 import { UserPatterns } from '../../common/enums/patterns.events';
 import { Services } from '../../common/enums/services.enum';

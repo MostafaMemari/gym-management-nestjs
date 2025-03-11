@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, EntitySubscriberInterface, InsertEvent, UpdateEvent, RemoveEvent } from 'typeorm';
 
+import { CachePatterns } from '../enums/cache.enum';
+
 import { ClubEntity } from '../entities/club.entity';
 import { CacheService } from '../../../modules/cache/cache.service';
-
-import { CachePatterns } from '../../../common/enums/cache.enum';
 
 @Injectable()
 export class ClubSubscriber implements EntitySubscriberInterface<ClubEntity> {

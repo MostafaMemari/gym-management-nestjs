@@ -4,8 +4,7 @@ import { DataSource, EntitySubscriberInterface, InsertEvent, UpdateEvent, Remove
 
 import { BeltEntity } from '../entities/belt.entity';
 import { CacheService } from '../../cache/cache.service';
-
-import { CachePatterns } from '../../../common/enums/cache.enum';
+import { CachePatterns } from '../enums/cache.enum';
 
 @Injectable()
 export class BeltSubscriber implements EntitySubscriberInterface<BeltEntity> {

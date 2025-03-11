@@ -1,11 +1,11 @@
-import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
-import { lastValueFrom, timeout } from 'rxjs';
 
 import { SessionEntity } from './entities/session.entity';
 import { SessionMessages } from './enums/session.message';
 import { ICreateSession, ISearchSessionQuery, IUpdateSession } from './interfaces/session.interface';
 import { SessionRepository } from './repositories/session.repository';
+import { CacheKeys } from './enums/cache.enum';
 
 import { CacheService } from '../cache/cache.service';
 import { CoachEntity } from '../coach/entities/coach.entity';
@@ -13,7 +13,6 @@ import { ClubService } from '../club/club.service';
 import { StudentService } from '../student/student.service';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
-import { CacheKeys } from '../../common/enums/cache.enum';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { IUser } from '../../common/interfaces/user.interface';
@@ -21,8 +20,6 @@ import { ResponseUtil } from '../../common/utils/response';
 
 @Injectable()
 export class SessionService {
-  private readonly timeout: number = 4500;
-
   constructor(
     private readonly sessionRepository: SessionRepository,
     private readonly cacheService: CacheService,
@@ -60,7 +57,7 @@ export class SessionService {
   async getAll(user: IUser, query: { querySessionDto: ISearchSessionQuery; paginationDto: IPagination }): Promise<PageDto<SessionEntity>> {
     const { take, page } = query.paginationDto;
 
-    const cacheKey = `${CacheKeys.CLUB_LIST}-${user.id}-${page}-${take}-${JSON.stringify(query.querySessionDto)}`;
+    const cacheKey = `${CacheKeys.SESSION_LIST}-${user.id}-${page}-${take}-${JSON.stringify(query.querySessionDto)}`;
 
     const cachedData = await this.cacheService.get<PageDto<SessionEntity>>(cacheKey);
     if (cachedData) return cachedData;
