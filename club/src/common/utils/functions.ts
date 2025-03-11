@@ -1,8 +1,5 @@
 import * as os from 'os';
 import { Gender } from '../enums/gender.enum';
-import { BadRequestException } from '@nestjs/common';
-import { ICreateClub } from '../../modules/club/interfaces/club.interface';
-import { CoachMessages } from '../../modules/coach/enums/coach.message';
 
 export function formatErrorMessage(errorMessage: string): string {
   return errorMessage
@@ -44,12 +41,6 @@ export function isSameGender(targetGender: Gender, referenceGender: Gender): boo
 
 export function isGenderAllowed(targetGender: Gender, allowedGenders: Gender[]): boolean {
   return allowedGenders.includes(targetGender);
-}
-
-export function validateCoachGender(coachGender: Gender, clubs: ICreateClub[]): void {
-  const invalidClubs = clubs.filter((club) => !isGenderAllowed(coachGender, club.genders)).map((club) => club.id);
-
-  if (invalidClubs.length > 0) throw new BadRequestException(`${CoachMessages.CoachGenderMismatch} ${invalidClubs.join(', ')}`);
 }
 
 export function replaceYaWithYe(input: string): string {

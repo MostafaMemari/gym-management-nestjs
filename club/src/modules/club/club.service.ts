@@ -59,7 +59,7 @@ export class ClubService {
     try {
       const cacheKey = `${CacheKeys.CLUB_LIST}-${user.id}-${page}-${take}-${JSON.stringify(query.queryClubDto)}`;
 
-      const cachedData = await this.cacheService.get<ServiceResponse>(cacheKey);
+      const cachedData = await this.cacheService.get<PageDto<ClubEntity>>(cacheKey);
       if (cachedData) return ResponseUtil.success(cachedData.data, ClubMessages.GET_ALL_SUCCESS);
 
       const [clubs, count] = await this.clubRepository.getClubsWithFilters(user.id, query.queryClubDto, page, take);

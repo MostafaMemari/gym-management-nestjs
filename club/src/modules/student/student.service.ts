@@ -46,7 +46,7 @@ export class StudentService {
     @Inject(forwardRef(() => CoachService)) private readonly coachService: CoachService,
   ) {}
 
-  async create(user: IUser, createStudentDto: ICreateStudent) {
+  async create(user: IUser, createStudentDto: ICreateStudent): Promise<ServiceResponse> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -86,13 +86,13 @@ export class StudentService {
     } catch (error) {
       await queryRunner.rollbackTransaction();
       await this.removeStudentData(studentUserId, imageKey);
-      return ResponseUtil.error(error?.message || StudentMessages.CREATE_FAILURE, error?.status);
+      ResponseUtil.error(error?.message || StudentMessages.CREATE_FAILURE, error?.status);
     } finally {
       await queryRunner.release();
     }
   }
 
-  async update(user: IUser, studentId: number, updateStudentDto: IUpdateStudent) {
+  async update(user: IUser, studentId: number, updateStudentDto: IUpdateStudent): Promise<ServiceResponse> {
     const { clubId, coachId, beltId, national_code, gender, image } = updateStudentDto;
     const userId: number = user.id;
 
@@ -125,25 +125,29 @@ export class StudentService {
       return ResponseUtil.success({ ...student, ...updateData }, StudentMessages.UPDATE_SUCCESS);
     } catch (error) {
       await this.removeStudentImage(imageKey);
-      return ResponseUtil.error(error?.message || StudentMessages.UPDATE_FAILURE, error?.status);
+      ResponseUtil.error(error?.message || StudentMessages.UPDATE_FAILURE, error?.status);
     }
   }
-  async getAll(user: IUser, query: { queryStudentDto: ISeachStudentQuery; paginationDto: IPagination }): Promise<PageDto<StudentEntity>> {
+  async getAll(user: IUser, query: { queryStudentDto: ISeachStudentQuery; paginationDto: IPagination }): Promise<ServiceResponse> {
     const { take, page } = query.paginationDto;
 
-    const cacheKey = `${CacheKeys.STUDENT_LIST}:${user.id}-${page}-${take}-${JSON.stringify(query.queryStudentDto)}`;
+    try {
+      const cacheKey = `${CacheKeys.STUDENT_LIST}:${user.id}-${page}-${take}-${JSON.stringify(query.queryStudentDto)}`;
 
-    const cachedData = await this.cacheService.get<PageDto<StudentEntity>>(cacheKey);
-    if (cachedData) return cachedData;
+      const cachedData = await this.cacheService.get<PageDto<StudentEntity>>(cacheKey);
+      if (cachedData) return ResponseUtil.success(cachedData.data, StudentMessages.GET_ALL_SUCCESS);
 
-    const [students, count] = await this.studentRepository.getStudentsWithFilters(user.id, query.queryStudentDto, page, take);
+      const [students, count] = await this.studentRepository.getStudentsWithFilters(user.id, query.queryStudentDto, page, take);
 
-    const pageMetaDto = new PageMetaDto(count, query.paginationDto);
-    const result = new PageDto(students, pageMetaDto);
+      const pageMetaDto = new PageMetaDto(count, query.paginationDto);
+      const result = new PageDto(students, pageMetaDto);
 
-    await this.cacheService.set(cacheKey, result, 60);
+      await this.cacheService.set(cacheKey, result, 60);
 
-    return result;
+      return ResponseUtil.success(result.data, StudentMessages.GET_ALL_SUCCESS);
+    } catch (error) {
+      ResponseUtil.error(error?.message || StudentMessages.GET_ALL_FAILURE, error?.status);
+    }
   }
   async findOneById(user: IUser, studentId: number): Promise<ServiceResponse> {
     try {

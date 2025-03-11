@@ -1,25 +1,23 @@
 export enum CoachMessages {
-  CreatedCoach = 'Coach created successfully',
-  UpdatedCoach = 'Coach updated successfully',
-  NotFoundCoach = 'Coach not found',
-  AlreadyExistsCoachWithUsername = 'A coach with this username already exists',
-  RemovedCoachSuccess = 'Coach removed successfully',
-  FailedToCreateCoach = 'Failed to create coach. Try again later',
-  FailedToRemoveCoach = 'Failed to remove coach. Try again',
-  InvalidCoachData = 'Invalid coach data',
-  UnauthorizedAction = 'You are not authorized',
-  CoachUpdateSuccess = 'Coach updated successfully',
-  FailedToUpdateCoach = 'Failed to update coach. Try again',
-  CoachListFetchError = 'Error fetching coach list',
-  DuplicateCoachEntry = 'This coach is already registered',
-  DuplicateNationalCode = 'A coach with this national code already exists',
-  FailedToUploadImage = 'Image upload failed. Try again',
-  FailedToCreateUser = 'Failed to create user. Try again later',
-  CoachNotFound = 'Coach not found',
-  CoachNotBelongToUser = 'This coach does not belong to the user or club',
-  GetCoachSuccess = 'Coach data retrieved successfully',
-  CoachGenderMismatch = 'Coach gender mismatch. Invalid Club IDs:',
-  CoachHasRelations = 'Cannot delete club relations with clubs or students',
-  CoachHasStudents = 'Coach cannot be removed because they are assigned to students',
-  InvalidGenderCoach = 'Cannot change coach gender, they are assigned to students',
+  CREATE_SUCCESS = 'Coach created successfully',
+  CREATE_FAILURE = 'Failed to create coach. Try again later',
+
+  UPDATE_SUCCESS = 'Coach updated successfully',
+  UPDATE_FAILURE = 'Failed to update coach. Try again later',
+
+  GET_SUCCESS = 'Coach data retrieved successfully',
+  GET_FAILURE = 'Failed to retrieve coach data',
+
+  GET_ALL_SUCCESS = 'Coach list retrieved successfully',
+  GET_ALL_FAILURE = 'Failed to retrieve coaches list',
+
+  REMOVE_SUCCESS = 'Coach removed successfully',
+  REMOVE_FAILURE = 'Failed to remove coach. Try again later',
+  COACH_HAS_STUDENTS = 'Coach (ID: {coachId}) cannot be removed, assigned students exist',
+
+  NOT_FOUND = 'Coach not found',
+
+  COACH_GENDER_CHANGE_NOT_ALLOWED = 'Cannot change coach gender, assigned students exist',
+  DUPLICATE_ENTRY = 'This coach is already registered',
+  COACH_GENDER_MISMATCH = 'Clubs {ids} do not allow this coach gender',
 }

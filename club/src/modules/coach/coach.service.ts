@@ -40,7 +40,7 @@ export class CoachService {
     @Inject(forwardRef(() => StudentService)) private readonly studentService: StudentService,
   ) {}
 
-  async create(user: IUser, createCoachDto: ICoachCreateDto) {
+  async create(user: IUser, createCoachDto: ICoachCreateDto): Promise<ServiceResponse> {
     const { clubIds, national_code, gender, image } = createCoachDto;
     const userId: number = user.id;
 
@@ -68,13 +68,13 @@ export class CoachService {
         ownerId: userId,
       });
 
-      return ResponseUtil.success({ ...coach, userId: coachUserId }, CoachMessages.CreatedCoach);
+      return ResponseUtil.success({ ...coach, userId: coachUserId }, CoachMessages.CREATE_SUCCESS);
     } catch (error) {
       await this.removeCoachData(coachUserId, imageKey);
-      return ResponseUtil.error(error?.message || CoachMessages.FailedToCreateCoach, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
+      ResponseUtil.error(error?.message || CoachMessages.CREATE_FAILURE, error?.status);
     }
   }
-  async update(user: IUser, coachId: number, updateCoachDto: ICoachUpdateDto) {
+  async update(user: IUser, coachId: number, updateCoachDto: ICoachUpdateDto): Promise<ServiceResponse> {
     const { clubIds = [], national_code, gender, image } = updateCoachDto;
     const userId: number = user.id;
 
@@ -104,37 +104,41 @@ export class CoachService {
 
       if (image && updateData.image_url && coach.image_url) await this.awsService.deleteFile(coach.image_url);
 
-      return ResponseUtil.success({ ...coach, ...updateData }, CoachMessages.UpdatedCoach);
+      return ResponseUtil.success({ ...coach, ...updateData }, CoachMessages.UPDATE_SUCCESS);
     } catch (error) {
       await this.removeCoachImage(imageKey);
-      return ResponseUtil.error(error?.message || CoachMessages.FailedToUpdateCoach, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
+      ResponseUtil.error(error?.message || CoachMessages.UPDATE_FAILURE, error?.status);
     }
   }
-  async getAll(user: IUser, query: { queryCoachDto: ICoachFilter; paginationDto: IPagination }): Promise<PageDto<CoachEntity>> {
+  async getAll(user: IUser, query: { queryCoachDto: ICoachFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
     const { take, page } = query.paginationDto;
-    const userId: number = user.id;
+    try {
+      const userId: number = user.id;
 
-    const cacheKey = `${CacheKeys.COACH_LIST}:${user.id}-${page}-${take}-${JSON.stringify(query.queryCoachDto)}`;
+      const cacheKey = `${CacheKeys.COACH_LIST}:${user.id}-${page}-${take}-${JSON.stringify(query.queryCoachDto)}`;
 
-    const cachedData = await this.cacheService.get<PageDto<CoachEntity>>(cacheKey);
-    if (cachedData) return cachedData;
+      const cachedData = await this.cacheService.get<PageDto<CoachEntity>>(cacheKey);
+      if (cachedData) return ResponseUtil.success(cachedData.data, CoachMessages.GET_ALL_SUCCESS);
 
-    const [coaches, count] = await this.coachRepository.getCoachesWithFilters(userId, query.queryCoachDto, page, take);
+      const [coaches, count] = await this.coachRepository.getCoachesWithFilters(userId, query.queryCoachDto, page, take);
 
-    const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
-    const result = new PageDto(coaches, pageMetaDto);
+      const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
+      const result = new PageDto(coaches, pageMetaDto);
 
-    await this.cacheService.set(cacheKey, result, 60);
+      await this.cacheService.set(cacheKey, result, 60);
 
-    return result;
+      return ResponseUtil.success(result.data, CoachMessages.GET_ALL_SUCCESS);
+    } catch (error) {
+      ResponseUtil.error(error?.message || CoachMessages.GET_ALL_FAILURE, error?.status);
+    }
   }
   async findOneById(user: IUser, coachId: number): Promise<ServiceResponse> {
     try {
       const coach = await this.checkCoachOwnership(coachId, user.id);
 
-      return ResponseUtil.success(coach, CoachMessages.RemovedCoachSuccess);
+      return ResponseUtil.success(coach, CoachMessages.GET_SUCCESS);
     } catch (error) {
-      throw new RpcException(error);
+      ResponseUtil.error(error?.message || CoachMessages.GET_FAILURE, error?.status);
     }
   }
   async removeById(user: IUser, coachId: number): Promise<ServiceResponse> {
@@ -142,21 +146,21 @@ export class CoachService {
       const coach = await this.checkCoachOwnership(coachId, user.id);
 
       const hasStudents = await this.studentService.hasStudentsAssignedToCoach(coachId);
-      if (hasStudents) throw new BadRequestException(CoachMessages.CoachHasStudents);
+      if (hasStudents) throw new BadRequestException(CoachMessages.COACH_HAS_STUDENTS.replace('{coachId}', coachId.toString()));
 
       const isRemoved = await this.coachRepository.removeCoachById(coachId);
 
       if (isRemoved) await this.removeCoachData(Number(coach.userId), coach.image_url);
 
-      return ResponseUtil.success(coach, CoachMessages.RemovedCoachSuccess);
+      return ResponseUtil.success(coach, CoachMessages.REMOVE_SUCCESS);
     } catch (error) {
-      throw new RpcException(error);
+      ResponseUtil.error(error?.message || CoachMessages.REMOVE_FAILURE, error?.status);
     }
   }
 
   async checkCoachOwnership(coachId: number, userId: number): Promise<CoachEntity> {
     const coach = await this.coachRepository.findByIdAndOwner(coachId, userId);
-    if (!coach) throw new NotFoundException(CoachMessages.CoachNotFound);
+    if (!coach) throw new NotFoundException(CoachMessages.NOT_FOUND);
     return coach;
   }
 
@@ -194,20 +198,21 @@ export class CoachService {
   }
   async validateUniqueNationalCode(nationalCode: string, userId: number): Promise<CoachEntity> {
     const coach = await this.coachRepository.findCoachByNationalCode(nationalCode, userId);
-    if (coach) throw new BadRequestException(CoachMessages.DuplicateNationalCode);
+    if (coach) throw new BadRequestException(CoachMessages.DUPLICATE_ENTRY);
     return coach;
   }
 
   private async validateCoachGender(coachGender: Gender, clubs: ICreateClub[], coachId?: number | null): Promise<void> {
     const invalidClubs = clubs.filter((club) => !isGenderAllowed(coachGender, club.genders)).map((club) => club.id);
-    if (invalidClubs.length > 0) throw new BadRequestException(`${CoachMessages.CoachGenderMismatch} ${invalidClubs.join(', ')}`);
+    if (invalidClubs.length > 0)
+      throw new BadRequestException(CoachMessages.COACH_GENDER_MISMATCH.replace('{ids}', invalidClubs.join(', ')).toString);
 
     if (coachId) {
       const hasInvalidStudent = await this.studentService.hasStudentsByGender(
         coachId,
         coachGender === Gender.Male ? Gender.Female : Gender.Male,
       );
-      if (hasInvalidStudent) throw new BadRequestException(CoachMessages.InvalidGenderCoach);
+      if (hasInvalidStudent) throw new BadRequestException(CoachMessages.COACH_GENDER_CHANGE_NOT_ALLOWED);
     }
   }
 
