@@ -30,6 +30,6 @@ export class AttendanceSubscriber implements EntitySubscriberInterface<Attendanc
   }
 
   private async clearCache() {
-    await this.cacheService.delByPattern(CachePatterns.ATTENDANCE_LIST);
+    await this.cacheService.delByPattern(CachePatterns.ATTENDANCES);
   }
 }

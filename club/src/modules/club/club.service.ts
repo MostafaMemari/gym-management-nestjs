@@ -57,7 +57,7 @@ export class ClubService {
     const { take, page } = query.paginationDto;
 
     try {
-      const cacheKey = `${CacheKeys.CLUB_LIST}-${user.id}-${page}-${take}-${JSON.stringify(query.queryClubDto)}`;
+      const cacheKey = `${CacheKeys.CLUBS}-${user.id}-${page}-${take}-${JSON.stringify(query.queryClubDto)}`;
 
       const cachedData = await this.cacheService.get<PageDto<ClubEntity>>(cacheKey);
       if (cachedData) return ResponseUtil.success(cachedData.data, ClubMessages.GET_ALL_SUCCESS);

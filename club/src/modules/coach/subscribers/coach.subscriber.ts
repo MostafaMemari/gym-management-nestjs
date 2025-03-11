@@ -29,6 +29,6 @@ export class CoachSubscriber implements EntitySubscriberInterface<CoachEntity> {
   }
 
   private async clearCache() {
-    await this.cacheService.delByPattern(CachePatterns.COACH_LIST);
+    await this.cacheService.delByPattern(CachePatterns.COACHES);
   }
 }

@@ -53,7 +53,7 @@ export class BeltService {
     const { take, page } = query.paginationDto;
 
     try {
-      const cacheKey = `${CacheKeys.BELT_LIST}-${page}-${take}-${JSON.stringify(query.queryBeltDto)}`;
+      const cacheKey = `${CacheKeys.BELTS}-${page}-${take}-${JSON.stringify(query.queryBeltDto)}`;
 
       const cachedData = await this.cacheService.get<Promise<ServiceResponse>>(cacheKey);
       if (cachedData) return cachedData;

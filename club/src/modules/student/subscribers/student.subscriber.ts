@@ -30,6 +30,6 @@ export class StudentSubscriber implements EntitySubscriberInterface<StudentEntit
   }
 
   private async clearCache() {
-    await this.cacheService.delByPattern(CachePatterns.STUDENT_LIST);
+    await this.cacheService.delByPattern(CachePatterns.STUDENTS);
   }
 }

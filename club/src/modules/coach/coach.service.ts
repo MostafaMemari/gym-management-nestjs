@@ -118,7 +118,7 @@ export class CoachService {
     try {
       const userId: number = user.id;
 
-      const cacheKey = `${CacheKeys.COACH_LIST}:${user.id}-${page}-${take}-${JSON.stringify(query.queryCoachDto)}`;
+      const cacheKey = `${CacheKeys.COACHES}:${user.id}-${page}-${take}-${JSON.stringify(query.queryCoachDto)}`;
 
       const cachedData = await this.cacheService.get<PageDto<CoachEntity>>(cacheKey);
       if (cachedData) return ResponseUtil.success(cachedData.data, CoachMessages.GET_ALL_SUCCESS);
@@ -170,10 +170,10 @@ export class CoachService {
   private async createUserCoach(): Promise<number> {
     const username = `COA_${Math.random().toString(36).slice(2, 8)}`;
 
-    await checkConnection(Services.USER, this.userServiceClientProxy);
+    await checkConnection(Services.USER, this.userServiceClientProxy, { pattern: UserPatterns.CHECK_CONNECTION });
 
     const result = await lastValueFrom(
-      this.userServiceClientProxy.send(UserPatterns.CreateUserCoach, { username }).pipe(timeout(this.timeout)),
+      this.userServiceClientProxy.send(UserPatterns.CREATE_COACH, { username }).pipe(timeout(this.timeout)),
     );
 
     if (result?.error) throw result;
@@ -182,9 +182,9 @@ export class CoachService {
   private async removeCoachUserById(userId: number): Promise<void> {
     if (!userId) return;
 
-    await checkConnection(Services.USER, this.userServiceClientProxy);
+    await checkConnection(Services.USER, this.userServiceClientProxy, { pattern: UserPatterns.CHECK_CONNECTION });
 
-    const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.RemoveUser, { userId }).pipe(timeout(this.timeout)));
+    const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.REMOVE_ONE, { userId }).pipe(timeout(this.timeout)));
 
     if (result?.error) throw new BadRequestException(result.error);
   }

@@ -57,7 +57,7 @@ export class SessionService {
   async getAll(user: IUser, query: { querySessionDto: ISearchSessionQuery; paginationDto: IPagination }): Promise<PageDto<SessionEntity>> {
     const { take, page } = query.paginationDto;
 
-    const cacheKey = `${CacheKeys.SESSION_LIST}-${user.id}-${page}-${take}-${JSON.stringify(query.querySessionDto)}`;
+    const cacheKey = `${CacheKeys.SESSIONS}-${user.id}-${page}-${take}-${JSON.stringify(query.querySessionDto)}`;
 
     const cachedData = await this.cacheService.get<PageDto<SessionEntity>>(cacheKey);
     if (cachedData) return cachedData;

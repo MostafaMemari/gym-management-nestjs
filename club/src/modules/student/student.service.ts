@@ -132,7 +132,7 @@ export class StudentService {
     const { take, page } = query.paginationDto;
 
     try {
-      const cacheKey = `${CacheKeys.STUDENT_LIST}:${user.id}-${page}-${take}-${JSON.stringify(query.queryStudentDto)}`;
+      const cacheKey = `${CacheKeys.STUDENTS}:${user.id}-${page}-${take}-${JSON.stringify(query.queryStudentDto)}`;
 
       const cachedData = await this.cacheService.get<PageDto<StudentEntity>>(cacheKey);
       if (cachedData) return ResponseUtil.success(cachedData.data, StudentMessages.GET_ALL_SUCCESS);
@@ -277,10 +277,10 @@ export class StudentService {
   private async createUserStudent(): Promise<number | null> {
     const username = `STU_${Math.random().toString(36).slice(2, 8)}`;
 
-    await checkConnection(Services.USER, this.userServiceClientProxy);
+    await checkConnection(Services.USER, this.userServiceClientProxy, { pattern: UserPatterns.CHECK_CONNECTION });
 
     const result = await lastValueFrom(
-      this.userServiceClientProxy.send(UserPatterns.CreateUserStudent, { username }).pipe(timeout(this.timeout)),
+      this.userServiceClientProxy.send(UserPatterns.CREATE_STUDENT, { username }).pipe(timeout(this.timeout)),
     );
 
     if (result?.error) throw result;
@@ -289,17 +289,17 @@ export class StudentService {
   private async removeStudentUserById(userId: number): Promise<void> {
     if (!userId) return null;
 
-    await checkConnection(Services.USER, this.userServiceClientProxy);
+    await checkConnection(Services.USER, this.userServiceClientProxy, { pattern: UserPatterns.CHECK_CONNECTION });
 
-    const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.RemoveUser, { userId }).pipe(timeout(this.timeout)));
+    const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.REMOVE_ONE, { userId }).pipe(timeout(this.timeout)));
     if (result?.error) throw result;
   }
   private async removeStudentsUserByIds(userIds: number[]): Promise<void> {
     if (!userIds.length) return null;
 
-    await checkConnection(Services.USER, this.userServiceClientProxy);
+    await checkConnection(Services.USER, this.userServiceClientProxy, { pattern: UserPatterns.CHECK_CONNECTION });
 
-    const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.RemoveUsers, { userIds }).pipe(timeout(this.timeout)));
+    const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.REMOVE_MANY, { userIds }).pipe(timeout(this.timeout)));
     if (result?.error) throw result;
   }
   private async uploadStudentImage(image: Express.Multer.File): Promise<string | undefined> {

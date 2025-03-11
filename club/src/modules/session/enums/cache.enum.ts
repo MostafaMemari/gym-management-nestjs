@@ -1,6 +1,6 @@
 export enum CacheKeys {
-  SESSION_LIST = 'session_list',
+  SESSIONS = 'sessions_list',
 }
 export enum CachePatterns {
-  SESSION_LIST = 'session_list*',
+  SESSIONS = 'sessions_list*',
 }

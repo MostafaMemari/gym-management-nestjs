@@ -30,6 +30,6 @@ export class ClubSubscriber implements EntitySubscriberInterface<ClubEntity> {
   }
 
   private async clearCache() {
-    await this.cacheService.delByPattern(CachePatterns.CLUB_LIST);
+    await this.cacheService.delByPattern(CachePatterns.CLUBS);
   }
 }

@@ -30,6 +30,6 @@ export class SessionSubscriber implements EntitySubscriberInterface<SessionEntit
   }
 
   private async clearCache() {
-    await this.cacheService.delByPattern(CachePatterns.SESSION_LIST);
+    await this.cacheService.delByPattern(CachePatterns.SESSIONS);
   }
 }

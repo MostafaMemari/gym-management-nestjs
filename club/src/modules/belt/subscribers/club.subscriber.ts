@@ -29,6 +29,6 @@ export class BeltSubscriber implements EntitySubscriberInterface<BeltEntity> {
   }
 
   private async clearCache() {
-    await this.cacheService.delByPattern(CachePatterns.BELT_LIST);
+    await this.cacheService.delByPattern(CachePatterns.BELTS);
   }
 }
