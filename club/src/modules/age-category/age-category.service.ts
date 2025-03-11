@@ -16,6 +16,8 @@ import { CacheService } from '../cache/cache.service';
 export class AgeCategoryService {
   constructor(private readonly cacheService: CacheService, private readonly ageCategoryRepository: AgeCategoryRepository) {}
 
+  private readonly cacheTTLSeconds = 3600;
+
   async create(createAgeCategoryDto: IAgeCategoryCreateDto): Promise<ServiceResponse> {
     try {
       const ageCategory = await this.ageCategoryRepository.createAndSaveAgeCategory(createAgeCategoryDto);
@@ -52,7 +54,7 @@ export class AgeCategoryService {
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(ageCategories, pageMetaDto);
 
-      await this.cacheService.set(cacheKey, result, 1);
+      await this.cacheService.set(cacheKey, result, this.cacheTTLSeconds);
 
       return ResponseUtil.success(result.data, AgeCategoryMessages.GET_ALL_SUCCESS);
     } catch (error) {

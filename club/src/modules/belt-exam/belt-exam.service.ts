@@ -22,6 +22,8 @@ export class BeltExamService {
     private readonly beltService: BeltService,
   ) {}
 
+  private readonly cacheTTLSeconds = 3600;
+
   async create(createBeltExamDto: IBeltCreateDtoExam) {
     try {
       const { beltIds } = createBeltExamDto;
@@ -55,21 +57,21 @@ export class BeltExamService {
       ResponseUtil.error(error?.message || BeltExamMessages.UPDATE_FAILURE, error?.status);
     }
   }
-  async getAll(query: { queryBeltExamDto: ISearchBeltExamQuery; paginationDto: IPagination }): Promise<PageDto<BeltExamEntity>> {
+  async getAll(query: { queryBeltExamDto: ISearchBeltExamQuery; paginationDto: IPagination }): Promise<ServiceResponse> {
     const { take, page } = query.paginationDto;
     try {
       const cacheKey = `${CacheKeys.BELT_EXAMS}-${page}-${take}-${JSON.stringify(query.queryBeltExamDto)}`;
       const cachedData = await this.cacheService.get<Promise<ServiceResponse>>(cacheKey);
-      if (cachedData) return cachedData;
+      if (cachedData) return ResponseUtil.success(cachedData.data, BeltExamMessages.GET_ALL_SUCCESS);
 
       const [beltExams, count] = await this.beltExamRepository.getBeltExamsWithFilters(query.queryBeltExamDto, page, take);
 
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(beltExams, pageMetaDto);
 
-      await this.cacheService.set(cacheKey, result, 600);
+      await this.cacheService.set(cacheKey, result, this.cacheTTLSeconds);
 
-      return result;
+      return ResponseUtil.success(cachedData.data, BeltExamMessages.GET_ALL_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || BeltExamMessages.UPDATE_FAILURE, error?.status);
     }

@@ -17,6 +17,8 @@ import { ResponseUtil } from '../../common/utils/response';
 export class BeltService {
   constructor(private readonly beltRepository: BeltRepository, private readonly cacheService: CacheService) {}
 
+  private readonly cacheTTLSeconds = 3600;
+
   async create(createBeltDto: IBeltCreateDto): Promise<ServiceResponse> {
     try {
       const { nextBeltIds } = createBeltDto;
@@ -63,7 +65,7 @@ export class BeltService {
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(belts, pageMetaDto);
 
-      await this.cacheService.set(cacheKey, result, 10);
+      await this.cacheService.set(cacheKey, result, this.cacheTTLSeconds);
 
       return ResponseUtil.success(result.data, BeltMessages.GET_ALL_SUCCESS);
     } catch (error) {
