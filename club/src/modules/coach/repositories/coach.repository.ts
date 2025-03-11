@@ -43,10 +43,8 @@ export class CoachRepository extends Repository<CoachEntity> {
     }
   }
 
-  async getCoachesWithFilters(userId: number, filters: ICoachFilter, page: number, take: number): Promise<[CoachEntity[], number]> {
-    const queryBuilder = this.createQueryBuilder(EntityName.Coaches)
-      .leftJoinAndSelect('coaches.clubs', 'club')
-      .where('club.ownerId = :userId', { userId });
+  async getCoachesWithFilters(ownerId: number, filters: ICoachFilter, page: number, take: number): Promise<[CoachEntity[], number]> {
+    const queryBuilder = this.createQueryBuilder(EntityName.Coaches).where('coaches.ownerId = :ownerId', { ownerId });
 
     if (filters?.search) {
       queryBuilder.andWhere('(coaches.full_name LIKE :search OR coaches.national_code LIKE :search)', { search: `%${filters.search}%` });

@@ -53,7 +53,7 @@ export class CoachService {
 
       if (clubIds) {
         ownedClubs = await this.clubService.validateOwnedClubs(clubIds, userId);
-        await this.validateCoachGender(gender, ownedClubs);
+        this.validateCoachClubGender(gender, ownedClubs);
       }
 
       imageKey = image ? await this.uploadCoachImage(image) : null;
@@ -90,12 +90,15 @@ export class CoachService {
         const ownedClubs = clubIds?.length ? await this.clubService.validateOwnedClubs(clubIds, userId) : coach.clubs;
         const removedClubs = coach.clubs.filter((club) => !clubIds.includes(club.id));
         if (removedClubs.length) await this.studentService.checkStudentsInRemovedClubs(removedClubs, coachId);
-        await this.validateCoachGender(coach.gender, ownedClubs);
+        this.validateCoachClubGender(coach.gender, ownedClubs);
         updateData.clubs = ownedClubs;
+      } else {
+        updateData.clubs = [];
       }
 
       if (gender && gender !== coach.gender) {
-        await this.validateCoachGender(gender, updateData.clubs ?? coach.clubs, coachId);
+        this.validateCoachClubGender(gender, updateData.clubs ?? coach.clubs);
+        await this.validateCoachGenderChange(gender, coachId);
       }
 
       if (image) updateData.image_url = await this.uploadCoachImage(image);
@@ -202,17 +205,22 @@ export class CoachService {
     return coach;
   }
 
-  private async validateCoachGender(coachGender: Gender, clubs: ICreateClub[], coachId?: number | null): Promise<void> {
+  private validateCoachClubGender(coachGender: Gender, clubs: ICreateClub[]): void {
     const invalidClubs = clubs.filter((club) => !isGenderAllowed(coachGender, club.genders)).map((club) => club.id);
-    if (invalidClubs.length > 0)
-      throw new BadRequestException(CoachMessages.COACH_GENDER_MISMATCH.replace('{ids}', invalidClubs.join(', ')).toString);
 
-    if (coachId) {
-      const hasInvalidStudent = await this.studentService.hasStudentsByGender(
-        coachId,
-        coachGender === Gender.Male ? Gender.Female : Gender.Male,
-      );
-      if (hasInvalidStudent) throw new BadRequestException(CoachMessages.COACH_GENDER_CHANGE_NOT_ALLOWED);
+    if (invalidClubs.length > 0) {
+      throw new BadRequestException(CoachMessages.COACH_GENDER_MISMATCH.replace('{ids}', invalidClubs.join(', ')));
+    }
+  }
+
+  private async validateCoachGenderChange(coachGender: Gender, coachId: number): Promise<void> {
+    const hasInvalidStudent = await this.studentService.hasStudentsByGender(
+      coachId,
+      coachGender === Gender.Male ? Gender.Female : Gender.Male,
+    );
+
+    if (hasInvalidStudent) {
+      throw new BadRequestException(CoachMessages.COACH_GENDER_CHANGE_NOT_ALLOWED);
     }
   }
 
