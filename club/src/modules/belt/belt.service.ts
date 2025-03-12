@@ -17,7 +17,7 @@ import { ResponseUtil } from '../../common/utils/response';
 export class BeltService {
   constructor(private readonly beltRepository: BeltRepository, private readonly cacheService: CacheService) {}
 
-  private readonly cacheTTLSeconds = 3600;
+  private readonly cacheTTLSeconds: number = 3600;
 
   async create(createBeltDto: IBeltCreateDto): Promise<ServiceResponse> {
     try {

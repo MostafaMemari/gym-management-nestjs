@@ -34,6 +34,8 @@ import { ResponseUtil } from '../../common/utils/response';
 @Injectable()
 export class StudentService {
   private readonly timeout: number = 4500;
+  private readonly cacheTTLSeconds: number = 1;
+
   constructor(
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
     private readonly studentRepository: StudentRepository,
@@ -142,7 +144,7 @@ export class StudentService {
       const pageMetaDto = new PageMetaDto(count, query.paginationDto);
       const result = new PageDto(students, pageMetaDto);
 
-      await this.cacheService.set(cacheKey, result, 60);
+      await this.cacheService.set(cacheKey, result, this.cacheTTLSeconds);
 
       return ResponseUtil.success(result.data, StudentMessages.GET_ALL_SUCCESS);
     } catch (error) {

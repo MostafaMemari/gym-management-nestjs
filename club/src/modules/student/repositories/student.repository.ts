@@ -51,13 +51,18 @@ export class StudentRepository extends Repository<StudentEntity> {
 
   async getStudentsWithFilters(userId: number, filters: IStudentFilter, page: number, take: number): Promise<[StudentEntity[], number]> {
     const queryBuilder = this.createQueryBuilder(EntityName.Students)
+      .innerJoin('students.club', 'club', 'club.ownerId = :userId', { userId })
+      .addSelect(['club.id', 'club.name'])
       .leftJoin('students.coach', 'coach')
       .addSelect(['coach.id', 'coach.full_name'])
-      .leftJoin('students.club', 'club')
-      .addSelect(['club.id', 'club.name'])
-      // .leftJoin('students.belt', 'belt')
-      // .addSelect(['belt.id', 'belt.name'])
-      .where('club.ownerId = :userId', { userId });
+      .leftJoinAndSelect('students.beltInfo', 'beltInfo')
+      .leftJoinAndSelect('beltInfo.belt', 'belt')
+      .leftJoinAndMapMany(
+        'students.age_categories',
+        AgeCategoryEntity,
+        'ageCategories',
+        'students.birth_date BETWEEN ageCategories.start_date AND ageCategories.end_date',
+      );
 
     if (filters?.search) {
       queryBuilder.andWhere('(students.full_name LIKE :search OR students.national_code LIKE :search)', { search: `%${filters.search}%` });
@@ -85,18 +90,23 @@ export class StudentRepository extends Repository<StudentEntity> {
       queryBuilder.orderBy('students.updated_at', 'DESC');
     }
 
-    return (
-      queryBuilder
-        // .leftJoinAndMapMany(
-        //   'students.age_category',
-        //   AgeCategoryEntity,
-        //   'ageCategories',
-        //   'students.birth_date BETWEEN ageCategories.start_date AND ageCategories.end_date',
-        // )
-        .skip((page - 1) * take)
-        .take(take)
-        .getManyAndCount()
-    );
+    const [students, totalCount] = await queryBuilder
+      .skip((page - 1) * take)
+      .take(take)
+      .getManyAndCount();
+
+    const mappedStudents: any = (students as any).map(({ age_categories, beltInfo, ...student }) => ({
+      ...student,
+      belt: beltInfo
+        ? {
+            id: beltInfo.belt?.id,
+            name: beltInfo.belt?.name,
+          }
+        : null,
+      age_categories: age_categories?.map(({ id, name }) => ({ id, name })) || [],
+    }));
+
+    return [mappedStudents, totalCount];
   }
 
   async findByIdAndOwner(studentId: number, userId: number): Promise<StudentEntity> {
