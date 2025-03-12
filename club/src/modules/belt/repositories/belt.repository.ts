@@ -54,4 +54,4 @@ export class BeltRepository extends Repository<BeltEntity> {
   }
 }
 
-const validSortFields = ['level'];
+const validSortFields = ['level', 'updated_at', 'created_at'];

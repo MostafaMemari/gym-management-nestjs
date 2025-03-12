@@ -23,7 +23,6 @@ export class BeltExamRepository extends Repository<BeltExamEntity> {
 
   async getBeltExamsWithFilters(filters: IBeltExamFilter, page: number, take: number): Promise<[BeltExamEntity[], number]> {
     const queryBuilder = this.createQueryBuilder(EntityName.BELT_EXAMS).innerJoin('belt_exams.belts', 'belts');
-    // .leftJoin('belt_exams.belts', 'belts')
 
     if (filters?.search) {
       queryBuilder.andWhere('belt_exams.name LIKE :search OR belt_exams.description LIKE :search', { search: `%${filters.search}%` });
@@ -32,28 +31,36 @@ export class BeltExamRepository extends Repository<BeltExamEntity> {
     if (filters?.gender) {
       queryBuilder.andWhere(`FIND_IN_SET(:gender, belt_exams.genders)`, { gender: filters.gender });
     }
+
     if (filters?.event_places?.length) {
       queryBuilder.andWhere(`belt_exams.event_places REGEXP :eventPlaces`, { eventPlaces: filters.event_places.join('|') });
     }
+
     if (filters?.beltIds?.length) {
       queryBuilder.andWhere('belts.id IN (:...beltIds)', { beltIds: filters.beltIds });
     }
 
-    if (filters?.sort_order) {
-      queryBuilder.orderBy('belt_exams.updated_at', filters.sort_order === 'asc' ? 'ASC' : 'DESC');
+    if (filters?.sort_by && validSortFields.includes(filters.sort_by)) {
+      queryBuilder.orderBy(`belt_exams.${filters.sort_by}`, filters.sort_order === 'asc' ? 'ASC' : 'DESC');
+    } else {
+      queryBuilder.orderBy('belt_exams.created_at', 'DESC');
     }
 
-    return (
-      queryBuilder
-        // .leftJoinAndSelect('belt_exams.nextBeltExam', 'nextBeltExam')
+    if (filters?.sort_by) {
+      queryBuilder.orderBy(`belt_exams.${filters.sort_by}`, filters.sort_order === 'asc' ? 'ASC' : 'DESC');
+    } else {
+      queryBuilder.orderBy('belt_exams.updated_at', 'DESC');
+    }
 
-        .skip((page - 1) * take)
-        .take(take)
-        .getManyAndCount()
-    );
+    return queryBuilder
+      .skip((page - 1) * take)
+      .take(take)
+      .getManyAndCount();
   }
 
   async findByIds(clubIds: number[]): Promise<BeltExamEntity[]> {
     return this.find({ where: { id: In(clubIds) } });
   }
 }
+
+const validSortFields = ['register_date', 'event_date', 'updated_at', 'created_at'];

@@ -51,4 +51,4 @@ export class AgeCategoryRepository extends Repository<AgeCategoryEntity> {
   }
 }
 
-const validSortFields = ['start_date', 'end_date'];
+const validSortFields = ['start_date', 'end_date', 'updated_at', 'created_at'];
