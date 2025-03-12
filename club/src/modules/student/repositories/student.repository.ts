@@ -67,17 +67,28 @@ export class StudentRepository extends Repository<StudentEntity> {
     if (filters?.search) {
       queryBuilder.andWhere('(students.full_name LIKE :search OR students.national_code LIKE :search)', { search: `%${filters.search}%` });
     }
-    if (filters?.gender) queryBuilder.andWhere('students.gender = :gender', { gender: filters?.gender });
-    if (filters?.is_active !== undefined) queryBuilder.andWhere('students.is_active = :isActive', { isActive: filters?.is_active });
-
+    if (filters?.gender) {
+      queryBuilder.andWhere('students.gender = :gender', { gender: filters?.gender });
+    }
+    if (filters?.is_active !== undefined) {
+      queryBuilder.andWhere('students.is_active = :isActive', { isActive: filters?.is_active });
+    }
     if (filters?.phone_number) {
       queryBuilder.andWhere('students.phone_number LIKE :phoneNumber', { phoneNumber: `%${filters?.phone_number}%` });
     }
-
-    if (filters?.club) queryBuilder.andWhere('students.clubId = :club', { club: filters?.club });
-    if (filters?.coach) queryBuilder.andWhere('students.coachId = :coach', { coach: filters?.coach });
-    // if (filters?.belt) queryBuilder.andWhere('students.beltId = :belt', { belt: filters?.belt });
-
+    if (filters?.club_id) {
+      queryBuilder.andWhere('students.clubId = :club', { club: filters?.club_id });
+    }
+    if (filters?.coach_id) {
+      queryBuilder.andWhere('students.coachId = :coach', { coach: filters?.coach_id });
+    }
+    console.log(filters?.belt_ids);
+    if (filters?.belt_ids?.length) {
+      queryBuilder.andWhere('beltInfo.beltId IN (:...beltIds)', { beltIds: filters.belt_ids });
+    }
+    if (filters?.age_category_ids?.length) {
+      queryBuilder.andWhere('ageCategories.id IN (:...ageCategoryIds)', { ageCategoryIds: filters.age_category_ids });
+    }
     if (filters?.sort_by && validSortFields.includes(filters.sort_by)) {
       queryBuilder.orderBy(`students.${filters.sort_by}`, filters.sort_order === 'asc' ? 'ASC' : 'DESC');
     } else {

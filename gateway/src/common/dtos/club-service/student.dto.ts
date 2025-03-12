@@ -16,7 +16,7 @@ import {
 } from 'class-validator';
 
 import { ApiProperty, ApiPropertyOptional, OmitType, PartialType, PickType } from '@nestjs/swagger';
-import { ToBoolean } from '../../../common/decorators/transformers.decorator';
+import { ToArray, ToBoolean } from '../../../common/decorators/transformers.decorator';
 import { Gender, SortOrder } from '../../../common/enums/shared.enum';
 import { IsDependentOn } from '../../../common/decorators/dependent-fields.decorator';
 
@@ -158,23 +158,30 @@ export class QueryStudentDto {
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ type: 'string', example: '09388366510' })
+  @ApiPropertyOptional({ type: 'string', example: '' })
   phone_number?: string;
 
   @IsOptional()
   @IsString()
   @ApiPropertyOptional({ type: 'string', example: '' })
-  coach: string;
+  coach_id: string;
 
   @IsOptional()
   @IsString()
   @ApiPropertyOptional({ type: 'string', example: '' })
-  club: string;
+  club_id: string;
 
   @IsOptional()
-  @IsString()
-  @ApiPropertyOptional({ type: 'string', example: '' })
-  belt: string;
+  @ToArray()
+  @IsInt({ each: true })
+  @ApiPropertyOptional({ type: 'array' })
+  belt_ids: number[];
+
+  @IsOptional()
+  @ToArray()
+  @IsInt({ each: true })
+  @ApiPropertyOptional({ type: 'array' })
+  age_category_ids: number[];
 
   @IsOptional()
   @IsEnum(SortBy, { message: 'sort_by must be one of "birth_date", "sports_insurance_date", "expire_image_date", "created_at", or "updated_at"' })

@@ -31,9 +31,10 @@ export interface IStudentFilter {
   is_active?: boolean;
   phone_number?: string;
   expire_image_date?: string;
-  coach?: string;
-  club?: string;
-  belt?: string;
+  coach_id?: string;
+  club_id?: string;
+  belt_ids?: number[];
+  age_category_ids: number[];
   sort_by?: 'birth_date' | 'sports_insurance_date' | 'expire_image_date';
   sort_order?: 'asc' | 'desc';
 }

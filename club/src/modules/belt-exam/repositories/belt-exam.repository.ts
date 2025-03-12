@@ -36,8 +36,8 @@ export class BeltExamRepository extends Repository<BeltExamEntity> {
       queryBuilder.andWhere(`belt_exams.event_places REGEXP :eventPlaces`, { eventPlaces: filters.event_places.join('|') });
     }
 
-    if (filters?.beltIds?.length) {
-      queryBuilder.andWhere('belts.id IN (:...beltIds)', { beltIds: filters.beltIds });
+    if (filters?.belt_ids?.length) {
+      queryBuilder.andWhere('belts.id IN (:...beltIds)', { beltIds: filters.belt_ids });
     }
 
     if (filters?.sort_by && validSortFields.includes(filters.sort_by)) {

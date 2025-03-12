@@ -93,7 +93,7 @@ export class QueryBeltExamDto {
   @ToArray()
   @IsInt({ each: true })
   @ApiPropertyOptional({ type: 'array' })
-  beltIds?: number[];
+  belt_ids?: number[];
 
   @IsOptional()
   @IsEnum(SortBy, { message: 'register_date must be one of "event_date", "created_at" or "updated_at"' })

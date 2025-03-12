@@ -37,7 +37,7 @@ export class QueryAgeCategoryDto {
 
   @IsOptional()
   @IsEnum(SortBy, { message: 'sort_by must be one of "start_date", "end_date", "created_at" or "updated_at"' })
-  @ApiPropertyOptional({ example: 'birth_date', enum: SortBy })
+  @ApiPropertyOptional({ example: '', enum: SortBy })
   sort_by?: SortBy;
 
   @IsOptional()

@@ -18,7 +18,7 @@ export interface IBeltExamFilter {
   search?: string;
   gender?: Gender;
   event_places?: string[];
-  beltIds?: number[];
+  belt_ids?: number[];
   sort_by: 'register_date' | 'event_date' | 'created_at' | 'updated_at';
   sort_order?: 'asc' | 'desc';
 }
