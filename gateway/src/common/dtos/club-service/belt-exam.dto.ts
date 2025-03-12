@@ -96,7 +96,7 @@ export class QueryBeltExamDto {
   belt_ids?: number[];
 
   @IsOptional()
-  @IsEnum(SortBy, { message: 'register_date must be one of "event_date", "created_at" or "updated_at"' })
+  @IsEnum(SortBy, { message: 'sort_by must be one of "register_date", "event_date", "created_at" or "updated_at"' })
   @ApiPropertyOptional({ example: 'birth_date', enum: SortBy })
   sort_by?: SortBy;
 
