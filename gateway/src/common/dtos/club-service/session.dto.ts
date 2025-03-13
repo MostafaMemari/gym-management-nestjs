@@ -69,10 +69,10 @@ export class CreateSessionDto {
   @ApiProperty({ type: 'integer', required: true, example: '' })
   coachId: number;
 
-  @IsNotEmpty()
+  @IsOptional()
   @ToArray()
   @IsInt({ each: true })
-  @ApiProperty({ type: 'array' })
+  @ApiPropertyOptional({ type: 'array' })
   studentIds: number[];
 }
 

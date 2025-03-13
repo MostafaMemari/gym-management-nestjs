@@ -22,9 +22,10 @@ export class SessionRepository extends Repository<SessionEntity> {
   }
 
   async getSessionsWithFilters(userId: number, filters: ISessionFilter, page: number, take: number): Promise<[SessionEntity[], number]> {
-    const queryBuilder = this.createQueryBuilder(EntityName.Sessions).innerJoin('sessions.club', 'club', 'club.ownerId = :userId', {
-      userId,
-    });
+    const queryBuilder = this.createQueryBuilder(EntityName.Sessions)
+      .leftJoin('sessions.club', 'club', 'club.ownerId = :userId', { userId })
+      .leftJoin('sessions.students', 'students')
+      .addSelect(['students.id', 'students.full_name']);
 
     if (filters?.search) {
       queryBuilder.andWhere('sessions.name LIKE :search', { search: `%${filters.search}%` });
@@ -47,8 +48,14 @@ export class SessionRepository extends Repository<SessionEntity> {
       .getManyAndCount();
   }
 
-  async findByIdAndOwner(sessionId: number): Promise<SessionEntity | null> {
-    return this.findOne({ where: { id: sessionId } });
+  async findByIdAndOwner(sessionId: number, userId: number): Promise<SessionEntity | null> {
+    return this.createQueryBuilder(EntityName.Sessions)
+      .where('sessions.id = :sessionId', { sessionId })
+      .innerJoin('sessions.club', 'club', 'club.ownerId = :userId', {
+        userId,
+      })
+
+      .getOne();
   }
 
   async findOwnedSessionsByIds(sessionIds: number[]): Promise<SessionEntity[]> {

@@ -23,10 +23,10 @@ export class SessionController {
     return this.clubService.create(user, createSessionDto);
   }
   @MessagePattern(SessionPatterns.UPDATE)
-  update(@Payload() data: { user: IUser; clubId: number; updateSessionDto: IUpdateSession }) {
-    const { user, clubId, updateSessionDto } = data;
+  update(@Payload() data: { user: IUser; sessionId: number; updateSessionDto: IUpdateSession }) {
+    const { user, sessionId, updateSessionDto } = data;
 
-    return this.clubService.update(user, clubId, updateSessionDto);
+    return this.clubService.update(user, sessionId, updateSessionDto);
   }
 
   @MessagePattern(SessionPatterns.GET_ALL)
@@ -37,15 +37,15 @@ export class SessionController {
   }
 
   @MessagePattern(SessionPatterns.GET_ONE)
-  findOne(@Payload() data: { user: IUser; clubId: number }) {
-    const { user, clubId } = data;
+  findOne(@Payload() data: { user: IUser; sessionId: number }) {
+    const { user, sessionId } = data;
 
-    return this.clubService.findOneById(user, clubId);
+    return this.clubService.findOneById(user, sessionId);
   }
   @MessagePattern(SessionPatterns.REMOVE)
-  remove(@Payload() data: { user: IUser; clubId: number }) {
-    const { user, clubId } = data;
+  remove(@Payload() data: { user: IUser; sessionId: number }) {
+    const { user, sessionId } = data;
 
-    return this.clubService.removeById(user, clubId);
+    return this.clubService.removeById(user, sessionId);
   }
 }

@@ -35,8 +35,8 @@ export class SessionService {
       await this.clubService.validateCoachInClub(club, coachId);
       const coach = club.coaches.find((coach) => coach.id === coachId);
 
-      const students = studentIds ? await this.studentService.validateStudentIds(studentIds, coach.id, coach.gender) : null;
-      const session = await this.sessionRepository.createAndSaveSession({ ...createSessionDto, students });
+      createSessionDto.students = studentIds ? await this.studentService.validateStudentIds(studentIds, coach.id, coach.gender) : null;
+      const session = await this.sessionRepository.createAndSaveSession(createSessionDto);
 
       return ResponseUtil.success(session, SessionMessages.CREATE_SUCCESS);
     } catch (error) {
@@ -45,7 +45,23 @@ export class SessionService {
   }
   async update(user: IUser, sessionId: number, updateSessionDto: IUpdateSession) {
     try {
-      const session = await this.checkSessionOwnership(sessionId);
+      const { clubId, coachId, studentIds } = updateSessionDto;
+      let club = null;
+
+      const session = await this.checkSessionOwnership(sessionId, user.id);
+
+      if (clubId || coachId) {
+        club = await this.clubService.checkClubOwnershipWithCoaches(clubId ?? session.clubId, user.id);
+        await this.clubService.validateCoachInClub(club, coachId ?? session.coachId);
+      }
+      if (studentIds?.length) {
+        club = club ? club : await this.clubService.checkClubOwnershipWithCoaches(clubId ?? session.clubId, user.id);
+
+        const coach = club.coaches.find((coach) => coach.id === coachId || session.coachId);
+        updateSessionDto.students = studentIds ? await this.studentService.validateStudentIds(studentIds, coach.id, coach.gender) : null;
+      } else {
+        updateSessionDto.students = [];
+      }
 
       const updatedSession = await this.sessionRepository.updateSession(session, updateSessionDto);
 
@@ -77,7 +93,7 @@ export class SessionService {
   }
   async findOneById(user: IUser, sessionId: number): Promise<ServiceResponse> {
     try {
-      const session = await this.checkSessionOwnership(sessionId);
+      const session = await this.checkSessionOwnership(sessionId, user.id);
 
       return ResponseUtil.success(session, SessionMessages.GET_SUCCESS);
     } catch (error) {
@@ -86,7 +102,7 @@ export class SessionService {
   }
   async removeById(user: IUser, sessionId: number): Promise<ServiceResponse> {
     try {
-      const session = await this.checkSessionOwnership(sessionId);
+      const session = await this.checkSessionOwnership(sessionId, user.id);
 
       const removedSession = await this.sessionRepository.delete(sessionId);
 
@@ -98,8 +114,8 @@ export class SessionService {
     }
   }
 
-  async checkSessionOwnership(sessionId: number): Promise<SessionEntity> {
-    const session = await this.sessionRepository.findByIdAndOwner(sessionId);
+  async checkSessionOwnership(sessionId: number, userId: number): Promise<SessionEntity> {
+    const session = await this.sessionRepository.findByIdAndOwner(sessionId, userId);
     if (!session) throw new NotFoundException(SessionMessages.NOT_FOUND);
     return session;
   }

@@ -4,11 +4,12 @@ import { DayOfWeek } from '../enums/days-of-week.enum';
 export interface ICreateSession {
   name: string;
   days: DayOfWeek[];
+  description: string;
   start_time: string;
   end_time: string;
   clubId: number;
   coachId: number;
-  studentIds: number[];
+  studentIds?: number[];
   students: StudentEntity[];
 }
 

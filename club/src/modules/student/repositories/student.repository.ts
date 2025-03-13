@@ -160,7 +160,6 @@ export class StudentRepository extends Repository<StudentEntity> {
     }
 
     return await queryBuilder
-      .addSelect(['students.id', 'students.full_name', 'students.image_url'])
       .skip((page - 1) * take)
       .take(take)
       .getManyAndCount();
