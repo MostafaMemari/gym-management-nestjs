@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
-import { ICreateSession, IUpdateSession, ISearchSessionQuery } from './interfaces/session.interface';
+import { ICreateSession, IUpdateSession, ISessionFilter } from './interfaces/session.interface';
 import { SessionPatterns } from './patterns/session.pattern';
 import { SessionService } from './session.service';
 import { IUser } from '../../common/interfaces/user.interface';
@@ -30,7 +30,7 @@ export class SessionController {
   }
 
   @MessagePattern(SessionPatterns.GET_ALL)
-  findAll(@Payload() data: { user: IUser; querySessionDto: ISearchSessionQuery; paginationDto: IPagination }) {
+  findAll(@Payload() data: { user: IUser; querySessionDto: ISessionFilter; paginationDto: IPagination }) {
     const { user, querySessionDto, paginationDto } = data;
 
     return this.clubService.getAll(user, { querySessionDto, paginationDto });
@@ -41,5 +41,11 @@ export class SessionController {
     const { user, clubId } = data;
 
     return this.clubService.findOneById(user, clubId);
+  }
+  @MessagePattern(SessionPatterns.REMOVE)
+  remove(@Payload() data: { user: IUser; clubId: number }) {
+    const { user, clubId } = data;
+
+    return this.clubService.removeById(user, clubId);
   }
 }

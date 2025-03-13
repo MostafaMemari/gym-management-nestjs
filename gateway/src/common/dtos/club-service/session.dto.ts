@@ -78,11 +78,22 @@ export class CreateSessionDto {
 
 export class UpdateSessionDto extends PartialType(CreateSessionDto) {}
 
+enum SortBy {
+  START_TIME = 'start_time',
+  END_TIME = 'end_time',
+  CREATED_AT = 'created_at',
+  UPDATED_AT = 'updated_at',
+}
 export class QuerySessionDto {
   @IsOptional()
   @IsString()
   @ApiPropertyOptional({ type: 'string', example: '', description: '' })
   search?: string;
+
+  @IsOptional()
+  @IsEnum(SortBy, { message: 'sort_by must be one of "start_time", "end_time", "created_at", or "updated_at"' })
+  @ApiPropertyOptional({ example: 'start_time', enum: SortBy })
+  sort_by?: SortBy;
 
   @IsOptional()
   @IsEnum(SortOrder, { message: 'sort_order must be either "asc" or "desc"' })

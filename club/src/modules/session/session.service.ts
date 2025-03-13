@@ -1,15 +1,15 @@
-import { BadRequestException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { RpcException } from '@nestjs/microservices';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 
 import { SessionEntity } from './entities/session.entity';
-import { SessionMessages } from './enums/session.message';
-import { ICreateSession, ISearchSessionQuery, IUpdateSession } from './interfaces/session.interface';
-import { SessionRepository } from './repositories/session.repository';
 import { CacheKeys } from './enums/cache.enum';
+import { SessionMessages } from './enums/session.message';
+import { ICreateSession, ISessionFilter, IUpdateSession } from './interfaces/session.interface';
+import { SessionRepository } from './repositories/session.repository';
+import { CacheTTLSeconds } from './entities/cache.enum';
 
 import { CacheService } from '../cache/cache.service';
-import { CoachEntity } from '../coach/entities/coach.entity';
 import { ClubService } from '../club/club.service';
+import { CoachEntity } from '../coach/entities/coach.entity';
 import { StudentService } from '../student/student.service';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
@@ -38,9 +38,9 @@ export class SessionService {
       const students = studentIds ? await this.studentService.validateStudentIds(studentIds, coach.id, coach.gender) : null;
       const session = await this.sessionRepository.createAndSaveSession({ ...createSessionDto, students });
 
-      return ResponseUtil.success(session, SessionMessages.CreatedSession);
+      return ResponseUtil.success(session, SessionMessages.CREATE_SUCCESS);
     } catch (error) {
-      return ResponseUtil.error(error?.message || SessionMessages.FailedToCreateSession, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
+      return ResponseUtil.error(error?.message || SessionMessages.CREATE_FAILURE, error?.status);
     }
   }
   async update(user: IUser, sessionId: number, updateSessionDto: IUpdateSession) {
@@ -49,35 +49,39 @@ export class SessionService {
 
       const updatedSession = await this.sessionRepository.updateSession(session, updateSessionDto);
 
-      return ResponseUtil.success({ ...updatedSession }, SessionMessages.UpdatedSession);
+      return ResponseUtil.success({ ...updatedSession }, SessionMessages.UPDATE_SUCCESS);
     } catch (error) {
-      return ResponseUtil.error(error?.message || SessionMessages.FailedToUpdateSession, error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
+      return ResponseUtil.error(error?.message || SessionMessages.UPDATE_FAILURE, error?.status);
     }
   }
-  async getAll(user: IUser, query: { querySessionDto: ISearchSessionQuery; paginationDto: IPagination }): Promise<PageDto<SessionEntity>> {
+  async getAll(user: IUser, query: { querySessionDto: ISessionFilter; paginationDto: IPagination }): Promise<PageDto<SessionEntity>> {
     const { take, page } = query.paginationDto;
 
-    const cacheKey = `${CacheKeys.SESSIONS}-${user.id}-${page}-${take}-${JSON.stringify(query.querySessionDto)}`;
+    try {
+      const cacheKey = `${CacheKeys.SESSIONS}-${user.id}-${page}-${take}-${JSON.stringify(query.querySessionDto)}`;
 
-    const cachedData = await this.cacheService.get<PageDto<SessionEntity>>(cacheKey);
-    if (cachedData) return cachedData;
+      const cachedData = await this.cacheService.get<PageDto<SessionEntity>>(cacheKey);
+      if (cachedData) return ResponseUtil.success(cachedData.data, SessionMessages.GET_ALL_SUCCESS);
 
-    const [sessions, count] = await this.sessionRepository.getSessionsWithFilters(user.id, query.querySessionDto, page, take);
+      const [sessions, count] = await this.sessionRepository.getSessionsWithFilters(user.id, query.querySessionDto, page, take);
 
-    const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
-    const result = new PageDto(sessions, pageMetaDto);
+      const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
+      const result = new PageDto(sessions, pageMetaDto);
 
-    await this.cacheService.set(cacheKey, result, 600);
+      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.SESSIONS);
 
-    return result;
+      return ResponseUtil.success(result.data, SessionMessages.GET_ALL_SUCCESS);
+    } catch (error) {
+      ResponseUtil.error(error?.message || SessionMessages.GET_ALL_FAILURE, error?.status);
+    }
   }
   async findOneById(user: IUser, sessionId: number): Promise<ServiceResponse> {
     try {
       const session = await this.checkSessionOwnership(sessionId);
 
-      return ResponseUtil.success(session, SessionMessages.GetSessionSuccess);
+      return ResponseUtil.success(session, SessionMessages.GET_SUCCESS);
     } catch (error) {
-      throw new RpcException(error);
+      ResponseUtil.error(error?.message || SessionMessages.GET_ALL_FAILURE, error?.status);
     }
   }
   async removeById(user: IUser, sessionId: number): Promise<ServiceResponse> {
@@ -86,17 +90,17 @@ export class SessionService {
 
       const removedSession = await this.sessionRepository.delete(sessionId);
 
-      if (removedSession.affected) return ResponseUtil.success(session, SessionMessages.RemovedSessionSuccess);
+      if (removedSession.affected) return ResponseUtil.success(session, SessionMessages.REMOVE_SUCCESS);
 
-      return ResponseUtil.success(removedSession, SessionMessages.RemovedSessionSuccess);
+      return ResponseUtil.success(removedSession, SessionMessages.REMOVE_FAILURE);
     } catch (error) {
-      throw new RpcException(error);
+      ResponseUtil.error(error?.message || SessionMessages.REMOVE_FAILURE, error?.status);
     }
   }
 
   async checkSessionOwnership(sessionId: number): Promise<SessionEntity> {
     const session = await this.sessionRepository.findByIdAndOwner(sessionId);
-    if (!session) throw new NotFoundException(SessionMessages.SessionNotBelongToUser);
+    if (!session) throw new NotFoundException(SessionMessages.NOT_FOUND);
     return session;
   }
 
@@ -105,7 +109,7 @@ export class SessionService {
 
     if (ownedSessions.length !== sessionIds.length) {
       const notOwnedSessionIds = sessionIds.filter((id) => !ownedSessions.some((session) => session.id === id));
-      throw new BadRequestException(`${SessionMessages.UnauthorizedSessions} ${notOwnedSessionIds.join(', ')}`);
+      throw new BadRequestException(SessionMessages.UnauthorizedSessions.replace('{ids}', notOwnedSessionIds.join(', ')));
     }
 
     return ownedSessions;

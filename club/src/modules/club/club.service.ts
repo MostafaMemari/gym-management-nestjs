@@ -26,16 +26,16 @@ export class ClubService {
     @Inject(forwardRef(() => CoachService)) private readonly coachService: CoachService,
   ) {}
 
-  async create(user: IUser, createClubDto: ICreateClub) {
+  async create(user: IUser, createClubDto: ICreateClub): Promise<ServiceResponse> {
     try {
       const club = await this.clubRepository.createAndSaveClub(createClubDto, user.id);
 
       return ResponseUtil.success(club, ClubMessages.CREATE_SUCCESS);
     } catch (error) {
-      return ResponseUtil.error(error?.message || ClubMessages.CREATE_FAILURE, error?.status);
+      ResponseUtil.error(error?.message || ClubMessages.CREATE_FAILURE, error?.status);
     }
   }
-  async update(user: IUser, clubId: number, updateClubDto: IUpdateClub) {
+  async update(user: IUser, clubId: number, updateClubDto: IUpdateClub): Promise<ServiceResponse> {
     try {
       const { genders } = updateClubDto;
       const club = await this.checkClubOwnership(clubId, user.id);

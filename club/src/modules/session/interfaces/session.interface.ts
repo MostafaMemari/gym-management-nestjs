@@ -14,7 +14,8 @@ export interface ICreateSession {
 
 export type IUpdateSession = Partial<ICreateSession>;
 
-export interface ISearchSessionQuery {
+export interface ISessionFilter {
   search?: string;
+  sort_by?: 'start_time' | 'end_time' | 'created_at' | 'updated_at';
   sort_order?: 'asc' | 'desc';
 }
