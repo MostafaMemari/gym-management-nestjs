@@ -113,6 +113,18 @@ export class StudentController {
       return handleServiceResponse(data);
     } catch (error) {}
   }
+  @Get('summary')
+  async findAllSummary(@GetUser() user: User, @Query() paginationDto: PaginationDto, @Query() queryStudentDto: QueryStudentDto): Promise<any> {
+    try {
+      await this.checkConnection();
+
+      const data: ServiceResponse = await lastValueFrom(
+        this.clubServiceClient.send(StudentPatterns.GET_ALL_SUMMARY, { user, queryStudentDto, paginationDto }).pipe(timeout(5000)),
+      );
+
+      return handleServiceResponse(data);
+    } catch (error) {}
+  }
 
   @Get(':id')
   async findOne(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {

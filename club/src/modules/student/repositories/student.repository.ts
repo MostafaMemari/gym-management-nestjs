@@ -82,7 +82,7 @@ export class StudentRepository extends Repository<StudentEntity> {
     if (filters?.coach_id) {
       queryBuilder.andWhere('students.coachId = :coach', { coach: filters?.coach_id });
     }
-    console.log(filters?.belt_ids);
+
     if (filters?.belt_ids?.length) {
       queryBuilder.andWhere('beltInfo.beltId IN (:...beltIds)', { beltIds: filters.belt_ids });
     }
@@ -118,6 +118,52 @@ export class StudentRepository extends Repository<StudentEntity> {
     }));
 
     return [mappedStudents, totalCount];
+  }
+  async getStudentsSummaryWithFilters(
+    userId: number,
+    filters: IStudentFilter,
+    page: number,
+    take: number,
+  ): Promise<[StudentEntity[], number]> {
+    const queryBuilder = this.createQueryBuilder(EntityName.Students).innerJoin('students.club', 'club', 'club.ownerId = :userId', {
+      userId,
+    });
+
+    if (filters?.search) {
+      queryBuilder.andWhere('(students.full_name LIKE :search OR students.national_code LIKE :search)', { search: `%${filters.search}%` });
+    }
+    if (filters?.gender) {
+      queryBuilder.andWhere('students.gender = :gender', { gender: filters?.gender });
+    }
+    if (filters?.is_active !== undefined) {
+      queryBuilder.andWhere('students.is_active = :isActive', { isActive: filters?.is_active });
+    }
+    if (filters?.phone_number) {
+      queryBuilder.andWhere('students.phone_number LIKE :phoneNumber', { phoneNumber: `%${filters?.phone_number}%` });
+    }
+    if (filters?.club_id) {
+      queryBuilder.andWhere('students.clubId = :club', { club: filters?.club_id });
+    }
+    if (filters?.coach_id) {
+      queryBuilder.andWhere('students.coachId = :coach', { coach: filters?.coach_id });
+    }
+    if (filters?.sort_by && validSortFields.includes(filters.sort_by)) {
+      queryBuilder.orderBy(`students.${filters.sort_by}`, filters.sort_order === 'asc' ? 'ASC' : 'DESC');
+    } else {
+      queryBuilder.orderBy('students.created_at', 'DESC');
+    }
+
+    if (filters?.sort_by) {
+      queryBuilder.orderBy(`students.${filters.sort_by}`, filters.sort_order === 'asc' ? 'ASC' : 'DESC');
+    } else {
+      queryBuilder.orderBy('students.updated_at', 'DESC');
+    }
+
+    return await queryBuilder
+      .addSelect(['students.id', 'students.full_name', 'students.image_url'])
+      .skip((page - 1) * take)
+      .take(take)
+      .getManyAndCount();
   }
 
   async findByIdAndOwner(studentId: number, userId: number): Promise<StudentEntity> {

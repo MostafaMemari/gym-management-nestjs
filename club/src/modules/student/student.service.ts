@@ -150,6 +150,27 @@ export class StudentService {
       ResponseUtil.error(error?.message || StudentMessages.GET_ALL_FAILURE, error?.status);
     }
   }
+  async getAllSummary(user: IUser, query: { queryStudentDto: IStudentFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
+    const { take, page } = query.paginationDto;
+
+    try {
+      const cacheKey = `${CacheKeys.STUDENTS_SUMMARY}:${user.id}-${page}-${take}-${JSON.stringify(query.queryStudentDto)}`;
+
+      const cachedData = await this.cacheService.get<PageDto<StudentEntity>>(cacheKey);
+      if (cachedData) return ResponseUtil.success(cachedData.data, StudentMessages.GET_ALL_SUCCESS);
+
+      const [students, count] = await this.studentRepository.getStudentsSummaryWithFilters(user.id, query.queryStudentDto, page, take);
+
+      const pageMetaDto = new PageMetaDto(count, query.paginationDto);
+      const result = new PageDto(students, pageMetaDto);
+
+      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.STUDENTS);
+
+      return ResponseUtil.success(result.data, StudentMessages.GET_ALL_SUCCESS);
+    } catch (error) {
+      ResponseUtil.error(error?.message || StudentMessages.GET_ALL_FAILURE, error?.status);
+    }
+  }
   async findOneById(user: IUser, studentId: number): Promise<ServiceResponse> {
     try {
       const student = await this.checkStudentOwnership(studentId, user.id);

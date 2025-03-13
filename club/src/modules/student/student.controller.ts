@@ -44,6 +44,12 @@ export class StudentController {
 
     return this.studentService.getAll(user, { queryStudentDto, paginationDto });
   }
+  @MessagePattern(StudentPatterns.GET_ALL_SUMMARY)
+  findAllSummary(@Payload() data: { user: IUser; queryStudentDto: IStudentFilter; paginationDto: IPagination }) {
+    const { user, queryStudentDto, paginationDto } = data;
+
+    return this.studentService.getAllSummary(user, { queryStudentDto, paginationDto });
+  }
 
   @MessagePattern(StudentPatterns.REMOVE)
   remove(@Payload() data: { user: IUser; studentId: number }) {
