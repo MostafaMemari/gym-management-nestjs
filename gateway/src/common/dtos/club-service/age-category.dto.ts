@@ -1,8 +1,8 @@
 import { IsNotEmpty, IsEnum, IsDateString, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 
-import { AgeCategoryName } from 'src/common/enums/age-category.enum';
-import { SortOrder } from 'src/common/enums/shared.enum';
+import { SortOrder } from '../../../common/enums/shared.enum';
+import { AgeCategoryName } from '../../../common/enums/age-category.enum';
 
 export class CreateAgeCategoryDto {
   @IsNotEmpty()

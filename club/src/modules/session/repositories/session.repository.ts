@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, In, Repository } from 'typeorm';
 
 import { SessionEntity } from '../entities/session.entity';
-import { EntityName } from 'src/common/enums/entity.enum';
+import { EntityName } from '../../../common/enums/entity.enum';
 import { ICreateSession, ISearchSessionQuery, IUpdateSession } from '../interfaces/session.interface';
 
 @Injectable()

@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, In, Repository } from 'typeorm';
 
 import { AttendanceEntity } from '../entities/attendance.entity';
-import { EntityName } from 'src/common/enums/entity.enum';
-import { IRecordAttendance, ISearchAttendanceQuery } from '../interfaces/attendance.interface';
+import { EntityName } from '../../../common/enums/entity.enum';
+import { ISearchAttendanceQuery } from '../interfaces/attendance.interface';
 
 @Injectable()
 export class AttendanceRepository extends Repository<AttendanceEntity> {

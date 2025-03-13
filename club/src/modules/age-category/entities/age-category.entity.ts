@@ -1,7 +1,7 @@
 import { Entity, Column } from 'typeorm';
 import { AgeCategoryName } from '../enums/age-category.enum';
-import { AbstractEntity } from 'src/common/abstracts/abstract.entity';
-import { EntityName } from 'src/common/enums/entity.enum';
+import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
+import { EntityName } from '../../../common/enums/entity.enum';
 
 @Entity(EntityName.AGE_CATEGORIES)
 export class AgeCategoryEntity extends AbstractEntity {

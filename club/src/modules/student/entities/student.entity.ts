@@ -8,9 +8,7 @@ import { Gender } from '../../../common/enums/gender.enum';
 import { ClubEntity } from '../../../modules/club/entities/club.entity';
 import { StudentBeltEntity } from './student-belt.entity';
 import { SessionEntity } from '../../../modules/session/entities/session.entity';
-import { AttendanceEntity } from 'src/modules/attendance/entities/attendance.entity';
-import { Expose, Transform } from 'class-transformer';
-import { AgeCategoryEntity } from 'src/modules/age-category/entities/age-category.entity';
+import { AttendanceEntity } from '../../../modules/attendance/entities/attendance.entity';
 
 @Entity(EntityName.Students)
 @Index(['full_name', 'national_code'])

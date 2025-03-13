@@ -1,4 +1,4 @@
-import { Controller, UsePipes } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
 import { ICreateClub, IUpdateClub, ISearchClubQuery } from './interfaces/club.interface';

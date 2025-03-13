@@ -358,10 +358,10 @@ export class StudentService {
   async hasStudentsAssignedToCoach(coachId: number): Promise<boolean> {
     return await this.studentRepository.existsByCoachId(coachId);
   }
-  async checkStudentsInRemovedClubs(removedClubs: ClubEntity[], coachId: number): Promise<void> {
+  async validateRemovedClubsStudents(clubs: ClubEntity[], coachId: number): Promise<void> {
     const clubsWithStudents: string[] = [];
 
-    for (const club of removedClubs) {
+    for (const club of clubs) {
       const hasStudents = await this.studentRepository.existsStudentsInClub(club.id, coachId);
       if (hasStudents) clubsWithStudents.push(`${club.id}`);
     }

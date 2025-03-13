@@ -89,10 +89,12 @@ export class CoachService {
       if (clubIds.length) {
         const ownedClubs = clubIds?.length ? await this.clubService.validateOwnedClubs(clubIds, userId) : coach.clubs;
         const removedClubs = coach.clubs.filter((club) => !clubIds.includes(club.id));
-        if (removedClubs.length) await this.studentService.checkStudentsInRemovedClubs(removedClubs, coachId);
+        if (removedClubs.length) await this.studentService.validateRemovedClubsStudents(removedClubs, coachId);
         this.validateCoachClubGender(coach.gender, ownedClubs);
         updateData.clubs = ownedClubs;
       } else {
+        await this.studentService.validateRemovedClubsStudents(coach.clubs, coachId);
+        this.validateCoachClubGender(coach.gender, coach.clubs);
         updateData.clubs = [];
       }
 

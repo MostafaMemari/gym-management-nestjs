@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, In, Repository } from 'typeorm';
 
-import { EntityName } from 'src/common/enums/entity.enum';
 import { BeltExamEntity } from '../entities/belt-exam.entity';
 import { IBeltExamCreateDto, IBeltExamFilter, IBeltExamUpdateDto } from '../interfaces/belt-exam.interface';
+import { EntityName } from '../../../common/enums/entity.enum';
 
 @Injectable()
 export class BeltExamRepository extends Repository<BeltExamEntity> {

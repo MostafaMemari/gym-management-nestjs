@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, In, Repository } from 'typeorm';
 
 import { BeltEntity } from '../entities/belt.entity';
-import { EntityName } from 'src/common/enums/entity.enum';
+import { EntityName } from '../../../common/enums/entity.enum';
 import { IBeltCreateDto, IBeltFilter, IBeltUpdateDto } from '../interfaces/belt.interface';
 
 @Injectable()

@@ -1,6 +1,6 @@
-import { AbstractEntity } from 'src/common/abstracts/abstract.entity';
-import { EntityName } from 'src/common/enums/entity.enum';
-import { BeltEntity } from 'src/modules/belt/entities/belt.entity';
+import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
+import { EntityName } from '../../../common/enums/entity.enum';
+import { BeltEntity } from '../../../modules/belt/entities/belt.entity';
 import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
 import { StudentEntity } from './student.entity';
 

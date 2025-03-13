@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, In, Repository } from 'typeorm';
 
 import { ClubEntity } from '../entities/club.entity';
-import { EntityName } from 'src/common/enums/entity.enum';
+import { EntityName } from '../../../common/enums/entity.enum';
 import { ICreateClub, ISearchClubQuery, IUpdateClub } from '../interfaces/club.interface';
 
 @Injectable()

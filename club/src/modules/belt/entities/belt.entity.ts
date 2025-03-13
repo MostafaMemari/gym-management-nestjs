@@ -1,7 +1,7 @@
 import { Entity, Column, ManyToMany, JoinTable } from 'typeorm';
 import { BeltName } from '../enums/belt-name.enum';
-import { AbstractEntity } from 'src/common/abstracts/abstract.entity';
-import { EntityName } from 'src/common/enums/entity.enum';
+import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
+import { EntityName } from '../../../common/enums/entity.enum';
 
 @Entity(EntityName.BELTS)
 export class BeltEntity extends AbstractEntity {
