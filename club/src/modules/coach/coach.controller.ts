@@ -12,39 +12,39 @@ import { IUser } from '../../common/interfaces/user.interface';
 export class CoachController {
   constructor(private readonly coachService: CoachService) {}
 
-  @MessagePattern(CoachPatterns.CheckConnection)
+  @MessagePattern(CoachPatterns.CHECK_CONNECTION)
   checkConnection() {
     return true;
   }
 
-  @MessagePattern(CoachPatterns.CreateCoach)
+  @MessagePattern(CoachPatterns.CREATE)
   create(@Payload() data: { user: IUser; createCoachDto: ICoachCreateDto }) {
     const { user, createCoachDto } = data;
 
     return this.coachService.create(user, createCoachDto);
   }
-  @MessagePattern(CoachPatterns.UpdateCoach)
+  @MessagePattern(CoachPatterns.UPDATE)
   update(@Payload() data: { user: IUser; coachId: number; updateCoachDto: ICoachUpdateDto }) {
     const { user, coachId, updateCoachDto } = data;
 
     return this.coachService.update(user, coachId, updateCoachDto);
   }
 
-  @MessagePattern(CoachPatterns.GetCoaches)
+  @MessagePattern(CoachPatterns.GET_ALL)
   findAll(@Payload() data: { user: IUser; queryCoachDto: ICoachFilter; paginationDto: IPagination }) {
     const { user, queryCoachDto, paginationDto } = data;
 
     return this.coachService.getAll(user, { queryCoachDto, paginationDto });
   }
 
-  @MessagePattern(CoachPatterns.GetCoach)
+  @MessagePattern(CoachPatterns.GET_ONE)
   findOne(@Payload() data: { user: IUser; coachId: number }) {
     const { user, coachId } = data;
 
     return this.coachService.findOneById(user, coachId);
   }
 
-  @MessagePattern(CoachPatterns.RemoveUserCoach)
+  @MessagePattern(CoachPatterns.REMOVE)
   remove(@Payload() data: { user: IUser; coachId: number }) {
     const { user, coachId } = data;
 

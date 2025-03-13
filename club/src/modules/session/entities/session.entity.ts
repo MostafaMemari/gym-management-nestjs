@@ -10,6 +10,9 @@ import { AttendanceSessionEntity } from '../../../modules/attendance/entities/at
 
 @Entity(EntityName.Sessions)
 export class SessionEntity extends AbstractEntity {
+  @Column({ type: 'varchar', length: 120 })
+  name: string;
+
   @Column({ type: 'set', enum: DayOfWeek })
   days: DayOfWeek[];
 

@@ -11,43 +11,43 @@ import { IPagination } from '../../common/interfaces/pagination.interface';
 export class ClubController {
   constructor(private readonly clubService: ClubService) {}
 
-  @MessagePattern(ClubPatterns.CheckConnection)
+  @MessagePattern(ClubPatterns.CHECK_CONNECTION)
   checkConnection() {
     return true;
   }
 
-  @MessagePattern(ClubPatterns.CreateClub)
+  @MessagePattern(ClubPatterns.CREATE)
   create(@Payload() data: { user: IUser; createClubDto: ICreateClub }) {
     const { user, createClubDto } = data;
 
     return this.clubService.create(user, createClubDto);
   }
-  @MessagePattern(ClubPatterns.UpdateClub)
+  @MessagePattern(ClubPatterns.UPDATE)
   update(@Payload() data: { user: IUser; clubId: number; updateClubDto: IUpdateClub }) {
     const { user, clubId, updateClubDto } = data;
 
     return this.clubService.update(user, clubId, updateClubDto);
   }
-  @MessagePattern(ClubPatterns.GetClubs)
+  @MessagePattern(ClubPatterns.GET_ALL)
   findAll(@Payload() data: { user: IUser; queryClubDto: ISearchClubQuery; paginationDto: IPagination }) {
     const { user, queryClubDto, paginationDto } = data;
 
     return this.clubService.getAll(user, { queryClubDto, paginationDto });
   }
-  @MessagePattern(ClubPatterns.GetClub)
+  @MessagePattern(ClubPatterns.GET_ONE)
   findOne(@Payload() data: { user: IUser; clubId: number }) {
     const { user, clubId } = data;
 
     return this.clubService.findOneById(user, clubId);
   }
-  @MessagePattern(ClubPatterns.RemoveClub)
+  @MessagePattern(ClubPatterns.REMOVE)
   remove(@Payload() data: { user: IUser; clubId: number }) {
     const { user, clubId } = data;
 
     return this.clubService.findOneById(user, clubId);
   }
 
-  @MessagePattern(ClubPatterns.walletDepleted)
+  @MessagePattern(ClubPatterns.WALLET_DEPLETED)
   updateWalletDepletionStatus(@Payload() data: { userId: number; isWalletDepleted: boolean }) {
     const { userId, isWalletDepleted } = data;
 

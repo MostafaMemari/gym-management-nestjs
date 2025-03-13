@@ -1,10 +1,9 @@
 export enum ClubPatterns {
-  CheckConnection = 'check_connection',
-  CreateClub = 'create_club',
-  UpdateClub = 'update_club',
-  GetClubs = 'get_clubs',
-  GetClub = 'get_club',
-  RemoveClub = 'remove_club',
-  walletDepleted = 'wallet_depleted_club',
-  checkExistClubById = 'check_exist_club_by_id',
+  CHECK_CONNECTION = 'check_connection',
+  CREATE = 'create_club',
+  UPDATE = 'update_club',
+  GET_ALL = 'get_clubs',
+  GET_ONE = 'get_club',
+  REMOVE = 'remove_club',
+  WALLET_DEPLETED = 'wallet_depleted_club',
 }

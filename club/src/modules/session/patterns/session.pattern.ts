@@ -1,10 +1,8 @@
 export enum SessionPatterns {
-  CheckConnection = 'check_connection',
-  CreateSession = 'create_session',
-  UpdateSession = 'update_session',
-  GetSessions = 'get_sessions',
-  GetSession = 'get_session',
-  RemoveSession = 'remove_session',
-  walletDepleted = 'wallet_depleted_session',
-  checkExistSessionById = 'check_exist_session_by_id',
+  CHECK_CONNECTION = 'check_connection',
+  CREATE = 'create_session',
+  UPDATE = 'update_session',
+  GET_ALL = 'get_sessions',
+  GET_ONE = 'get_session',
+  REMOVE = 'remove_session',
 }

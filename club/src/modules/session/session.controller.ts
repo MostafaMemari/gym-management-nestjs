@@ -1,4 +1,4 @@
-import { Controller, UsePipes } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
 import { ICreateSession, IUpdateSession, ISearchSessionQuery } from './interfaces/session.interface';
@@ -11,32 +11,32 @@ import { IPagination } from '../../common/interfaces/pagination.interface';
 export class SessionController {
   constructor(private readonly clubService: SessionService) {}
 
-  @MessagePattern(SessionPatterns.CheckConnection)
+  @MessagePattern(SessionPatterns.CHECK_CONNECTION)
   checkConnection() {
     return true;
   }
 
-  @MessagePattern(SessionPatterns.CreateSession)
+  @MessagePattern(SessionPatterns.CREATE)
   create(@Payload() data: { user: IUser; createSessionDto: ICreateSession }) {
     const { user, createSessionDto } = data;
 
     return this.clubService.create(user, createSessionDto);
   }
-  @MessagePattern(SessionPatterns.UpdateSession)
+  @MessagePattern(SessionPatterns.UPDATE)
   update(@Payload() data: { user: IUser; clubId: number; updateSessionDto: IUpdateSession }) {
     const { user, clubId, updateSessionDto } = data;
 
     return this.clubService.update(user, clubId, updateSessionDto);
   }
 
-  @MessagePattern(SessionPatterns.GetSessions)
+  @MessagePattern(SessionPatterns.GET_ALL)
   findAll(@Payload() data: { user: IUser; querySessionDto: ISearchSessionQuery; paginationDto: IPagination }) {
     const { user, querySessionDto, paginationDto } = data;
 
     return this.clubService.getAll(user, { querySessionDto, paginationDto });
   }
 
-  @MessagePattern(SessionPatterns.GetSession)
+  @MessagePattern(SessionPatterns.GET_ONE)
   findOne(@Payload() data: { user: IUser; clubId: number }) {
     const { user, clubId } = data;
 

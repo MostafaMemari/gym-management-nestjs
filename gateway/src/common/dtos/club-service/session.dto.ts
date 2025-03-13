@@ -7,6 +7,19 @@ import { DayOfWeek } from '../../../common/enums/days-of-week.enum';
 import { ToArray } from '../../../common/decorators/transformers.decorator';
 
 export class CreateSessionDto {
+  @IsNotEmpty()
+  @IsString()
+  @Length(2, 120)
+  @Transform(({ value }) => value?.trim())
+  @ApiProperty({
+    type: String,
+    minLength: 2,
+    maxLength: 120,
+    required: true,
+    example: '',
+  })
+  name: string;
+
   @IsOptional()
   @ApiPropertyOptional({
     example: [DayOfWeek.FRIDAY, DayOfWeek.WEDNESDAY],

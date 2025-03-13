@@ -2,6 +2,7 @@ import { StudentEntity } from '../../../modules/student/entities/student.entity'
 import { DayOfWeek } from '../enums/days-of-week.enum';
 
 export interface ICreateSession {
+  name: string;
   days: DayOfWeek[];
   start_time: string;
   end_time: string;
