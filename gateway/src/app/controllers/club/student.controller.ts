@@ -5,10 +5,8 @@ import {
   Delete,
   Get,
   Inject,
-  InternalServerErrorException,
   Param,
   ParseIntPipe,
-  Patch,
   Post,
   Put,
   Query,
@@ -16,20 +14,21 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { lastValueFrom, timeout } from 'rxjs';
 
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { GetUser } from '../../../common/decorators/get-user.decorator';
 import { BulkCreateStudentsDto, CreateStudentDto, QueryStudentDto, UpdateStudentDto } from '../../../common/dtos/club-service/student.dto';
 import { PaginationDto } from '../../../common/dtos/shared.dto';
-import { User } from '../../../common/interfaces/user.interface';
 import { StudentPatterns } from '../../../common/enums/club.events';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { UploadFile } from '../../../common/interceptors/upload-file.interceptor';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
+import { User } from '../../../common/interfaces/user.interface';
 import { UploadFileValidationPipe } from '../../../common/pipes/upload-file.pipe';
+import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
 
 @Controller('students')
@@ -37,14 +36,6 @@ import { handleError, handleServiceResponse } from '../../../common/utils/handle
 @AuthDecorator()
 export class StudentController {
   constructor(@Inject(Services.CLUB) private readonly clubServiceClient: ClientProxy) {}
-
-  private async checkConnection(): Promise<boolean> {
-    try {
-      return await lastValueFrom(this.clubServiceClient.send(StudentPatterns.CHECK_CONNECTION, {}).pipe(timeout(5000)));
-    } catch (error) {
-      throw new InternalServerErrorException('Student service is not connected');
-    }
-  }
 
   @Post()
   @UseInterceptors(UploadFile('image'))
@@ -56,7 +47,7 @@ export class StudentController {
     image: Express.Multer.File,
   ) {
     try {
-      await this.checkConnection();
+      await checkConnection(Services.CLUB, this.clubServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
         this.clubServiceClient
@@ -84,7 +75,7 @@ export class StudentController {
     image: Express.Multer.File,
   ) {
     try {
-      await this.checkConnection();
+      await checkConnection(Services.CLUB, this.clubServiceClient);
       const data: ServiceResponse = await lastValueFrom(
         this.clubServiceClient
           .send(StudentPatterns.UPDATE, {
@@ -104,7 +95,7 @@ export class StudentController {
   @Get()
   async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto, @Query() queryStudentDto: QueryStudentDto): Promise<any> {
     try {
-      await this.checkConnection();
+      await checkConnection(Services.CLUB, this.clubServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
         this.clubServiceClient.send(StudentPatterns.GET_ALL, { user, queryStudentDto, paginationDto }).pipe(timeout(5000)),
@@ -116,7 +107,7 @@ export class StudentController {
   @Get('summary')
   async findAllSummary(@GetUser() user: User, @Query() paginationDto: PaginationDto, @Query() queryStudentDto: QueryStudentDto): Promise<any> {
     try {
-      await this.checkConnection();
+      await checkConnection(Services.CLUB, this.clubServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
         this.clubServiceClient.send(StudentPatterns.GET_ALL_SUMMARY, { user, queryStudentDto, paginationDto }).pipe(timeout(5000)),
@@ -129,7 +120,7 @@ export class StudentController {
   @Get(':id')
   async findOne(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
-      await this.checkConnection();
+      await checkConnection(Services.CLUB, this.clubServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
         this.clubServiceClient.send(StudentPatterns.GET_ONE, { user, studentId: id }).pipe(timeout(5000)),
@@ -144,7 +135,7 @@ export class StudentController {
   @Delete(':id')
   async remove(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
-      await this.checkConnection();
+      await checkConnection(Services.CLUB, this.clubServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
         this.clubServiceClient.send(StudentPatterns.REMOVE, { user, studentId: id }).pipe(timeout(5000)),
@@ -167,7 +158,7 @@ export class StudentController {
   ) {
     try {
       if (!studentsFile) throw new BadRequestException('student file required');
-      await this.checkConnection();
+      await checkConnection(Services.CLUB, this.clubServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
         this.clubServiceClient

@@ -1,45 +1,35 @@
-import { Body, Controller, Delete, Get, Inject, InternalServerErrorException, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Post } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { lastValueFrom, timeout } from 'rxjs';
 
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
-import { PaginationDto } from '../../../common/dtos/shared.dto';
+import { GetUser } from '../../../common/decorators/get-user.decorator';
+import { Roles } from '../../../common/decorators/role.decorator';
+import { RecordAttendanceDto } from '../../../common/dtos/club-service/attendance.dto';
+import { AttendancePatterns } from '../../../common/enums/club.events';
+import { Role } from '../../../common/enums/role.enum';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
-import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
-import { Roles } from '../../../common/decorators/role.decorator';
-import { Role } from '../../../common/enums/role.enum';
-import { AttendancePatterns } from '../../../common/enums/club.events';
-import { GetUser } from '../../../common/decorators/get-user.decorator';
 import { User } from '../../../common/interfaces/user.interface';
-import { RecordAttendanceDto } from '../../../common/dtos/club-service/attendance.dto';
+import { checkConnection } from '../../../common/utils/checkConnection.utils';
+import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
 
 @Controller('attendances')
 @ApiTags('Attendances')
 @AuthDecorator()
 export class AttendanceController {
-  constructor(@Inject(Services.CLUB) private readonly attendanceServiceClient: ClientProxy) {}
+  constructor(@Inject(Services.CLUB) private readonly clubServiceClient: ClientProxy) {}
 
-  private async checkConnection(): Promise<boolean> {
-    try {
-      return await lastValueFrom(this.attendanceServiceClient.send(AttendancePatterns.CheckConnection, {}).pipe(timeout(5000)));
-    } catch (error) {
-      throw new InternalServerErrorException('Attendance service is not connected');
-    }
-  }
-
-  @Post('record')
+  @Post()
   @Roles(Role.ADMIN_CLUB)
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
   async create(@GetUser() user: User, @Body() createAttendanceDto: RecordAttendanceDto) {
     try {
-      await this.checkConnection();
+      await checkConnection(Services.CLUB, this.clubServiceClient);
       const data: ServiceResponse = await lastValueFrom(
-        this.attendanceServiceClient
-          .send(AttendancePatterns.CreateAttendance, { user, createAttendanceDto: { ...createAttendanceDto } })
-          .pipe(timeout(10000)),
+        this.clubServiceClient.send(AttendancePatterns.CREATE, { user, createAttendanceDto: { ...createAttendanceDto } }).pipe(timeout(10000)),
       );
       return handleServiceResponse(data);
     } catch (error) {
@@ -52,9 +42,9 @@ export class AttendanceController {
   // @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
   // async update(@GetUser() user: User, @Param('id', ParseIntPipe) id: number, @Body() updateAttendanceDto: UpdateAttendanceDto) {
   //   try {
-  //     await this.checkConnection();
+  //     await checkConnection(Services.CLUB, this.clubServiceClient);
   //     const data: ServiceResponse = await lastValueFrom(
-  //       this.attendanceServiceClient
+  //       this.clubServiceClient
   //         .send(AttendancePatterns.UpdateAttendance, { user, attendanceId: id, updateAttendanceDto: { ...updateAttendanceDto } })
   //         .pipe(timeout(5000)),
   //     );
@@ -69,10 +59,10 @@ export class AttendanceController {
   // @Roles(Role.ADMIN_CLUB)
   // async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto, @Query() queryAttendanceDto: QueryAttendanceDto): Promise<any> {
   //   try {
-  //     await this.checkConnection();
+  //     await checkConnection(Services.CLUB, this.clubServiceClient);
 
   //     const data: ServiceResponse = await lastValueFrom(
-  //       this.attendanceServiceClient.send(AttendancePatterns.GetAttendances, { user, queryAttendanceDto, paginationDto }).pipe(timeout(5000)),
+  //       this.clubServiceClient.send(AttendancePatterns.GetAttendances, { user, queryAttendanceDto, paginationDto }).pipe(timeout(5000)),
   //     );
   //     return handleServiceResponse(data);
   //   } catch (error) {}
@@ -82,10 +72,10 @@ export class AttendanceController {
   @Roles(Role.ADMIN_CLUB)
   async findOne(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
-      await this.checkConnection();
+      await checkConnection(Services.CLUB, this.clubServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.attendanceServiceClient.send(AttendancePatterns.GetAttendance, { user, attendanceId: id }).pipe(timeout(5000)),
+        this.clubServiceClient.send(AttendancePatterns.GET_ONE, { user, attendanceId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -98,10 +88,10 @@ export class AttendanceController {
   @Roles(Role.ADMIN_CLUB)
   async remove(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
-      await this.checkConnection();
+      await checkConnection(Services.CLUB, this.clubServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.attendanceServiceClient.send(AttendancePatterns.RemoveAttendance, { user, attendanceId: id }).pipe(timeout(5000)),
+        this.clubServiceClient.send(AttendancePatterns.REMOVE, { user, attendanceId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);

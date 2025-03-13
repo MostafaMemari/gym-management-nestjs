@@ -1,41 +1,34 @@
-import { Body, Controller, Delete, Get, Inject, InternalServerErrorException, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { lastValueFrom, timeout } from 'rxjs';
 
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
+import { Roles } from '../../../common/decorators/role.decorator';
+import { CreateBeltDto, QueryBeltDto, UpdateBeltDto } from '../../../common/dtos/club-service/belt.dto';
 import { PaginationDto } from '../../../common/dtos/shared.dto';
+import { BeltPatterns } from '../../../common/enums/club.events';
+import { Role } from '../../../common/enums/role.enum';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
+import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
-import { Roles } from '../../../common/decorators/role.decorator';
-import { Role } from '../../../common/enums/role.enum';
-import { BeltPatterns } from '../../../common/enums/club.events';
-import { CreateBeltDto, QueryBeltDto, UpdateBeltDto } from '../../../common/dtos/club-service/belt.dto';
 
 @Controller('belts')
 @ApiTags('Belts')
 @AuthDecorator()
 export class BeltController {
-  constructor(@Inject(Services.CLUB) private readonly beltServiceClient: ClientProxy) {}
-
-  private async checkConnection(): Promise<boolean> {
-    try {
-      return await lastValueFrom(this.beltServiceClient.send(BeltPatterns.CheckConnection, {}).pipe(timeout(5000)));
-    } catch (error) {
-      throw new InternalServerErrorException('Belt service is not connected');
-    }
-  }
+  constructor(@Inject(Services.CLUB) private readonly clubServiceClient: ClientProxy) {}
 
   @Post()
   @Roles(Role.SUPER_ADMIN)
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
   async create(@Body() createBeltDto: CreateBeltDto) {
     try {
-      await this.checkConnection();
+      await checkConnection(Services.CLUB, this.clubServiceClient);
       const data: ServiceResponse = await lastValueFrom(
-        this.beltServiceClient.send(BeltPatterns.CreateBelt, { createBeltDto: { ...createBeltDto } }).pipe(timeout(10000)),
+        this.clubServiceClient.send(BeltPatterns.CREATE, { createBeltDto: { ...createBeltDto } }).pipe(timeout(10000)),
       );
       return handleServiceResponse(data);
     } catch (error) {
@@ -48,9 +41,9 @@ export class BeltController {
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
   async update(@Param('id', ParseIntPipe) id: number, @Body() updateBeltDto: UpdateBeltDto) {
     try {
-      await this.checkConnection();
+      await checkConnection(Services.CLUB, this.clubServiceClient);
       const data: ServiceResponse = await lastValueFrom(
-        this.beltServiceClient.send(BeltPatterns.UpdateBelt, { beltId: id, updateBeltDto: { ...updateBeltDto } }).pipe(timeout(5000)),
+        this.clubServiceClient.send(BeltPatterns.UPDATE, { beltId: id, updateBeltDto: { ...updateBeltDto } }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -63,10 +56,10 @@ export class BeltController {
   @Roles(Role.SUPER_ADMIN)
   async findAll(@Query() paginationDto: PaginationDto, @Query() queryBeltDto: QueryBeltDto): Promise<any> {
     try {
-      await this.checkConnection();
+      await checkConnection(Services.CLUB, this.clubServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.beltServiceClient.send(BeltPatterns.GetBelts, { queryBeltDto, paginationDto }).pipe(timeout(5000)),
+        this.clubServiceClient.send(BeltPatterns.GET_ALL, { queryBeltDto, paginationDto }).pipe(timeout(5000)),
       );
       return handleServiceResponse(data);
     } catch (error) {}
@@ -76,9 +69,9 @@ export class BeltController {
   @Roles(Role.SUPER_ADMIN)
   async findOne(@Param('id', ParseIntPipe) id: number) {
     try {
-      await this.checkConnection();
+      await checkConnection(Services.CLUB, this.clubServiceClient);
 
-      const data: ServiceResponse = await lastValueFrom(this.beltServiceClient.send(BeltPatterns.GetBelt, { beltId: id }).pipe(timeout(5000)));
+      const data: ServiceResponse = await lastValueFrom(this.clubServiceClient.send(BeltPatterns.GET_ONE, { beltId: id }).pipe(timeout(5000)));
 
       return handleServiceResponse(data);
     } catch (error) {
@@ -90,9 +83,9 @@ export class BeltController {
   @Roles(Role.SUPER_ADMIN)
   async remove(@Param('id', ParseIntPipe) id: number) {
     try {
-      await this.checkConnection();
+      await checkConnection(Services.CLUB, this.clubServiceClient);
 
-      const data: ServiceResponse = await lastValueFrom(this.beltServiceClient.send(BeltPatterns.RemoveBelt, { beltId: id }).pipe(timeout(5000)));
+      const data: ServiceResponse = await lastValueFrom(this.clubServiceClient.send(BeltPatterns.REMOVE, { beltId: id }).pipe(timeout(5000)));
 
       return handleServiceResponse(data);
     } catch (error) {

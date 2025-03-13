@@ -21,13 +21,14 @@ import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { GetUser } from '../../../common/decorators/get-user.decorator';
 import { CreateCoachDto, QueryCoachDto, UpdateCoachDto } from '../../../common/dtos/club-service/coach.dto';
 import { PaginationDto } from '../../../common/dtos/shared.dto';
-import { User } from '../../../common/interfaces/user.interface';
 import { CoachPatterns } from '../../../common/enums/club.events';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { UploadFile } from '../../../common/interceptors/upload-file.interceptor';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
+import { User } from '../../../common/interfaces/user.interface';
 import { UploadFileValidationPipe } from '../../../common/pipes/upload-file.pipe';
+import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
 
 @Controller('coaches')
@@ -35,14 +36,6 @@ import { handleError, handleServiceResponse } from '../../../common/utils/handle
 @AuthDecorator()
 export class CoachController {
   constructor(@Inject(Services.CLUB) private readonly clubServiceClient: ClientProxy) {}
-
-  private async checkConnection(): Promise<boolean> {
-    try {
-      return await lastValueFrom(this.clubServiceClient.send(CoachPatterns.CheckConnection, {}).pipe(timeout(5000)));
-    } catch (error) {
-      throw new InternalServerErrorException('Coach service is not connected');
-    }
-  }
 
   @Post()
   @UseInterceptors(UploadFile('image'))
@@ -54,11 +47,11 @@ export class CoachController {
     image: Express.Multer.File,
   ) {
     try {
-      await this.checkConnection();
+      await checkConnection(Services.CLUB, this.clubServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
         this.clubServiceClient
-          .send(CoachPatterns.CreateCoach, {
+          .send(CoachPatterns.CREATE, {
             user,
             createCoachDto: { ...createCoachDto, image },
           })
@@ -82,10 +75,10 @@ export class CoachController {
     image: Express.Multer.File,
   ) {
     try {
-      await this.checkConnection();
+      await checkConnection(Services.CLUB, this.clubServiceClient);
       const data: ServiceResponse = await lastValueFrom(
         this.clubServiceClient
-          .send(CoachPatterns.UpdateCoach, {
+          .send(CoachPatterns.UPDATE, {
             user,
             coachId: id,
             updateCoachDto: { ...updateCoachDto, image },
@@ -102,10 +95,10 @@ export class CoachController {
   @Get()
   async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto, @Query() queryCoachDto: QueryCoachDto): Promise<any> {
     try {
-      await this.checkConnection();
+      await checkConnection(Services.CLUB, this.clubServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(CoachPatterns.GetCoaches, { user, queryCoachDto, paginationDto }).pipe(timeout(5000)),
+        this.clubServiceClient.send(CoachPatterns.GET_ALL, { user, queryCoachDto, paginationDto }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -115,10 +108,10 @@ export class CoachController {
   @Get(':id')
   async findOne(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
-      await this.checkConnection();
+      await checkConnection(Services.CLUB, this.clubServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(CoachPatterns.GetCoach, { user, coachId: id }).pipe(timeout(5000)),
+        this.clubServiceClient.send(CoachPatterns.GET_ONE, { user, coachId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -130,11 +123,9 @@ export class CoachController {
   @Delete(':id')
   async remove(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
-      await this.checkConnection();
+      await checkConnection(Services.CLUB, this.clubServiceClient);
 
-      const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient.send(CoachPatterns.RemoveUserCoach, { user, coachId: id }).pipe(timeout(5000)),
-      );
+      const data: ServiceResponse = await lastValueFrom(this.clubServiceClient.send(CoachPatterns.REMOVE, { user, coachId: id }).pipe(timeout(5000)));
 
       return handleServiceResponse(data);
     } catch (error) {

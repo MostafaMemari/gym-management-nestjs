@@ -1,4 +1,4 @@
-import { Controller, UsePipes } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
 import { AttendancePatterns } from './patterns/attendance.pattern';
@@ -11,17 +11,17 @@ import { IRecordAttendance, ISearchAttendanceQuery } from './interfaces/attendan
 export class AttendanceController {
   constructor(private readonly clubService: AttendanceService) {}
 
-  @MessagePattern(AttendancePatterns.CheckConnection)
+  @MessagePattern(AttendancePatterns.CHECK_CONNECTION)
   checkConnection() {
     return true;
   }
 
-  // @MessagePattern(AttendancePatterns.CreateAttendance)
-  // create(@Payload() data: { user: IUser; createAttendanceDto: IRecordAttendance }) {
-  //   const { user, createAttendanceDto } = data;
+  @MessagePattern(AttendancePatterns.CREATE)
+  create(@Payload() data: { user: IUser; createAttendanceDto: IRecordAttendance }) {
+    const { user, createAttendanceDto } = data;
 
-  //   return this.clubService.create(user, createAttendanceDto);
-  // }
+    return this.clubService.create(user, createAttendanceDto);
+  }
   // @MessagePattern(AttendancePatterns.UpdateAttendance)
   // update(@Payload() data: { user: IUser; clubId: number; updateAttendanceDto: IUpdateAttendance }) {
   //   const { user, clubId, updateAttendanceDto } = data;

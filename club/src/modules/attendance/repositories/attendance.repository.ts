@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, In, QueryRunner, Repository } from 'typeorm';
 
 import { AttendanceEntity } from '../entities/attendance.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
-import { ISearchAttendanceQuery } from '../interfaces/attendance.interface';
+import { ISearchAttendanceQuery, IStudentAttendance } from '../interfaces/attendance.interface';
+import { AttendanceSessionEntity } from '../entities/attendance-sessions.entity';
 
 @Injectable()
 export class AttendanceRepository extends Repository<AttendanceEntity> {
@@ -11,15 +12,30 @@ export class AttendanceRepository extends Repository<AttendanceEntity> {
     super(AttendanceEntity, dataSource.createEntityManager());
   }
 
-  // async createAndSaveAttendance(createAttendanceDto: IRecordAttendance): Promise<AttendanceEntity> {
-  //   const attendance = this.create({ ...createAttendanceDto });
-  //   return await this.save(attendance);
-  // }
+  async createAttendanceEntities(
+    attendances: IStudentAttendance[],
+    validStudentIds: number[],
+    attendanceSession: AttendanceSessionEntity,
+    queryRunner?: QueryRunner,
+  ): Promise<AttendanceEntity[]> {
+    const attendanceEntities: AttendanceEntity[] = attendances
+      .filter((att) => validStudentIds.includes(Number(att.studentId)))
+      .map((att) => {
+        const attendance = new AttendanceEntity();
+        attendance.studentId = att.studentId;
+        attendance.attendanceSession = attendanceSession;
+        attendance.status = att.status;
+        attendance.note = att.note;
+        attendance.attendance_date_time = new Date();
+        return attendance;
+      });
 
-  // async updateAttendance(attendance: AttendanceEntity, updateAttendanceDto: IUpdateAttendance): Promise<AttendanceEntity> {
-  //   const updatedAttendance = this.merge(attendance, { ...updateAttendanceDto });
-  //   return await this.save(updatedAttendance);
-  // }
+    if (queryRunner) {
+      return await queryRunner.manager.save(AttendanceEntity, attendanceEntities);
+    }
+
+    return await this.save(attendanceEntities);
+  }
 
   async getAttendancesWithFilters(
     userId: number,
@@ -41,10 +57,6 @@ export class AttendanceRepository extends Repository<AttendanceEntity> {
       .skip((page - 1) * take)
       .take(take)
       .getManyAndCount();
-  }
-
-  async findByIdAndOwner(attendanceId: number): Promise<AttendanceEntity | null> {
-    return this.findOne({ where: { id: attendanceId } });
   }
 
   async findOwnedAttendancesByIds(attendanceIds: number[]): Promise<AttendanceEntity[]> {

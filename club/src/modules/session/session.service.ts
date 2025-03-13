@@ -120,6 +120,12 @@ export class SessionService {
     return session;
   }
 
+  async checkSessionOwnershipRelationStudents(sessionId: number, userId: number): Promise<SessionEntity> {
+    const session = await this.sessionRepository.findByIdAndOwnerRelationStudents(sessionId, userId);
+    if (!session) throw new NotFoundException(SessionMessages.NOT_FOUND);
+    return session;
+  }
+
   async validateOwnedSessions(sessionIds: number[], userId: number): Promise<SessionEntity[]> {
     const ownedSessions = await this.sessionRepository.findOwnedSessionsByIds(sessionIds);
 

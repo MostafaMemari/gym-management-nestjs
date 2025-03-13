@@ -54,7 +54,16 @@ export class SessionRepository extends Repository<SessionEntity> {
       .innerJoin('sessions.club', 'club', 'club.ownerId = :userId', {
         userId,
       })
-
+      .getOne();
+  }
+  async findByIdAndOwnerRelationStudents(sessionId: number, userId: number): Promise<SessionEntity | null> {
+    return this.createQueryBuilder(EntityName.Sessions)
+      .where('sessions.id = :sessionId', { sessionId })
+      .innerJoin('sessions.club', 'club', 'club.ownerId = :userId', {
+        userId,
+      })
+      .leftJoin('sessions.students', 'students')
+      .addSelect(['students.id', 'students.full_name'])
       .getOne();
   }
 
