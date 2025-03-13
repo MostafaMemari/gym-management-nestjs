@@ -4,7 +4,7 @@ import { lastValueFrom, timeout } from 'rxjs';
 import { DataSource } from 'typeorm';
 
 import { StudentEntity } from './entities/student.entity';
-import { CacheKeys } from './enums/cache.enum';
+import { CacheKeys, CacheTTLSeconds } from './enums/cache.enum';
 import { StudentMessages } from './enums/student.message';
 import { IStudentBulkCreateDto, IStudentCreateDto, IStudentFilter, IStudentUpdateDto } from './interfaces/student.interface';
 import { StudentBeltRepository } from './repositories/student-belt.repository';
@@ -34,7 +34,6 @@ import { ResponseUtil } from '../../common/utils/response';
 @Injectable()
 export class StudentService {
   private readonly timeout: number = 4500;
-  private readonly cacheTTLSeconds: number = 1;
 
   constructor(
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
@@ -144,7 +143,7 @@ export class StudentService {
       const pageMetaDto = new PageMetaDto(count, query.paginationDto);
       const result = new PageDto(students, pageMetaDto);
 
-      await this.cacheService.set(cacheKey, result, this.cacheTTLSeconds);
+      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.STUDENTS);
 
       return ResponseUtil.success(result.data, StudentMessages.GET_ALL_SUCCESS);
     } catch (error) {

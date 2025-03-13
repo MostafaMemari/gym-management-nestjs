@@ -4,3 +4,6 @@ export enum CacheKeys {
 export enum CachePatterns {
   STUDENTS = 'students_list*',
 }
+export enum CacheTTLSeconds {
+  STUDENTS = 3600,
+}

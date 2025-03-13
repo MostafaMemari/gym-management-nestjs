@@ -15,6 +15,6 @@ export type IBeltUpdateDto = Partial<IBeltCreateDto>;
 
 export interface IBeltFilter {
   search?: string;
-  sort_by?: 'level';
+  sort_by?: 'level' | 'created_at' | 'updated_at';
   sort_order?: 'asc' | 'desc';
 }

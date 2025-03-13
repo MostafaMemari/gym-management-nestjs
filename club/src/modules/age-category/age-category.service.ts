@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { AgeCategoryEntity } from './entities/age-category.entity';
 import { AgeCategoryMessages } from './enums/age-category.message';
-import { CacheKeys } from './enums/cache.enum';
+import { CacheKeys, CacheTTLSeconds } from './enums/cache.enum';
 import { IAgeCategoryCreateDto, IAgeCategoryFilter, IAgeCategoryUpdateDto } from './interfaces/age-category.interface';
 import { AgeCategoryRepository } from './repositories/age-category.repository';
 
@@ -15,8 +15,6 @@ import { CacheService } from '../cache/cache.service';
 @Injectable()
 export class AgeCategoryService {
   constructor(private readonly cacheService: CacheService, private readonly ageCategoryRepository: AgeCategoryRepository) {}
-
-  private readonly cacheTTLSeconds = 3600;
 
   async create(createAgeCategoryDto: IAgeCategoryCreateDto): Promise<ServiceResponse> {
     try {
@@ -54,7 +52,7 @@ export class AgeCategoryService {
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(ageCategories, pageMetaDto);
 
-      await this.cacheService.set(cacheKey, result, this.cacheTTLSeconds);
+      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.AGE_CATEGORIES);
 
       return ResponseUtil.success(result.data, AgeCategoryMessages.GET_ALL_SUCCESS);
     } catch (error) {

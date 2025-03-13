@@ -6,7 +6,7 @@ import { CoachEntity } from './entities/coach.entity';
 import { CoachMessages } from './enums/coach.message';
 import { ICoachCreateDto, ICoachFilter, ICoachUpdateDto } from './interfaces/coach.interface';
 import { CoachRepository } from './repositories/coach.repository';
-import { CacheKeys } from './enums/cache.enum';
+import { CacheKeys, CacheTTLSeconds } from './enums/cache.enum';
 
 import { CacheService } from '../cache/cache.service';
 import { ClubService } from '../club/club.service';
@@ -128,7 +128,7 @@ export class CoachService {
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(coaches, pageMetaDto);
 
-      await this.cacheService.set(cacheKey, result, 60);
+      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.COACHES);
 
       return ResponseUtil.success(result.data, CoachMessages.GET_ALL_SUCCESS);
     } catch (error) {

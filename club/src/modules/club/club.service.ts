@@ -5,7 +5,7 @@ import { ClubEntity } from './entities/club.entity';
 import { ClubMessages } from './enums/club.message';
 import { ICreateClub, ISearchClubQuery, IUpdateClub } from './interfaces/club.interface';
 import { ClubRepository } from './repositories/club.repository';
-import { CacheKeys } from './enums/cache.enum';
+import { CacheKeys, CacheTTLSeconds } from './enums/cache.enum';
 
 import { CacheService } from '../cache/cache.service';
 import { CoachService } from '../coach/coach.service';
@@ -20,8 +20,6 @@ import { ResponseUtil } from '../../common/utils/response';
 
 @Injectable()
 export class ClubService {
-  private readonly timeout: number = 4500;
-
   constructor(
     private readonly clubRepository: ClubRepository,
     private readonly cacheService: CacheService,
@@ -67,7 +65,7 @@ export class ClubService {
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(clubs, pageMetaDto);
 
-      await this.cacheService.set(cacheKey, result, 600);
+      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.CLUBS);
 
       return ResponseUtil.success(result.data, ClubMessages.GET_ALL_SUCCESS);
     } catch (error) {

@@ -22,7 +22,7 @@ export class BeltExamService {
     private readonly beltService: BeltService,
   ) {}
 
-  private readonly cacheTTLSeconds = 1;
+  private readonly cacheTTLSeconds: number = 3600;
 
   async create(createBeltExamDto: IBeltExamCreateDto) {
     try {
