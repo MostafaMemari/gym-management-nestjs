@@ -145,7 +145,6 @@ export class ClubService {
 
     return ownedClubs;
   }
-
   async validateCoachInClub(club: ClubEntity, coachId: number): Promise<void> {
     const coach = club.coaches.find((coach) => coach.id === coachId);
     if (!coach) throw new BadRequestException(ClubMessages.COACH_NOT_ASSIGNED);

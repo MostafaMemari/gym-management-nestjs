@@ -28,16 +28,20 @@ export class ClubController {
 
     return this.clubService.update(user, clubId, updateClubDto);
   }
-
   @MessagePattern(ClubPatterns.GetClubs)
   findAll(@Payload() data: { user: IUser; queryClubDto: ISearchClubQuery; paginationDto: IPagination }) {
     const { user, queryClubDto, paginationDto } = data;
 
     return this.clubService.getAll(user, { queryClubDto, paginationDto });
   }
-
   @MessagePattern(ClubPatterns.GetClub)
   findOne(@Payload() data: { user: IUser; clubId: number }) {
+    const { user, clubId } = data;
+
+    return this.clubService.findOneById(user, clubId);
+  }
+  @MessagePattern(ClubPatterns.RemoveClub)
+  remove(@Payload() data: { user: IUser; clubId: number }) {
     const { user, clubId } = data;
 
     return this.clubService.findOneById(user, clubId);

@@ -6,11 +6,12 @@ import { CacheKeys, CacheTTLSeconds } from './enums/cache.enum';
 import { IAgeCategoryCreateDto, IAgeCategoryFilter, IAgeCategoryUpdateDto } from './interfaces/age-category.interface';
 import { AgeCategoryRepository } from './repositories/age-category.repository';
 
+import { CacheService } from '../cache/cache.service';
+
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from '../../common/utils/response';
-import { CacheService } from '../cache/cache.service';
 
 @Injectable()
 export class AgeCategoryService {
@@ -25,7 +26,6 @@ export class AgeCategoryService {
       ResponseUtil.error(error?.message || AgeCategoryMessages.CREATE_FAILURE, error?.status);
     }
   }
-
   async update(ageCategoryId: number, updateAgeCategoryDto: IAgeCategoryUpdateDto): Promise<ServiceResponse> {
     try {
       const ageCategory = await this.validateAgeCategoryId(ageCategoryId);
@@ -37,7 +37,6 @@ export class AgeCategoryService {
       ResponseUtil.error(error?.message || AgeCategoryMessages.UPDATE_FAILURE, error?.status);
     }
   }
-
   async getAll(query: { queryAgeCategoryDto: IAgeCategoryFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
     const { take, page } = query.paginationDto;
 

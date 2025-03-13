@@ -24,7 +24,7 @@ export class BeltExamService {
 
   private readonly cacheTTLSeconds: number = 3600;
 
-  async create(createBeltExamDto: IBeltExamCreateDto) {
+  async create(createBeltExamDto: IBeltExamCreateDto): Promise<ServiceResponse> {
     try {
       const { beltIds } = createBeltExamDto;
       if (beltIds) {
@@ -36,10 +36,10 @@ export class BeltExamService {
 
       return ResponseUtil.success(beltExam, BeltExamMessages.CREATE_SUCCESS);
     } catch (error) {
-      return ResponseUtil.error(error?.message || BeltExamMessages.CREATE_FAILURE, error?.status);
+      ResponseUtil.error(error?.message || BeltExamMessages.CREATE_FAILURE, error?.status);
     }
   }
-  async update(beltExamId: number, updateBeltExamDto: IBeltExamUpdateDto) {
+  async update(beltExamId: number, updateBeltExamDto: IBeltExamUpdateDto): Promise<ServiceResponse> {
     try {
       const { beltIds } = updateBeltExamDto;
 

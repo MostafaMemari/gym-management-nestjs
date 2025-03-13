@@ -28,21 +28,18 @@ export class BeltController {
 
     return this.beltService.update(beltId, updateBeltDto);
   }
-
   @MessagePattern(BeltPatterns.GET_ALL)
   findAll(@Payload() data: { queryBeltDto: IBeltFilter; paginationDto: IPagination }) {
     const { queryBeltDto, paginationDto } = data;
 
     return this.beltService.getAll({ queryBeltDto, paginationDto });
   }
-
   @MessagePattern(BeltPatterns.GET_ONE)
   findOne(@Payload() data: { beltId: number }) {
     const { beltId } = data;
 
     return this.beltService.findOneById(beltId);
   }
-
   @MessagePattern(BeltPatterns.REMOVE)
   remove(@Payload() data: { beltId: number }) {
     const { beltId } = data;

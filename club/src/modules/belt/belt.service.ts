@@ -4,7 +4,7 @@ import { BeltEntity } from './entities/belt.entity';
 import { BeltMessages } from './enums/belt.message';
 import { IBeltCreateDto, IBeltFilter, IBeltUpdateDto } from './interfaces/belt.interface';
 import { BeltRepository } from './repositories/belt.repository';
-import { CacheKeys } from './enums/cache.enum';
+import { CacheKeys, CacheTTLSeconds } from './enums/cache.enum';
 
 import { CacheService } from '../cache/cache.service';
 
@@ -16,8 +16,6 @@ import { ResponseUtil } from '../../common/utils/response';
 @Injectable()
 export class BeltService {
   constructor(private readonly beltRepository: BeltRepository, private readonly cacheService: CacheService) {}
-
-  private readonly cacheTTLSeconds: number = 3600;
 
   async create(createBeltDto: IBeltCreateDto): Promise<ServiceResponse> {
     try {
@@ -65,7 +63,7 @@ export class BeltService {
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(belts, pageMetaDto);
 
-      await this.cacheService.set(cacheKey, result, this.cacheTTLSeconds);
+      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.BELTS);
 
       return ResponseUtil.success(result.data, BeltMessages.GET_ALL_SUCCESS);
     } catch (error) {
