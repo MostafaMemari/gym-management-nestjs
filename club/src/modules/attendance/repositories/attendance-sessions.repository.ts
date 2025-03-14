@@ -78,6 +78,17 @@ export class AttendanceSessionRepository extends Repository<AttendanceSessionEnt
       .andWhere('club.ownerId = :userId', { userId })
       .getOne();
   }
+  async findByIdAndOwnerRelationAttendanceStudents(attendanceId: number, userId: number): Promise<AttendanceSessionEntity | null> {
+    return this.createQueryBuilder(EntityName.AttendanceSessions)
+      .leftJoinAndSelect('attendance_sessions.attendances', 'attendances')
+      .leftJoin('attendances.student', 'student')
+      .addSelect(['student.id', 'student.full_name'])
+      .leftJoin('attendance_sessions.session', 'session')
+      .leftJoin('session.club', 'club')
+      .where('attendance_sessions.id = :attendanceId', { attendanceId })
+      .andWhere('club.ownerId = :userId', { userId })
+      .getOne();
+  }
 
   async findOwnedAttendancesByIds(attendanceIds: number[]): Promise<AttendanceSessionEntity[]> {
     return this.find({

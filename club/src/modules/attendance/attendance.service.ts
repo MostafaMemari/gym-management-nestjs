@@ -217,7 +217,9 @@ export class AttendanceService {
 
   async findOneById(user: IUser, attendanceId: number) {
     try {
-      const attendance = await this.checkAttendanceOwnership(attendanceId, user.id);
+      const attendance = await this.checkSessionOwnershipRelationAttendanceStudents(attendanceId, user.id);
+
+      console.log(attendance);
 
       return ResponseUtil.success(attendance, AttendanceMessages.GET_SUCCESS);
     } catch (error) {
@@ -246,6 +248,11 @@ export class AttendanceService {
 
   async checkSessionOwnershipRelationAttendance(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
     const attendance = await this.attendanceSessionRepository.findByIdAndOwnerRelationAttendance(attendanceId, userId);
+    if (!attendance) throw new NotFoundException(AttendanceMessages.NOT_FOUND);
+    return attendance;
+  }
+  async checkSessionOwnershipRelationAttendanceStudents(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
+    const attendance = await this.attendanceSessionRepository.findByIdAndOwnerRelationAttendanceStudents(attendanceId, userId);
     if (!attendance) throw new NotFoundException(AttendanceMessages.NOT_FOUND);
     return attendance;
   }
