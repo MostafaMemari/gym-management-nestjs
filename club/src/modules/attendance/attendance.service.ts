@@ -35,7 +35,7 @@ export class AttendanceService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      const session = await this.sessionService.checkSessionOwnershipRelationStudents(sessionId, user.id);
+      const session = await this.sessionService.validateOwnershipRelationStudents(sessionId, user.id);
       this.checkDateIsNotInTheFuture(date);
       this.validateAllowedDays(session.days, date);
       await this.checkDuplicateAttendanceSession(sessionId, date);
@@ -78,8 +78,8 @@ export class AttendanceService {
     let attendanceEntities = null;
 
     try {
-      const attendanceSession = await this.validateOwnership(attendanceId, user.id);
-      const session = await this.sessionService.checkSessionOwnershipRelationStudents(sessionId || attendanceSession.sessionId, user.id);
+      const attendanceSession = await this.validateOwnershipById(attendanceId, user.id);
+      const session = await this.sessionService.validateOwnershipRelationStudents(sessionId || attendanceSession.sessionId, user.id);
 
       if (date) {
         this.validateAllowedDays(session.days, date);
@@ -214,10 +214,9 @@ export class AttendanceService {
       ResponseUtil.error(error?.message || AttendanceMessages.GET_ALL_FAILURE, error?.status);
     }
   }
-
   async findOneById(user: IUser, attendanceId: number) {
     try {
-      const attendance = await this.validateOwnershipWithStudents(attendanceId, user.id);
+      const attendance = await this.validateOwnershipByIdWithStudents(attendanceId, user.id);
 
       return ResponseUtil.success(attendance, AttendanceMessages.GET_SUCCESS);
     } catch (error) {
@@ -226,7 +225,7 @@ export class AttendanceService {
   }
   async remove(user: IUser, attendanceId: number) {
     try {
-      const attendance = await this.validateOwnership(attendanceId, user.id);
+      const attendance = await this.validateOwnershipById(attendanceId, user.id);
 
       const removedClub = await this.attendanceSessionRepository.delete({ id: attendanceId });
 
@@ -238,17 +237,17 @@ export class AttendanceService {
     }
   }
 
-  async validateOwnership(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
+  async validateOwnershipById(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
     const attendance = await this.attendanceSessionRepository.findOwnedById(attendanceId, userId);
     if (!attendance) throw new NotFoundException(AttendanceMessages.NOT_FOUND);
     return attendance;
   }
-  async validateOwnershipWithAttendances(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
+  async validateOwnershipByIdWithAttendances(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
     const attendance = await this.attendanceSessionRepository.findOwnedWithAttendances(attendanceId, userId);
     if (!attendance) throw new NotFoundException(AttendanceMessages.NOT_FOUND);
     return attendance;
   }
-  async validateOwnershipWithStudents(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
+  async validateOwnershipByIdWithStudents(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
     const attendance = await this.attendanceSessionRepository.findOwnedWithStudents(attendanceId, userId);
     if (!attendance) throw new NotFoundException(AttendanceMessages.NOT_FOUND);
     return attendance;

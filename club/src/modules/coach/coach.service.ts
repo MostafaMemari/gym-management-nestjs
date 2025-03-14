@@ -52,7 +52,7 @@ export class CoachService {
       if (national_code) await this.validateUniqueNationalCode(national_code, userId);
 
       if (clubIds) {
-        ownedClubs = await this.clubService.validateOwnedClubs(clubIds, userId);
+        ownedClubs = await this.clubService.validateOwnershipByIds(clubIds, userId);
         this.validateCoachClubGender(gender, ownedClubs);
       }
 
@@ -82,12 +82,12 @@ export class CoachService {
 
     try {
       let coach = national_code ? await this.validateUniqueNationalCode(national_code, userId) : null;
-      if (!coach) coach = await this.checkCoachOwnership(coachId, userId);
+      if (!coach) coach = await this.validateOwnershipById(coachId, userId);
 
       const updateData = this.prepareUpdateData(updateCoachDto, coach);
 
       if (clubIds.length) {
-        const ownedClubs = clubIds?.length ? await this.clubService.validateOwnedClubs(clubIds, userId) : coach.clubs;
+        const ownedClubs = clubIds?.length ? await this.clubService.validateOwnershipByIds(clubIds, userId) : coach.clubs;
         const removedClubs = coach.clubs.filter((club) => !clubIds.includes(club.id));
         if (removedClubs.length) await this.studentService.validateRemovedClubsStudents(removedClubs, coachId);
         this.validateCoachClubGender(coach.gender, ownedClubs);
@@ -139,7 +139,7 @@ export class CoachService {
   }
   async findOneById(user: IUser, coachId: number): Promise<ServiceResponse> {
     try {
-      const coach = await this.checkCoachOwnership(coachId, user.id);
+      const coach = await this.validateOwnershipById(coachId, user.id);
 
       return ResponseUtil.success(coach, CoachMessages.GET_SUCCESS);
     } catch (error) {
@@ -148,7 +148,7 @@ export class CoachService {
   }
   async removeById(user: IUser, coachId: number): Promise<ServiceResponse> {
     try {
-      const coach = await this.checkCoachOwnership(coachId, user.id);
+      const coach = await this.validateOwnershipById(coachId, user.id);
 
       const hasStudents = await this.studentService.hasStudentsAssignedToCoach(coachId);
       if (hasStudents) throw new BadRequestException(CoachMessages.COACH_HAS_STUDENTS.replace('{coachId}', coachId.toString()));
@@ -163,7 +163,7 @@ export class CoachService {
     }
   }
 
-  async checkCoachOwnership(coachId: number, userId: number): Promise<CoachEntity> {
+  async validateOwnershipById(coachId: number, userId: number): Promise<CoachEntity> {
     const coach = await this.coachRepository.findByIdAndOwner(coachId, userId);
     if (!coach) throw new NotFoundException(CoachMessages.NOT_FOUND);
     return coach;
@@ -214,7 +214,6 @@ export class CoachService {
       throw new BadRequestException(CoachMessages.COACH_GENDER_MISMATCH.replace('{ids}', invalidClubs.join(', ')));
     }
   }
-
   private async validateCoachGenderChange(coachGender: Gender, coachId: number): Promise<void> {
     const hasInvalidStudent = await this.studentService.hasStudentsByGender(
       coachId,
@@ -225,7 +224,6 @@ export class CoachService {
       throw new BadRequestException(CoachMessages.COACH_GENDER_CHANGE_NOT_ALLOWED);
     }
   }
-
   private prepareUpdateData(updateDto: ICoachUpdateDto, coach: CoachEntity): Partial<CoachEntity> {
     return Object.fromEntries(
       Object.entries(updateDto).filter(
@@ -233,18 +231,15 @@ export class CoachService {
       ),
     );
   }
-
   private async removeCoachData(coachUserId: number, imageKey: string | null) {
     await Promise.all([
       coachUserId ? this.removeCoachUserById(coachUserId) : Promise.resolve(),
       imageKey ? this.removeCoachImage(imageKey) : Promise.resolve(),
     ]);
   }
-
   async existsCoachWithGenderInClub(clubId: number, gender: Gender): Promise<boolean> {
     return this.coachRepository.existsCoachByGenderInClub(clubId, gender);
   }
-
   async existsCoachInClub(clubId: number): Promise<boolean> {
     return this.coachRepository.existsCoachByClubId(clubId);
   }

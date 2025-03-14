@@ -28,7 +28,7 @@ export class AgeCategoryService {
   }
   async update(ageCategoryId: number, updateAgeCategoryDto: IAgeCategoryUpdateDto): Promise<ServiceResponse> {
     try {
-      const ageCategory = await this.validateAgeCategoryId(ageCategoryId);
+      const ageCategory = await this.validateById(ageCategoryId);
 
       const updatedAgeCategory = await this.ageCategoryRepository.updateAgeCategory(ageCategory, updateAgeCategoryDto);
 
@@ -60,7 +60,7 @@ export class AgeCategoryService {
   }
   async findOneById(ageCategoryId: number): Promise<ServiceResponse> {
     try {
-      const ageCategory = await this.validateAgeCategoryId(ageCategoryId);
+      const ageCategory = await this.validateById(ageCategoryId);
 
       return ResponseUtil.success(ageCategory, AgeCategoryMessages.GET_SUCCESS);
     } catch (error) {
@@ -69,7 +69,7 @@ export class AgeCategoryService {
   }
   async removeById(ageCategoryId: number): Promise<ServiceResponse> {
     try {
-      const ageCategory = await this.validateAgeCategoryId(ageCategoryId);
+      const ageCategory = await this.validateById(ageCategoryId);
       const removedAgeCategory = await this.ageCategoryRepository.delete({ id: ageCategoryId });
 
       if (!removedAgeCategory.affected) ResponseUtil.error(AgeCategoryMessages.REMOVE_FAILURE);
@@ -80,7 +80,7 @@ export class AgeCategoryService {
     }
   }
 
-  async validateAgeCategoryId(ageCategoryId: number): Promise<AgeCategoryEntity> {
+  async validateById(ageCategoryId: number): Promise<AgeCategoryEntity> {
     const ageCategory = await this.ageCategoryRepository.findOneBy({ id: ageCategoryId });
     if (!ageCategory) throw new NotFoundException(AgeCategoryMessages.NOT_FOUND);
     return ageCategory;

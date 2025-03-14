@@ -38,7 +38,7 @@ export class ClubService {
   async update(user: IUser, clubId: number, updateClubDto: IUpdateClub): Promise<ServiceResponse> {
     try {
       const { genders } = updateClubDto;
-      const club = await this.checkClubOwnership(clubId, user.id);
+      const club = await this.validateOwnershipById(clubId, user.id);
 
       if (genders && genders !== club.genders) {
         await this.validateGenderRemoval(genders, clubId, club.genders);
@@ -74,7 +74,7 @@ export class ClubService {
   }
   async findOneById(user: IUser, clubId: number): Promise<ServiceResponse> {
     try {
-      const club = await this.checkClubOwnership(clubId, user.id);
+      const club = await this.validateOwnershipById(clubId, user.id);
 
       return ResponseUtil.success(club, ClubMessages.GET_SUCCESS);
     } catch (error) {
@@ -83,7 +83,7 @@ export class ClubService {
   }
   async removeById(user: IUser, clubId: number): Promise<ServiceResponse> {
     try {
-      await this.checkClubOwnership(clubId, user.id);
+      await this.validateOwnershipById(clubId, user.id);
 
       const isClubAssignedToCoaches = await this.coachService.existsCoachInClub(clubId);
       if (isClubAssignedToCoaches) throw new BadRequestException(ClubMessages.CANNOT_REMOVE_ASSIGNED_COACHES);
@@ -111,17 +111,16 @@ export class ClubService {
     }
   }
 
-  async checkClubOwnership(clubId: number, userId: number): Promise<ClubEntity> {
+  async validateOwnershipById(clubId: number, userId: number): Promise<ClubEntity> {
     const club = await this.clubRepository.findByIdAndOwner(clubId, userId);
     if (!club) throw new NotFoundException(ClubMessages.NOT_BELONG_TO_USER);
     return club;
   }
-  async checkClubOwnershipWithCoaches(clubId: number, userId: number): Promise<ClubEntity> {
+  async validateOwnershipByIdWithCoaches(clubId: number, userId: number): Promise<ClubEntity> {
     const club = await this.clubRepository.findByIdAndOwnerRelationCoaches(clubId, userId);
     if (!club) throw new NotFoundException(ClubMessages.NOT_BELONG_TO_USER);
     return club;
   }
-
   async validateGenderRemoval(genders: Gender[], clubId: number, currentGenders: Gender[]): Promise<void> {
     const removedGenders = currentGenders.filter((gender) => !genders.includes(gender));
 
@@ -135,7 +134,7 @@ export class ClubService {
       if (femaleCoachExists) throw new BadRequestException(ClubMessages.CANNOT_REMOVE_FEMALE_COACH);
     }
   }
-  async validateOwnedClubs(clubIds: number[], userId: number): Promise<ClubEntity[]> {
+  async validateOwnershipByIds(clubIds: number[], userId: number): Promise<ClubEntity[]> {
     const ownedClubs = await this.clubRepository.findOwnedClubsByIds(clubIds, userId);
 
     if (ownedClubs.length !== clubIds.length) {

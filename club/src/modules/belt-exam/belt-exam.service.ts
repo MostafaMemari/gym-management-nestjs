@@ -28,7 +28,7 @@ export class BeltExamService {
     try {
       const { beltIds } = createBeltExamDto;
       if (beltIds) {
-        const belts = await this.beltService.validateBeltIds(beltIds);
+        const belts = await this.beltService.validateByIds(beltIds);
         createBeltExamDto.belts = belts;
       }
 
@@ -43,10 +43,10 @@ export class BeltExamService {
     try {
       const { beltIds } = updateBeltExamDto;
 
-      const beltExam = await this.validateBeltExamId(beltExamId);
+      const beltExam = await this.validateById(beltExamId);
 
       if (beltIds) {
-        const belts = await this.beltService.validateBeltIds(beltIds);
+        const belts = await this.beltService.validateByIds(beltIds);
         updateBeltExamDto.belts = belts;
       }
 
@@ -78,7 +78,7 @@ export class BeltExamService {
   }
   async findOneById(beltExamId: number): Promise<ServiceResponse> {
     try {
-      const beltExam = await this.validateBeltExamId(beltExamId);
+      const beltExam = await this.validateById(beltExamId);
 
       return ResponseUtil.success(beltExam, BeltExamMessages.GET_SUCCESS);
     } catch (error) {
@@ -87,7 +87,7 @@ export class BeltExamService {
   }
   async removeById(beltExamId: number): Promise<ServiceResponse> {
     try {
-      const beltExam = await this.validateBeltExamId(beltExamId);
+      const beltExam = await this.validateById(beltExamId);
 
       const removedBeltExam = await this.beltExamRepository.delete({ id: beltExamId });
 
@@ -98,7 +98,7 @@ export class BeltExamService {
     }
   }
 
-  async validateBeltExamId(beltExamId: number): Promise<BeltExamEntity> {
+  async validateById(beltExamId: number): Promise<BeltExamEntity> {
     const beltExam = await this.beltExamRepository.findOneBy({ id: beltExamId });
     if (!beltExam) throw new NotFoundException(BeltExamMessages.NOT_FOUND);
     return beltExam;

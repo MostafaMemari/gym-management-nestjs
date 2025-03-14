@@ -31,7 +31,7 @@ export class SessionService {
     try {
       const { clubId, coachId, studentIds } = createSessionDto;
 
-      const club = await this.clubService.checkClubOwnershipWithCoaches(clubId, user.id);
+      const club = await this.clubService.validateOwnershipByIdWithCoaches(clubId, user.id);
       await this.clubService.validateCoachInClub(club, coachId);
       const coach = club.coaches.find((coach) => coach.id === coachId);
 
@@ -48,14 +48,14 @@ export class SessionService {
       const { clubId, coachId, studentIds } = updateSessionDto;
       let club = null;
 
-      const session = await this.checkSessionOwnership(sessionId, user.id);
+      const session = await this.validateOwnershipById(sessionId, user.id);
 
       if (clubId || coachId) {
-        club = await this.clubService.checkClubOwnershipWithCoaches(clubId ?? session.clubId, user.id);
+        club = await this.clubService.validateOwnershipByIdWithCoaches(clubId ?? session.clubId, user.id);
         await this.clubService.validateCoachInClub(club, coachId ?? session.coachId);
       }
       if (studentIds?.length) {
-        club = club ? club : await this.clubService.checkClubOwnershipWithCoaches(clubId ?? session.clubId, user.id);
+        club = club ? club : await this.clubService.validateOwnershipByIdWithCoaches(clubId ?? session.clubId, user.id);
 
         const coach = club.coaches.find((coach) => coach.id === coachId || session.coachId);
         updateSessionDto.students = studentIds ? await this.studentService.validateStudentIds(studentIds, coach.id, coach.gender) : null;
@@ -93,7 +93,7 @@ export class SessionService {
   }
   async findOneById(user: IUser, sessionId: number): Promise<ServiceResponse> {
     try {
-      const session = await this.checkSessionOwnership(sessionId, user.id);
+      const session = await this.validateOwnershipById(sessionId, user.id);
 
       return ResponseUtil.success(session, SessionMessages.GET_SUCCESS);
     } catch (error) {
@@ -102,7 +102,7 @@ export class SessionService {
   }
   async removeById(user: IUser, sessionId: number): Promise<ServiceResponse> {
     try {
-      await this.checkSessionOwnership(sessionId, user.id);
+      await this.validateOwnershipById(sessionId, user.id);
 
       const removedSession = await this.sessionRepository.delete({ id: sessionId });
 
@@ -114,19 +114,18 @@ export class SessionService {
     }
   }
 
-  async checkSessionOwnership(sessionId: number, userId: number): Promise<SessionEntity> {
+  async validateOwnershipById(sessionId: number, userId: number): Promise<SessionEntity> {
     const session = await this.sessionRepository.findByIdAndOwner(sessionId, userId);
     if (!session) throw new NotFoundException(SessionMessages.NOT_FOUND);
     return session;
   }
-
-  async checkSessionOwnershipRelationStudents(sessionId: number, userId: number): Promise<SessionEntity> {
+  async validateOwnershipRelationStudents(sessionId: number, userId: number): Promise<SessionEntity> {
     const session = await this.sessionRepository.findByIdAndOwnerRelationStudents(sessionId, userId);
     if (!session) throw new NotFoundException(SessionMessages.NOT_FOUND);
     return session;
   }
 
-  async validateOwnedSessions(sessionIds: number[], userId: number): Promise<SessionEntity[]> {
+  async validateOwnershipByIds(sessionIds: number[], userId: number): Promise<SessionEntity[]> {
     const ownedSessions = await this.sessionRepository.findOwnedSessionsByIds(sessionIds);
 
     if (ownedSessions.length !== sessionIds.length) {
