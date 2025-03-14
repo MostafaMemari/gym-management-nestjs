@@ -3,7 +3,7 @@ import { DataSource, In, QueryRunner, Repository } from 'typeorm';
 
 import { AttendanceEntity } from '../entities/attendance.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
-import { ISearchAttendanceQuery, IStudentAttendance } from '../interfaces/attendance.interface';
+import { IAttendanceFilter, IStudentAttendance } from '../interfaces/attendance.interface';
 import { AttendanceSessionEntity } from '../entities/attendance-sessions.entity';
 
 @Injectable()
@@ -39,15 +39,11 @@ export class AttendanceRepository extends Repository<AttendanceEntity> {
 
   async getAttendancesWithFilters(
     userId: number,
-    filters: ISearchAttendanceQuery,
+    filters: IAttendanceFilter,
     page: number,
     take: number,
   ): Promise<[AttendanceEntity[], number]> {
     const queryBuilder = this.createQueryBuilder(EntityName.Attendances).where('attendances.ownerId = :ownerId', { ownerId: userId });
-
-    if (filters?.search) {
-      queryBuilder.andWhere('attendances.name LIKE :search', { search: `%${filters.search}%` });
-    }
 
     if (filters?.sort_order) {
       queryBuilder.orderBy('attendances.updated_at', filters.sort_order === 'asc' ? 'ASC' : 'DESC');

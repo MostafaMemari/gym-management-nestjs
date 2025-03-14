@@ -1,24 +1,20 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import { Between, DataSource } from 'typeorm';
 
 import { AttendanceRepository } from './repositories/attendance.repository';
 
 import { CacheService } from '../cache/cache.service';
 
-import { Services } from '../../common/enums/services.enum';
-import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
-import { StudentService } from '../student/student.service';
-import { ClubService } from '../club/club.service';
+import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
+import { IPagination } from '../../common/interfaces/pagination.interface';
 import { IUser } from '../../common/interfaces/user.interface';
-import { IRecordAttendance } from './interfaces/attendance.interface';
+import { ResponseUtil } from '../../common/utils/response';
 import { SessionService } from '../session/session.service';
-import { DayOfWeek } from '../session/enums/days-of-week.enum';
-import { ResponseUtil } from 'src/common/utils/response';
-import { AttendanceMessages } from './enums/attendance.message';
 import { AttendanceEntity } from './entities/attendance.entity';
+import { AttendanceMessages } from './enums/attendance.message';
+import { CacheKeys, CacheTTLSeconds } from './enums/cache.enum';
+import { IAttendanceFilter, IRecordAttendance } from './interfaces/attendance.interface';
 import { AttendanceSessionRepository } from './repositories/attendance-sessions.repository';
-import { AttendanceSessionEntity } from './entities/attendance-sessions.entity';
-import { DataSource } from 'typeorm';
 
 @Injectable()
 export class AttendanceService {
@@ -26,6 +22,7 @@ export class AttendanceService {
     private readonly attendanceSessionRepository: AttendanceSessionRepository,
     private readonly attendanceRepository: AttendanceRepository,
     private readonly sessionService: SessionService,
+    private readonly cacheService: CacheService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -53,18 +50,48 @@ export class AttendanceService {
         queryRunner,
       );
 
-      if (attendanceEntities.length === 0) {
-        throw new BadRequestException(AttendanceMessages.NO_STUDENTS_ELIGIBLE);
-      }
+      if (attendanceEntities.length === 0) throw new BadRequestException(AttendanceMessages.NO_STUDENTS_ELIGIBLE);
 
-      // await this.attendanceRepository.save(attendanceEntities);
       await queryRunner.commitTransaction();
-      return ResponseUtil.success(createAttendanceDto, AttendanceMessages.CREATE_SUCCESS);
+
+      return ResponseUtil.success({
+        ...createAttendanceDto,
+        attendances: attendanceEntities.map((attendance) => ({
+          studentId: attendance.studentId,
+          status: attendance.status,
+        })),
+      });
     } catch (error) {
       await queryRunner.rollbackTransaction();
       return ResponseUtil.success(error?.message || AttendanceMessages.CREATE_FAILURE, error?.status);
     } finally {
       await queryRunner.release();
+    }
+  }
+  async getAll(user: IUser, query: { queryAttendanceDto: IAttendanceFilter; paginationDto: IPagination }): Promise<any> {
+    const { take, page } = query.paginationDto;
+
+    try {
+      const cacheKey = `${CacheKeys.ATTENDANCES}-${user.id}-${page}-${take}-${JSON.stringify(query.queryAttendanceDto)}`;
+
+      const cachedData = await this.cacheService.get<PageDto<AttendanceEntity>>(cacheKey);
+      if (cachedData) return ResponseUtil.success(cachedData.data, AttendanceMessages.GET_ALL_SUCCESS);
+
+      const [attendances, count] = await this.attendanceSessionRepository.getAttendancesWithFilters(
+        user.id,
+        query.queryAttendanceDto,
+        page,
+        take,
+      );
+
+      const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
+      const result = new PageDto(attendances, pageMetaDto);
+
+      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.ATTENDANCES);
+
+      return ResponseUtil.success(result.data, AttendanceMessages.GET_ALL_SUCCESS);
+    } catch (error) {
+      ResponseUtil.error(error?.message || AttendanceMessages.GET_ALL_FAILURE, error?.status);
     }
   }
 

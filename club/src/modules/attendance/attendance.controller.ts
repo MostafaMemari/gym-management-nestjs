@@ -5,7 +5,7 @@ import { AttendancePatterns } from './patterns/attendance.pattern';
 import { AttendanceService } from './attendance.service';
 import { IUser } from '../../common/interfaces/user.interface';
 import { IPagination } from '../../common/interfaces/pagination.interface';
-import { IRecordAttendance, ISearchAttendanceQuery } from './interfaces/attendance.interface';
+import { IAttendanceFilter, IRecordAttendance } from './interfaces/attendance.interface';
 
 @Controller()
 export class AttendanceController {
@@ -22,6 +22,14 @@ export class AttendanceController {
 
     return this.clubService.create(user, createAttendanceDto);
   }
+
+  @MessagePattern(AttendancePatterns.GET_ALL)
+  findAll(@Payload() data: { user: IUser; queryAttendanceDto: IAttendanceFilter; paginationDto: IPagination }) {
+    const { user, queryAttendanceDto, paginationDto } = data;
+
+    return this.clubService.getAll(user, { queryAttendanceDto, paginationDto });
+  }
+
   // @MessagePattern(AttendancePatterns.UpdateAttendance)
   // update(@Payload() data: { user: IUser; clubId: number; updateAttendanceDto: IUpdateAttendance }) {
   //   const { user, clubId, updateAttendanceDto } = data;

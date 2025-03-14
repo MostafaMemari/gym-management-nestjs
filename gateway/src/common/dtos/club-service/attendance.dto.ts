@@ -1,7 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { ArrayMinSize, IsArray, IsDateString, IsEnum, IsInt, IsOptional, IsString, Length, ValidateNested } from 'class-validator';
-import { ToArray } from 'src/common/decorators/transformers.decorator';
+import { IsDependentOn } from 'src/common/decorators/dependent-fields.decorator';
+import { ToArray } from '../../../common/decorators/transformers.decorator';
+import { SortOrder } from 'src/common/enums/shared.enum';
 
 export enum AttendanceStatus {
   PRESENT = 'present',
@@ -46,4 +48,41 @@ export class RecordAttendanceDto {
   @ValidateNested({ each: true })
   @ApiProperty({ type: [StudentAttendanceDto] })
   attendances: StudentAttendanceDto[];
+}
+enum SortBy {
+  DATE = 'date',
+  CREATED_AT = 'created_at',
+  UPDATED_AT = 'updated_at',
+}
+export class QueryAttendanceDto {
+  @IsOptional()
+  @ApiProperty({ type: 'string', example: 1 })
+  @IsString()
+  @ApiPropertyOptional()
+  sessionId: string;
+
+  @IsOptional()
+  @IsDateString()
+  @ApiPropertyOptional({ type: String, example: '' })
+  date?: Date;
+
+  @IsOptional()
+  @IsDateString()
+  @ApiPropertyOptional({ type: String, example: '' })
+  start_date?: Date;
+
+  @IsOptional()
+  @IsDateString()
+  @ApiPropertyOptional({ type: String, example: '' })
+  end_date?: Date;
+
+  @IsOptional()
+  @IsEnum(SortBy, { message: 'sort_by must be one of "date", "created_at", or "updated_at"' })
+  @ApiPropertyOptional({ example: 'birth_date', enum: SortBy })
+  sort_by?: SortBy;
+
+  @IsOptional()
+  @IsEnum(SortOrder, { message: 'sort_order must be either "asc" or "desc"' })
+  @ApiPropertyOptional({ example: 'desc', enum: SortOrder })
+  sort_order?: SortOrder;
 }

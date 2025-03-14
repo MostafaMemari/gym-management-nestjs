@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { lastValueFrom, timeout } from 'rxjs';
@@ -6,7 +6,7 @@ import { lastValueFrom, timeout } from 'rxjs';
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { GetUser } from '../../../common/decorators/get-user.decorator';
 import { Roles } from '../../../common/decorators/role.decorator';
-import { RecordAttendanceDto } from '../../../common/dtos/club-service/attendance.dto';
+import { QueryAttendanceDto, RecordAttendanceDto } from '../../../common/dtos/club-service/attendance.dto';
 import { AttendancePatterns } from '../../../common/enums/club.events';
 import { Role } from '../../../common/enums/role.enum';
 import { Services } from '../../../common/enums/services.enum';
@@ -15,6 +15,7 @@ import { ServiceResponse } from '../../../common/interfaces/serviceResponse.inte
 import { User } from '../../../common/interfaces/user.interface';
 import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
+import { PaginationDto } from 'src/common/dtos/shared.dto';
 
 @Controller('attendances')
 @ApiTags('Attendances')
@@ -55,18 +56,18 @@ export class AttendanceController {
   //   }
   // }
 
-  // @Get()
-  // @Roles(Role.ADMIN_CLUB)
-  // async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto, @Query() queryAttendanceDto: QueryAttendanceDto): Promise<any> {
-  //   try {
-  //     await checkConnection(Services.CLUB, this.clubServiceClient);
+  @Get()
+  @Roles(Role.ADMIN_CLUB)
+  async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto, @Query() queryAttendanceDto: QueryAttendanceDto): Promise<any> {
+    try {
+      await checkConnection(Services.CLUB, this.clubServiceClient);
 
-  //     const data: ServiceResponse = await lastValueFrom(
-  //       this.clubServiceClient.send(AttendancePatterns.GetAttendances, { user, queryAttendanceDto, paginationDto }).pipe(timeout(5000)),
-  //     );
-  //     return handleServiceResponse(data);
-  //   } catch (error) {}
-  // }
+      const data: ServiceResponse = await lastValueFrom(
+        this.clubServiceClient.send(AttendancePatterns.GET_ALL, { user, queryAttendanceDto, paginationDto }).pipe(timeout(5000)),
+      );
+      return handleServiceResponse(data);
+    } catch (error) {}
+  }
 
   @Get(':id')
   @Roles(Role.ADMIN_CLUB)

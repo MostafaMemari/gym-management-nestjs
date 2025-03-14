@@ -12,8 +12,9 @@ export interface IRecordAttendance {
   attendances: IStudentAttendance[];
 }
 
-export interface ISearchAttendanceQuery {
-  search?: string;
-
+export interface IAttendanceFilter {
+  start_date?: Date;
+  end_date?: Date;
+  sort_by?: 'date' | 'created_at' | 'updated_at';
   sort_order?: 'asc' | 'desc';
 }
