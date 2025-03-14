@@ -18,4 +18,5 @@ export enum AttendanceMessages {
   ALREADY_RECORDED = 'Attendance has already been recorded',
   INVALID_SESSION_DAY = 'The session is not held on {dayOfWeek}',
   NO_STUDENTS_ELIGIBLE = 'No students found for this session on the given date',
+  FUTURE_DATE_NOT_ALLOWED = 'The provided date cannot be in the future',
 }

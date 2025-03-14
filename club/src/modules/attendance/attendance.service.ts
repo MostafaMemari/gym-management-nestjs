@@ -1,5 +1,6 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { Between, DataSource } from 'typeorm';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { DataSource } from 'typeorm';
+import { formatDate, isAfter } from 'date-fns';
 
 import { AttendanceRepository } from './repositories/attendance.repository';
 
@@ -13,7 +14,7 @@ import { SessionService } from '../session/session.service';
 import { AttendanceEntity } from './entities/attendance.entity';
 import { AttendanceMessages } from './enums/attendance.message';
 import { CacheKeys, CacheTTLSeconds } from './enums/cache.enum';
-import { IAttendanceFilter, IRecordAttendance, IStudentAttendance, IUpdateRecordAttendance } from './interfaces/attendance.interface';
+import { IAttendanceFilter, IRecordAttendance, IUpdateRecordAttendance } from './interfaces/attendance.interface';
 import { AttendanceSessionRepository } from './repositories/attendance-sessions.repository';
 import { AttendanceSessionEntity } from './entities/attendance-sessions.entity';
 
@@ -35,13 +36,11 @@ export class AttendanceService {
     await queryRunner.startTransaction();
     try {
       const session = await this.sessionService.checkSessionOwnershipRelationStudents(sessionId, user.id);
+      this.checkDateIsNotInTheFuture(date);
       this.validateAllowedDays(session.days, date);
-      await this.checkDuplicateAttendanceSession(sessionId, new Date(date));
+      await this.checkDuplicateAttendanceSession(sessionId, date);
 
-      const attendanceSession = await this.attendanceSessionRepository.createAttendanceSession(
-        { date: new Date(date), session },
-        queryRunner,
-      );
+      const attendanceSession = await this.attendanceSessionRepository.createAttendanceSession({ date, session }, queryRunner);
 
       const validStudentIds = session.students.map((student) => student.id);
       const attendanceEntities = await this.attendanceRepository.createAttendanceEntities(
@@ -64,7 +63,7 @@ export class AttendanceService {
       });
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      return ResponseUtil.success(error?.message || AttendanceMessages.CREATE_FAILURE, error?.status);
+      ResponseUtil.error(error?.message || AttendanceMessages.CREATE_FAILURE, error?.status);
     } finally {
       await queryRunner.release();
     }
@@ -79,14 +78,15 @@ export class AttendanceService {
     let attendanceEntities = null;
 
     try {
-      const attendanceSession = await this.checkSessionOwnershipRelationAttendance(attendanceId, user.id);
+      const attendanceSession = await this.validateOwnership(attendanceId, user.id);
       const session = await this.sessionService.checkSessionOwnershipRelationStudents(sessionId || attendanceSession.sessionId, user.id);
 
       if (date) {
         this.validateAllowedDays(session.days, date);
-        await this.checkDuplicateAttendanceSession(session.id, new Date(date));
+        this.checkDateIsNotInTheFuture(date);
+        await this.checkDuplicateAttendanceSession(session.id, date);
 
-        attendanceSession.date = new Date(date);
+        attendanceSession.date = date;
         await queryRunner.manager.save(attendanceSession);
       }
 
@@ -119,7 +119,7 @@ export class AttendanceService {
       );
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      return ResponseUtil.error(error?.message || AttendanceMessages.CREATE_FAILURE, error?.status);
+      ResponseUtil.error(error?.message || AttendanceMessages.CREATE_FAILURE, error?.status);
     } finally {
       await queryRunner.release();
     }
@@ -217,9 +217,7 @@ export class AttendanceService {
 
   async findOneById(user: IUser, attendanceId: number) {
     try {
-      const attendance = await this.checkSessionOwnershipRelationAttendanceStudents(attendanceId, user.id);
-
-      console.log(attendance);
+      const attendance = await this.validateOwnershipWithStudents(attendanceId, user.id);
 
       return ResponseUtil.success(attendance, AttendanceMessages.GET_SUCCESS);
     } catch (error) {
@@ -228,7 +226,7 @@ export class AttendanceService {
   }
   async remove(user: IUser, attendanceId: number) {
     try {
-      const attendance = await this.checkAttendanceOwnership(attendanceId, user.id);
+      const attendance = await this.validateOwnership(attendanceId, user.id);
 
       const removedClub = await this.attendanceSessionRepository.delete({ id: attendanceId });
 
@@ -240,32 +238,43 @@ export class AttendanceService {
     }
   }
 
-  async checkAttendanceOwnership(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
-    const attendance = await this.attendanceSessionRepository.findByIdAndOwner(attendanceId, userId);
+  async validateOwnership(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
+    const attendance = await this.attendanceSessionRepository.findOwnedById(attendanceId, userId);
     if (!attendance) throw new NotFoundException(AttendanceMessages.NOT_FOUND);
     return attendance;
   }
-  async checkSessionOwnershipRelationAttendance(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
-    const attendance = await this.attendanceSessionRepository.findByIdAndOwnerRelationAttendance(attendanceId, userId);
+  async validateOwnershipWithAttendances(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
+    const attendance = await this.attendanceSessionRepository.findOwnedWithAttendances(attendanceId, userId);
     if (!attendance) throw new NotFoundException(AttendanceMessages.NOT_FOUND);
     return attendance;
   }
-  async checkSessionOwnershipRelationAttendanceStudents(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
-    const attendance = await this.attendanceSessionRepository.findByIdAndOwnerRelationAttendanceStudents(attendanceId, userId);
+  async validateOwnershipWithStudents(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
+    const attendance = await this.attendanceSessionRepository.findOwnedWithStudents(attendanceId, userId);
     if (!attendance) throw new NotFoundException(AttendanceMessages.NOT_FOUND);
     return attendance;
   }
 
-  validateAllowedDays(allowedDays: string[], date: string): void {
-    const inputDate = new Date(date);
-    const dayOfWeek = inputDate.toLocaleString('en-US', { weekday: 'long' });
-
-    if (!allowedDays.includes(dayOfWeek)) {
-      throw new Error(AttendanceMessages.INVALID_SESSION_DAY.replace('{dayOfWeek}', dayOfWeek));
-    }
-  }
   async checkDuplicateAttendanceSession(sessionId: number, date: Date): Promise<void> {
     const session = await this.attendanceSessionRepository.findAttendanceByIdAndDate(sessionId, date);
     if (session) throw new BadRequestException(AttendanceMessages.ALREADY_RECORDED);
+  }
+
+  validateAllowedDays(allowedDays: string[], date: Date | string): void {
+    const inputDate = new Date(date);
+
+    const dayOfWeek = formatDate(inputDate, 'EEEE');
+
+    if (!allowedDays.includes(dayOfWeek)) {
+      throw new BadRequestException(AttendanceMessages.INVALID_SESSION_DAY.replace('{dayOfWeek}', dayOfWeek));
+    }
+  }
+
+  checkDateIsNotInTheFuture(date: Date): void {
+    const today = new Date();
+    const inputDate = new Date(date);
+
+    if (isAfter(inputDate, today)) {
+      throw new BadRequestException(AttendanceMessages.FUTURE_DATE_NOT_ALLOWED);
+    }
   }
 }

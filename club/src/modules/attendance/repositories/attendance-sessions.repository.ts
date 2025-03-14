@@ -58,10 +58,15 @@ export class AttendanceSessionRepository extends Repository<AttendanceSessionEnt
   }
 
   async findAttendanceByIdAndDate(sessionId: number, date: Date): Promise<AttendanceSessionEntity | null> {
-    return this.findOne({ where: { id: sessionId, date } });
+    // return this.createQueryBuilder('attendance_sessions')
+    //   .where('attendance_sessions.sessionId = :sessionId', { sessionId })
+    //   .andWhere('attendance_sessions.date = :date', { date })
+    //   .getOne();
+
+    return this.findOne({ where: { sessionId, date } });
   }
 
-  async findByIdAndOwner(attendanceId: number, userId: number): Promise<AttendanceSessionEntity | null> {
+  async findOwnedById(attendanceId: number, userId: number): Promise<AttendanceSessionEntity | null> {
     return this.createQueryBuilder(EntityName.AttendanceSessions)
       .leftJoin('attendance_sessions.session', 'session')
       .leftJoin('session.club', 'club')
@@ -69,7 +74,7 @@ export class AttendanceSessionRepository extends Repository<AttendanceSessionEnt
       .andWhere('club.ownerId = :userId', { userId })
       .getOne();
   }
-  async findByIdAndOwnerRelationAttendance(attendanceId: number, userId: number): Promise<AttendanceSessionEntity | null> {
+  async findOwnedWithAttendances(attendanceId: number, userId: number): Promise<AttendanceSessionEntity | null> {
     return this.createQueryBuilder(EntityName.AttendanceSessions)
       .leftJoinAndSelect('attendance_sessions.attendances', 'attendances')
       .leftJoin('attendance_sessions.session', 'session')
@@ -78,7 +83,7 @@ export class AttendanceSessionRepository extends Repository<AttendanceSessionEnt
       .andWhere('club.ownerId = :userId', { userId })
       .getOne();
   }
-  async findByIdAndOwnerRelationAttendanceStudents(attendanceId: number, userId: number): Promise<AttendanceSessionEntity | null> {
+  async findOwnedWithStudents(attendanceId: number, userId: number): Promise<AttendanceSessionEntity | null> {
     return this.createQueryBuilder(EntityName.AttendanceSessions)
       .leftJoinAndSelect('attendance_sessions.attendances', 'attendances')
       .leftJoin('attendances.student', 'student')

@@ -8,7 +8,7 @@ export interface IStudentAttendance {
 
 export interface IRecordAttendance {
   sessionId: number;
-  date: string;
+  date: Date;
   attendances: IStudentAttendance[];
 }
 

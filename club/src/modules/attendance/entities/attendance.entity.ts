@@ -1,10 +1,12 @@
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
+import { AttendanceSessionEntity } from './attendance-sessions.entity';
+
+import { AttendanceStatus } from '../enums/attendance.status.enum';
+
 import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { StudentEntity } from '../../../modules/student/entities/student.entity';
-import { AttendanceSessionEntity } from './attendance-sessions.entity';
-import { AttendanceStatus } from '../enums/attendance.status.enum';
 
 @Entity(EntityName.Attendances)
 export class AttendanceEntity extends AbstractEntity {
