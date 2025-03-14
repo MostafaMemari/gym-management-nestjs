@@ -61,6 +61,24 @@ export class AttendanceSessionRepository extends Repository<AttendanceSessionEnt
     return this.findOne({ where: { id: sessionId, date } });
   }
 
+  async findByIdAndOwner(attendanceId: number, userId: number): Promise<AttendanceSessionEntity | null> {
+    return this.createQueryBuilder(EntityName.AttendanceSessions)
+      .leftJoin('attendance_sessions.session', 'session')
+      .leftJoin('session.club', 'club')
+      .where('attendance_sessions.id = :attendanceId', { attendanceId })
+      .andWhere('club.ownerId = :userId', { userId })
+      .getOne();
+  }
+  async findByIdAndOwnerRelationAttendance(attendanceId: number, userId: number): Promise<AttendanceSessionEntity | null> {
+    return this.createQueryBuilder(EntityName.AttendanceSessions)
+      .leftJoinAndSelect('attendance_sessions.attendances', 'attendances')
+      .leftJoin('attendance_sessions.session', 'session')
+      .leftJoin('session.club', 'club')
+      .where('attendance_sessions.id = :attendanceId', { attendanceId })
+      .andWhere('club.ownerId = :userId', { userId })
+      .getOne();
+  }
+
   async findOwnedAttendancesByIds(attendanceIds: number[]): Promise<AttendanceSessionEntity[]> {
     return this.find({
       where: { id: In(attendanceIds) },

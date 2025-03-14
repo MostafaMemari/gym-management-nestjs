@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { ArrayMinSize, IsArray, IsDateString, IsEnum, IsInt, IsOptional, IsString, Length, ValidateNested } from 'class-validator';
 import { IsDependentOn } from 'src/common/decorators/dependent-fields.decorator';
@@ -49,11 +49,15 @@ export class RecordAttendanceDto {
   @ApiProperty({ type: [StudentAttendanceDto] })
   attendances: StudentAttendanceDto[];
 }
+
+export class UpdateAttendanceDto extends PartialType(RecordAttendanceDto) {}
+
 enum SortBy {
   DATE = 'date',
   CREATED_AT = 'created_at',
   UPDATED_AT = 'updated_at',
 }
+
 export class QueryAttendanceDto {
   @IsOptional()
   @ApiProperty({ type: 'string', example: 1 })

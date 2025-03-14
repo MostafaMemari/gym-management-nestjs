@@ -5,11 +5,11 @@ import { AttendancePatterns } from './patterns/attendance.pattern';
 import { AttendanceService } from './attendance.service';
 import { IUser } from '../../common/interfaces/user.interface';
 import { IPagination } from '../../common/interfaces/pagination.interface';
-import { IAttendanceFilter, IRecordAttendance } from './interfaces/attendance.interface';
+import { IAttendanceFilter, IRecordAttendance, IUpdateRecordAttendance } from './interfaces/attendance.interface';
 
 @Controller()
 export class AttendanceController {
-  constructor(private readonly clubService: AttendanceService) {}
+  constructor(private readonly attendanceService: AttendanceService) {}
 
   @MessagePattern(AttendancePatterns.CHECK_CONNECTION)
   checkConnection() {
@@ -20,34 +20,34 @@ export class AttendanceController {
   create(@Payload() data: { user: IUser; createAttendanceDto: IRecordAttendance }) {
     const { user, createAttendanceDto } = data;
 
-    return this.clubService.create(user, createAttendanceDto);
+    return this.attendanceService.create(user, createAttendanceDto);
   }
 
-  // @MessagePattern(AttendancePatterns.UpdateAttendance)
-  // update(@Payload() data: { user: IUser; clubId: number; updateAttendanceDto: IUpdateAttendance }) {
-  //   const { user, clubId, updateAttendanceDto } = data;
+  @MessagePattern(AttendancePatterns.UPDATE)
+  update(@Payload() data: { user: IUser; attendanceId: number; updateAttendanceDto: IUpdateRecordAttendance }) {
+    const { user, attendanceId, updateAttendanceDto } = data;
 
-  //   return this.clubService.update(user, clubId, updateAttendanceDto);
-  // }
+    return this.attendanceService.update(user, attendanceId, updateAttendanceDto);
+  }
 
   @MessagePattern(AttendancePatterns.GET_ALL)
   findAll(@Payload() data: { user: IUser; queryAttendanceDto: IAttendanceFilter; paginationDto: IPagination }) {
     const { user, queryAttendanceDto, paginationDto } = data;
 
-    return this.clubService.getAll(user, { queryAttendanceDto, paginationDto });
+    return this.attendanceService.getAll(user, { queryAttendanceDto, paginationDto });
   }
 
   // @MessagePattern(AttendancePatterns.GetAttendance)
-  // findOne(@Payload() data: { user: IUser; clubId: number }) {
-  //   const { user, clubId } = data;
+  // findOne(@Payload() data: { user: IUser; attendanceId: number }) {
+  //   const { user, attendanceId } = data;
 
-  //   return this.clubService.findOneById(user, clubId);
+  //   return this.attendanceService.findOneById(user, attendanceId);
   // }
 
   // @MessagePattern(ClubPatterns.REMOVE)
-  // remove(@Payload() data: { user: IUser; clubId: number }) {
-  //   const { user, clubId } = data;
+  // remove(@Payload() data: { user: IUser; attendanceId: number }) {
+  //   const { user, attendanceId } = data;
 
-  //   return this.clubService.findOneById(user, clubId);
+  //   return this.attendanceService.findOneById(user, attendanceId);
   // }
 }

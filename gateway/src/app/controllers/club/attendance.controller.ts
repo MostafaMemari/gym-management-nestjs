@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { lastValueFrom, timeout } from 'rxjs';
@@ -6,7 +6,7 @@ import { lastValueFrom, timeout } from 'rxjs';
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { GetUser } from '../../../common/decorators/get-user.decorator';
 import { Roles } from '../../../common/decorators/role.decorator';
-import { QueryAttendanceDto, RecordAttendanceDto } from '../../../common/dtos/club-service/attendance.dto';
+import { QueryAttendanceDto, RecordAttendanceDto, UpdateAttendanceDto } from '../../../common/dtos/club-service/attendance.dto';
 import { AttendancePatterns } from '../../../common/enums/club.events';
 import { Role } from '../../../common/enums/role.enum';
 import { Services } from '../../../common/enums/services.enum';
@@ -38,23 +38,23 @@ export class AttendanceController {
     }
   }
 
-  // @Put(':id')
-  // @Roles(Role.ADMIN_CLUB)
-  // @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
-  // async update(@GetUser() user: User, @Param('id', ParseIntPipe) id: number, @Body() updateAttendanceDto: UpdateAttendanceDto) {
-  //   try {
-  //     await checkConnection(Services.CLUB, this.clubServiceClient);
-  //     const data: ServiceResponse = await lastValueFrom(
-  //       this.clubServiceClient
-  //         .send(AttendancePatterns.UpdateAttendance, { user, attendanceId: id, updateAttendanceDto: { ...updateAttendanceDto } })
-  //         .pipe(timeout(5000)),
-  //     );
+  @Put(':id')
+  @Roles(Role.ADMIN_CLUB)
+  @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
+  async update(@GetUser() user: User, @Param('id', ParseIntPipe) id: number, @Body() updateAttendanceDto: UpdateAttendanceDto) {
+    try {
+      await checkConnection(Services.CLUB, this.clubServiceClient);
+      const data: ServiceResponse = await lastValueFrom(
+        this.clubServiceClient
+          .send(AttendancePatterns.UPDATE, { user, attendanceId: id, updateAttendanceDto: { ...updateAttendanceDto } })
+          .pipe(timeout(5000)),
+      );
 
-  //     return handleServiceResponse(data);
-  //   } catch (error) {
-  //     handleError(error, 'Failed to updated attendance', 'AttendanceService');
-  //   }
-  // }
+      return handleServiceResponse(data);
+    } catch (error) {
+      handleError(error, 'Failed to updated attendance', 'AttendanceService');
+    }
+  }
 
   @Get()
   @Roles(Role.ADMIN_CLUB)

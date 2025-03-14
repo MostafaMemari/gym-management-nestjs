@@ -37,6 +37,10 @@ export class AttendanceRepository extends Repository<AttendanceEntity> {
     return await this.save(attendanceEntities);
   }
 
+  async deleteAttendanceBySession(sessionId: number, queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.manager.delete(AttendanceEntity, { attendanceSession: { id: sessionId } });
+  }
+
   async getAttendancesWithFilters(
     userId: number,
     filters: IAttendanceFilter,

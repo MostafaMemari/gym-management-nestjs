@@ -12,6 +12,8 @@ export interface IRecordAttendance {
   attendances: IStudentAttendance[];
 }
 
+export type IUpdateRecordAttendance = Partial<IRecordAttendance>;
+
 export interface IAttendanceFilter {
   start_date?: Date;
   end_date?: Date;

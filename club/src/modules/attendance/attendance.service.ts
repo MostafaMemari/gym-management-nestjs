@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Between, DataSource } from 'typeorm';
 
 import { AttendanceRepository } from './repositories/attendance.repository';
@@ -13,8 +13,9 @@ import { SessionService } from '../session/session.service';
 import { AttendanceEntity } from './entities/attendance.entity';
 import { AttendanceMessages } from './enums/attendance.message';
 import { CacheKeys, CacheTTLSeconds } from './enums/cache.enum';
-import { IAttendanceFilter, IRecordAttendance, IStudentAttendance } from './interfaces/attendance.interface';
+import { IAttendanceFilter, IRecordAttendance, IStudentAttendance, IUpdateRecordAttendance } from './interfaces/attendance.interface';
 import { AttendanceSessionRepository } from './repositories/attendance-sessions.repository';
+import { AttendanceSessionEntity } from './entities/attendance-sessions.entity';
 
 @Injectable()
 export class AttendanceService {
@@ -68,6 +69,57 @@ export class AttendanceService {
       await queryRunner.release();
     }
   }
+  async update(user: IUser, attendanceId: number, updateAttendanceDto: IUpdateRecordAttendance) {
+    const { sessionId, date, attendances } = updateAttendanceDto;
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const attendanceSession = await this.checkSessionOwnershipRelationAttendance(attendanceId, user.id);
+      const session = await this.sessionService.checkSessionOwnershipRelationStudents(sessionId || attendanceSession.sessionId, user.id);
+
+      if (date) {
+        this.validateAllowedDays(session.days, date);
+        await this.checkDuplicateAttendanceSession(session.id, new Date(date));
+
+        attendanceSession.date = new Date(date);
+        await queryRunner.manager.save(attendanceSession);
+      }
+
+      await this.attendanceRepository.deleteAttendanceBySession(attendanceSession.id, queryRunner);
+
+      const validStudentIds = session.students.map((student) => student.id);
+      const attendanceEntities = await this.attendanceRepository.createAttendanceEntities(
+        attendances,
+        validStudentIds,
+        attendanceSession,
+        queryRunner,
+      );
+
+      if (attendanceEntities.length === 0) throw new BadRequestException(AttendanceMessages.NO_STUDENTS_ELIGIBLE);
+
+      await queryRunner.commitTransaction();
+
+      return ResponseUtil.success(
+        {
+          ...updateAttendanceDto,
+          attendances: attendanceEntities.map((attendance) => ({
+            studentId: attendance.studentId,
+            status: attendance.status,
+          })),
+        },
+        AttendanceMessages.UPDATE_SUCCESS,
+      );
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      return ResponseUtil.error(error?.message || AttendanceMessages.CREATE_FAILURE, error?.status);
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
   async getAll(user: IUser, query: { queryAttendanceDto: IAttendanceFilter; paginationDto: IPagination }): Promise<any> {
     const { take, page } = query.paginationDto;
 
@@ -157,6 +209,18 @@ export class AttendanceService {
     } catch (error) {
       ResponseUtil.error(error?.message || AttendanceMessages.GET_ALL_FAILURE, error?.status);
     }
+  }
+
+  async checkAttendanceOwnership(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
+    const attendance = await this.attendanceSessionRepository.findByIdAndOwner(attendanceId, userId);
+    if (!attendance) throw new NotFoundException(AttendanceMessages.NOT_FOUND);
+    return attendance;
+  }
+
+  async checkSessionOwnershipRelationAttendance(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
+    const attendance = await this.attendanceSessionRepository.findByIdAndOwnerRelationAttendance(attendanceId, userId);
+    if (!attendance) throw new NotFoundException(AttendanceMessages.NOT_FOUND);
+    return attendance;
   }
 
   validateAllowedDays(allowedDays: string[], date: string): void {
