@@ -76,6 +76,8 @@ export class AttendanceService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
+    let attendanceEntities = null;
+
     try {
       const attendanceSession = await this.checkSessionOwnershipRelationAttendance(attendanceId, user.id);
       const session = await this.sessionService.checkSessionOwnershipRelationStudents(sessionId || attendanceSession.sessionId, user.id);
@@ -88,27 +90,30 @@ export class AttendanceService {
         await queryRunner.manager.save(attendanceSession);
       }
 
-      await this.attendanceRepository.deleteAttendanceBySession(attendanceSession.id, queryRunner);
+      if (attendances) {
+        await this.attendanceRepository.deleteAttendanceBySession(attendanceSession.id, queryRunner);
+        const validStudentIds = session.students.map((student) => student.id);
+        attendanceEntities = await this.attendanceRepository.createAttendanceEntities(
+          attendances,
+          validStudentIds,
+          attendanceSession,
+          queryRunner,
+        );
 
-      const validStudentIds = session.students.map((student) => student.id);
-      const attendanceEntities = await this.attendanceRepository.createAttendanceEntities(
-        attendances,
-        validStudentIds,
-        attendanceSession,
-        queryRunner,
-      );
-
-      if (attendanceEntities.length === 0) throw new BadRequestException(AttendanceMessages.NO_STUDENTS_ELIGIBLE);
+        if (attendanceEntities.length === 0) throw new BadRequestException(AttendanceMessages.NO_STUDENTS_ELIGIBLE);
+      }
 
       await queryRunner.commitTransaction();
 
       return ResponseUtil.success(
         {
           ...updateAttendanceDto,
-          attendances: attendanceEntities.map((attendance) => ({
-            studentId: attendance.studentId,
-            status: attendance.status,
-          })),
+          attendances: attendanceEntities
+            ? attendanceEntities.map((attendance) => ({
+                studentId: attendance.studentId,
+                status: attendance.status,
+              }))
+            : [],
         },
         AttendanceMessages.UPDATE_SUCCESS,
       );
