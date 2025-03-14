@@ -245,7 +245,6 @@ export class AttendanceService {
     if (!attendance) throw new NotFoundException(AttendanceMessages.NOT_FOUND);
     return attendance;
   }
-
   async checkSessionOwnershipRelationAttendance(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
     const attendance = await this.attendanceSessionRepository.findByIdAndOwnerRelationAttendance(attendanceId, userId);
     if (!attendance) throw new NotFoundException(AttendanceMessages.NOT_FOUND);
