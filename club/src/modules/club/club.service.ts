@@ -2,16 +2,16 @@ import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException 
 import { RpcException } from '@nestjs/microservices';
 
 import { ClubEntity } from './entities/club.entity';
+import { CacheKeys } from './enums/cache.enum';
 import { ClubMessages } from './enums/club.message';
 import { ICreateClub, ISearchClubQuery, IUpdateClub } from './interfaces/club.interface';
 import { ClubRepository } from './repositories/club.repository';
-import { CacheKeys, CacheTTLSeconds } from './enums/cache.enum';
 
 import { CacheService } from '../cache/cache.service';
 import { CoachService } from '../coach/coach.service';
-import { CoachEntity } from '../coach/entities/coach.entity';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
+import { CacheTTLSeconds } from '../../common/enums/cache-time';
 import { Gender } from '../../common/enums/gender.enum';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
@@ -65,7 +65,7 @@ export class ClubService {
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(clubs, pageMetaDto);
 
-      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.CLUBS);
+      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.GET_ALL_CLUBS);
 
       return ResponseUtil.success(result.data, ClubMessages.GET_ALL_SUCCESS);
     } catch (error) {

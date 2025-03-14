@@ -4,6 +4,3 @@ export enum CacheKeys {
 export enum CachePatterns {
   BELT_EXAMS = 'belt_exams_list*',
 }
-export enum CacheTTLSeconds {
-  BELT_EXAMS = 3600,
-}

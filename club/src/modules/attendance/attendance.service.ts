@@ -1,22 +1,23 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { DataSource } from 'typeorm';
 import { formatDate, isAfter } from 'date-fns';
+import { DataSource } from 'typeorm';
 
+import { AttendanceSessionEntity } from './entities/attendance-sessions.entity';
+import { AttendanceEntity } from './entities/attendance.entity';
+import { AttendanceMessages } from './enums/attendance.message';
+import { CacheKeys } from './enums/cache.enum';
+import { IAttendanceFilter, IRecordAttendance, IUpdateRecordAttendance } from './interfaces/attendance.interface';
+import { AttendanceSessionRepository } from './repositories/attendance-sessions.repository';
 import { AttendanceRepository } from './repositories/attendance.repository';
 
 import { CacheService } from '../cache/cache.service';
+import { SessionService } from '../session/session.service';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
+import { CacheTTLSeconds } from '../../common/enums/cache-time';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { IUser } from '../../common/interfaces/user.interface';
 import { ResponseUtil } from '../../common/utils/response';
-import { SessionService } from '../session/session.service';
-import { AttendanceEntity } from './entities/attendance.entity';
-import { AttendanceMessages } from './enums/attendance.message';
-import { CacheKeys, CacheTTLSeconds } from './enums/cache.enum';
-import { IAttendanceFilter, IRecordAttendance, IUpdateRecordAttendance } from './interfaces/attendance.interface';
-import { AttendanceSessionRepository } from './repositories/attendance-sessions.repository';
-import { AttendanceSessionEntity } from './entities/attendance-sessions.entity';
 
 @Injectable()
 export class AttendanceService {
@@ -157,7 +158,7 @@ export class AttendanceService {
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(formattedData, pageMetaDto);
 
-      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.ATTENDANCES);
+      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.GET_ALL_ATTENDANCES);
 
       // const report: IStudentAttendance = attendances.reduce((acc, session) => {
       //   const date = new Date(session.date);
@@ -207,7 +208,7 @@ export class AttendanceService {
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(formattedData, pageMetaDto);
 
-      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.ATTENDANCES);
+      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.GET_ALL_ATTENDANCES);
 
       return ResponseUtil.success(result.data, AttendanceMessages.GET_ALL_SUCCESS);
     } catch (error) {

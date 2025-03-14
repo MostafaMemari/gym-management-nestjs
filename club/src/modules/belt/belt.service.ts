@@ -2,13 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { BeltEntity } from './entities/belt.entity';
 import { BeltMessages } from './enums/belt.message';
+import { CacheKeys } from './enums/cache.enum';
 import { IBeltCreateDto, IBeltFilter, IBeltUpdateDto } from './interfaces/belt.interface';
 import { BeltRepository } from './repositories/belt.repository';
-import { CacheKeys, CacheTTLSeconds } from './enums/cache.enum';
 
 import { CacheService } from '../cache/cache.service';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
+import { CacheTTLSeconds } from '../../common/enums/cache-time';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from '../../common/utils/response';
@@ -63,7 +64,7 @@ export class BeltService {
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(belts, pageMetaDto);
 
-      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.BELTS);
+      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.GET_ALL_BELTS);
 
       return ResponseUtil.success(result.data, BeltMessages.GET_ALL_SUCCESS);
     } catch (error) {

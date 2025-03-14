@@ -4,7 +4,7 @@ import { lastValueFrom, timeout } from 'rxjs';
 import { DataSource } from 'typeorm';
 
 import { StudentEntity } from './entities/student.entity';
-import { CacheKeys, CacheTTLSeconds } from './enums/cache.enum';
+import { CacheKeys } from './enums/cache.enum';
 import { StudentMessages } from './enums/student.message';
 import { IStudentBulkCreateDto, IStudentCreateDto, IStudentFilter, IStudentUpdateDto } from './interfaces/student.interface';
 import { StudentBeltRepository } from './repositories/student-belt.repository';
@@ -30,6 +30,7 @@ import { addMonthsToDateShamsi } from '../../common/utils/date/addMonths';
 import { mildadiToShamsi, shmasiToMiladi } from '../../common/utils/date/convertDate';
 import { isGenderAllowed, isSameGender } from '../../common/utils/functions';
 import { ResponseUtil } from '../../common/utils/response';
+import { CacheTTLSeconds } from '../../common/enums/cache-time';
 
 @Injectable()
 export class StudentService {
@@ -142,7 +143,7 @@ export class StudentService {
       const pageMetaDto = new PageMetaDto(count, query.paginationDto);
       const result = new PageDto(students, pageMetaDto);
 
-      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.STUDENTS);
+      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.GET_ALL_STUDENTS);
 
       return ResponseUtil.success(result.data, StudentMessages.GET_ALL_SUCCESS);
     } catch (error) {
@@ -163,7 +164,7 @@ export class StudentService {
       const pageMetaDto = new PageMetaDto(count, query.paginationDto);
       const result = new PageDto(students, pageMetaDto);
 
-      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.STUDENTS);
+      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.GET_ALL_STUDENTS_SUMMARY);
 
       return ResponseUtil.success(result.data, StudentMessages.GET_ALL_SUCCESS);
     } catch (error) {
@@ -359,7 +360,7 @@ export class StudentService {
     }, {} as Partial<StudentEntity>);
   }
 
-  private async removeStudentData(studentUserId: number, imageKey: string | null) {
+  private async removeStudentData(studentUserId: number, imageKey: string | null): Promise<void> {
     await Promise.all([
       studentUserId ? this.removeStudentUserById(studentUserId) : Promise.resolve(),
       imageKey ? this.removeStudentImage(imageKey) : Promise.resolve(),

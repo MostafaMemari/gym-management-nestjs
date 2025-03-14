@@ -1,18 +1,17 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { SessionEntity } from './entities/session.entity';
 import { CacheKeys } from './enums/cache.enum';
 import { SessionMessages } from './enums/session.message';
 import { ICreateSession, ISessionFilter, IUpdateSession } from './interfaces/session.interface';
 import { SessionRepository } from './repositories/session.repository';
-import { CacheTTLSeconds } from './entities/cache.enum';
 
 import { CacheService } from '../cache/cache.service';
 import { ClubService } from '../club/club.service';
-import { CoachEntity } from '../coach/entities/coach.entity';
 import { StudentService } from '../student/student.service';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
+import { CacheTTLSeconds } from '../../common/enums/cache-time';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { IUser } from '../../common/interfaces/user.interface';
@@ -27,7 +26,7 @@ export class SessionService {
     private readonly studentService: StudentService,
   ) {}
 
-  async create(user: IUser, createSessionDto: ICreateSession) {
+  async create(user: IUser, createSessionDto: ICreateSession): Promise<ServiceResponse> {
     try {
       const { clubId, coachId, studentIds } = createSessionDto;
 
@@ -40,10 +39,10 @@ export class SessionService {
 
       return ResponseUtil.success(session, SessionMessages.CREATE_SUCCESS);
     } catch (error) {
-      return ResponseUtil.error(error?.message || SessionMessages.CREATE_FAILURE, error?.status);
+      ResponseUtil.error(error?.message || SessionMessages.CREATE_FAILURE, error?.status);
     }
   }
-  async update(user: IUser, sessionId: number, updateSessionDto: IUpdateSession) {
+  async update(user: IUser, sessionId: number, updateSessionDto: IUpdateSession): Promise<ServiceResponse> {
     try {
       const { clubId, coachId, studentIds } = updateSessionDto;
       let club = null;
@@ -67,10 +66,10 @@ export class SessionService {
 
       return ResponseUtil.success({ ...updatedSession }, SessionMessages.UPDATE_SUCCESS);
     } catch (error) {
-      return ResponseUtil.error(error?.message || SessionMessages.UPDATE_FAILURE, error?.status);
+      ResponseUtil.error(error?.message || SessionMessages.UPDATE_FAILURE, error?.status);
     }
   }
-  async getAll(user: IUser, query: { querySessionDto: ISessionFilter; paginationDto: IPagination }): Promise<PageDto<SessionEntity>> {
+  async getAll(user: IUser, query: { querySessionDto: ISessionFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
     const { take, page } = query.paginationDto;
 
     try {
@@ -84,7 +83,7 @@ export class SessionService {
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(sessions, pageMetaDto);
 
-      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.SESSIONS);
+      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.GET_ALL_SESSIONS);
 
       return ResponseUtil.success(result.data, SessionMessages.GET_ALL_SUCCESS);
     } catch (error) {
@@ -123,16 +122,5 @@ export class SessionService {
     const session = await this.sessionRepository.findByIdAndOwnerRelationStudents(sessionId, userId);
     if (!session) throw new NotFoundException(SessionMessages.NOT_FOUND);
     return session;
-  }
-
-  async validateOwnershipByIds(sessionIds: number[], userId: number): Promise<SessionEntity[]> {
-    const ownedSessions = await this.sessionRepository.findOwnedSessionsByIds(sessionIds);
-
-    if (ownedSessions.length !== sessionIds.length) {
-      const notOwnedSessionIds = sessionIds.filter((id) => !ownedSessions.some((session) => session.id === id));
-      throw new BadRequestException(SessionMessages.UnauthorizedSessions.replace('{ids}', notOwnedSessionIds.join(', ')));
-    }
-
-    return ownedSessions;
   }
 }

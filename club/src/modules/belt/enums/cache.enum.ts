@@ -4,6 +4,3 @@ export enum CacheKeys {
 export enum CachePatterns {
   BELTS = 'belts_list*',
 }
-export enum CacheTTLSeconds {
-  BELTS = 3600,
-}

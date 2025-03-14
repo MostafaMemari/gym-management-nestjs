@@ -1,30 +1,31 @@
-import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 
 import { CoachEntity } from './entities/coach.entity';
+import { CacheKeys } from './enums/cache.enum';
 import { CoachMessages } from './enums/coach.message';
 import { ICoachCreateDto, ICoachFilter, ICoachUpdateDto } from './interfaces/coach.interface';
 import { CoachRepository } from './repositories/coach.repository';
-import { CacheKeys, CacheTTLSeconds } from './enums/cache.enum';
 
 import { CacheService } from '../cache/cache.service';
 import { ClubService } from '../club/club.service';
+import { ClubEntity } from '../club/entities/club.entity';
 import { ICreateClub } from '../club/interfaces/club.interface';
 import { AwsService } from '../s3AWS/s3AWS.service';
 import { StudentService } from '../student/student.service';
-import { ClubEntity } from '../club/entities/club.entity';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
+import { CacheTTLSeconds } from '../../common/enums/cache-time';
 import { Gender } from '../../common/enums/gender.enum';
 import { UserPatterns } from '../../common/enums/patterns.events';
 import { Services } from '../../common/enums/services.enum';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { IUser } from '../../common/interfaces/user.interface';
+import { checkConnection } from '../../common/utils/checkConnection.utils';
 import { isGenderAllowed } from '../../common/utils/functions';
 import { ResponseUtil } from '../../common/utils/response';
-import { checkConnection } from '../../common/utils/checkConnection.utils';
 
 @Injectable()
 export class CoachService {
@@ -130,7 +131,7 @@ export class CoachService {
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(coaches, pageMetaDto);
 
-      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.COACHES);
+      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.GET_ALL_COACHES);
 
       return ResponseUtil.success(result.data, CoachMessages.GET_ALL_SUCCESS);
     } catch (error) {

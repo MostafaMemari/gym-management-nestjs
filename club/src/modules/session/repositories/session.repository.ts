@@ -66,12 +66,6 @@ export class SessionRepository extends Repository<SessionEntity> {
       .addSelect(['students.id', 'students.full_name'])
       .getOne();
   }
-
-  async findOwnedSessionsByIds(sessionIds: number[]): Promise<SessionEntity[]> {
-    return this.find({
-      where: { id: In(sessionIds) },
-    });
-  }
 }
 
 const validSortFields = ['start_time', 'end_time', 'created_at', 'updated_at'];
