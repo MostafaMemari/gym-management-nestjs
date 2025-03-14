@@ -89,9 +89,10 @@ export class BeltExamService {
     try {
       const beltExam = await this.validateBeltExamId(beltExamId);
 
-      const removedBeltExam = await this.beltExamRepository.delete(beltExamId);
+      const removedBeltExam = await this.beltExamRepository.delete({ id: beltExamId });
 
-      if (removedBeltExam.affected) return ResponseUtil.success(beltExam, BeltExamMessages.REMOVE_SUCCESS);
+      if (!removedBeltExam.affected) ResponseUtil.error(BeltExamMessages.REMOVE_FAILURE);
+      return ResponseUtil.success(beltExam, BeltExamMessages.REMOVE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || BeltExamMessages.CREATE_FAILURE, error?.status);
     }

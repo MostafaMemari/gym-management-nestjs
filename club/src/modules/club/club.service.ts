@@ -83,14 +83,14 @@ export class ClubService {
   }
   async removeById(user: IUser, clubId: number): Promise<ServiceResponse> {
     try {
-      const club = await this.checkClubOwnership(clubId, user.id);
+      await this.checkClubOwnership(clubId, user.id);
 
       const isClubAssignedToCoaches = await this.coachService.existsCoachInClub(clubId);
       if (isClubAssignedToCoaches) throw new BadRequestException(ClubMessages.CANNOT_REMOVE_ASSIGNED_COACHES);
 
-      const removedClub = await this.clubRepository.delete(clubId);
+      const removedClub = await this.clubRepository.delete({ id: clubId });
 
-      if (removedClub.affected) return ResponseUtil.success(club, ClubMessages.REMOVE_SUCCESS);
+      if (!removedClub.affected) ResponseUtil.error(ClubMessages.REMOVE_FAILURE);
 
       return ResponseUtil.success(removedClub, ClubMessages.REMOVE_SUCCESS);
     } catch (error) {

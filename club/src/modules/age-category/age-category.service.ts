@@ -70,9 +70,11 @@ export class AgeCategoryService {
   async removeById(ageCategoryId: number): Promise<ServiceResponse> {
     try {
       const ageCategory = await this.validateAgeCategoryId(ageCategoryId);
-      const removedAgeCategory = await this.ageCategoryRepository.delete(ageCategoryId);
+      const removedAgeCategory = await this.ageCategoryRepository.delete({ id: ageCategoryId });
 
-      if (removedAgeCategory.affected) return ResponseUtil.success(ageCategory, AgeCategoryMessages.REMOVE_SUCCESS);
+      if (!removedAgeCategory.affected) ResponseUtil.error(AgeCategoryMessages.REMOVE_FAILURE);
+
+      return ResponseUtil.success(ageCategory, AgeCategoryMessages.REMOVE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || AgeCategoryMessages.REMOVE_FAILURE, error?.status);
     }

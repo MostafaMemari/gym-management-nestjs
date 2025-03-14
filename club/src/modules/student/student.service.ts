@@ -103,7 +103,7 @@ export class StudentService {
       let student = national_code ? await this.validateUniqueNationalCode(national_code, userId) : null;
       if (!student) student = await this.checkStudentOwnership(studentId, userId);
 
-      if (beltId) await this.beltService.findBeltByIdOrThrow(beltId);
+      if (beltId) await this.beltService.validateBeltId(beltId);
 
       if (clubId || coachId || gender) {
         const { club, coach } = await this.validateClubAndCoachOwnership(userId, clubId ?? student.clubId, coachId ?? student.coachId);

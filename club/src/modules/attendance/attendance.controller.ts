@@ -37,17 +37,17 @@ export class AttendanceController {
     return this.attendanceService.getAll(user, { queryAttendanceDto, paginationDto });
   }
 
-  // @MessagePattern(AttendancePatterns.GetAttendance)
-  // findOne(@Payload() data: { user: IUser; attendanceId: number }) {
-  //   const { user, attendanceId } = data;
+  @MessagePattern(AttendancePatterns.GET_ONE)
+  findOne(@Payload() data: { user: IUser; attendanceId: number }) {
+    const { user, attendanceId } = data;
 
-  //   return this.attendanceService.findOneById(user, attendanceId);
-  // }
+    return this.attendanceService.findOneById(user, attendanceId);
+  }
 
-  // @MessagePattern(ClubPatterns.REMOVE)
-  // remove(@Payload() data: { user: IUser; attendanceId: number }) {
-  //   const { user, attendanceId } = data;
+  @MessagePattern(AttendancePatterns.REMOVE)
+  remove(@Payload() data: { user: IUser; attendanceId: number }) {
+    const { user, attendanceId } = data;
 
-  //   return this.attendanceService.findOneById(user, attendanceId);
-  // }
+    return this.attendanceService.remove(user, attendanceId);
+  }
 }

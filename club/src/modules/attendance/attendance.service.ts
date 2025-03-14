@@ -124,7 +124,6 @@ export class AttendanceService {
       await queryRunner.release();
     }
   }
-
   async getAll(user: IUser, query: { queryAttendanceDto: IAttendanceFilter; paginationDto: IPagination }): Promise<any> {
     const { take, page } = query.paginationDto;
 
@@ -213,6 +212,29 @@ export class AttendanceService {
       return ResponseUtil.success(result.data, AttendanceMessages.GET_ALL_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || AttendanceMessages.GET_ALL_FAILURE, error?.status);
+    }
+  }
+
+  async findOneById(user: IUser, attendanceId: number) {
+    try {
+      const attendance = await this.checkAttendanceOwnership(attendanceId, user.id);
+
+      return ResponseUtil.success(attendance, AttendanceMessages.GET_SUCCESS);
+    } catch (error) {
+      return ResponseUtil.error(error?.message || AttendanceMessages.GET_FAILURE, error?.status);
+    }
+  }
+  async remove(user: IUser, attendanceId: number) {
+    try {
+      const attendance = await this.checkAttendanceOwnership(attendanceId, user.id);
+
+      const removedClub = await this.attendanceSessionRepository.delete({ id: attendanceId });
+
+      if (!removedClub.affected) ResponseUtil.error(AttendanceMessages.REMOVE_FAILURE);
+
+      return ResponseUtil.success(attendance, AttendanceMessages.REMOVE_SUCCESS);
+    } catch (error) {
+      return ResponseUtil.error(error?.message || AttendanceMessages.REMOVE_FAILURE, error?.status);
     }
   }
 

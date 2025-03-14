@@ -102,11 +102,11 @@ export class SessionService {
   }
   async removeById(user: IUser, sessionId: number): Promise<ServiceResponse> {
     try {
-      const session = await this.checkSessionOwnership(sessionId, user.id);
+      await this.checkSessionOwnership(sessionId, user.id);
 
-      const removedSession = await this.sessionRepository.delete(sessionId);
+      const removedSession = await this.sessionRepository.delete({ id: sessionId });
 
-      if (removedSession.affected) return ResponseUtil.success(session, SessionMessages.REMOVE_SUCCESS);
+      if (removedSession.affected) ResponseUtil.error(SessionMessages.REMOVE_FAILURE);
 
       return ResponseUtil.success(removedSession, SessionMessages.REMOVE_FAILURE);
     } catch (error) {
