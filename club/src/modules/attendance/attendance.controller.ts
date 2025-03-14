@@ -23,13 +23,6 @@ export class AttendanceController {
     return this.clubService.create(user, createAttendanceDto);
   }
 
-  @MessagePattern(AttendancePatterns.GET_ALL)
-  findAll(@Payload() data: { user: IUser; queryAttendanceDto: IAttendanceFilter; paginationDto: IPagination }) {
-    const { user, queryAttendanceDto, paginationDto } = data;
-
-    return this.clubService.getAll(user, { queryAttendanceDto, paginationDto });
-  }
-
   // @MessagePattern(AttendancePatterns.UpdateAttendance)
   // update(@Payload() data: { user: IUser; clubId: number; updateAttendanceDto: IUpdateAttendance }) {
   //   const { user, clubId, updateAttendanceDto } = data;
@@ -37,15 +30,22 @@ export class AttendanceController {
   //   return this.clubService.update(user, clubId, updateAttendanceDto);
   // }
 
-  // @MessagePattern(AttendancePatterns.GetAttendances)
-  // findAll(@Payload() data: { user: IUser; queryAttendanceDto: ISearchAttendanceQuery; paginationDto: IPagination }) {
-  //   const { user, queryAttendanceDto, paginationDto } = data;
+  @MessagePattern(AttendancePatterns.GET_ALL)
+  findAll(@Payload() data: { user: IUser; queryAttendanceDto: IAttendanceFilter; paginationDto: IPagination }) {
+    const { user, queryAttendanceDto, paginationDto } = data;
 
-  //   return this.clubService.getAll(user, { queryAttendanceDto, paginationDto });
-  // }
+    return this.clubService.getAll(user, { queryAttendanceDto, paginationDto });
+  }
 
   // @MessagePattern(AttendancePatterns.GetAttendance)
   // findOne(@Payload() data: { user: IUser; clubId: number }) {
+  //   const { user, clubId } = data;
+
+  //   return this.clubService.findOneById(user, clubId);
+  // }
+
+  // @MessagePattern(ClubPatterns.REMOVE)
+  // remove(@Payload() data: { user: IUser; clubId: number }) {
   //   const { user, clubId } = data;
 
   //   return this.clubService.findOneById(user, clubId);

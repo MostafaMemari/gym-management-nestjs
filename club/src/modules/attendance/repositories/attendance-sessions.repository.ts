@@ -26,6 +26,8 @@ export class AttendanceSessionRepository extends Repository<AttendanceSessionEnt
   ): Promise<[AttendanceSessionEntity[], number]> {
     const queryBuilder = this.createQueryBuilder(EntityName.AttendanceSessions)
       .leftJoinAndSelect('attendance_sessions.attendances', 'attendances')
+      .leftJoin('attendances.student', 'student')
+      .addSelect(['student.id', 'student.full_name'])
       .leftJoin('attendance_sessions.session', 'session')
       .leftJoin('session.club', 'club')
       .where('club.ownerId = :userId', { userId });

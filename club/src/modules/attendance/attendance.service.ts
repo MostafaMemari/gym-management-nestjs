@@ -13,7 +13,7 @@ import { SessionService } from '../session/session.service';
 import { AttendanceEntity } from './entities/attendance.entity';
 import { AttendanceMessages } from './enums/attendance.message';
 import { CacheKeys, CacheTTLSeconds } from './enums/cache.enum';
-import { IAttendanceFilter, IRecordAttendance } from './interfaces/attendance.interface';
+import { IAttendanceFilter, IRecordAttendance, IStudentAttendance } from './interfaces/attendance.interface';
 import { AttendanceSessionRepository } from './repositories/attendance-sessions.repository';
 
 @Injectable()
@@ -84,8 +84,72 @@ export class AttendanceService {
         take,
       );
 
+      const formattedData = attendances.map((item) => ({
+        id: item.id,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+        sessionId: item.sessionId,
+        date: item.date,
+        attendances: item.attendances.map((attendance) => ({
+          id: attendance.student.id,
+          full_name: attendance.student.full_name,
+          status: attendance.status,
+          note: attendance?.note,
+        })),
+      }));
+
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
-      const result = new PageDto(attendances, pageMetaDto);
+      const result = new PageDto(formattedData, pageMetaDto);
+
+      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.ATTENDANCES);
+
+      // const report: IStudentAttendance = attendances.reduce((acc, session) => {
+      //   const date = new Date(session.date);
+      //   const dateStr = date.toISOString().split('T')[0];
+      //   acc[dateStr] = session.attendances.map((att) => ({
+      //     studentId: att.studentId,
+      //     fullName: att.student.full_name,
+      //     status: att.status,
+      //     note: att.note,
+      //   }));
+      //   return acc;
+      // }, {} as IStudentAttendance);
+
+      // return report;
+
+      return ResponseUtil.success(result.data, AttendanceMessages.GET_ALL_SUCCESS);
+    } catch (error) {
+      ResponseUtil.error(error?.message || AttendanceMessages.GET_ALL_FAILURE, error?.status);
+    }
+  }
+  async reportAll(user: IUser, query: { queryAttendanceDto: IAttendanceFilter; paginationDto: IPagination }): Promise<any> {
+    const { take, page } = query.paginationDto;
+
+    try {
+      const cacheKey = `${CacheKeys.ATTENDANCES}-${user.id}-${page}-${take}-${JSON.stringify(query.queryAttendanceDto)}`;
+
+      const cachedData = await this.cacheService.get<PageDto<AttendanceEntity>>(cacheKey);
+      if (cachedData) return ResponseUtil.success(cachedData.data, AttendanceMessages.GET_ALL_SUCCESS);
+
+      const [attendances, count] = await this.attendanceSessionRepository.getAttendancesWithFilters(
+        user.id,
+        query.queryAttendanceDto,
+        page,
+        take,
+      );
+
+      const formattedData = attendances.map(({ date, attendances }) => ({
+        date: new Date(date).toISOString().split('T')[0],
+        attendances: attendances.map(({ studentId, student, status, note }) => ({
+          studentId,
+          fullName: student.full_name,
+          status,
+          note,
+        })),
+      }));
+
+      const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
+      const result = new PageDto(formattedData, pageMetaDto);
 
       await this.cacheService.set(cacheKey, result, CacheTTLSeconds.ATTENDANCES);
 
@@ -95,31 +159,6 @@ export class AttendanceService {
     }
   }
 
-  // async getAttendanceReport(sessionId: number, startDate: string, endDate: string): Promise<AttendanceReportDto> {
-  //   const attendanceSessions = await this.attendanceSessionRepository.find({
-  //     where: {
-  //       sessionId,
-  //       date: Between(new Date(startDate), new Date(endDate)),
-  //     },
-  //     relations: ['attendances', 'attendances.student'],
-  //     order: { date: 'ASC' },
-  //   });
-
-  //   const report: AttendanceReportDto = attendanceSessions.reduce((acc, session) => {
-  //     const dateStr = session.date.toISOString().split('T')[0];
-  //     acc[dateStr] = session.attendances.map((att) => ({
-  //       studentId: att.studentId,
-  //       fullName: att.student.full_name,
-  //       status: att.status,
-  //       note: att.note,
-  //       attendanceDateTime: att.attendanceDateTime.toISOString(),
-  //     }));
-  //     return acc;
-  //   }, {} as AttendanceReportDto);
-
-  //   return report;
-  // }
-
   validateAllowedDays(allowedDays: string[], date: string): void {
     const inputDate = new Date(date);
     const dayOfWeek = inputDate.toLocaleString('en-US', { weekday: 'long' });
@@ -128,7 +167,6 @@ export class AttendanceService {
       throw new Error(AttendanceMessages.INVALID_SESSION_DAY.replace('{dayOfWeek}', dayOfWeek));
     }
   }
-
   async checkDuplicateAttendanceSession(sessionId: number, date: Date): Promise<void> {
     const session = await this.attendanceSessionRepository.findAttendanceByIdAndDate(sessionId, date);
     if (session) throw new BadRequestException(AttendanceMessages.ALREADY_RECORDED);

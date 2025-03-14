@@ -5,5 +5,5 @@ export enum CachePatterns {
   ATTENDANCES = 'attendances_list*',
 }
 export enum CacheTTLSeconds {
-  ATTENDANCES = 3600,
+  ATTENDANCES = 1,
 }
