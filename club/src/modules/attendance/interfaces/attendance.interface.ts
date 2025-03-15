@@ -3,17 +3,16 @@ import { AttendanceStatus } from '../enums/attendance.status.enum';
 export interface IStudentAttendance {
   studentId: number;
   note: string;
-  isGusted: true;
   status: AttendanceStatus;
 }
 
-export interface IRecordAttendance {
+export interface IRecordAttendanceDto {
   sessionId: number;
   date: Date;
   attendances: IStudentAttendance[];
 }
 
-export type IUpdateRecordAttendance = Partial<IRecordAttendance>;
+export type IUpdateRecordAttendance = Partial<IRecordAttendanceDto>;
 
 export interface IAttendanceFilter {
   start_date?: Date;

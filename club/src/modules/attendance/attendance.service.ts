@@ -6,17 +6,18 @@ import { AttendanceSessionEntity } from './entities/attendance-sessions.entity';
 import { AttendanceEntity } from './entities/attendance.entity';
 import { AttendanceMessages } from './enums/attendance.message';
 import { CacheKeys } from './enums/cache.enum';
-import { IAttendanceFilter, IRecordAttendance, IUpdateRecordAttendance } from './interfaces/attendance.interface';
+import { IAttendanceFilter, IRecordAttendanceDto, IUpdateRecordAttendance } from './interfaces/attendance.interface';
 import { AttendanceSessionRepository } from './repositories/attendance-sessions.repository';
 import { AttendanceRepository } from './repositories/attendance.repository';
 
 import { CacheService } from '../cache/cache.service';
-import { StudentService } from '../student/student.service';
 import { SessionService } from '../session/session.service';
+import { StudentService } from '../student/student.service';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
 import { CacheTTLSeconds } from '../../common/enums/cache-time';
 import { IPagination } from '../../common/interfaces/pagination.interface';
+import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { IUser } from '../../common/interfaces/user.interface';
 import { ResponseUtil } from '../../common/utils/response';
 
@@ -31,7 +32,7 @@ export class AttendanceService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async create(user: IUser, createAttendanceDto: IRecordAttendance) {
+  async create(user: IUser, createAttendanceDto: IRecordAttendanceDto): Promise<ServiceResponse> {
     const { sessionId, date, attendances } = createAttendanceDto;
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -78,7 +79,7 @@ export class AttendanceService {
       await queryRunner.release();
     }
   }
-  async update(user: IUser, attendanceId: number, updateAttendanceDto: IUpdateRecordAttendance) {
+  async update(user: IUser, attendanceId: number, updateAttendanceDto: IUpdateRecordAttendance): Promise<ServiceResponse> {
     const { sessionId, date, attendances } = updateAttendanceDto;
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -134,7 +135,7 @@ export class AttendanceService {
       await queryRunner.release();
     }
   }
-  async getAll(user: IUser, query: { queryAttendanceDto: IAttendanceFilter; paginationDto: IPagination }): Promise<any> {
+  async getAll(user: IUser, query: { queryAttendanceDto: IAttendanceFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
     const { take, page } = query.paginationDto;
 
     try {
@@ -188,7 +189,7 @@ export class AttendanceService {
       ResponseUtil.error(error?.message || AttendanceMessages.GET_ALL_FAILURE, error?.status);
     }
   }
-  async reportAll(user: IUser, query: { queryAttendanceDto: IAttendanceFilter; paginationDto: IPagination }): Promise<any> {
+  async reportAll(user: IUser, query: { queryAttendanceDto: IAttendanceFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
     const { take, page } = query.paginationDto;
 
     try {
@@ -224,16 +225,16 @@ export class AttendanceService {
       ResponseUtil.error(error?.message || AttendanceMessages.GET_ALL_FAILURE, error?.status);
     }
   }
-  async findOneById(user: IUser, attendanceId: number) {
+  async findOneById(user: IUser, attendanceId: number): Promise<ServiceResponse> {
     try {
       const attendance = await this.validateOwnershipByIdWithStudents(attendanceId, user.id);
 
       return ResponseUtil.success(attendance, AttendanceMessages.GET_SUCCESS);
     } catch (error) {
-      return ResponseUtil.error(error?.message || AttendanceMessages.GET_FAILURE, error?.status);
+      ResponseUtil.error(error?.message || AttendanceMessages.GET_FAILURE, error?.status);
     }
   }
-  async remove(user: IUser, attendanceId: number) {
+  async remove(user: IUser, attendanceId: number): Promise<ServiceResponse> {
     try {
       const attendance = await this.validateOwnershipById(attendanceId, user.id);
 
@@ -243,32 +244,32 @@ export class AttendanceService {
 
       return ResponseUtil.success(attendance, AttendanceMessages.REMOVE_SUCCESS);
     } catch (error) {
-      return ResponseUtil.error(error?.message || AttendanceMessages.REMOVE_FAILURE, error?.status);
+      ResponseUtil.error(error?.message || AttendanceMessages.REMOVE_FAILURE, error?.status);
     }
   }
 
-  async validateOwnershipById(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
+  private async validateOwnershipById(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
     const attendance = await this.attendanceSessionRepository.findOwnedById(attendanceId, userId);
     if (!attendance) throw new NotFoundException(AttendanceMessages.NOT_FOUND);
     return attendance;
   }
-  async validateOwnershipByIdWithAttendances(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
+  private async validateOwnershipByIdWithAttendances(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
     const attendance = await this.attendanceSessionRepository.findOwnedWithAttendances(attendanceId, userId);
     if (!attendance) throw new NotFoundException(AttendanceMessages.NOT_FOUND);
     return attendance;
   }
-  async validateOwnershipByIdWithStudents(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
+  private async validateOwnershipByIdWithStudents(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
     const attendance = await this.attendanceSessionRepository.findOwnedWithStudents(attendanceId, userId);
     if (!attendance) throw new NotFoundException(AttendanceMessages.NOT_FOUND);
     return attendance;
   }
 
-  async checkDuplicateAttendanceSession(sessionId: number, date: Date): Promise<void> {
+  private async checkDuplicateAttendanceSession(sessionId: number, date: Date): Promise<void> {
     const session = await this.attendanceSessionRepository.findAttendanceByIdAndDate(sessionId, date);
     if (session) throw new BadRequestException(AttendanceMessages.ALREADY_RECORDED);
   }
 
-  validateAllowedDays(allowedDays: string[], date: Date | string): void {
+  private validateAllowedDays(allowedDays: string[], date: Date | string): void {
     const inputDate = new Date(date);
 
     const dayOfWeek = formatDate(inputDate, 'EEEE');
@@ -277,8 +278,7 @@ export class AttendanceService {
       throw new BadRequestException(AttendanceMessages.INVALID_SESSION_DAY.replace('{dayOfWeek}', dayOfWeek));
     }
   }
-
-  checkDateIsNotInTheFuture(date: Date): void {
+  private checkDateIsNotInTheFuture(date: Date): void {
     const today = new Date();
     const inputDate = new Date(date);
 

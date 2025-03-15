@@ -204,7 +204,7 @@ export class StudentService {
     }
   }
 
-  async bulkCreate(user: IUser, studentData: IStudentBulkCreateDto, studentsJson: Express.Multer.File) {
+  async bulkCreate(user: IUser, studentData: IStudentBulkCreateDto, studentsJson: Express.Multer.File): Promise<ServiceResponse> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -263,10 +263,9 @@ export class StudentService {
         StudentMessages.BULK_CREATE_SUCCESS.replace('{count}', (studentUserIds.length + 1).toString()),
       );
     } catch (error) {
-      console.log(studentUserIds);
       await queryRunner.rollbackTransaction();
       await this.removeStudentsUserByIds(studentUserIds);
-      return ResponseUtil.error(error?.message || StudentMessages.BULK_CREATE_FAILURE, error?.status);
+      ResponseUtil.error(error?.message || StudentMessages.BULK_CREATE_FAILURE, error?.status);
     } finally {
       await queryRunner.release();
     }

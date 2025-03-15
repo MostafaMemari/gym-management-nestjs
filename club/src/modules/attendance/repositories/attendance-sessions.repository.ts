@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, In, QueryRunner, Repository } from 'typeorm';
 
 import { AttendanceSessionEntity } from '../entities/attendance-sessions.entity';
+import { IAttendanceFilter } from '../interfaces/attendance.interface';
 
 import { EntityName } from '../../../common/enums/entity.enum';
-import { IAttendanceFilter } from '../interfaces/attendance.interface';
 
 @Injectable()
 export class AttendanceSessionRepository extends Repository<AttendanceSessionEntity> {

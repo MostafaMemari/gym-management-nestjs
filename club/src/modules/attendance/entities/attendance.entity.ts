@@ -16,6 +16,9 @@ export class AttendanceEntity extends AbstractEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   note?: string;
 
+  @Column({ type: 'enum', enum: AttendanceStatus, default: AttendanceStatus.ABSENT })
+  status: AttendanceStatus;
+
   @Column({ type: 'boolean', default: false })
   is_guest: boolean;
 
@@ -24,9 +27,6 @@ export class AttendanceEntity extends AbstractEntity {
 
   @Column({ type: 'integer', nullable: false })
   attendanceSessionId: number;
-
-  @Column({ type: 'enum', enum: AttendanceStatus, default: AttendanceStatus.ABSENT })
-  status: AttendanceStatus;
 
   @ManyToOne(() => AttendanceSessionEntity, (attendanceSession) => attendanceSession.attendances, {
     nullable: false,

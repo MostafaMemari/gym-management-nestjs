@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, In, Repository } from 'typeorm';
 
-import { EntityName } from '../../../common/enums/entity.enum';
 import { AgeCategoryEntity } from '../entities/age-category.entity';
 import { IAgeCategoryCreateDto, IAgeCategoryFilter, IAgeCategoryUpdateDto } from '../interfaces/age-category.interface';
+
+import { EntityName } from '../../../common/enums/entity.enum';
 
 @Injectable()
 export class AgeCategoryRepository extends Repository<AgeCategoryEntity> {

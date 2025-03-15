@@ -1,11 +1,13 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
-import { ICreateSession, IUpdateSession, ISessionFilter } from './interfaces/session.interface';
+import { ICreateSession, ISessionFilter, IUpdateSession } from './interfaces/session.interface';
 import { SessionPatterns } from './patterns/session.pattern';
 import { SessionService } from './session.service';
-import { IUser } from '../../common/interfaces/user.interface';
+
 import { IPagination } from '../../common/interfaces/pagination.interface';
+import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
+import { IUser } from '../../common/interfaces/user.interface';
 
 @Controller()
 export class SessionController {
@@ -17,33 +19,31 @@ export class SessionController {
   }
 
   @MessagePattern(SessionPatterns.CREATE)
-  create(@Payload() data: { user: IUser; createSessionDto: ICreateSession }) {
+  create(@Payload() data: { user: IUser; createSessionDto: ICreateSession }): Promise<ServiceResponse> {
     const { user, createSessionDto } = data;
 
     return this.clubService.create(user, createSessionDto);
   }
   @MessagePattern(SessionPatterns.UPDATE)
-  update(@Payload() data: { user: IUser; sessionId: number; updateSessionDto: IUpdateSession }) {
+  update(@Payload() data: { user: IUser; sessionId: number; updateSessionDto: IUpdateSession }): Promise<ServiceResponse> {
     const { user, sessionId, updateSessionDto } = data;
 
     return this.clubService.update(user, sessionId, updateSessionDto);
   }
-
   @MessagePattern(SessionPatterns.GET_ALL)
-  findAll(@Payload() data: { user: IUser; querySessionDto: ISessionFilter; paginationDto: IPagination }) {
+  findAll(@Payload() data: { user: IUser; querySessionDto: ISessionFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
     const { user, querySessionDto, paginationDto } = data;
 
     return this.clubService.getAll(user, { querySessionDto, paginationDto });
   }
-
   @MessagePattern(SessionPatterns.GET_ONE)
-  findOne(@Payload() data: { user: IUser; sessionId: number }) {
+  findOne(@Payload() data: { user: IUser; sessionId: number }): Promise<ServiceResponse> {
     const { user, sessionId } = data;
 
     return this.clubService.findOneById(user, sessionId);
   }
   @MessagePattern(SessionPatterns.REMOVE)
-  remove(@Payload() data: { user: IUser; sessionId: number }) {
+  remove(@Payload() data: { user: IUser; sessionId: number }): Promise<ServiceResponse> {
     const { user, sessionId } = data;
 
     return this.clubService.removeById(user, sessionId);

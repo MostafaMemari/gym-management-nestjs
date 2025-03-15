@@ -81,7 +81,7 @@ export class AgeCategoryService {
     }
   }
 
-  async validateById(ageCategoryId: number): Promise<AgeCategoryEntity> {
+  private async validateById(ageCategoryId: number): Promise<AgeCategoryEntity> {
     const ageCategory = await this.ageCategoryRepository.findOneBy({ id: ageCategoryId });
     if (!ageCategory) throw new NotFoundException(AgeCategoryMessages.NOT_FOUND);
     return ageCategory;
