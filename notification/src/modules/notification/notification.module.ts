@@ -12,7 +12,7 @@ import { TelegramBotModule } from '../telegram-bot/telegram-bot.module';
     ConfigModule.forRoot(envConfig()),
     MongooseModule.forRoot(process.env.DATABASE_URL),
     MongooseModule.forFeature([{ name: Notification.name, schema: NotificationSchema }]),
-    TelegramBotModule,
+    //TelegramBotModule,
   ],
   controllers: [NotificationController],
   providers: [NotificationService],

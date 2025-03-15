@@ -11,7 +11,7 @@ import { transformArrayIds, transformId } from '../../common/utils/transformId.u
 
 @Injectable()
 export class NotificationService {
-  constructor(@InjectModel(Notification.name) private readonly notificationModel: Model<Notification>) {}
+  constructor(@InjectModel(Notification.name) private readonly notificationModel: Model<Notification>) { }
 
   async create(createNotificationDto: ICreateNotification): Promise<ServiceResponse> {
     try {
@@ -28,7 +28,7 @@ export class NotificationService {
   async getUserNotifications({ userId }: { userId: string }) {
     try {
       const notifications = await this.notificationModel.aggregate([
-        { $match: { $or: [{ recipients: userId }, { readBy: userId }] } },
+        { $match: { recipients: userId } },
         { $sort: { createdAt: -1 } },
         {
           $project: {
@@ -73,8 +73,7 @@ export class NotificationService {
         .findOneAndUpdate(
           { _id: notificationId, recipients: userId },
           {
-            $addToSet: { readBy: userId },
-            $pull: { recipients: userId },
+            $addToSet: { readBy: userId }
           },
           { new: true },
         )

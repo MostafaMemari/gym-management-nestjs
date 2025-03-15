@@ -16,6 +16,8 @@ export class Notification extends Document<Notification> {
   isRead: boolean;
   @Prop({ type: [Number], default: [] })
   readBy: number[];
+  @Prop({ type: Boolean, default: false })
+  isEdited: boolean
 }
 
 export const NotificationSchema = SchemaFactory.createForClass(Notification);
