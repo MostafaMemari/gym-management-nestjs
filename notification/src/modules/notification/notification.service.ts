@@ -1,13 +1,14 @@
 import { BadRequestException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Notification } from './notification.schema';
-import { isValidObjectId, Model } from 'mongoose';
+import { isValidObjectId, Model, ObjectId } from 'mongoose';
 import { RpcException } from '@nestjs/microservices';
 import { ICreateNotification, IMarkAsRead, IRemoveNotification, IUpdateNotification } from '../../common/interfaces/notification.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { NotificationMessages } from '../../common/enums/notification.messages';
 import { ResponseUtil } from '../../common/utils/response.utils';
 import { transformArrayIds, transformId } from '../../common/utils/transformId.utils';
+import { RootFilterQuery } from 'mongoose';
 
 @Injectable()
 export class NotificationService {
@@ -67,13 +68,9 @@ export class NotificationService {
     try {
       const { notificationId, userId } = notificationDto;
 
-      if (!isValidObjectId(notificationId)) throw new BadRequestException(NotificationMessages.InvalidObjectId);
+      this.validateObjectId(notificationId);
 
-      const existingNotification = await this.notificationModel.findOne({ _id: notificationId, recipients: userId });
-
-      if (!existingNotification) {
-        throw new NotFoundException(NotificationMessages.NotFoundNotification);
-      }
+      const existingNotification = await this.findOneOrFail(notificationId, { recipients: userId });
 
       if (existingNotification.readBy.includes(userId)) throw new BadRequestException(NotificationMessages.AlreadyMarkAsReadNotification);
 
@@ -102,11 +99,9 @@ export class NotificationService {
     try {
       const { notificationId, senderId } = notificationDto;
 
-      if (!isValidObjectId(notificationId)) throw new BadRequestException(NotificationMessages.InvalidObjectId);
+      this.validateObjectId(notificationId);
 
-      const notification = await this.notificationModel.findOneAndDelete({ _id: notificationId, senderId }).lean();
-
-      if (!notification) throw new NotFoundException(NotificationMessages.NotFoundNotification);
+      const notification = await this.findOneOrFail(notificationId, { senderId });
 
       const transformedId = transformId(notification);
 
@@ -120,7 +115,9 @@ export class NotificationService {
     try {
       const { message, recipients, notificationId, senderId } = notificationDto;
 
-      if (!isValidObjectId(notificationId)) throw new BadRequestException(NotificationMessages.InvalidObjectId);
+      this.validateObjectId(notificationId);
+
+      await this.findOneOrFail(notificationId);
 
       const notification = await this.notificationModel
         .findOneAndUpdate(
@@ -129,7 +126,7 @@ export class NotificationService {
             message,
             recipients,
             isEdited: true,
-            $pull: { readBy: { $nin: recipients } },
+            readBy: [],
           },
           {
             new: true,
@@ -137,13 +134,23 @@ export class NotificationService {
         )
         .lean();
 
-      if (!notification) throw new NotFoundException(NotificationMessages.NotFoundNotification);
-
       const transformedId = transformId(notification);
 
       return ResponseUtil.success({ notification: transformedId }, NotificationMessages.UpdatedSuccess, HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }
+  }
+
+  async findOneOrFail(id: ObjectId | string, filters: RootFilterQuery<Notification> = {}): Promise<Notification | never> {
+    const notification = await this.notificationModel.findOne({ _id: id, ...filters }).lean();
+
+    if (!notification) throw new NotFoundException(NotificationMessages.NotFoundNotification);
+
+    return notification;
+  }
+
+  validateObjectId(objectId: ObjectId | string): void | never {
+    if (!isValidObjectId(objectId)) throw new BadRequestException(NotificationMessages.InvalidObjectId);
   }
 }
