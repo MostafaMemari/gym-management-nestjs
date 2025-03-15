@@ -56,17 +56,17 @@ export class CreateSessionDto {
   description: string;
 
   @IsNotEmpty()
+  @Transform(({ value }) => parseInt(value, 10))
   @IsInt()
   @IsPositive()
-  @Transform(({ value }) => parseInt(value, 10))
-  @ApiProperty({ type: 'integer', required: true, example: '' })
+  @ApiProperty({ type: 'number', example: '' })
   clubId: number;
 
   @IsNotEmpty()
+  @Transform(({ value }) => parseInt(value, 10))
   @IsInt()
   @IsPositive()
-  @Transform(({ value }) => parseInt(value, 10))
-  @ApiProperty({ type: 'integer', required: true, example: '' })
+  @ApiProperty({ type: 'number', example: '' })
   coachId: number;
 
   @IsOptional()

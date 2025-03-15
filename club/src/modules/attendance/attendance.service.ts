@@ -11,6 +11,7 @@ import { AttendanceSessionRepository } from './repositories/attendance-sessions.
 import { AttendanceRepository } from './repositories/attendance.repository';
 
 import { CacheService } from '../cache/cache.service';
+import { StudentService } from '../student/student.service';
 import { SessionService } from '../session/session.service';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
@@ -24,6 +25,7 @@ export class AttendanceService {
   constructor(
     private readonly attendanceSessionRepository: AttendanceSessionRepository,
     private readonly attendanceRepository: AttendanceRepository,
+    private readonly studentService: StudentService,
     private readonly sessionService: SessionService,
     private readonly cacheService: CacheService,
     private readonly dataSource: DataSource,
@@ -40,13 +42,19 @@ export class AttendanceService {
       this.checkDateIsNotInTheFuture(date);
       this.validateAllowedDays(session.days, date);
       await this.checkDuplicateAttendanceSession(sessionId, date);
+      const studentIdsAttendances = attendances.map((attendance) => attendance.studentId);
 
-      const attendanceSession = await this.attendanceSessionRepository.createAttendanceSession({ date, session }, queryRunner);
+      const attendanceSession = await this.attendanceSessionRepository.createAttendanceSession(
+        { date, sessionId: session.id, coachId: session.coachId },
+        queryRunner,
+      );
+      await this.studentService.validateStudentsIdsByCoach(studentIdsAttendances, session.coachId);
 
-      const validStudentIds = session.students.map((student) => student.id);
+      const sessionStudentIds = session.students.map((student) => student.id);
+
       const attendanceEntities = await this.attendanceRepository.createAttendanceEntities(
         attendances,
-        validStudentIds,
+        sessionStudentIds,
         attendanceSession,
         queryRunner,
       );
@@ -57,6 +65,7 @@ export class AttendanceService {
 
       return ResponseUtil.success({
         ...createAttendanceDto,
+        coachId: session.coachId,
         attendances: attendanceEntities.map((attendance) => ({
           studentId: attendance.studentId,
           status: attendance.status,

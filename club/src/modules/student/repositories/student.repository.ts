@@ -260,6 +260,9 @@ export class StudentRepository extends Repository<StudentEntity> {
   async findByIdsAndCoachAndGender(ids: number[], coachId: number, gender: Gender): Promise<StudentEntity[]> {
     return this.find({ where: { id: In(ids), gender, coachId } });
   }
+  async findByIdsAndCoach(ids: number[], coachId: number): Promise<StudentEntity[]> {
+    return this.find({ where: { id: In(ids), coachId } });
+  }
 }
 
 const validSortFields = ['birth_date', 'sports_insurance_date', 'expire_image_date', 'created_at', 'updated_at'];

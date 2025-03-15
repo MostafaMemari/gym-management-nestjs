@@ -7,6 +7,7 @@ import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
 import { ClubEntity } from '../../../modules/club/entities/club.entity';
+import { AttendanceSessionEntity } from 'src/modules/attendance/entities/attendance-sessions.entity';
 
 @Entity(EntityName.Coaches)
 @Index(['full_name', 'national_code'])
@@ -49,4 +50,7 @@ export class CoachEntity extends AbstractEntity {
 
   @OneToMany(() => SessionEntity, (session) => session.coach)
   sessions: SessionEntity;
+
+  @OneToMany(() => AttendanceSessionEntity, (attendanceSession) => attendanceSession.coach)
+  attendanceSessions: AttendanceSessionEntity[];
 }

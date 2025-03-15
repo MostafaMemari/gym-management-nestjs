@@ -400,8 +400,19 @@ export class StudentService {
     const nextBeltDateMiladi = shmasiToMiladi(nextBeltDateShamsi);
     return new Date(nextBeltDateMiladi);
   }
-  async validateStudentIds(studentIds: number[], coachId: number, gender: Gender): Promise<StudentEntity[]> {
+  async validateStudentsIdsByCoachAndGender(studentIds: number[], coachId: number, gender: Gender): Promise<StudentEntity[]> {
     const foundStudents = await this.studentRepository.findByIdsAndCoachAndGender(studentIds, coachId, gender);
+    const foundIds = foundStudents.map((student) => student.id);
+    const invalidIds = studentIds.filter((id) => !foundIds.includes(id));
+
+    if (invalidIds.length > 0) {
+      throw new NotFoundException(StudentMessages.MULTIPLE_NOT_FOUND.replace('{ids}', invalidIds.join(', ')));
+    }
+
+    return foundStudents;
+  }
+  async validateStudentsIdsByCoach(studentIds: number[], coachId: number): Promise<StudentEntity[]> {
+    const foundStudents = await this.studentRepository.findByIdsAndCoach(studentIds, coachId);
     const foundIds = foundStudents.map((student) => student.id);
     const invalidIds = studentIds.filter((id) => !foundIds.includes(id));
 

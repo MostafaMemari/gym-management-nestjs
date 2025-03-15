@@ -3,6 +3,7 @@ import { AttendanceStatus } from '../enums/attendance.status.enum';
 export interface IStudentAttendance {
   studentId: number;
   note: string;
+  isGusted: true;
   status: AttendanceStatus;
 }
 

@@ -17,17 +17,16 @@ export class AttendanceRepository extends Repository<AttendanceEntity> {
     attendanceSession: AttendanceSessionEntity,
     queryRunner?: QueryRunner,
   ): Promise<AttendanceEntity[]> {
-    const attendanceEntities: AttendanceEntity[] = attendances
-      .filter((att) => validStudentIds.includes(Number(att.studentId)))
-      .map((att) => {
-        const attendance = new AttendanceEntity();
-        attendance.studentId = att.studentId;
-        attendance.attendanceSession = attendanceSession;
-        attendance.status = att.status;
-        attendance.note = att.note;
-        attendance.attendance_date_time = new Date();
-        return attendance;
-      });
+    const attendanceEntities: AttendanceEntity[] = attendances.map((att) => {
+      const attendance = new AttendanceEntity();
+      attendance.studentId = att.studentId;
+      attendance.attendanceSession = attendanceSession;
+      attendance.status = att.status;
+      attendance.note = att.note;
+      attendance.attendance_date_time = new Date();
+      attendance.is_guest = !validStudentIds.includes(Number(att.studentId));
+      return attendance;
+    });
 
     if (queryRunner) {
       return await queryRunner.manager.save(AttendanceEntity, attendanceEntities);

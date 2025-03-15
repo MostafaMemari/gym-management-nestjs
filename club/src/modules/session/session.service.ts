@@ -34,7 +34,7 @@ export class SessionService {
       await this.clubService.validateCoachInClub(club, coachId);
       const coach = club.coaches.find((coach) => coach.id === coachId);
 
-      createSessionDto.students = studentIds ? await this.studentService.validateStudentIds(studentIds, coach.id, coach.gender) : null;
+      // createSessionDto.students = studentIds ? await this.studentService.validateStudentIds(studentIds, coach.id, coach.gender) : null;
       const session = await this.sessionRepository.createAndSaveSession(createSessionDto);
 
       return ResponseUtil.success(session, SessionMessages.CREATE_SUCCESS);
@@ -57,7 +57,9 @@ export class SessionService {
         club = club ? club : await this.clubService.validateOwnershipByIdWithCoaches(clubId ?? session.clubId, user.id);
 
         const coach = club.coaches.find((coach) => coach.id === coachId || session.coachId);
-        updateSessionDto.students = studentIds ? await this.studentService.validateStudentIds(studentIds, coach.id, coach.gender) : null;
+        updateSessionDto.students = studentIds
+          ? await this.studentService.validateStudentsIdsByCoachAndGender(studentIds, coach.id, coach.gender)
+          : null;
       } else {
         updateSessionDto.students = [];
       }

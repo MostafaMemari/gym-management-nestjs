@@ -16,6 +16,9 @@ export class AttendanceEntity extends AbstractEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   note?: string;
 
+  @Column({ type: 'boolean', default: false })
+  is_guest: boolean;
+
   @Column({ type: 'integer', nullable: false })
   studentId: number;
 
