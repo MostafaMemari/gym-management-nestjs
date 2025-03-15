@@ -91,12 +91,13 @@ export class NotificationController {
   }
 
   @Put(':id')
+  @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
   async update(@Param('id') id: string, @Body() updateNotificationDto: UpdateNotificationDto, @GetUser() user: User) {
     try {
       await checkConnection(Services.NOTIFICATION, this.notificationServiceClient);
 
       const notificationData = { notificationId: id, senderId: user.id, ...updateNotificationDto };
-      notificationData.recipients = notificationData.recipients.filter((item) => typeof item == 'number');
+      notificationData.recipients = notificationData.recipients?.filter((item) => typeof item == 'number');
 
       const data: ServiceResponse = await lastValueFrom(
         this.notificationServiceClient.send(NotificationPatterns.UpdateNotification, notificationData).pipe(timeout(this.timeout)),

@@ -1,4 +1,4 @@
-import { ApiProperty, OmitType } from '@nestjs/swagger';
+import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { ArrayUnique, IsArray, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
@@ -56,4 +56,4 @@ export class CreateNotificationDto {
   recipients: number[];
 }
 
-export class UpdateNotificationDto extends OmitType(CreateNotificationDto, ['type'] as const) {}
+export class UpdateNotificationDto extends PartialType(OmitType(CreateNotificationDto, ['type'] as const)) {}
