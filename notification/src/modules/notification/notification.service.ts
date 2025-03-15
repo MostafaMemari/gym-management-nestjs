@@ -11,7 +11,7 @@ import { transformArrayIds, transformId } from '../../common/utils/transformId.u
 
 @Injectable()
 export class NotificationService {
-  constructor(@InjectModel(Notification.name) private readonly notificationModel: Model<Notification>) { }
+  constructor(@InjectModel(Notification.name) private readonly notificationModel: Model<Notification>) {}
 
   async create(createNotificationDto: ICreateNotification): Promise<ServiceResponse> {
     try {
@@ -69,20 +69,26 @@ export class NotificationService {
 
       if (!isValidObjectId(notificationId)) throw new BadRequestException(NotificationMessages.InvalidObjectId);
 
+      const existingNotification = await this.notificationModel.findOne({ _id: notificationId, recipients: userId });
+
+      if (!existingNotification) {
+        throw new NotFoundException(NotificationMessages.NotFoundNotification);
+      }
+
+      if (existingNotification.readBy.includes(userId)) throw new BadRequestException(NotificationMessages.AlreadyMarkAsReadNotification);
+
       const notification = await this.notificationModel
         .findOneAndUpdate(
           { _id: notificationId, recipients: userId },
           {
-            $addToSet: { readBy: userId }
+            $addToSet: { readBy: userId },
           },
-          { new: true },
+          {
+            new: true,
+          },
         )
         .select('-readBy -recipients')
         .lean();
-
-      if (!notification) {
-        throw new NotFoundException(NotificationMessages.NotFoundNotification);
-      }
 
       const transformedNotification = transformId(notification);
 
@@ -122,6 +128,7 @@ export class NotificationService {
           {
             message,
             recipients,
+            isEdited: true,
             $pull: { readBy: { $nin: recipients } },
           },
           {
