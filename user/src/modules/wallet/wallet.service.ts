@@ -164,8 +164,8 @@ export class WalletService {
     const daysLeft = this.calculateDaysLeft(balance, studentCount);
 
     //TODO: Add messages to enum
-    if (daysLeft <= 5) await this.sendNotification(userId, 'Low wallet balance', 'PUSH');
-    if (daysLeft <= 2) await this.sendNotification(userId, 'Critically low wallet balance', 'SMS');
+    if (daysLeft <= 5) return await this.sendNotification(userId, 'Low wallet balance', 'PUSH');
+    if (daysLeft <= 2) return this.sendNotification(userId, 'Critically low wallet balance', 'SMS');
     if (daysLeft <= 0) await this.markWalletAsDepleted(wallet);
   }
 

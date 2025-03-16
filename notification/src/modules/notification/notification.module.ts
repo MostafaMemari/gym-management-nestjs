@@ -7,7 +7,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Notification, NotificationSchema } from './notification.schema';
 import { TelegramBotModule } from '../telegram-bot/telegram-bot.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { Services } from 'src/common/enums/services.enum';
+import { Services } from '../../common/enums/services.enum';
 
 @Module({
   imports: [

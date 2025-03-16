@@ -179,7 +179,7 @@ export class NotificationService {
     await checkConnection(Services.USER, this.userServiceClient);
 
     const resultUsers: ServiceResponse = await lastValueFrom(
-      this.userServiceClient.send(UserPatterns.GetUsersByIds, { usersIds }).pipe(timeout(1000)),
+      this.userServiceClient.send(UserPatterns.GetUsersByIds, { usersIds }).pipe(timeout(this.timeout)),
     );
 
     if (resultUsers.error) throw resultUsers;
