@@ -1,4 +1,4 @@
-import { BadRequestException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Notification } from './notification.schema';
 import { isValidObjectId, Model, ObjectId } from 'mongoose';
@@ -9,6 +9,8 @@ import { NotificationMessages } from '../../common/enums/notification.messages';
 import { ResponseUtil } from '../../common/utils/response.utils';
 import { transformArrayIds, transformId } from '../../common/utils/transformId.utils';
 import { RootFilterQuery } from 'mongoose';
+import { NotificationType } from '../../common/enums/notification.type';
+import { Smsir } from 'sms-typescript/lib';
 
 @Injectable()
 export class NotificationService {
@@ -16,6 +18,8 @@ export class NotificationService {
 
   async create(createNotificationDto: ICreateNotification): Promise<ServiceResponse> {
     try {
+      if (createNotificationDto.type == NotificationType.SMS) return this.sendViaSms(createNotificationDto);
+
       const newNotification = (await this.notificationModel.create(createNotificationDto)).toObject();
 
       const transformedNotification = transformId(newNotification);
@@ -142,7 +146,19 @@ export class NotificationService {
     }
   }
 
-  async findOneOrFail(id: ObjectId | string, filters: RootFilterQuery<Notification> = {}): Promise<Notification | never> {
+  async sendViaSms(notificationDto: ICreateNotification): Promise<ServiceResponse> {
+    const { SMS_API_KEY, SMS_LINE_NUMBER } = process.env;
+
+    const sms = new Smsir(SMS_API_KEY, Number(SMS_LINE_NUMBER));
+
+    const result = await sms.SendBulk(notificationDto.message, []);
+
+    if (result.data.status !== 1) throw new InternalServerErrorException(NotificationMessages.ProblemSendingSms);
+
+    return ResponseUtil.success({});
+  }
+
+  private async findOneOrFail(id: ObjectId | string, filters: RootFilterQuery<Notification> = {}): Promise<Notification | never> {
     const notification = await this.notificationModel.findOne({ _id: id, ...filters }).lean();
 
     if (!notification) throw new NotFoundException(NotificationMessages.NotFoundNotification);
@@ -150,7 +166,7 @@ export class NotificationService {
     return notification;
   }
 
-  validateObjectId(objectId: ObjectId | string): void | never {
+  private validateObjectId(objectId: ObjectId | string): void | never {
     if (!isValidObjectId(objectId)) throw new BadRequestException(NotificationMessages.InvalidObjectId);
   }
 }
