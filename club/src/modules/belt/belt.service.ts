@@ -13,6 +13,8 @@ import { CacheTTLSeconds } from '../../common/enums/cache-time';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from '../../common/utils/response';
+import { mildadiToShamsi, shmasiToMiladi } from 'src/common/utils/date/convertDate';
+import { addMonthsToDateShamsi } from 'src/common/utils/date/addMonths';
 
 @Injectable()
 export class BeltService {
@@ -117,5 +119,12 @@ export class BeltService {
   }
   async getNamesAndIds() {
     return await this.beltRepository.getBeltNamesAndIds();
+  }
+
+  calculateNextBeltDate(beltDate: Date, durationMonths: number): Date {
+    const shamsiBeltDate = mildadiToShamsi(beltDate);
+    const nextBeltDateShamsi = addMonthsToDateShamsi(shamsiBeltDate, durationMonths);
+    const nextBeltDateMiladi = shmasiToMiladi(nextBeltDateShamsi);
+    return new Date(nextBeltDateMiladi);
   }
 }

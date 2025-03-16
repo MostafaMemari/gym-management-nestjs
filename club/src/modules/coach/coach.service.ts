@@ -216,7 +216,7 @@ export class CoachService {
     }
   }
   private async validateCoachGenderChange(coachGender: Gender, coachId: number): Promise<void> {
-    const hasInvalidStudent = await this.studentService.hasStudentsByGender(
+    const hasInvalidStudent = await this.studentService.validateGenderCoachStudent(
       coachId,
       coachGender === Gender.Male ? Gender.Female : Gender.Male,
     );

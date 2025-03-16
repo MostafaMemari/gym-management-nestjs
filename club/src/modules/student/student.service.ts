@@ -26,8 +26,7 @@ import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { IUser } from '../../common/interfaces/user.interface';
 import { checkConnection } from '../../common/utils/checkConnection.utils';
-import { addMonthsToDateShamsi } from '../../common/utils/date/addMonths';
-import { mildadiToShamsi, shmasiToMiladi } from '../../common/utils/date/convertDate';
+import { shmasiToMiladi } from '../../common/utils/date/convertDate';
 import { isGenderAllowed, isSameGender } from '../../common/utils/functions';
 import { ResponseUtil } from '../../common/utils/response';
 import { CacheTTLSeconds } from '../../common/enums/cache-time';
@@ -61,7 +60,7 @@ export class StudentService {
 
     try {
       if (national_code) await this.validateUniqueNationalCode(national_code, userId);
-      const { club, coach } = await this.validateClubAndCoachOwnership(userId, clubId, coachId);
+      const { club, coach } = await this.validateOwnershipClubAndCoach(userId, clubId, coachId);
       this.validateClubIdInCoach(clubId, coach);
       this.validateStudentGender(gender, coach, club);
 
@@ -79,7 +78,7 @@ export class StudentService {
 
       if (beltId && belt_date) {
         const belt = await this.beltService.validateByIdWithRelation(beltId);
-        const nextBeltDate = this.calculateNextBeltDate(belt_date, belt.duration_month);
+        const nextBeltDate = this.beltService.calculateNextBeltDate(belt_date, belt.duration_month);
         await this.studentBeltRepository.createStudentBelt(student, belt, belt_date, nextBeltDate, queryRunner);
       }
 
@@ -101,12 +100,12 @@ export class StudentService {
 
     try {
       let student = national_code ? await this.validateUniqueNationalCode(national_code, userId) : null;
-      if (!student) student = await this.checkStudentOwnership(studentId, userId);
+      if (!student) student = await this.validateOwnershipById(studentId, userId);
 
       if (beltId) await this.beltService.validateById(beltId);
 
       if (clubId || coachId || gender) {
-        const { club, coach } = await this.validateClubAndCoachOwnership(userId, clubId ?? student.clubId, coachId ?? student.coachId);
+        const { club, coach } = await this.validateOwnershipClubAndCoach(userId, clubId ?? student.clubId, coachId ?? student.coachId);
         this.validateClubIdInCoach(club.id, coach);
         this.validateStudentGender(gender ?? student.gender, coach, club);
       }
@@ -173,7 +172,7 @@ export class StudentService {
   }
   async findOneById(user: IUser, studentId: number): Promise<ServiceResponse> {
     try {
-      const student = await this.checkStudentOwnership(studentId, user.id);
+      const student = await this.validateOwnershipById(studentId, user.id);
 
       return ResponseUtil.success(student, StudentMessages.GET_SUCCESS);
     } catch (error) {
@@ -189,10 +188,9 @@ export class StudentService {
       ResponseUtil.error(error?.message || StudentMessages.GET_FAILURE, error?.status);
     }
   }
-
   async removeById(user: IUser, studentId: number): Promise<ServiceResponse> {
     try {
-      const student = await this.checkStudentOwnership(studentId, user.id);
+      const student = await this.validateOwnershipById(studentId, user.id);
 
       const isRemoved = await this.studentRepository.removeStudentById(studentId);
 
@@ -203,7 +201,6 @@ export class StudentService {
       ResponseUtil.error(error?.message || StudentMessages.REMOVE_FAILURE, error?.status);
     }
   }
-
   async bulkCreate(user: IUser, studentData: IStudentBulkCreateDto, studentsJson: Express.Multer.File): Promise<ServiceResponse> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -216,7 +213,7 @@ export class StudentService {
     try {
       const belts = await this.beltService.getNamesAndIds();
 
-      const { club, coach } = await this.validateClubAndCoachOwnership(userId, clubId, coachId);
+      const { club, coach } = await this.validateOwnershipClubAndCoach(userId, clubId, coachId);
       this.validateClubIdInCoach(clubId, coach);
       this.validateStudentGender(gender, coach, club);
 
@@ -252,7 +249,7 @@ export class StudentService {
 
         if (beltId && beltDate) {
           const belt = await this.beltService.validateByIdWithRelation(beltId);
-          const nextBeltDate = this.calculateNextBeltDate(beltDate, belt.duration_month);
+          const nextBeltDate = this.beltService.calculateNextBeltDate(beltDate, belt.duration_month);
           await this.studentBeltRepository.createStudentBelt(studentCreate, belt, beltDate, nextBeltDate, queryRunner);
         }
       }
@@ -287,12 +284,6 @@ export class StudentService {
     } catch (error) {
       ResponseUtil.error(error?.message || StudentMessages.GET_COUNT_FAILURE, error?.status);
     }
-  }
-
-  private async checkStudentOwnership(studentId: number, userId: number): Promise<StudentEntity> {
-    const student = await this.studentRepository.findByIdAndOwner(studentId, userId);
-    if (!student) throw new NotFoundException(StudentMessages.NOT_FOUND);
-    return student;
   }
 
   private async createUserStudent(): Promise<number | null> {
@@ -338,27 +329,6 @@ export class StudentService {
     if (student) throw new BadRequestException(StudentMessages.DUPLICATE_ENTRY);
     return student;
   }
-
-  private async validateClubAndCoachOwnership(userId: number, clubId?: number, coachId?: number) {
-    const club = clubId ? await this.clubService.validateOwnershipById(clubId, userId) : null;
-    const coach = coachId ? await this.coachService.validateOwnershipById(coachId, userId) : null;
-    return { club, coach };
-  }
-
-  private validateStudentGender(gender: Gender, coach: CoachEntity | null, club: ClubEntity | null) {
-    if (coach && !isSameGender(gender, coach.gender)) throw new BadRequestException(StudentMessages.COACH_GENDER_MISMATCH);
-    if (club && !isGenderAllowed(gender, club.genders)) throw new BadRequestException(StudentMessages.CLUB_GENDER_MISMATCH);
-  }
-
-  private prepareUpdateData(updateDto: IStudentUpdateDto, student: StudentEntity): Partial<StudentEntity> {
-    return Object.keys(updateDto).reduce((acc, key) => {
-      if (key !== 'image' && updateDto[key] !== undefined && updateDto[key] !== student[key]) {
-        acc[key] = updateDto[key];
-      }
-      return acc;
-    }, {} as Partial<StudentEntity>);
-  }
-
   private async removeStudentData(studentUserId: number, imageKey: string | null): Promise<void> {
     await Promise.all([
       studentUserId ? this.removeStudentUserById(studentUserId) : Promise.resolve(),
@@ -366,6 +336,20 @@ export class StudentService {
     ]);
   }
 
+  private async validateOwnershipById(studentId: number, userId: number): Promise<StudentEntity> {
+    const student = await this.studentRepository.findByIdAndOwner(studentId, userId);
+    if (!student) throw new NotFoundException(StudentMessages.NOT_FOUND);
+    return student;
+  }
+  private async validateOwnershipClubAndCoach(userId: number, clubId?: number, coachId?: number) {
+    const club = clubId ? await this.clubService.validateOwnershipById(clubId, userId) : null;
+    const coach = coachId ? await this.coachService.validateOwnershipById(coachId, userId) : null;
+    return { club, coach };
+  }
+  private validateStudentGender(gender: Gender, coach?: CoachEntity, club?: ClubEntity) {
+    if (coach && !isSameGender(gender, coach.gender)) throw new BadRequestException(StudentMessages.COACH_GENDER_MISMATCH);
+    if (club && !isGenderAllowed(gender, club.genders)) throw new BadRequestException(StudentMessages.CLUB_GENDER_MISMATCH);
+  }
   private validateClubIdInCoach(clubId: number, coach: CoachEntity): void {
     const exists = coach.clubs.some((club) => club.id === clubId);
     if (!exists) {
@@ -373,10 +357,6 @@ export class StudentService {
         StudentMessages.COACH_NOT_IN_CLUB.replace('{coachId}', coach.id.toString()).replace('{clubId}', clubId.toString()),
       );
     }
-  }
-
-  async hasStudentsAssignedToCoach(coachId: number): Promise<boolean> {
-    return await this.studentRepository.existsByCoachId(coachId);
   }
   async validateRemovedClubsStudents(clubs: ClubEntity[], coachId: number): Promise<void> {
     const clubsWithStudents: string[] = [];
@@ -389,15 +369,6 @@ export class StudentService {
     if (clubsWithStudents.length > 0) {
       throw new BadRequestException(StudentMessages.MULTIPLE_NOT_FOUND.replace('{ids}', clubsWithStudents.join(', ')));
     }
-  }
-  async hasStudentsByGender(coachId: number, gender: Gender): Promise<boolean> {
-    return await this.studentRepository.existsByCoachIdAndCoachGender(coachId, gender);
-  }
-  calculateNextBeltDate(beltDate: Date, durationMonths: number): Date {
-    const shamsiBeltDate = mildadiToShamsi(beltDate);
-    const nextBeltDateShamsi = addMonthsToDateShamsi(shamsiBeltDate, durationMonths);
-    const nextBeltDateMiladi = shmasiToMiladi(nextBeltDateShamsi);
-    return new Date(nextBeltDateMiladi);
   }
   async validateStudentsIdsByCoachAndGender(studentIds: number[], coachId: number, gender: Gender): Promise<StudentEntity[]> {
     const foundStudents = await this.studentRepository.findByIdsAndCoachAndGender(studentIds, coachId, gender);
@@ -420,5 +391,21 @@ export class StudentService {
     }
 
     return foundStudents;
+  }
+
+  async validateGenderCoachStudent(coachId: number, gender: Gender): Promise<boolean> {
+    return await this.studentRepository.existsByCoachIdAndCoachGender(coachId, gender);
+  }
+  async hasStudentsAssignedToCoach(coachId: number): Promise<boolean> {
+    return await this.studentRepository.existsByCoachId(coachId);
+  }
+
+  private prepareUpdateData(updateDto: IStudentUpdateDto, student: StudentEntity): Partial<StudentEntity> {
+    return Object.keys(updateDto).reduce((acc, key) => {
+      if (key !== 'image' && updateDto[key] !== undefined && updateDto[key] !== student[key]) {
+        acc[key] = updateDto[key];
+      }
+      return acc;
+    }, {} as Partial<StudentEntity>);
   }
 }

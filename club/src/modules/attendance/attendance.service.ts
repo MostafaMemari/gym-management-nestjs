@@ -6,7 +6,7 @@ import { AttendanceSessionEntity } from './entities/attendance-sessions.entity';
 import { AttendanceEntity } from './entities/attendance.entity';
 import { AttendanceMessages } from './enums/attendance.message';
 import { CacheKeys } from './enums/cache.enum';
-import { IAttendanceFilter, IRecordAttendanceDto, IUpdateRecordAttendance } from './interfaces/attendance.interface';
+import { IAttendanceFilter, IRecordAttendanceDto, IStudentAttendance, IUpdateRecordAttendance } from './interfaces/attendance.interface';
 import { AttendanceSessionRepository } from './repositories/attendance-sessions.repository';
 import { AttendanceRepository } from './repositories/attendance.repository';
 
@@ -38,21 +38,22 @@ export class AttendanceService {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
+
     try {
       const session = await this.sessionService.validateOwnershipRelationStudents(sessionId, user.id);
+
       this.checkDateIsNotInTheFuture(date);
       this.validateAllowedDays(session.days, date);
       await this.checkDuplicateAttendanceSession(sessionId, date);
-      const studentIdsAttendances = attendances.map((attendance) => attendance.studentId);
+
+      await this.verifyCoachStudentsAttendance(attendances, session.coachId);
 
       const attendanceSession = await this.attendanceSessionRepository.createAttendanceSession(
         { date, sessionId: session.id, coachId: session.coachId },
         queryRunner,
       );
-      await this.studentService.validateStudentsIdsByCoach(studentIdsAttendances, session.coachId);
 
       const sessionStudentIds = session.students.map((student) => student.id);
-
       const attendanceEntities = await this.attendanceRepository.createAttendanceEntities(
         attendances,
         sessionStudentIds,
@@ -102,8 +103,11 @@ export class AttendanceService {
       }
 
       if (attendances) {
+        await this.verifyCoachStudentsAttendance(attendances, session.coachId);
+
         await this.attendanceRepository.deleteAttendanceBySession(attendanceSession.id, queryRunner);
         const validStudentIds = session.students.map((student) => student.id);
+
         attendanceEntities = await this.attendanceRepository.createAttendanceEntities(
           attendances,
           validStudentIds,
@@ -262,6 +266,11 @@ export class AttendanceService {
     const attendance = await this.attendanceSessionRepository.findOwnedWithStudents(attendanceId, userId);
     if (!attendance) throw new NotFoundException(AttendanceMessages.NOT_FOUND);
     return attendance;
+  }
+
+  async verifyCoachStudentsAttendance(attendance: IStudentAttendance[], coachId: number) {
+    const studentIdsAttendances = attendance.map((attendance) => attendance.studentId);
+    await this.studentService.validateStudentsIdsByCoach(studentIdsAttendances, coachId);
   }
 
   private async checkDuplicateAttendanceSession(sessionId: number, date: Date): Promise<void> {
