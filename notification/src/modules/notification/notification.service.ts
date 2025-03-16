@@ -33,7 +33,7 @@ export class NotificationService {
   async getUserNotifications({ userId }: { userId: string }) {
     try {
       const notifications = await this.notificationModel.aggregate([
-        { $match: { recipients: userId } },
+        { $match: { recipients: userId , type: NotificationType.PUSH } },
         { $sort: { createdAt: -1 } },
         {
           $project: {
