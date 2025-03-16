@@ -14,4 +14,5 @@ export enum UserPatterns {
   GetUserByMobile = 'get_user_by_mobile',
   GetUserByArgs = 'get_user_by_args',
   RemoveUsers = 'remove_users',
+  GetUsersByIds = 'get_users_by_ids',
 }

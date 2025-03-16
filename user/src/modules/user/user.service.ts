@@ -187,6 +187,10 @@ export class UserService {
     }
   }
 
+  findByIds(userDto: { userIds: number[] }) {
+    return this.userRepository.findAll({ where: { id: { in: userDto.userIds } } });
+  }
+
   async search({ query, ...paginationDto }: ISearchUser): Promise<ServiceResponse> {
     try {
       const cacheKey = `${CacheKeys.SearchUsers}_${query}_${paginationDto.page || 1}_${paginationDto.take || 20}`;

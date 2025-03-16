@@ -21,7 +21,7 @@ export class NotificationService {
   constructor(
     @InjectModel(Notification.name) private readonly notificationModel: Model<Notification>,
     @Inject(Services.USER) private readonly userServiceClient: ClientProxy,
-  ) {}
+  ) { }
 
   private readonly timeout: 4500;
 
@@ -160,7 +160,11 @@ export class NotificationService {
 
     const sms = new Smsir(SMS_API_KEY, Number(SMS_LINE_NUMBER));
 
-    const result = await sms.SendBulk(notificationDto.message, []);
+    const users = await this.getUsersByIds(notificationDto.recipients)
+
+    const mobiles = users.map(user => user.mobile)
+
+    const result = await sms.SendBulk(notificationDto.message, mobiles);
 
     if (result.data.status !== 1) throw new InternalServerErrorException(NotificationMessages.ProblemSendingSms);
 
