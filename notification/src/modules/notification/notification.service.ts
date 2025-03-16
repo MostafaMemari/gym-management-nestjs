@@ -1,8 +1,8 @@
-import { BadRequestException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Notification } from './notification.schema';
 import { isValidObjectId, Model, ObjectId } from 'mongoose';
-import { RpcException } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { ICreateNotification, IMarkAsRead, IRemoveNotification, IUpdateNotification } from '../../common/interfaces/notification.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { NotificationMessages } from '../../common/enums/notification.messages';
@@ -11,10 +11,19 @@ import { transformArrayIds, transformId } from '../../common/utils/transformId.u
 import { RootFilterQuery } from 'mongoose';
 import { NotificationType } from '../../common/enums/notification.type';
 import { Smsir } from 'sms-typescript/lib';
+import { Services } from 'src/common/enums/services.enum';
+import { checkConnection } from 'src/common/utils/checkConnection.utils';
+import { lastValueFrom, timeout } from 'rxjs';
+import { UserPatterns } from 'src/common/enums/user.events';
 
 @Injectable()
 export class NotificationService {
-  constructor(@InjectModel(Notification.name) private readonly notificationModel: Model<Notification>) {}
+  constructor(
+    @InjectModel(Notification.name) private readonly notificationModel: Model<Notification>,
+    @Inject(Services.USER) private readonly userServiceClient: ClientProxy,
+  ) {}
+
+  private readonly timeout: 4500;
 
   async create(createNotificationDto: ICreateNotification): Promise<ServiceResponse> {
     try {
@@ -146,7 +155,7 @@ export class NotificationService {
     }
   }
 
-  async sendViaSms(notificationDto: ICreateNotification): Promise<ServiceResponse> {
+  private async sendViaSms(notificationDto: ICreateNotification): Promise<ServiceResponse> {
     const { SMS_API_KEY, SMS_LINE_NUMBER } = process.env;
 
     const sms = new Smsir(SMS_API_KEY, Number(SMS_LINE_NUMBER));
@@ -156,6 +165,20 @@ export class NotificationService {
     if (result.data.status !== 1) throw new InternalServerErrorException(NotificationMessages.ProblemSendingSms);
 
     return ResponseUtil.success({});
+  }
+
+  private async getUsersByIds(userIds: number[]) {
+    await checkConnection(Services.USER, this.userServiceClient);
+
+    const resultUsers: ServiceResponse = await lastValueFrom(
+      this.userServiceClient.send(UserPatterns.GetUsersByIds, { userIds }).pipe(timeout(this.timeout)),
+    );
+
+    if (resultUsers.error) throw resultUsers;
+
+    if (!resultUsers.data.users) throw new InternalServerErrorException();
+
+    return resultUsers.data;
   }
 
   private async findOneOrFail(id: ObjectId | string, filters: RootFilterQuery<Notification> = {}): Promise<Notification | never> {
