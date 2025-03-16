@@ -64,7 +64,7 @@ export class StudentService {
       this.validateClubIdInCoach(clubId, coach);
       this.validateStudentGender(gender, coach, club);
 
-      imageKey = image ? await this.uploadStudentImage(image) : null;
+      imageKey = image ? await this.updateImage(image) : null;
       studentUserId = await this.createUserStudent();
 
       const student = await this.studentRepository.createStudent(
@@ -114,7 +114,7 @@ export class StudentService {
       if (clubId !== undefined) updateData.clubId = clubId;
       if (coachId !== undefined) updateData.coachId = coachId;
 
-      if (image) updateData.image_url = await this.uploadStudentImage(image);
+      if (image) updateData.image_url = await this.updateImage(image);
 
       await this.studentRepository.updateStudent(student, updateData);
 
@@ -124,7 +124,7 @@ export class StudentService {
 
       return ResponseUtil.success({ ...student, ...updateData }, StudentMessages.UPDATE_SUCCESS);
     } catch (error) {
-      await this.removeStudentImage(imageKey);
+      await this.removeImage(imageKey);
       ResponseUtil.error(error?.message || StudentMessages.UPDATE_FAILURE, error?.status);
     }
   }
@@ -286,7 +286,7 @@ export class StudentService {
     }
   }
 
-  private async createUserStudent(): Promise<number | null> {
+  private async createUserStudent(): Promise<number> {
     const username = `STU_${Math.random().toString(36).slice(2, 8)}`;
 
     await checkConnection(Services.USER, this.userServiceClientProxy, { pattern: UserPatterns.CHECK_CONNECTION });
@@ -314,13 +314,13 @@ export class StudentService {
     const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.REMOVE_MANY, { userIds }).pipe(timeout(this.timeout)));
     if (result?.error) throw result;
   }
-  private async uploadStudentImage(image: Express.Multer.File): Promise<string | undefined> {
+  private async updateImage(image: Express.Multer.File): Promise<string | undefined> {
     if (!image) return;
 
     const uploadedImage = await this.awsService.uploadSingleFile({ file: image, folderName: 'students' });
     return uploadedImage.key;
   }
-  private async removeStudentImage(imageKey: string): Promise<void> {
+  private async removeImage(imageKey: string): Promise<void> {
     if (!imageKey) return;
     await this.awsService.deleteFile(imageKey);
   }
@@ -332,7 +332,7 @@ export class StudentService {
   private async removeStudentData(studentUserId: number, imageKey: string | null): Promise<void> {
     await Promise.all([
       studentUserId ? this.removeStudentUserById(studentUserId) : Promise.resolve(),
-      imageKey ? this.removeStudentImage(imageKey) : Promise.resolve(),
+      imageKey ? this.removeImage(imageKey) : Promise.resolve(),
     ]);
   }
 

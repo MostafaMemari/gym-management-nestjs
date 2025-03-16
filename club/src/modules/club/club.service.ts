@@ -85,7 +85,7 @@ export class ClubService {
     try {
       await this.validateOwnershipById(clubId, user.id);
 
-      const isClubAssignedToCoaches = await this.coachService.existsCoachInClub(clubId);
+      const isClubAssignedToCoaches = await this.coachService.hasCoachByClubId(clubId);
       if (isClubAssignedToCoaches) throw new BadRequestException(ClubMessages.CANNOT_REMOVE_ASSIGNED_COACHES);
 
       const removedClub = await this.clubRepository.delete({ id: clubId });
@@ -125,12 +125,12 @@ export class ClubService {
     const removedGenders = currentGenders.filter((gender) => !genders.includes(gender));
 
     if (removedGenders.includes(Gender.Male)) {
-      const maleCoachExists = await this.coachService.existsCoachWithGenderInClub(clubId, Gender.Male);
+      const maleCoachExists = await this.coachService.hasCoachWithGenderInClub(clubId, Gender.Male);
       if (maleCoachExists) throw new BadRequestException(ClubMessages.CANNOT_REMOVE_MALE_COACH);
     }
 
     if (removedGenders.includes(Gender.Female)) {
-      const femaleCoachExists = await this.coachService.existsCoachWithGenderInClub(clubId, Gender.Female);
+      const femaleCoachExists = await this.coachService.hasCoachWithGenderInClub(clubId, Gender.Female);
       if (femaleCoachExists) throw new BadRequestException(ClubMessages.CANNOT_REMOVE_FEMALE_COACH);
     }
   }

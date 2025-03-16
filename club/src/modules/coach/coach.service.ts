@@ -57,7 +57,7 @@ export class CoachService {
         this.validateCoachClubGender(gender, ownedClubs);
       }
 
-      imageKey = image ? await this.uploadCoachImage(image) : null;
+      imageKey = image ? await this.updateImage(image) : null;
 
       coachUserId = await this.createUserCoach();
 
@@ -104,7 +104,7 @@ export class CoachService {
         await this.validateCoachGenderChange(gender, coachId);
       }
 
-      if (image) updateData.image_url = await this.uploadCoachImage(image);
+      if (image) updateData.image_url = await this.updateImage(image);
 
       await this.coachRepository.updateCoach(coach, { ...updateData });
 
@@ -112,7 +112,7 @@ export class CoachService {
 
       return ResponseUtil.success({ ...coach, ...updateData }, CoachMessages.UPDATE_SUCCESS);
     } catch (error) {
-      await this.removeCoachImage(imageKey);
+      await this.removeImage(imageKey);
       ResponseUtil.error(error?.message || CoachMessages.UPDATE_FAILURE, error?.status);
     }
   }
@@ -191,14 +191,14 @@ export class CoachService {
 
     if (result?.error) throw new BadRequestException(result.error);
   }
-  private async uploadCoachImage(image: Express.Multer.File): Promise<string | undefined> {
+  private async updateImage(image: Express.Multer.File): Promise<string | undefined> {
     if (!image) return;
 
     const uploadedImage = await this.awsService.uploadSingleFile({ file: image, folderName: 'coaches' });
     return uploadedImage.key;
     // return (await this.awsService.uploadSingleFile({ file: image, folderName: 'coaches' }))?.key;
   }
-  private async removeCoachImage(imageKey: string): Promise<void> {
+  private async removeImage(imageKey: string): Promise<void> {
     if (!imageKey) return;
     await this.awsService.deleteFile(imageKey);
   }
@@ -206,6 +206,12 @@ export class CoachService {
     const coach = await this.coachRepository.findCoachByNationalCode(nationalCode, userId);
     if (coach) throw new BadRequestException(CoachMessages.DUPLICATE_ENTRY);
     return coach;
+  }
+  private async removeCoachData(coachUserId: number, imageKey: string | null) {
+    await Promise.all([
+      coachUserId ? this.removeCoachUserById(coachUserId) : Promise.resolve(),
+      imageKey ? this.removeImage(imageKey) : Promise.resolve(),
+    ]);
   }
 
   private validateCoachClubGender(coachGender: Gender, clubs: ICreateClub[]): void {
@@ -221,9 +227,7 @@ export class CoachService {
       coachGender === Gender.Male ? Gender.Female : Gender.Male,
     );
 
-    if (hasInvalidStudent) {
-      throw new BadRequestException(CoachMessages.COACH_GENDER_CHANGE_NOT_ALLOWED);
-    }
+    if (hasInvalidStudent) throw new BadRequestException(CoachMessages.COACH_GENDER_CHANGE_NOT_ALLOWED);
   }
   private prepareUpdateData(updateDto: ICoachUpdateDto, coach: CoachEntity): Partial<CoachEntity> {
     return Object.fromEntries(
@@ -232,16 +236,11 @@ export class CoachService {
       ),
     );
   }
-  private async removeCoachData(coachUserId: number, imageKey: string | null) {
-    await Promise.all([
-      coachUserId ? this.removeCoachUserById(coachUserId) : Promise.resolve(),
-      imageKey ? this.removeCoachImage(imageKey) : Promise.resolve(),
-    ]);
+
+  async hasCoachWithGenderInClub(clubId: number, coachGender: Gender): Promise<boolean> {
+    return this.coachRepository.existsCoachByGenderInClub(clubId, coachGender);
   }
-  async existsCoachWithGenderInClub(clubId: number, gender: Gender): Promise<boolean> {
-    return this.coachRepository.existsCoachByGenderInClub(clubId, gender);
-  }
-  async existsCoachInClub(clubId: number): Promise<boolean> {
+  async hasCoachByClubId(clubId: number): Promise<boolean> {
     return this.coachRepository.existsCoachByClubId(clubId);
   }
 }
