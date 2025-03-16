@@ -14,15 +14,15 @@ export class CreateNotificationDto {
   message: string;
 
   @ApiProperty({
-    enum: ['SMS', 'EMAIL', 'PUSH'],
+    enum: ['PUSH', 'SMS', 'EMAIL'],
     type: 'string',
     nullable: false,
     required: true,
   })
-  @IsEnum(['SMS', 'EMAIL', 'PUSH'])
+  @IsEnum(['PUSH', 'SMS', 'EMAIL'])
   @IsNotEmpty()
   @IsString()
-  type: 'SMS' | 'EMAIL' | 'PUSH';
+  type: 'PUSH' | 'SMS' | 'EMAIL';
 
   @ApiProperty({
     isArray: true,
@@ -56,4 +56,4 @@ export class CreateNotificationDto {
   recipients: number[];
 }
 
-export class UpdateNotificationDto extends PartialType(OmitType(CreateNotificationDto, ['type'] as const)) {}
+export class UpdateNotificationDto extends PartialType(OmitType(CreateNotificationDto, ['type'] as const)) { }

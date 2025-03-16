@@ -11,23 +11,23 @@ import { transformArrayIds, transformId } from '../../common/utils/transformId.u
 import { RootFilterQuery } from 'mongoose';
 import { NotificationType } from '../../common/enums/notification.type';
 import { Smsir } from 'sms-typescript/lib';
-import { Services } from 'src/common/enums/services.enum';
-import { checkConnection } from 'src/common/utils/checkConnection.utils';
+import { Services } from '../../common/enums/services.enum';
+import { checkConnection } from '../../common/utils/checkConnection.utils';
 import { lastValueFrom, timeout } from 'rxjs';
-import { UserPatterns } from 'src/common/enums/user.events';
+import { UserPatterns } from '../../common/enums/user.events';
 
 @Injectable()
 export class NotificationService {
   constructor(
     @InjectModel(Notification.name) private readonly notificationModel: Model<Notification>,
     @Inject(Services.USER) private readonly userServiceClient: ClientProxy,
-  ) { }
+  ) {}
 
   private readonly timeout: 4500;
 
   async create(createNotificationDto: ICreateNotification): Promise<ServiceResponse> {
     try {
-      if (createNotificationDto.type == NotificationType.SMS) return this.sendViaSms(createNotificationDto);
+      if (createNotificationDto.type == NotificationType.SMS) return await this.sendViaSms(createNotificationDto);
 
       const newNotification = (await this.notificationModel.create(createNotificationDto)).toObject();
 
@@ -160,29 +160,33 @@ export class NotificationService {
 
     const sms = new Smsir(SMS_API_KEY, Number(SMS_LINE_NUMBER));
 
-    const users = await this.getUsersByIds(notificationDto.recipients)
+    const users = await this.getUsersByIds(notificationDto.recipients);
 
-    const mobiles = users.map(user => user.mobile)
+    const mobiles = users.map((user) => user.mobile);
 
     const result = await sms.SendBulk(notificationDto.message, mobiles);
 
     if (result.data.status !== 1) throw new InternalServerErrorException(NotificationMessages.ProblemSendingSms);
 
-    return ResponseUtil.success({});
+    const notification = await this.notificationModel.create(notificationDto);
+
+    const transformedId = transformId(notification.toObject());
+
+    return ResponseUtil.success({ notification: transformedId }, NotificationMessages.NotificationSmsSentSuccess, HttpStatus.OK);
   }
 
-  private async getUsersByIds(userIds: number[]) {
+  private async getUsersByIds(usersIds: number[]) {
     await checkConnection(Services.USER, this.userServiceClient);
 
     const resultUsers: ServiceResponse = await lastValueFrom(
-      this.userServiceClient.send(UserPatterns.GetUsersByIds, { userIds }).pipe(timeout(this.timeout)),
+      this.userServiceClient.send(UserPatterns.GetUsersByIds, { usersIds }).pipe(timeout(1000)),
     );
 
     if (resultUsers.error) throw resultUsers;
 
     if (!resultUsers.data.users) throw new InternalServerErrorException();
 
-    return resultUsers.data;
+    return resultUsers.data.users;
   }
 
   private async findOneOrFail(id: ObjectId | string, filters: RootFilterQuery<Notification> = {}): Promise<Notification | never> {
