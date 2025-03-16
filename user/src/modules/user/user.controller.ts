@@ -68,7 +68,7 @@ export class UserController {
   }
 
   @MessagePattern(UserPatterns.GetUsersByIds)
-  getUsersByIds(@Payload() data: { userIds: number[] }) {
+  getUsersByIds(@Payload() data: { usersIds: number[] }) {
     return this.userService.findByIds(data);
   }
 

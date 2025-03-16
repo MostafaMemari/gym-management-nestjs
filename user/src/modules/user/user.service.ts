@@ -187,8 +187,14 @@ export class UserService {
     }
   }
 
-  findByIds(userDto: { userIds: number[] }) {
-    return this.userRepository.findAll({ where: { id: { in: userDto.userIds } } });
+  async findByIds(userDto: { usersIds: number[] }) {
+    try {
+      const users = await this.userRepository.findAll({ where: { id: { in: userDto.usersIds } }, omit: { password: true } });
+
+      return ResponseUtil.success({ users }, '', HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
   }
 
   async search({ query, ...paginationDto }: ISearchUser): Promise<ServiceResponse> {
