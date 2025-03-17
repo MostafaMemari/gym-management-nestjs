@@ -14,11 +14,14 @@ import { CacheKeys } from '../../common/enums/cache.enum';
 
 @Injectable()
 export class PaymentService {
+
+  private REDIS_EXPIRE_TIME = 600 //* Seconds
+
   constructor(
     private readonly zarinpalService: ZarinpalService,
     private readonly paymentRepository: PaymentRepository,
     private readonly cacheService: CacheService,
-  ) {}
+  ) { }
 
   async getGatewayUrl(data: ISendRequest) {
     try {
@@ -78,7 +81,7 @@ export class PaymentService {
 
       const transactions = await this.paymentRepository.findByArgs({ userId });
 
-      await this.cacheService.set(cacheKey, transactions, 600); //Seconds
+      await this.cacheService.set(cacheKey, transactions, this.REDIS_EXPIRE_TIME);
 
       return ResponseUtil.success({ transactions: pagination(paginationDto, transactions) }, '', HttpStatus.OK);
     } catch (error) {
@@ -108,7 +111,7 @@ export class PaymentService {
 
       const transactions = await this.paymentRepository.findByArgs();
 
-      await this.cacheService.set(cacheKey, transactions, 600); //Seconds
+      await this.cacheService.set(cacheKey, transactions, this.REDIS_EXPIRE_TIME);
 
       return ResponseUtil.success({ transactions: pagination(paginationDto, transactions) }, '', HttpStatus.OK);
     } catch (error) {
