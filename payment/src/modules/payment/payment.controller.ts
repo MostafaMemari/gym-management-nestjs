@@ -21,7 +21,7 @@ export class PaymentController {
 
   @MessagePattern(PaymentPatterns.GetUserTransactions)
   getUserTransactions(@Payload() data: IGetUserTransactions) {
-    return this.paymentService.findUserTransaction(data);
+    return this.paymentService.findUserTransactions(data);
   }
 
   @MessagePattern(PaymentPatterns.GetOneTransaction)

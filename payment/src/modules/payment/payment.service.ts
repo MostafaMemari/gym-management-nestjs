@@ -10,7 +10,7 @@ import { ResponseUtil } from '../../common/utils/response.utils';
 import { PaymentMessages } from '../../common/enums/payment.messages';
 import { CacheService } from '../cache/cache.service';
 import { pagination } from '../../common/utils/pagination.utils';
-import { CacheKeys } from 'src/common/enums/cache.enum';
+import { CacheKeys } from '../../common/enums/cache.enum';
 
 @Injectable()
 export class PaymentService {
@@ -66,19 +66,14 @@ export class PaymentService {
     }
   }
 
-  async findUserTransaction({ userId, ...paginationDto }: IPagination & { userId: number }): Promise<ServiceResponse> {
+  async findUserTransactions({ userId, ...paginationDto }: IPagination & { userId: number }): Promise<ServiceResponse> {
     try {
       const cacheKey = `${CacheKeys.Transaction}_${paginationDto.page || 1}_${paginationDto.take || 20}_${userId}`;
 
       const cacheData = await this.cacheService.get<null | Transaction[]>(cacheKey);
 
       if (cacheData) {
-        return {
-          data: { ...pagination(paginationDto, cacheData) },
-          error: false,
-          message: '',
-          status: HttpStatus.OK,
-        };
+        return ResponseUtil.success({ ...pagination(paginationDto, cacheData) }, '', HttpStatus.OK);
       }
 
       const transactions = await this.paymentRepository.findByArgs({ userId });
@@ -108,12 +103,7 @@ export class PaymentService {
       const cacheData = await this.cacheService.get<null | Transaction[]>(cacheKey);
 
       if (cacheData) {
-        return {
-          data: { ...pagination(paginationDto, cacheData) },
-          error: false,
-          message: '',
-          status: HttpStatus.OK,
-        };
+        return ResponseUtil.success({ ...pagination(paginationDto, cacheData) }, '', HttpStatus.OK);
       }
 
       const transactions = await this.paymentRepository.findByArgs();
