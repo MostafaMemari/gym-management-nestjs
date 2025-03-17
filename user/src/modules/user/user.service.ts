@@ -12,6 +12,8 @@ import { ResponseUtil } from '../../common/utils/response.utils';
 
 @Injectable()
 export class UserService {
+  REDIS_EXPIRE_TIME = 600; //* Seconds
+
   constructor(
     private readonly userRepository: UserRepository,
     private readonly cache: CacheService,
@@ -102,7 +104,7 @@ export class UserService {
       const redisKeys = {
         key: cacheKey,
         value: users,
-        expireTime: 600, //* Seconds
+        expireTime: this.REDIS_EXPIRE_TIME,
       };
 
       await this.cache.set(redisKeys.key, redisKeys.value, redisKeys.expireTime);
@@ -227,7 +229,7 @@ export class UserService {
       const redisKeys = {
         key: cacheKey,
         value: users,
-        expireTime: 600, //* Seconds
+        expireTime: this.REDIS_EXPIRE_TIME,
       };
 
       await this.cache.set(redisKeys.key, redisKeys.value, redisKeys.expireTime);
