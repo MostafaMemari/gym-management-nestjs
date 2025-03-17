@@ -3,14 +3,15 @@ import { WalletService } from './wallet.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { WalletPatterns } from '../../common/enums/wallet.events';
 import { IChargeWallet } from '../../common/interfaces/wallet.interface';
+import { IPagination } from '../../common/interfaces/user.interface';
 
 @Controller()
 export class WalletController {
   constructor(private readonly walletService: WalletService) {}
 
   @MessagePattern(WalletPatterns.GetWallets)
-  findAll() {
-    return this.walletService.findAll();
+  findAll(@Payload() data: IPagination) {
+    return this.walletService.findAll(data);
   }
 
   @MessagePattern(WalletPatterns.GetOneWallet)

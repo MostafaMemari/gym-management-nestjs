@@ -7,31 +7,43 @@ import { ResponseUtil } from '../../common/utils/response.utils';
 import { WalletMessages } from '../../common/enums/wallet.messages';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Services } from '../../common/enums/services.enum';
-import { WalletPatterns } from '../../common/enums/wallet.events';
 import { lastValueFrom, timeout } from 'rxjs';
 import { ClubPatterns } from '../../common/enums/club.events';
 import { NotificationPatterns } from '../../common/enums/notification.events';
 import { UserRepository } from '../user/user.repository';
 import { Role, Wallet } from '@prisma/client';
+import { IPagination } from 'src/common/interfaces/user.interface';
+import { CacheKeys } from 'src/common/enums/cache.enum';
+import { CacheService } from '../cache/cache.service';
+import { pagination } from 'src/common/utils/pagination.utils';
 
 @Injectable()
 export class WalletService {
   private readonly logger = new Logger(WalletService.name);
   private readonly timeout = 4500;
   private readonly DAILY_COST_PER_STUDENT = 50000 / 30;
+  private readonly REDIS_EXPIRE_TIME = 600; //* Seconds
 
   constructor(
     private readonly walletRepository: WalletRepository,
     private readonly userRepository: UserRepository,
     @Inject(Services.CLUB) private readonly clubServiceClient: ClientProxy,
     @Inject(Services.NOTIFICATION) private readonly notificationServiceClient: ClientProxy,
+    private readonly cache: CacheService,
   ) {}
 
-  async findAll(): Promise<ServiceResponse> {
+  async findAll(paginationDto: IPagination): Promise<ServiceResponse> {
     try {
+      const cacheKey = `${CacheKeys.Wallets}_${paginationDto.page || 1}_${paginationDto.take || 20}`;
+      const walletsCache = await this.cache.get<Wallet[] | null>(cacheKey);
+
+      if (walletsCache) return ResponseUtil.success({ ...pagination(paginationDto, walletsCache) }, '', HttpStatus.OK);
+
       const wallets = await this.walletRepository.findAll();
 
-      return ResponseUtil.success({ wallets }, '', HttpStatus.OK);
+      await this.cache.set(cacheKey, wallets, this.REDIS_EXPIRE_TIME);
+
+      return ResponseUtil.success({ ...pagination(paginationDto, wallets) }, '', HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }
