@@ -40,7 +40,7 @@ export class CreateStudentDto {
 
   @IsOptional()
   @ApiPropertyOptional({ type: 'string', format: 'binary' })
-  image?: string;
+  image?: Express.Multer.File;
 
   @IsOptional()
   @IsString()

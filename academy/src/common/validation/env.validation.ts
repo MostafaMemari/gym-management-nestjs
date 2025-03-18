@@ -11,15 +11,15 @@ export default (): ConfigModuleOptions => {
         //* Rabbitmq
         RABBITMQ_URL: Joi.string().required(),
         RABBITMQ_QUEUE_NAME: Joi.string().required(),
-        RABBITMQ_USER_QUEUE_NAME: Joi.string().required(),
+        RABBITMQ_CLUB_QUEUE_NAME: Joi.string().required(),
 
         //* Database
         DB_TYPE: Joi.string().valid('postgres', 'mysql', 'mariadb', 'mongodb').required(),
         DB_HOST: Joi.string().default('localhost'),
-        DB_PORT: Joi.number().default(5432).when('DB_TYPE', { is: 'postgres', then: Joi.required() }),
+        DB_PORT: Joi.number().default(3306).when('DB_TYPE', { is: 'mysql', then: Joi.required() }),
         DB_USERNAME: Joi.string().default('postgres'),
         DB_PASSWORD: Joi.string().default('').allow(''),
-        DB_NAME: Joi.string().default('shop'),
+        DB_NAME: Joi.string().default('gym-academy'),
         DB_SYNCHRONIZE: Joi.number().integer().valid(0, 1).default(0),
         DB_SSL: Joi.number().integer().valid(0, 1).default(0),
 

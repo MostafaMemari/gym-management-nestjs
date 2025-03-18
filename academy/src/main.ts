@@ -18,6 +18,6 @@ async function bootstrap() {
   const logger = new Logger('NestApplication');
 
   await app.listen();
-  logger.log('Club service is running....');
+  logger.log('Academy service is running....');
 }
 bootstrap();
