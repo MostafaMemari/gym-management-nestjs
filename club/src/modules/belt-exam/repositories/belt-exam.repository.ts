@@ -4,6 +4,9 @@ import { DataSource, In, Repository } from 'typeorm';
 import { BeltExamEntity } from '../entities/belt-exam.entity';
 import { IBeltExamCreateDto, IBeltExamFilter, IBeltExamUpdateDto } from '../interfaces/belt-exam.interface';
 import { EntityName } from '../../../common/enums/entity.enum';
+import { CacheKeys } from '../enums/cache.enum';
+
+import { CacheTTLMilliseconds } from '../../../common/enums/cache-time';
 
 @Injectable()
 export class BeltExamRepository extends Repository<BeltExamEntity> {
@@ -22,6 +25,8 @@ export class BeltExamRepository extends Repository<BeltExamEntity> {
   }
 
   async getBeltExamsWithFilters(filters: IBeltExamFilter, page: number, take: number): Promise<[BeltExamEntity[], number]> {
+    const cacheKey = `${CacheKeys.BELT_EXAMS}-${page}-${take}-${JSON.stringify(filters)}`;
+
     const queryBuilder = this.createQueryBuilder(EntityName.BELT_EXAMS).innerJoin('belt_exams.belts', 'belts');
 
     if (filters?.search) {
@@ -55,6 +60,7 @@ export class BeltExamRepository extends Repository<BeltExamEntity> {
     return queryBuilder
       .skip((page - 1) * take)
       .take(take)
+      .cache(cacheKey, CacheTTLMilliseconds.GET_ALL_BELT_EXAMS)
       .getManyAndCount();
   }
 

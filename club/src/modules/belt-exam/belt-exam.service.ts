@@ -4,7 +4,6 @@ import { BeltExamEntity } from './entities/belt-exam.entity';
 import { BeltExamMessages } from './enums/belt-exam.message';
 import { IBeltExamCreateDto, IBeltExamUpdateDto, IBeltExamFilter } from './interfaces/belt-exam.interface';
 import { BeltExamRepository } from './repositories/belt-exam.repository';
-import { CacheKeys } from './enums/cache.enum';
 
 import { BeltService } from '../belt/belt.service';
 import { CacheService } from '../cache/cache.service';
@@ -21,8 +20,6 @@ export class BeltExamService {
     private readonly cacheService: CacheService,
     private readonly beltService: BeltService,
   ) {}
-
-  private readonly cacheTTLSeconds: number = 3600;
 
   async create(createBeltExamDto: IBeltExamCreateDto): Promise<ServiceResponse> {
     try {
@@ -60,16 +57,10 @@ export class BeltExamService {
   async getAll(query: { queryBeltExamDto: IBeltExamFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
     const { take, page } = query.paginationDto;
     try {
-      const cacheKey = `${CacheKeys.BELT_EXAMS}-${page}-${take}-${JSON.stringify(query.queryBeltExamDto)}`;
-      const cachedData = await this.cacheService.get<Promise<ServiceResponse>>(cacheKey);
-      if (cachedData) return ResponseUtil.success(cachedData.data, BeltExamMessages.GET_ALL_SUCCESS);
-
       const [beltExams, count] = await this.beltExamRepository.getBeltExamsWithFilters(query.queryBeltExamDto, page, take);
 
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(beltExams, pageMetaDto);
-
-      await this.cacheService.set(cacheKey, result, this.cacheTTLSeconds);
 
       return ResponseUtil.success(result.data, BeltExamMessages.GET_ALL_SUCCESS);
     } catch (error) {

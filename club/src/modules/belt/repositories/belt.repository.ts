@@ -5,6 +5,8 @@ import { BeltEntity } from '../entities/belt.entity';
 import { IBeltCreateDto, IBeltFilter, IBeltUpdateDto } from '../interfaces/belt.interface';
 
 import { EntityName } from '../../../common/enums/entity.enum';
+import { CacheKeys } from '../enums/cache.enum';
+import { CacheTTLMilliseconds } from 'src/common/enums/cache-time';
 
 @Injectable()
 export class BeltRepository extends Repository<BeltEntity> {
@@ -41,6 +43,7 @@ export class BeltRepository extends Repository<BeltEntity> {
     return queryBuilder
       .skip((page - 1) * take)
       .take(take)
+      .cache(CacheKeys.BELTS, CacheTTLMilliseconds.GET_ALL_BELTS)
       .getManyAndCount();
   }
   async findByIds(ids: number[]): Promise<BeltEntity[]> {

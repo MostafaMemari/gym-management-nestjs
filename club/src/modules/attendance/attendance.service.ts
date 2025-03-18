@@ -165,6 +165,7 @@ export class AttendanceService {
           id: attendance.student.id,
           full_name: attendance.student.full_name,
           status: attendance.status,
+          is_guest: attendance.is_guest,
           note: attendance?.note,
         })),
       }));

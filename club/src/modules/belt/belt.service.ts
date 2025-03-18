@@ -58,15 +58,15 @@ export class BeltService {
     try {
       const cacheKey = `${CacheKeys.BELTS}-${page}-${take}-${JSON.stringify(query.queryBeltDto)}`;
 
-      const cachedData = await this.cacheService.get<Promise<ServiceResponse>>(cacheKey);
-      if (cachedData) ResponseUtil.success(cachedData.data, BeltMessages.GET_ALL_SUCCESS);
+      // const cachedData = await this.cacheService.get<Promise<ServiceResponse>>(cacheKey);
+      // if (cachedData) ResponseUtil.success(cachedData.data, BeltMessages.GET_ALL_SUCCESS);
 
       const [belts, count] = await this.beltRepository.getBeltsWithFilters(query.queryBeltDto, page, take);
 
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(belts, pageMetaDto);
 
-      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.GET_ALL_BELTS);
+      // await this.cacheService.set(cacheKey, result, CacheTTLSeconds.GET_ALL_BELTS);
 
       return ResponseUtil.success(result.data, BeltMessages.GET_ALL_SUCCESS);
     } catch (error) {

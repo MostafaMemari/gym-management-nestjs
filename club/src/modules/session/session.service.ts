@@ -34,10 +34,22 @@ export class SessionService {
       await this.clubService.validateCoachInClub(club, coachId);
       const coach = club.coaches.find((coach) => coach.id === coachId);
 
-      // createSessionDto.students = studentIds ? await this.studentService.validateStudentIds(studentIds, coach.id, coach.gender) : null;
+      createSessionDto.students = studentIds.length
+        ? await this.studentService.validateStudentsIdsByCoachAndGender(studentIds, coach.id, coach.gender)
+        : null;
+
       const session = await this.sessionRepository.createAndSaveSession(createSessionDto);
 
-      return ResponseUtil.success(session, SessionMessages.CREATE_SUCCESS);
+      return ResponseUtil.success(
+        {
+          ...session,
+          students: session.students.map((student) => ({
+            id: student.id,
+            full_name: student.full_name,
+          })),
+        },
+        SessionMessages.CREATE_SUCCESS,
+      );
     } catch (error) {
       ResponseUtil.error(error?.message || SessionMessages.CREATE_FAILURE, error?.status);
     }
@@ -107,9 +119,9 @@ export class SessionService {
 
       const removedSession = await this.sessionRepository.delete({ id: sessionId });
 
-      if (removedSession.affected) ResponseUtil.error(SessionMessages.REMOVE_FAILURE);
+      if (!removedSession.affected) ResponseUtil.error(SessionMessages.REMOVE_FAILURE);
 
-      return ResponseUtil.success(removedSession, SessionMessages.REMOVE_FAILURE);
+      return ResponseUtil.success({}, SessionMessages.REMOVE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || SessionMessages.REMOVE_FAILURE, error?.status);
     }
