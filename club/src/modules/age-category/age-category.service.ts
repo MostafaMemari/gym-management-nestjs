@@ -42,17 +42,10 @@ export class AgeCategoryService {
     const { take, page } = query.paginationDto;
 
     try {
-      const cacheKey = `${CacheKeys.AGE_CATEGORIES}-${page}-${take}-${JSON.stringify(query.queryAgeCategoryDto)}`;
-
-      const cachedData = await this.cacheService.get<PageDto<AgeCategoryEntity>>(cacheKey);
-      if (cachedData) return ResponseUtil.success(cachedData.data, AgeCategoryMessages.GET_ALL_SUCCESS);
-
       const [ageCategories, count] = await this.ageCategoryRepository.getAgeCategoriesWithFilters(query.queryAgeCategoryDto, page, take);
 
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(ageCategories, pageMetaDto);
-
-      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.GET_ALL_AGE_CATEGORIES);
 
       return ResponseUtil.success(result.data, AgeCategoryMessages.GET_ALL_SUCCESS);
     } catch (error) {

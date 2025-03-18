@@ -23,6 +23,8 @@ export class BeltRepository extends Repository<BeltEntity> {
     return await this.save(updatedBelt);
   }
   async getBeltsWithFilters(filters: IBeltFilter, page: number, take: number): Promise<[BeltEntity[], number]> {
+    const cacheKey = `${CacheKeys.BELTS}-${page}-${take}-${JSON.stringify(filters)}`;
+
     const queryBuilder = this.createQueryBuilder(EntityName.BELTS);
 
     if (filters?.search) {
@@ -43,7 +45,7 @@ export class BeltRepository extends Repository<BeltEntity> {
     return queryBuilder
       .skip((page - 1) * take)
       .take(take)
-      .cache(CacheKeys.BELTS, CacheTTLMilliseconds.GET_ALL_BELTS)
+      .cache(cacheKey, CacheTTLMilliseconds.GET_ALL_BELTS)
       .getManyAndCount();
   }
   async findByIds(ids: number[]): Promise<BeltEntity[]> {
