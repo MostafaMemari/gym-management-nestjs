@@ -8,15 +8,9 @@ export class LessonEntity extends AbstractEntity {
   @Column()
   title: string;
 
-  @Column({ nullable: true })
-  description?: string;
-
   @Column({ type: 'text', nullable: true })
-  content_html?: string;
+  content: string;
 
-  @Column('simple-array', { nullable: true })
-  videos?: string[];
-
-  @Column('simple-array', { nullable: true })
-  documents?: string[];
+  @Column({ type: 'integer' })
+  beltId: number;
 }

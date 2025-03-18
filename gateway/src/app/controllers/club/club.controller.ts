@@ -8,7 +8,7 @@ import { GetUser } from '../../../common/decorators/get-user.decorator';
 import { Roles } from '../../../common/decorators/role.decorator';
 import { CreateClubDto, QueryClubDto, UpdateClubDto } from '../../../common/dtos/club-service/club.dto';
 import { PaginationDto } from '../../../common/dtos/shared.dto';
-import { ClubPatterns } from '../../../common/enums/club.events';
+import { ClubPatterns } from '../../../common/enums/club-service/club.events';
 import { Role } from '../../../common/enums/role.enum';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';

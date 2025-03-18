@@ -2,7 +2,7 @@ import { IsNotEmpty, IsEnum, IsInt, Min, IsIn, IsOptional, IsString, Max } from 
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 
-import { BeltName } from '../../../common/enums/belt.enum';
+import { BeltName } from '../../enums/club-service/belt.enum';
 import { ToArray } from '../../../common/decorators/transformers.decorator';
 import { SortOrder } from '../../../common/enums/shared.enum';
 

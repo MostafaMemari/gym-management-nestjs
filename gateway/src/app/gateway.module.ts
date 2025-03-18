@@ -19,6 +19,7 @@ import { BeltExamController } from './controllers/club/belt-exams.controller';
 import { WalletController } from './controllers/user/wallet.controller';
 import { SessionController } from './controllers/club/session.controller';
 import { AttendanceController } from './controllers/club/attendance.controller';
+import { LessonController } from './controllers/academy/lesson.controller';
 
 @Module({
   imports: [
@@ -99,6 +100,21 @@ import { AttendanceController } from './controllers/club/attendance.controller';
           },
         },
       },
+      {
+        name: Services.ACADEMY,
+        transport: Transport.RMQ,
+        options: {
+          urls: [process.env.RABBITMQ_URL],
+          queue: process.env.RABBITMQ_ACADEMY_SERVICE_QUEUE,
+          prefetchCount: 2,
+          isGlobalPrefetchCount: true,
+          noAck: true,
+          persistent: false,
+          queueOptions: {
+            // durable: process.env.NODE_ENV == 'production',
+          },
+        },
+      },
     ]),
   ],
   controllers: [
@@ -116,6 +132,7 @@ import { AttendanceController } from './controllers/club/attendance.controller';
     BeltExamController,
     SessionController,
     AttendanceController,
+    LessonController,
   ],
   providers: [
     {

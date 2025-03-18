@@ -1,47 +1,47 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsInt, IsOptional } from 'class-validator';
-import { Express } from 'express';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
+
+import { SortOrder } from '../../../common/enums/shared.enum';
+
+export class CreateLessonFileDto {
+  @ApiProperty({ example: 'video', enum: ['video', 'document', 'image'] })
+  @IsEnum(['video', 'document', 'image'])
+  fileType: 'video' | 'document' | 'image';
+
+  @ApiProperty({ example: 1, required: false })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  orderNumber?: number;
+}
 
 export class CreateLessonDto {
-  @ApiProperty({ example: 'اصول پایه‌ای ضربات پا', description: 'عنوان درس' })
-  @IsString()
+  @ApiProperty({ example: '' })
   @IsNotEmpty()
+  @IsString()
   title: string;
 
-  @ApiPropertyOptional({
-    example: 'این درس شامل تکنیک‌های پایه‌ای کمربند زرد است.',
-    description: 'توضیحات کوتاه درس (متن ساده)',
-  })
+  @ApiProperty({ example: '<p>HTML content here...</p>', required: false })
   @IsOptional()
   @IsString()
-  description?: string;
+  content?: string;
 
-  @ApiProperty({ example: 2, description: 'شناسه کمربند مربوط به این درس' })
-  @IsInt()
+  @ApiProperty({ example: 1 })
   @IsNotEmpty()
-  beltId: number; // شناسه کمربند (از سرویس Club)
+  @IsInt()
+  beltId: number;
+}
 
-  @ApiPropertyOptional({
-    description: 'محتوای کامل درس به‌صورت HTML (ارسالی از Cheditor)',
-    example: '<p>در این درس یاد می‌گیرید که چگونه ضربات پایه‌ای را اجرا کنید.</p>',
-  })
+export class UpdateLessonDto extends PartialType(CreateLessonDto) {}
+
+export class QueryLessonDto {
   @IsOptional()
   @IsString()
-  content_html?: string;
+  @ApiPropertyOptional({ type: 'string', example: '', description: '' })
+  search?: string;
 
-  @ApiPropertyOptional({
-    description: 'فایل‌های ویدیویی مربوط به درس',
-    type: 'array',
-    items: { type: 'string', format: 'binary' },
-  })
   @IsOptional()
-  videos?: Express.Multer.File[]; // آرایه‌ای از فایل‌های ویدیو
-
-  @ApiPropertyOptional({
-    description: 'فایل‌های مستندات مربوط به درس (PDF, DOCX, و ...)',
-    type: 'array',
-    items: { type: 'string', format: 'binary' },
-  })
-  @IsOptional()
-  documents?: Express.Multer.File[]; // آرایه‌ای از فایل‌های مستندات
+  @IsEnum(SortOrder, { message: 'sort_order must be either "asc" or "desc"' })
+  @ApiPropertyOptional({ example: 'desc', enum: SortOrder })
+  sort_order?: SortOrder;
 }

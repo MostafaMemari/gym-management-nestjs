@@ -7,7 +7,7 @@ import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { GetUser } from '../../../common/decorators/get-user.decorator';
 import { Roles } from '../../../common/decorators/role.decorator';
 import { QueryAttendanceDto, RecordAttendanceDto, UpdateAttendanceDto } from '../../../common/dtos/club-service/attendance.dto';
-import { AttendancePatterns } from '../../../common/enums/club.events';
+import { AttendancePatterns } from '../../../common/enums/club-service/club.events';
 import { Role } from '../../../common/enums/role.enum';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';

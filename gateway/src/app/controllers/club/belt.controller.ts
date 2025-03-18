@@ -7,7 +7,7 @@ import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { Roles } from '../../../common/decorators/role.decorator';
 import { CreateBeltDto, QueryBeltDto, UpdateBeltDto } from '../../../common/dtos/club-service/belt.dto';
 import { PaginationDto } from '../../../common/dtos/shared.dto';
-import { BeltPatterns } from '../../../common/enums/club.events';
+import { BeltPatterns } from '../../../common/enums/club-service/club.events';
 import { Role } from '../../../common/enums/role.enum';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
