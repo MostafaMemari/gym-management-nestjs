@@ -8,6 +8,8 @@ import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
 import { AgeCategoryEntity } from '../../../modules/age-category/entities/age-category.entity';
 import { BeltExamEntity } from '../../../modules/belt-exam/entities/belt-exam.entity';
+import { CacheKeys } from '../enums/cache.enum';
+import { CacheTTLMilliseconds } from 'src/common/enums/cache-time';
 
 @Injectable()
 export class StudentRepository extends Repository<StudentEntity> {
@@ -50,6 +52,8 @@ export class StudentRepository extends Repository<StudentEntity> {
   }
 
   async getStudentsWithFilters(userId: number, filters: IStudentFilter, page: number, take: number): Promise<[StudentEntity[], number]> {
+    const cacheKey = `${CacheKeys.STUDENTS}-userId:${userId}-${page}-${take}-${JSON.stringify(filters)}`;
+
     const queryBuilder = this.createQueryBuilder(EntityName.Students)
       .innerJoin('students.club', 'club', 'club.ownerId = :userId', { userId })
       .addSelect(['club.id', 'club.name'])
@@ -104,6 +108,7 @@ export class StudentRepository extends Repository<StudentEntity> {
     const [students, totalCount] = await queryBuilder
       .skip((page - 1) * take)
       .take(take)
+      .cache(cacheKey, CacheTTLMilliseconds.GET_ALL_STUDENTS)
       .getManyAndCount();
 
     const mappedStudents: any = (students as any).map(({ age_categories, beltInfo, ...student }) => ({

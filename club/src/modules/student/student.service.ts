@@ -83,6 +83,7 @@ export class StudentService {
       }
 
       await queryRunner.commitTransaction();
+      await this.clearStudentCacheByUser(userId);
       return ResponseUtil.success({ ...student, userId: studentUserId }, StudentMessages.CREATE_SUCCESS);
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -122,6 +123,7 @@ export class StudentService {
         await this.awsService.deleteFile(student.image_url);
       }
 
+      await this.clearStudentCacheByUser(userId);
       return ResponseUtil.success({ ...student, ...updateData }, StudentMessages.UPDATE_SUCCESS);
     } catch (error) {
       await this.removeImage(imageKey);
@@ -132,17 +134,10 @@ export class StudentService {
     const { take, page } = query.paginationDto;
 
     try {
-      const cacheKey = `${CacheKeys.STUDENTS}:${user.id}-${page}-${take}-${JSON.stringify(query.queryStudentDto)}`;
-
-      const cachedData = await this.cacheService.get<PageDto<StudentEntity>>(cacheKey);
-      if (cachedData) return ResponseUtil.success(cachedData.data, StudentMessages.GET_ALL_SUCCESS);
-
       const [students, count] = await this.studentRepository.getStudentsWithFilters(user.id, query.queryStudentDto, page, take);
 
       const pageMetaDto = new PageMetaDto(count, query.paginationDto);
       const result = new PageDto(students, pageMetaDto);
-
-      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.GET_ALL_STUDENTS);
 
       return ResponseUtil.success(result.data, StudentMessages.GET_ALL_SUCCESS);
     } catch (error) {
@@ -190,12 +185,14 @@ export class StudentService {
   }
   async removeById(user: IUser, studentId: number): Promise<ServiceResponse> {
     try {
-      const student = await this.validateOwnershipById(studentId, user.id);
+      const userId = user.id;
+      const student = await this.validateOwnershipById(studentId, userId);
 
       const isRemoved = await this.studentRepository.removeStudentById(studentId);
 
       if (isRemoved) this.removeStudentData(Number(student.userId), student.image_url);
 
+      await this.clearStudentCacheByUser(userId);
       return ResponseUtil.success(student, StudentMessages.REMOVE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || StudentMessages.REMOVE_FAILURE, error?.status);
@@ -255,6 +252,7 @@ export class StudentService {
       }
       await queryRunner.commitTransaction();
 
+      await this.clearStudentCacheByUser(userId);
       return ResponseUtil.success(
         { count: studentUserIds.length + 1 },
         StudentMessages.BULK_CREATE_SUCCESS.replace('{count}', (studentUserIds.length + 1).toString()),
@@ -407,5 +405,9 @@ export class StudentService {
       }
       return acc;
     }, {} as Partial<StudentEntity>);
+  }
+
+  private async clearStudentCacheByUser(userId: number) {
+    await this.cacheService.delByPattern(`${CacheKeys.STUDENTS}-userId:${userId}*`);
   }
 }

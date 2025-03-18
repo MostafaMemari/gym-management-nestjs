@@ -35,8 +35,7 @@ export class SessionEntity extends AbstractEntity {
   @JoinColumn()
   coach: CoachEntity;
 
-  @ManyToMany(() => StudentEntity, (student) => student.sessions)
-  @JoinTable()
+  @ManyToMany(() => StudentEntity, (student) => student.sessions, { onDelete: 'CASCADE' })
   students: StudentEntity[];
 
   @ManyToOne(() => ClubEntity, (club) => club.sessions, { nullable: false, onDelete: 'CASCADE' })

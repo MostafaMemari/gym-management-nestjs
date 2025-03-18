@@ -26,5 +26,5 @@ export enum StudentMessages {
   COACH_GENDER_MISMATCH = 'Student gender does not match the coach gender',
 
   MULTIPLE_NOT_FOUND = 'Students with IDs {ids} were not found',
-  COACH_NOT_IN_CLUB = 'Student with ID {coachId} is not associated with club ID {clubId}',
+  COACH_NOT_IN_CLUB = 'Coach with ID {coachId} is not associated with club ID {clubId}',
 }
