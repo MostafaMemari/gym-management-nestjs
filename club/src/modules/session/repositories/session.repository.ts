@@ -27,7 +27,7 @@ export class SessionRepository extends Repository<SessionEntity> {
   async getSessionsWithFilters(userId: number, filters: ISessionFilter, page: number, take: number): Promise<[SessionEntity[], number]> {
     const cacheKey = `${CacheKeys.SESSIONS}-userId:${userId}-${page}-${take}-${JSON.stringify(filters)}`;
 
-    const queryBuilder = this.createQueryBuilder(EntityName.Sessions)
+    const queryBuilder = this.createQueryBuilder(EntityName.SESSIONS)
       .leftJoin('sessions.club', 'club', 'club.ownerId = :userId', { userId })
       .leftJoin('sessions.students', 'students')
       .addSelect(['students.id', 'students.full_name']);
@@ -55,7 +55,7 @@ export class SessionRepository extends Repository<SessionEntity> {
   }
 
   async findByIdAndOwner(sessionId: number, userId: number): Promise<SessionEntity | null> {
-    return this.createQueryBuilder(EntityName.Sessions)
+    return this.createQueryBuilder(EntityName.SESSIONS)
       .where('sessions.id = :sessionId', { sessionId })
       .innerJoin('sessions.club', 'club', 'club.ownerId = :userId', {
         userId,
@@ -63,7 +63,7 @@ export class SessionRepository extends Repository<SessionEntity> {
       .getOne();
   }
   async findByIdAndOwnerRelationStudents(sessionId: number, userId: number): Promise<SessionEntity | null> {
-    return this.createQueryBuilder(EntityName.Sessions)
+    return this.createQueryBuilder(EntityName.SESSIONS)
       .where('sessions.id = :sessionId', { sessionId })
       .innerJoin('sessions.club', 'club', 'club.ownerId = :userId', {
         userId,

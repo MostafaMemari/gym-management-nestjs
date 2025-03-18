@@ -10,7 +10,7 @@ import { StudentBeltEntity } from './student-belt.entity';
 import { SessionEntity } from '../../../modules/session/entities/session.entity';
 import { AttendanceEntity } from '../../../modules/attendance/entities/attendance.entity';
 
-@Entity(EntityName.Students)
+@Entity(EntityName.STUDENTS)
 @Index(['full_name', 'national_code'])
 export class StudentEntity extends AbstractEntity {
   @Column({ type: 'integer', unique: true, nullable: false })

@@ -19,7 +19,6 @@ import { CoachEntity } from '../coach/entities/coach.entity';
 import { AwsService } from '../s3AWS/s3AWS.service';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
-import { CacheTTLSeconds } from '../../common/enums/cache-time';
 import { Gender } from '../../common/enums/gender.enum';
 import { UserPatterns } from '../../common/enums/patterns.events';
 import { Services } from '../../common/enums/services.enum';

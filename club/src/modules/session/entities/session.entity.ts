@@ -8,7 +8,7 @@ import { StudentEntity } from '../../../modules/student/entities/student.entity'
 import { ClubEntity } from '../../../modules/club/entities/club.entity';
 import { AttendanceSessionEntity } from '../../../modules/attendance/entities/attendance-sessions.entity';
 
-@Entity(EntityName.Sessions)
+@Entity(EntityName.SESSIONS)
 export class SessionEntity extends AbstractEntity {
   @Column({ type: 'varchar', length: 120 })
   name: string;

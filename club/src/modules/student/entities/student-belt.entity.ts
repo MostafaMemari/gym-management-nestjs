@@ -4,7 +4,7 @@ import { BeltEntity } from '../../../modules/belt/entities/belt.entity';
 import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
 import { StudentEntity } from './student.entity';
 
-@Entity(EntityName.StudentBelts)
+@Entity(EntityName.STUDENT_BELTS)
 export class StudentBeltEntity extends AbstractEntity {
   @Column({ type: 'date', nullable: true })
   belt_date: Date;

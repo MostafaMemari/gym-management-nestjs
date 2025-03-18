@@ -2,14 +2,12 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { BeltEntity } from './entities/belt.entity';
 import { BeltMessages } from './enums/belt.message';
-import { CacheKeys } from './enums/cache.enum';
 import { IBeltCreateDto, IBeltFilter, IBeltUpdateDto } from './interfaces/belt.interface';
 import { BeltRepository } from './repositories/belt.repository';
 
 import { CacheService } from '../cache/cache.service';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
-import { CacheTTLSeconds } from '../../common/enums/cache-time';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from '../../common/utils/response';

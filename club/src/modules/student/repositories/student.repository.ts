@@ -54,7 +54,7 @@ export class StudentRepository extends Repository<StudentEntity> {
   async getStudentsWithFilters(userId: number, filters: IStudentFilter, page: number, take: number): Promise<[StudentEntity[], number]> {
     const cacheKey = `${CacheKeys.STUDENTS}-userId:${userId}-${page}-${take}-${JSON.stringify(filters)}`;
 
-    const queryBuilder = this.createQueryBuilder(EntityName.Students)
+    const queryBuilder = this.createQueryBuilder(EntityName.STUDENTS)
       .innerJoin('students.club', 'club', 'club.ownerId = :userId', { userId })
       .addSelect(['club.id', 'club.name'])
       .leftJoin('students.coach', 'coach')
@@ -132,7 +132,7 @@ export class StudentRepository extends Repository<StudentEntity> {
   ): Promise<[StudentEntity[], number]> {
     const cacheKey = `${CacheKeys.STUDENTS_SUMMARY}:userId:${userId}-${page}-${take}-${JSON.stringify(filters)}`;
 
-    const queryBuilder = this.createQueryBuilder(EntityName.Students).innerJoin('students.club', 'club', 'club.ownerId = :userId', {
+    const queryBuilder = this.createQueryBuilder(EntityName.STUDENTS).innerJoin('students.club', 'club', 'club.ownerId = :userId', {
       userId,
     });
 
@@ -174,7 +174,7 @@ export class StudentRepository extends Repository<StudentEntity> {
   }
 
   async findByIdAndOwner(studentId: number, userId: number): Promise<StudentEntity> {
-    const student = await this.createQueryBuilder(EntityName.Students)
+    const student = await this.createQueryBuilder(EntityName.STUDENTS)
       .where('students.id = :studentId', { studentId })
       .leftJoinAndSelect('students.club', 'club')
       .andWhere('club.ownerId = :userId', { userId })
@@ -184,7 +184,7 @@ export class StudentRepository extends Repository<StudentEntity> {
   }
 
   async findStudentByNationalCode(nationalCode: string, userId: number): Promise<StudentEntity> {
-    const student = await this.createQueryBuilder(EntityName.Students)
+    const student = await this.createQueryBuilder(EntityName.STUDENTS)
       .where('students.national_code = :nationalCode', { nationalCode })
       .leftJoinAndSelect('students.club', 'club')
       .andWhere('club.ownerId = :userId', { userId })
@@ -210,7 +210,7 @@ export class StudentRepository extends Repository<StudentEntity> {
   }
 
   async findStudentWithRelations(studentId: number): Promise<StudentEntity> {
-    const student = await this.createQueryBuilder(EntityName.Students)
+    const student = await this.createQueryBuilder(EntityName.STUDENTS)
       .where('students.id = :studentId', { studentId })
       .leftJoin('students.club', 'club')
       .leftJoin('students.coach', 'coach')
@@ -255,7 +255,7 @@ export class StudentRepository extends Repository<StudentEntity> {
   }
 
   async countStudentsByOwner(ownerId: number): Promise<number> {
-    return this.createQueryBuilder(EntityName.Students)
+    return this.createQueryBuilder(EntityName.STUDENTS)
       .leftJoin('students.club', 'club')
       .where('club.ownerId = :ownerId', { ownerId })
       .getCount();

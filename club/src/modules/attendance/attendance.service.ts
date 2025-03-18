@@ -15,7 +15,6 @@ import { SessionService } from '../session/session.service';
 import { StudentService } from '../student/student.service';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
-import { CacheTTLSeconds } from '../../common/enums/cache-time';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { IUser } from '../../common/interfaces/user.interface';
@@ -195,11 +194,6 @@ export class AttendanceService {
     const { take, page } = query.paginationDto;
 
     try {
-      const cacheKey = `${CacheKeys.ATTENDANCES}-${user.id}-${page}-${take}-${JSON.stringify(query.queryAttendanceDto)}`;
-
-      const cachedData = await this.cacheService.get<PageDto<AttendanceEntity>>(cacheKey);
-      if (cachedData) return ResponseUtil.success(cachedData.data, AttendanceMessages.GET_ALL_SUCCESS);
-
       const [attendances, count] = await this.attendanceSessionRepository.getAttendancesWithFilters(
         user.id,
         query.queryAttendanceDto,
@@ -219,8 +213,6 @@ export class AttendanceService {
 
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(formattedData, pageMetaDto);
-
-      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.GET_ALL_ATTENDANCES);
 
       return ResponseUtil.success(result.data, AttendanceMessages.GET_ALL_SUCCESS);
     } catch (error) {

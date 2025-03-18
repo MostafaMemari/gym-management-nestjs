@@ -12,7 +12,6 @@ import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from '../../common/utils/response';
-import { CacheTTLSeconds } from '../../common/enums/cache-time';
 
 @Injectable()
 export class AgeCategoryService {

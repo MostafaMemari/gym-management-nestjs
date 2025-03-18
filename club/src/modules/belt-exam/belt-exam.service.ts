@@ -13,7 +13,7 @@ import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from '../../common/utils/response';
-import { CacheTTLSeconds } from 'src/common/enums/cache-time';
+import { CacheTTLMilliseconds } from 'src/common/enums/cache-time';
 
 @Injectable()
 export class BeltExamService {
@@ -68,7 +68,7 @@ export class BeltExamService {
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(beltExams, pageMetaDto);
 
-      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.GET_ALL_BELT_EXAMS);
+      await this.cacheService.set(cacheKey, result, CacheTTLMilliseconds.GET_ALL_BELT_EXAMS);
 
       return ResponseUtil.success(result.data, BeltExamMessages.GET_ALL_SUCCESS);
     } catch (error) {

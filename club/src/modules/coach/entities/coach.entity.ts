@@ -9,7 +9,7 @@ import { Gender } from '../../../common/enums/gender.enum';
 import { ClubEntity } from '../../../modules/club/entities/club.entity';
 import { AttendanceSessionEntity } from 'src/modules/attendance/entities/attendance-sessions.entity';
 
-@Entity(EntityName.Coaches)
+@Entity(EntityName.COACHES)
 @Index(['full_name', 'national_code'])
 export class CoachEntity extends AbstractEntity {
   @Column({ type: 'integer', unique: true, nullable: false })

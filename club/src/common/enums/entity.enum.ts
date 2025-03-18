@@ -1,12 +1,12 @@
 export enum EntityName {
-  Students = 'students',
-  StudentBelts = 'student_belts',
-  Coaches = 'coaches',
+  STUDENTS = 'students',
+  STUDENT_BELTS = 'student_belts',
+  COACHES = 'coaches',
   CLUBS = 'clubs',
   BELTS = 'belts',
-  Sessions = 'sessions',
+  SESSIONS = 'sessions',
   BELT_EXAMS = 'belt_exams',
   AGE_CATEGORIES = 'age_categories',
-  Attendances = 'attendances',
-  AttendanceSessions = 'attendance_sessions',
+  ATTENDANCES = 'attendances',
+  ATTENDANCES_SESSIONS = 'attendance_sessions',
 }

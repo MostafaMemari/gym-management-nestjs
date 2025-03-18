@@ -7,7 +7,7 @@ import { EntityName } from '../../../common/enums/entity.enum';
 import { CoachEntity } from '../../../modules/coach/entities/coach.entity';
 import { SessionEntity } from '../../../modules/session/entities/session.entity';
 
-@Entity(EntityName.AttendanceSessions)
+@Entity(EntityName.ATTENDANCES_SESSIONS)
 export class AttendanceSessionEntity extends AbstractEntity {
   @Column({ type: 'integer', nullable: false })
   sessionId: number;

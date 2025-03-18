@@ -8,7 +8,7 @@ import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { StudentEntity } from '../../../modules/student/entities/student.entity';
 
-@Entity(EntityName.Attendances)
+@Entity(EntityName.ATTENDANCES)
 export class AttendanceEntity extends AbstractEntity {
   @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
   attendance_date_time: Date;
