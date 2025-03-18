@@ -69,6 +69,7 @@ export class CoachService {
         ownerId: userId,
       });
 
+      await this.clearCoachCacheByUser(userId);
       return ResponseUtil.success({ ...coach, userId: coachUserId }, CoachMessages.CREATE_SUCCESS);
     } catch (error) {
       await this.removeCoachData(coachUserId, imageKey);
@@ -110,6 +111,7 @@ export class CoachService {
 
       if (image && updateData.image_url && coach.image_url) await this.awsService.deleteFile(coach.image_url);
 
+      await this.clearCoachCacheByUser(userId);
       return ResponseUtil.success({ ...coach, ...updateData }, CoachMessages.UPDATE_SUCCESS);
     } catch (error) {
       await this.removeImage(imageKey);
@@ -118,20 +120,13 @@ export class CoachService {
   }
   async getAll(user: IUser, query: { queryCoachDto: ICoachFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
     const { take, page } = query.paginationDto;
+    const userId: number = user.id;
+
     try {
-      const userId: number = user.id;
-
-      const cacheKey = `${CacheKeys.COACHES}:${user.id}-${page}-${take}-${JSON.stringify(query.queryCoachDto)}`;
-
-      const cachedData = await this.cacheService.get<PageDto<CoachEntity>>(cacheKey);
-      if (cachedData) return ResponseUtil.success(cachedData.data, CoachMessages.GET_ALL_SUCCESS);
-
       const [coaches, count] = await this.coachRepository.getCoachesWithFilters(userId, query.queryCoachDto, page, take);
 
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(coaches, pageMetaDto);
-
-      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.GET_ALL_COACHES);
 
       return ResponseUtil.success(result.data, CoachMessages.GET_ALL_SUCCESS);
     } catch (error) {
@@ -148,6 +143,7 @@ export class CoachService {
     }
   }
   async removeById(user: IUser, coachId: number): Promise<ServiceResponse> {
+    const userId = user.id;
     try {
       const coach = await this.validateOwnershipById(coachId, user.id);
 
@@ -158,6 +154,7 @@ export class CoachService {
 
       if (isRemoved) await this.removeCoachData(Number(coach.userId), coach.image_url);
 
+      await this.clearCoachCacheByUser(userId);
       return ResponseUtil.success(coach, CoachMessages.REMOVE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || CoachMessages.REMOVE_FAILURE, error?.status);
@@ -242,5 +239,8 @@ export class CoachService {
   }
   async hasCoachByClubId(clubId: number): Promise<boolean> {
     return this.coachRepository.existsCoachByClubId(clubId);
+  }
+  private async clearCoachCacheByUser(userId: number) {
+    await this.cacheService.delByPattern(`${CacheKeys.COACHES}-userId:${userId}*`);
   }
 }

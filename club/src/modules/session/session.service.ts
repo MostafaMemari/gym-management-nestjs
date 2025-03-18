@@ -29,8 +29,9 @@ export class SessionService {
   async create(user: IUser, createSessionDto: ICreateSession): Promise<ServiceResponse> {
     try {
       const { clubId, coachId, studentIds } = createSessionDto;
+      const userId = user.id;
 
-      const club = await this.clubService.validateOwnershipByIdWithCoaches(clubId, user.id);
+      const club = await this.clubService.validateOwnershipByIdWithCoaches(clubId, userId);
       await this.clubService.validateCoachInClub(club, coachId);
       const coach = club.coaches.find((coach) => coach.id === coachId);
 
@@ -40,6 +41,7 @@ export class SessionService {
 
       const session = await this.sessionRepository.createAndSaveSession(createSessionDto);
 
+      await this.clearSessionCacheByUser(userId);
       return ResponseUtil.success(
         {
           ...session,
@@ -57,16 +59,17 @@ export class SessionService {
   async update(user: IUser, sessionId: number, updateSessionDto: IUpdateSession): Promise<ServiceResponse> {
     try {
       const { clubId, coachId, studentIds } = updateSessionDto;
+      const userId = user.id;
       let club = null;
 
-      const session = await this.validateOwnershipById(sessionId, user.id);
+      const session = await this.validateOwnershipById(sessionId, userId);
 
       if (clubId || coachId) {
-        club = await this.clubService.validateOwnershipByIdWithCoaches(clubId ?? session.clubId, user.id);
+        club = await this.clubService.validateOwnershipByIdWithCoaches(clubId ?? session.clubId, userId);
         await this.clubService.validateCoachInClub(club, coachId ?? session.coachId);
       }
       if (studentIds?.length) {
-        club = club ? club : await this.clubService.validateOwnershipByIdWithCoaches(clubId ?? session.clubId, user.id);
+        club = club ? club : await this.clubService.validateOwnershipByIdWithCoaches(clubId ?? session.clubId, userId);
 
         const coach = club.coaches.find((coach) => coach.id === coachId || session.coachId);
         updateSessionDto.students = studentIds
@@ -78,6 +81,7 @@ export class SessionService {
 
       const updatedSession = await this.sessionRepository.updateSession(session, updateSessionDto);
 
+      await this.clearSessionCacheByUser(userId);
       return ResponseUtil.success({ ...updatedSession }, SessionMessages.UPDATE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || SessionMessages.UPDATE_FAILURE, error?.status);
@@ -87,17 +91,10 @@ export class SessionService {
     const { take, page } = query.paginationDto;
 
     try {
-      const cacheKey = `${CacheKeys.SESSIONS}-${user.id}-${page}-${take}-${JSON.stringify(query.querySessionDto)}`;
-
-      const cachedData = await this.cacheService.get<PageDto<SessionEntity>>(cacheKey);
-      if (cachedData) return ResponseUtil.success(cachedData.data, SessionMessages.GET_ALL_SUCCESS);
-
       const [sessions, count] = await this.sessionRepository.getSessionsWithFilters(user.id, query.querySessionDto, page, take);
 
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(sessions, pageMetaDto);
-
-      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.GET_ALL_SESSIONS);
 
       return ResponseUtil.success(result.data, SessionMessages.GET_ALL_SUCCESS);
     } catch (error) {
@@ -136,5 +133,9 @@ export class SessionService {
     const session = await this.sessionRepository.findByIdAndOwnerRelationStudents(sessionId, userId);
     if (!session) throw new NotFoundException(SessionMessages.NOT_FOUND);
     return session;
+  }
+
+  private async clearSessionCacheByUser(userId: number) {
+    await this.cacheService.delByPattern(`${CacheKeys.SESSIONS}-userId:${userId}*`);
   }
 }

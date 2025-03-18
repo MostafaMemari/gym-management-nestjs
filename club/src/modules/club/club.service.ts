@@ -11,7 +11,6 @@ import { CacheService } from '../cache/cache.service';
 import { CoachService } from '../coach/coach.service';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
-import { CacheTTLSeconds } from '../../common/enums/cache-time';
 import { Gender } from '../../common/enums/gender.enum';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
@@ -27,18 +26,21 @@ export class ClubService {
   ) {}
 
   async create(user: IUser, createClubDto: ICreateClub): Promise<ServiceResponse> {
+    const userId = user.id;
     try {
       const club = await this.clubRepository.createAndSaveClub(createClubDto, user.id);
 
+      await this.clearClubCacheByUser(userId);
       return ResponseUtil.success(club, ClubMessages.CREATE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || ClubMessages.CREATE_FAILURE, error?.status);
     }
   }
   async update(user: IUser, clubId: number, updateClubDto: IUpdateClub): Promise<ServiceResponse> {
+    const userId = user.id;
     try {
       const { genders } = updateClubDto;
-      const club = await this.validateOwnershipById(clubId, user.id);
+      const club = await this.validateOwnershipById(clubId, userId);
 
       if (genders && genders !== club.genders) {
         await this.validateGenderRemoval(genders, clubId, club.genders);
@@ -46,6 +48,7 @@ export class ClubService {
 
       const updatedClub = await this.clubRepository.updateClub(club, updateClubDto);
 
+      await this.clearClubCacheByUser(userId);
       return ResponseUtil.success({ ...updatedClub }, ClubMessages.UPDATE_FAILURE);
     } catch (error) {
       ResponseUtil.error(error?.message || ClubMessages.UPDATE_FAILURE, error?.status);
@@ -55,17 +58,10 @@ export class ClubService {
     const { take, page } = query.paginationDto;
 
     try {
-      const cacheKey = `${CacheKeys.CLUBS}-${user.id}-${page}-${take}-${JSON.stringify(query.queryClubDto)}`;
-
-      const cachedData = await this.cacheService.get<PageDto<ClubEntity>>(cacheKey);
-      if (cachedData) return ResponseUtil.success(cachedData.data, ClubMessages.GET_ALL_SUCCESS);
-
       const [clubs, count] = await this.clubRepository.getClubsWithFilters(user.id, query.queryClubDto, page, take);
 
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(clubs, pageMetaDto);
-
-      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.GET_ALL_CLUBS);
 
       return ResponseUtil.success(result.data, ClubMessages.GET_ALL_SUCCESS);
     } catch (error) {
@@ -82,6 +78,8 @@ export class ClubService {
     }
   }
   async removeById(user: IUser, clubId: number): Promise<ServiceResponse> {
+    const userId = user.id;
+
     try {
       await this.validateOwnershipById(clubId, user.id);
 
@@ -92,6 +90,7 @@ export class ClubService {
 
       if (!removedClub.affected) ResponseUtil.error(ClubMessages.REMOVE_FAILURE);
 
+      await this.clearClubCacheByUser(userId);
       return ResponseUtil.success(removedClub, ClubMessages.REMOVE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || ClubMessages.REMOVE_FAILURE, error?.status);
@@ -147,5 +146,8 @@ export class ClubService {
   async validateCoachInClub(club: ClubEntity, coachId: number): Promise<void> {
     const coach = club.coaches.find((coach) => coach.id === coachId);
     if (!coach) throw new BadRequestException(ClubMessages.COACH_NOT_ASSIGNED);
+  }
+  private async clearClubCacheByUser(userId: number) {
+    await this.cacheService.delByPattern(`${CacheKeys.CLUBS}-userId:${userId}*`);
   }
 }

@@ -5,7 +5,6 @@ import { ClubEntity } from './entities/club.entity';
 import { ClubController } from './club.controller';
 import { ClubService } from './club.service';
 import { ClubRepository } from './repositories/club.repository';
-import { ClubSubscriber } from './subscribers/club.subscriber';
 
 import { CacheModule } from '../cache/cache.module';
 import { CoachModule } from '../coach/coach.module';
@@ -13,7 +12,7 @@ import { CoachModule } from '../coach/coach.module';
 @Module({
   imports: [TypeOrmModule.forFeature([ClubEntity]), CacheModule, forwardRef(() => CoachModule)],
   controllers: [ClubController],
-  providers: [ClubService, ClubRepository, ClubSubscriber],
+  providers: [ClubService, ClubRepository],
   exports: [ClubService],
 })
 export class ClubModule {}

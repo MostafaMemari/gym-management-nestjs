@@ -4,6 +4,8 @@ import { CoachEntity } from '../entities/coach.entity';
 import { ICoachFilter } from '../interfaces/coach.interface';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
+import { CacheKeys } from '../enums/cache.enum';
+import { CacheTTLSeconds } from 'src/common/enums/cache-time';
 
 @Injectable()
 export class CoachRepository extends Repository<CoachEntity> {
@@ -43,8 +45,10 @@ export class CoachRepository extends Repository<CoachEntity> {
     }
   }
 
-  async getCoachesWithFilters(ownerId: number, filters: ICoachFilter, page: number, take: number): Promise<[CoachEntity[], number]> {
-    const queryBuilder = this.createQueryBuilder(EntityName.Coaches).where('coaches.ownerId = :ownerId', { ownerId });
+  async getCoachesWithFilters(userId: number, filters: ICoachFilter, page: number, take: number): Promise<[CoachEntity[], number]> {
+    const cacheKey = `${CacheKeys.COACHES}:userId:${userId}-${page}-${take}-${JSON.stringify(filters)}`;
+
+    const queryBuilder = this.createQueryBuilder(EntityName.Coaches).where('coaches.ownerId = :userId', { userId });
 
     if (filters?.search) {
       queryBuilder.andWhere('(coaches.full_name LIKE :search OR coaches.national_code LIKE :search)', { search: `%${filters.search}%` });
@@ -75,6 +79,7 @@ export class CoachRepository extends Repository<CoachEntity> {
     return queryBuilder
       .skip((page - 1) * take)
       .take(take)
+      .cache(cacheKey, CacheTTLSeconds.GET_ALL_COACHES)
       .getManyAndCount();
   }
 

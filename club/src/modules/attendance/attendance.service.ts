@@ -34,6 +34,7 @@ export class AttendanceService {
 
   async create(user: IUser, createAttendanceDto: IRecordAttendanceDto): Promise<ServiceResponse> {
     const { sessionId, date, attendances } = createAttendanceDto;
+    const userId = user.id;
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -64,6 +65,7 @@ export class AttendanceService {
       if (attendanceEntities.length === 0) throw new BadRequestException(AttendanceMessages.NO_STUDENTS_ELIGIBLE);
 
       await queryRunner.commitTransaction();
+      await this.clearAttendanceCacheByUser(userId);
 
       return ResponseUtil.success({
         ...createAttendanceDto,
@@ -82,6 +84,7 @@ export class AttendanceService {
   }
   async update(user: IUser, attendanceId: number, updateAttendanceDto: IUpdateRecordAttendance): Promise<ServiceResponse> {
     const { sessionId, date, attendances } = updateAttendanceDto;
+    const userId = user.id;
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -120,6 +123,7 @@ export class AttendanceService {
 
       await queryRunner.commitTransaction();
 
+      await this.clearAttendanceCacheByUser(userId);
       return ResponseUtil.success(
         {
           ...updateAttendanceDto,
@@ -143,11 +147,6 @@ export class AttendanceService {
     const { take, page } = query.paginationDto;
 
     try {
-      const cacheKey = `${CacheKeys.ATTENDANCES}-${user.id}-${page}-${take}-${JSON.stringify(query.queryAttendanceDto)}`;
-
-      const cachedData = await this.cacheService.get<PageDto<AttendanceEntity>>(cacheKey);
-      if (cachedData) return ResponseUtil.success(cachedData.data, AttendanceMessages.GET_ALL_SUCCESS);
-
       const [attendances, count] = await this.attendanceSessionRepository.getAttendancesWithFilters(
         user.id,
         query.queryAttendanceDto,
@@ -172,8 +171,6 @@ export class AttendanceService {
 
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(formattedData, pageMetaDto);
-
-      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.GET_ALL_ATTENDANCES);
 
       // const report: IStudentAttendance = attendances.reduce((acc, session) => {
       //   const date = new Date(session.date);
@@ -240,13 +237,14 @@ export class AttendanceService {
     }
   }
   async remove(user: IUser, attendanceId: number): Promise<ServiceResponse> {
+    const userId = user.id;
     try {
       const attendance = await this.validateOwnershipById(attendanceId, user.id);
 
       const removedClub = await this.attendanceSessionRepository.delete({ id: attendanceId });
 
       if (!removedClub.affected) ResponseUtil.error(AttendanceMessages.REMOVE_FAILURE);
-
+      await this.clearAttendanceCacheByUser(userId);
       return ResponseUtil.success(attendance, AttendanceMessages.REMOVE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || AttendanceMessages.REMOVE_FAILURE, error?.status);
@@ -295,5 +293,9 @@ export class AttendanceService {
     if (isAfter(inputDate, today)) {
       throw new BadRequestException(AttendanceMessages.FUTURE_DATE_NOT_ALLOWED);
     }
+  }
+
+  private async clearAttendanceCacheByUser(userId: number) {
+    await this.cacheService.delByPattern(`${CacheKeys.ATTENDANCES}-userId:${userId}*`);
   }
 }

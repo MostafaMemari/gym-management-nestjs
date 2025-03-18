@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 import { SessionEntity } from '../entities/session.entity';
+import { CacheKeys } from '../enums/cache.enum';
+
 import { EntityName } from '../../../common/enums/entity.enum';
 import { ICreateSession, ISessionFilter, IUpdateSession } from '../interfaces/session.interface';
+import { CacheTTLMilliseconds } from '../../../common/enums/cache-time';
 
 @Injectable()
 export class SessionRepository extends Repository<SessionEntity> {
@@ -22,6 +25,8 @@ export class SessionRepository extends Repository<SessionEntity> {
   }
 
   async getSessionsWithFilters(userId: number, filters: ISessionFilter, page: number, take: number): Promise<[SessionEntity[], number]> {
+    const cacheKey = `${CacheKeys.SESSIONS}-userId:${userId}-${page}-${take}-${JSON.stringify(filters)}`;
+
     const queryBuilder = this.createQueryBuilder(EntityName.Sessions)
       .leftJoin('sessions.club', 'club', 'club.ownerId = :userId', { userId })
       .leftJoin('sessions.students', 'students')
@@ -45,6 +50,7 @@ export class SessionRepository extends Repository<SessionEntity> {
     return queryBuilder
       .skip((page - 1) * take)
       .take(take)
+      .cache(cacheKey, CacheTTLMilliseconds.GET_ALL_SESSIONS)
       .getManyAndCount();
   }
 

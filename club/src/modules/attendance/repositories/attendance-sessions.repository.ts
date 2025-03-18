@@ -2,9 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, In, QueryRunner, Repository } from 'typeorm';
 
 import { AttendanceSessionEntity } from '../entities/attendance-sessions.entity';
+import { CacheKeys } from '../enums/cache.enum';
 import { IAttendanceFilter } from '../interfaces/attendance.interface';
 
 import { EntityName } from '../../../common/enums/entity.enum';
+import { CacheTTLSeconds } from 'src/common/enums/cache-time';
 
 @Injectable()
 export class AttendanceSessionRepository extends Repository<AttendanceSessionEntity> {
@@ -24,6 +26,8 @@ export class AttendanceSessionRepository extends Repository<AttendanceSessionEnt
     page: number,
     take: number,
   ): Promise<[AttendanceSessionEntity[], number]> {
+    const cacheKey = `${CacheKeys.ATTENDANCES}-userId:${userId}-${page}-${take}-${JSON.stringify(filters)}`;
+
     const queryBuilder = this.createQueryBuilder(EntityName.AttendanceSessions)
       .leftJoinAndSelect('attendance_sessions.attendances', 'attendances')
       .leftJoin('attendances.student', 'student')
@@ -54,6 +58,7 @@ export class AttendanceSessionRepository extends Repository<AttendanceSessionEnt
     return queryBuilder
       .skip((page - 1) * take)
       .take(take)
+      .cache(cacheKey, CacheTTLSeconds.GET_ALL_ATTENDANCES)
       .getManyAndCount();
   }
 

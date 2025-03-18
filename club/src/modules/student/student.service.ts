@@ -19,6 +19,7 @@ import { CoachEntity } from '../coach/entities/coach.entity';
 import { AwsService } from '../s3AWS/s3AWS.service';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
+import { CacheTTLSeconds } from '../../common/enums/cache-time';
 import { Gender } from '../../common/enums/gender.enum';
 import { UserPatterns } from '../../common/enums/patterns.events';
 import { Services } from '../../common/enums/services.enum';
@@ -29,7 +30,6 @@ import { checkConnection } from '../../common/utils/checkConnection.utils';
 import { shmasiToMiladi } from '../../common/utils/date/convertDate';
 import { isGenderAllowed, isSameGender } from '../../common/utils/functions';
 import { ResponseUtil } from '../../common/utils/response';
-import { CacheTTLSeconds } from '../../common/enums/cache-time';
 
 @Injectable()
 export class StudentService {
@@ -148,17 +148,10 @@ export class StudentService {
     const { take, page } = query.paginationDto;
 
     try {
-      const cacheKey = `${CacheKeys.STUDENTS_SUMMARY}:${user.id}-${page}-${take}-${JSON.stringify(query.queryStudentDto)}`;
-
-      const cachedData = await this.cacheService.get<PageDto<StudentEntity>>(cacheKey);
-      if (cachedData) return ResponseUtil.success(cachedData.data, StudentMessages.GET_ALL_SUCCESS);
-
       const [students, count] = await this.studentRepository.getStudentsSummaryWithFilters(user.id, query.queryStudentDto, page, take);
 
       const pageMetaDto = new PageMetaDto(count, query.paginationDto);
       const result = new PageDto(students, pageMetaDto);
-
-      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.GET_ALL_STUDENTS_SUMMARY);
 
       return ResponseUtil.success(result.data, StudentMessages.GET_ALL_SUCCESS);
     } catch (error) {
@@ -409,5 +402,6 @@ export class StudentService {
 
   private async clearStudentCacheByUser(userId: number) {
     await this.cacheService.delByPattern(`${CacheKeys.STUDENTS}-userId:${userId}*`);
+    await this.cacheService.delByPattern(`${CacheKeys.STUDENTS_SUMMARY}-userId:${userId}*`);
   }
 }
