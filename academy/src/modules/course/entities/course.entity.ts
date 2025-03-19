@@ -18,7 +18,7 @@ export class CourseEntity extends AbstractEntity {
   cover_image?: string;
 
   @Column({ nullable: true })
-  cover_video?: string;
+  intro_video?: string;
 
   @OneToMany(() => ChapterEntity, (chapter) => chapter.course)
   chapters: ChapterEntity[];

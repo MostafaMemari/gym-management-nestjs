@@ -1,13 +1,15 @@
+import { APP_PIPE } from '@nestjs/core';
 import { Module, ValidationPipe } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { AuthController } from './controllers/auth/auth.controller';
 import { ConfigModule } from '@nestjs/config';
+
 import envConfig from '../configs/env.config';
-import { UserController } from './controllers/user/user.controller';
-import { APP_PIPE } from '@nestjs/core';
-import { StudentController } from './controllers/club/student.controller';
 import { Services } from '../common/enums/services.enum';
 import { AuthGuard } from '../common/guards/auth.guard';
+
+import { AuthController } from './controllers/auth/auth.controller';
+import { UserController } from './controllers/user/user.controller';
+import { StudentController } from './controllers/club/student.controller';
 import { CoachController } from './controllers/club/coach.controller';
 import { ClubController } from './controllers/club/club.controller';
 import { RbacController } from './controllers/auth/rbac.controller';
@@ -20,6 +22,7 @@ import { WalletController } from './controllers/user/wallet.controller';
 import { SessionController } from './controllers/club/session.controller';
 import { AttendanceController } from './controllers/club/attendance.controller';
 import { LessonController } from './controllers/academy/lesson.controller';
+import { CoursesController } from './controllers/academy/course.controller';
 
 @Module({
   imports: [
@@ -132,6 +135,7 @@ import { LessonController } from './controllers/academy/lesson.controller';
     BeltExamController,
     SessionController,
     AttendanceController,
+    CoursesController,
     LessonController,
   ],
   providers: [

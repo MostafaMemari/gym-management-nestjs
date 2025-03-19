@@ -1,39 +1,31 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
 import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsPositive, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 import { SortOrder } from '../../../common/enums/shared.enum';
 
-export class CreateLessonDto {
-  @ApiProperty({ example: '' })
+export class CreateChaptersDto {
   @IsNotEmpty()
   @IsString()
+  @ApiProperty({ example: '' })
   title: string;
-
-  @ApiProperty({ example: '<p>HTML content here...</p>', required: false })
-  @IsOptional()
-  @IsString()
-  content?: string;
 
   @IsNotEmpty()
   @IsInt()
   @IsPositive()
   @Transform(({ value }) => parseInt(value, 10))
   @ApiProperty({ type: 'integer', required: true, example: '' })
-  chapterId: number;
+  courseId: number;
 
   @IsOptional()
-  @ApiPropertyOptional({ type: 'string', format: 'binary' })
-  cover_image?: Express.Multer.File;
-
-  @IsOptional()
-  @ApiPropertyOptional({ type: 'string', format: 'binary' })
-  video?: Express.Multer.File;
+  @IsString()
+  @ApiPropertyOptional({ example: '' })
+  description?: string;
 }
 
-export class UpdateLessonDto extends PartialType(CreateLessonDto) {}
+export class UpdateChaptersDto extends PartialType(CreateChaptersDto) {}
 
-export class QueryLessonDto {
+export class QueryChaptersDto {
   @IsOptional()
   @IsString()
   @ApiPropertyOptional({ type: 'string', example: '', description: '' })

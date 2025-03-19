@@ -18,13 +18,13 @@ export class LessonEntity extends AbstractEntity {
   cover_image?: string;
 
   @Column({ nullable: true })
-  cover_video?: string;
-
-  @ManyToOne(() => ChapterEntity, (chapter) => chapter.lessons)
-  chapter: ChapterEntity;
+  video?: string;
 
   @OneToMany(() => LessonFileEntity, (file) => file.lesson)
   files: LessonFileEntity[];
+
+  @ManyToOne(() => ChapterEntity, (chapter) => chapter.lessons)
+  chapter: ChapterEntity;
 
   @OneToMany(() => UserLessonProgressEntity, (progress) => progress.lesson)
   userProgress: UserLessonProgressEntity[];
