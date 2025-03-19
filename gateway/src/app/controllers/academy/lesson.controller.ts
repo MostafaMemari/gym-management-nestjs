@@ -11,7 +11,9 @@ import {
   Put,
   Query,
   UploadedFile,
+  UploadedFiles,
   UseInterceptors,
+  UsePipes,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiConsumes, ApiParam, ApiTags } from '@nestjs/swagger';
@@ -27,41 +29,75 @@ import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { UploadFile } from '../../../common/interceptors/upload-file.interceptor';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
 import { User } from '../../../common/interfaces/user.interface';
-import { UploadFileValidationPipe } from '../../../common/pipes/upload-file.pipe';
+import { FileValidationPipe } from '../../../common/pipes/upload-file.pipe';
 import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
 import { UserLessonProgressDto } from '../../../common/dtos/academy-service/user-lesson-progress.dto';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { FilesValidationPipe } from 'src/common/pipes/upload-files.pipe';
 
 @Controller('lessons')
 @ApiTags('Lessons')
 @AuthDecorator()
 export class LessonController {
   constructor(@Inject(Services.ACADEMY) private readonly lessonServiceClient: ClientProxy) {}
-
   @Post()
-  @UseInterceptors(UploadFile('image'))
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'cover_image', maxCount: 1 },
+      { name: 'video', maxCount: 1 },
+    ]),
+  )
+  @UsePipes(
+    new FilesValidationPipe({
+      cover_image: { types: ['image/jpeg', 'image/png'], maxSize: 10 * 1024 * 1024 }, // حداکثر 10MB
+      video: { types: ['video/mp4'], maxSize: 10 * 1024 * 1024 },
+    }),
+  )
   @ApiConsumes(SwaggerConsumes.MultipartData)
   async create(
     @GetUser() user: User,
     @Body() createLessonDto: CreateLessonDto,
-    @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)'))
-    image: Express.Multer.File,
+    @UploadedFiles() files: { cover_image?: Express.Multer.File[]; video?: Express.Multer.File[] },
   ) {
     try {
-      await checkConnection(Services.ACADEMY, this.lessonServiceClient);
+      console.log('Received Files:', files);
+      console.log('Cover Image:', files.cover_image ? files.cover_image[0] : 'No cover image uploaded');
+      console.log('Video:', files.video ? files.video[0] : 'No video uploaded');
 
-      const data: ServiceResponse = await lastValueFrom(
-        this.lessonServiceClient
-          .send(LessonPatterns.CREATE, {
-            user,
-            createLessonDto: { ...createLessonDto, image },
-          })
-          .pipe(timeout(10000)),
-      );
+      return {
+        ...createLessonDto,
+        cover_image: files.cover_image ? files.cover_image[0] : null,
+        video: files.video ? files.video[0] : null,
+      };
 
-      return handleServiceResponse(data);
+      // await checkConnection(Services.ACADEMY, this.lessonServiceClient);
+
+      // const data: ServiceResponse = await lastValueFrom(
+      //   this.lessonServiceClient
+      //     .send(LessonPatterns.CREATE, {
+      //       user,
+      //       createLessonDto: {
+      //         ...createLessonDto,
+      //         cover_image: files.cover_image ? files.cover_image[0] : null,
+      //         video: files.video ? files.video[0] : null,
+      //       },
+      //     })
+      //     .pipe(timeout(10000)),
+      // );
+
+      // return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to create student', 'LessonService');
+      if (error instanceof BadRequestException) {
+        return {
+          message: error.message,
+          error: 'Invalid file format or size',
+          statusCode: 400,
+        };
+      }
+      handleError(error, 'Failed to create lesson', 'LessonService');
+
+      throw error;
     }
   }
 
@@ -78,7 +114,7 @@ export class LessonController {
     @GetUser() user: User,
     @Param('id', ParseIntPipe) id: number,
     @Body() updateLessonDto: UpdateLessonDto,
-    @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)'))
+    @UploadedFile(new FileValidationPipe(10 * 1024 * 1024, ['image/jpeg', 'image/png']))
     image: Express.Multer.File,
   ) {
     try {
@@ -87,7 +123,7 @@ export class LessonController {
         this.lessonServiceClient
           .send(LessonPatterns.UPDATE, {
             user,
-            studentId: id,
+            lessonId: id,
             updateLessonDto: { ...updateLessonDto, image },
           })
           .pipe(timeout(5000)),
@@ -95,7 +131,7 @@ export class LessonController {
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to updated student', 'LessonService');
+      handleError(error, 'Failed to updated lesson', 'LessonService');
     }
   }
 
@@ -118,12 +154,12 @@ export class LessonController {
       await checkConnection(Services.ACADEMY, this.lessonServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.lessonServiceClient.send(LessonPatterns.GET_ONE, { user, studentId: id }).pipe(timeout(5000)),
+        this.lessonServiceClient.send(LessonPatterns.GET_ONE, { user, lessonId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to get student', 'LessonService');
+      handleError(error, 'Failed to get lesson', 'LessonService');
     }
   }
 
@@ -133,12 +169,12 @@ export class LessonController {
       await checkConnection(Services.ACADEMY, this.lessonServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.lessonServiceClient.send(LessonPatterns.REMOVE, { user, studentId: id }).pipe(timeout(5000)),
+        this.lessonServiceClient.send(LessonPatterns.REMOVE, { user, lessonId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to remove student', 'LessonService');
+      handleError(error, 'Failed to remove lesson', 'LessonService');
     }
   }
 

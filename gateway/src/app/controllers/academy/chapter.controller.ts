@@ -13,7 +13,7 @@ import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { UploadFile } from '../../../common/interceptors/upload-file.interceptor';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
 import { User } from '../../../common/interfaces/user.interface';
-import { UploadFileValidationPipe } from '../../../common/pipes/upload-file.pipe';
+import { FileValidationPipe } from '../../../common/pipes/upload-file.pipe';
 import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
 
@@ -29,7 +29,7 @@ export class ChaptersController {
   async create(
     @GetUser() user: User,
     @Body() createChaptersDto: CreateChaptersDto,
-    @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)'))
+    @UploadedFile(new FileValidationPipe(10 * 1024 * 1024, ['image/jpeg', 'image/png']))
     image: Express.Multer.File,
   ) {
     try {
@@ -46,7 +46,7 @@ export class ChaptersController {
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to create student', 'ChaptersService');
+      handleError(error, 'Failed to create chapter', 'ChaptersService');
     }
   }
 
@@ -69,7 +69,7 @@ export class ChaptersController {
     @GetUser() user: User,
     @Param('id', ParseIntPipe) id: number,
     @Body() updateChaptersDto: UpdateChaptersDto,
-    @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)'))
+    @UploadedFile(new FileValidationPipe(10 * 1024 * 1024, ['image/jpeg', 'image/png']))
     image: Express.Multer.File,
   ) {
     try {
@@ -78,7 +78,7 @@ export class ChaptersController {
         this.chaptersServiceClient
           .send(ChapterPatterns.UPDATE, {
             user,
-            studentId: id,
+            chapterId: id,
             updateChaptersDto: { ...updateChaptersDto, image },
           })
           .pipe(timeout(5000)),
@@ -86,7 +86,7 @@ export class ChaptersController {
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to updated student', 'ChaptersService');
+      handleError(error, 'Failed to updated chapter', 'ChaptersService');
     }
   }
 
@@ -109,12 +109,12 @@ export class ChaptersController {
       await checkConnection(Services.ACADEMY, this.chaptersServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.chaptersServiceClient.send(ChapterPatterns.GET_ONE, { user, studentId: id }).pipe(timeout(5000)),
+        this.chaptersServiceClient.send(ChapterPatterns.GET_ONE, { user, chapterId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to get student', 'ChaptersService');
+      handleError(error, 'Failed to get chapter', 'ChaptersService');
     }
   }
 
@@ -124,12 +124,12 @@ export class ChaptersController {
       await checkConnection(Services.ACADEMY, this.chaptersServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.chaptersServiceClient.send(ChapterPatterns.REMOVE, { user, studentId: id }).pipe(timeout(5000)),
+        this.chaptersServiceClient.send(ChapterPatterns.REMOVE, { user, chapterId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to remove student', 'ChaptersService');
+      handleError(error, 'Failed to remove chapter', 'ChaptersService');
     }
   }
 }

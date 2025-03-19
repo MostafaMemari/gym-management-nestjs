@@ -4,7 +4,7 @@ import { Transform } from 'class-transformer';
 
 import { SortOrder } from '../../../common/enums/shared.enum';
 
-export class CreateCoursesDto {
+export class CreateCourseDto {
   @IsNotEmpty()
   @IsString()
   @ApiProperty({ example: '' })
@@ -31,9 +31,9 @@ export class CreateCoursesDto {
   intro_video: string;
 }
 
-export class UpdateCoursesDto extends PartialType(CreateCoursesDto) {}
+export class UpdateCourseDto extends PartialType(CreateCourseDto) {}
 
-export class QueryCoursesDto {
+export class QueryCourseDto {
   @IsOptional()
   @IsString()
   @ApiPropertyOptional({ type: 'string', example: '', description: '' })
