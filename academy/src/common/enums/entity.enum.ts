@@ -4,4 +4,5 @@ export enum EntityName {
   USER_LESSON_PROGRESS = 'user_lesson_progress',
 
   COURSES = 'courses',
+  CHAPTERS = 'chapters',
 }
