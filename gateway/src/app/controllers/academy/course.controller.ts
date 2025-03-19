@@ -120,11 +120,4 @@ export class CoursesController {
       handleError(error, 'Failed to remove student', 'CoursesService');
     }
   }
-
-  // @Post(':id/upload')
-  // @UseInterceptors(FilesInterceptor('files'))
-  // @ApiOperation({ summary: 'آپلود ویدیو یا مستندات برای یک درس' })
-  // async uploadFiles(@Param('id') id: number, @UploadedFiles() files: Express.Multer.File[]): Promise<string[]> {
-  //   return files.map((file) => file.filename);
-  // }
 }

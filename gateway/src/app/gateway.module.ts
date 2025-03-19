@@ -23,6 +23,7 @@ import { SessionController } from './controllers/club/session.controller';
 import { AttendanceController } from './controllers/club/attendance.controller';
 import { LessonController } from './controllers/academy/lesson.controller';
 import { CoursesController } from './controllers/academy/course.controller';
+import { ChaptersController } from './controllers/academy/chapter.controller';
 
 @Module({
   imports: [
@@ -137,6 +138,7 @@ import { CoursesController } from './controllers/academy/course.controller';
     AttendanceController,
     CoursesController,
     LessonController,
+    ChaptersController,
   ],
   providers: [
     {

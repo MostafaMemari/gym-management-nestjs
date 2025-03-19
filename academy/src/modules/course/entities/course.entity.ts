@@ -2,8 +2,9 @@ import { Column, Entity, OneToMany } from 'typeorm';
 
 import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { ChapterEntity } from '../../chapter/entities/chapter.entity';
+import { EntityName } from 'src/common/enums/entity.enum';
 
-@Entity()
+@Entity(EntityName.COURSES)
 export class CourseEntity extends AbstractEntity {
   @Column()
   title: string;
