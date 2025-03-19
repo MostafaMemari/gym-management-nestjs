@@ -1,19 +1,7 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
+import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 import { SortOrder } from '../../../common/enums/shared.enum';
-
-export class CreateLessonFileDto {
-  @ApiProperty({ example: 'video', enum: ['video', 'document', 'image'] })
-  @IsEnum(['video', 'document', 'image'])
-  fileType: 'video' | 'document' | 'image';
-
-  @ApiProperty({ example: 1, required: false })
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  orderNumber?: number;
-}
 
 export class CreateLessonDto {
   @ApiProperty({ example: '' })
