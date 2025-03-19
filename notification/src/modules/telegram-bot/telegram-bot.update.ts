@@ -32,6 +32,7 @@ export class TelegramBotUpdate {
     try {
       const nationalCode = ctx.text?.split(' ')?.[1] || '';
 
+      //TODO: Remove check pattern
       if (!nationalCode.match(/^[0-9]{10}$/)) {
         await ctx.reply('کد ملی نامعتبر می باشد.');
         return;

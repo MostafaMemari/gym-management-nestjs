@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, HttpStatus, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { IChargeWallet } from '../../common/interfaces/wallet.interface';
 import { WalletRepository } from './wallet.repository';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
@@ -12,10 +12,10 @@ import { ClubPatterns } from '../../common/enums/club.events';
 import { NotificationPatterns } from '../../common/enums/notification.events';
 import { UserRepository } from '../user/user.repository';
 import { Role, Wallet } from '@prisma/client';
-import { IPagination } from 'src/common/interfaces/user.interface';
-import { CacheKeys } from 'src/common/enums/cache.enum';
+import { IPagination } from '../../common/interfaces/user.interface';
+import { CacheKeys } from '../../common/enums/cache.enum';
 import { CacheService } from '../cache/cache.service';
-import { pagination } from 'src/common/utils/pagination.utils';
+import { pagination } from '../../common/utils/pagination.utils';
 
 @Injectable()
 export class WalletService {
@@ -54,8 +54,6 @@ export class WalletService {
       const wallet = await this.walletRepository.findOne(walletId);
 
       if (!wallet) throw new NotFoundException(WalletMessages.NotFoundWallet);
-      //TODO: Add message
-      if (wallet.isBlocked) throw new BadRequestException();
 
       return ResponseUtil.success({ wallet }, '', HttpStatus.OK);
     } catch (error) {
@@ -68,8 +66,8 @@ export class WalletService {
       const wallet = await this.walletRepository.findOneByUser(userId);
 
       if (!wallet) throw new NotFoundException(WalletMessages.NotFoundWallet);
-      //TODO: Add message
-      if (wallet.isBlocked) throw new ForbiddenException();
+
+      if (wallet.isBlocked) throw new BadRequestException(WalletMessages.BlockedWallet);
 
       return ResponseUtil.success({ wallet }, '', HttpStatus.OK);
     } catch (error) {
@@ -108,13 +106,12 @@ export class WalletService {
   async chargeWallet(chargeDto: IChargeWallet): Promise<ServiceResponse> {
     try {
       const { amount, userId } = chargeDto;
-      //TODO: Add message to enum
-      if (amount <= 0) throw new BadRequestException('Amount must be greater than zero.');
+
+      if (amount <= 0) throw new BadRequestException(WalletMessages.AmountMustBeGreaterThanZero);
 
       let wallet = await this.walletRepository.findOneByUser(userId);
 
-      //TODO: Add message to enum
-      if (wallet?.isBlocked) throw new BadRequestException('Wallet is blocked.');
+      if (wallet?.isBlocked) throw new BadRequestException(WalletMessages.BlockedWallet);
 
       if (!wallet) wallet = await this.walletRepository.create({ userId });
 
@@ -148,8 +145,7 @@ export class WalletService {
       this.logger.log('Daily withdrawal process completed successfully.');
     } catch (error) {
       this.logger.error(`Failed to process withdraw: ${error.message}`, error.stack);
-      //TODO: Add message to enum
-      await this.notifySuperAdmin('Daily withdrawal process failed.');
+      await this.notifySuperAdmin(WalletMessages.DailyWithdrawalFailed);
     }
   }
 
@@ -175,17 +171,16 @@ export class WalletService {
     const { userId, balance } = wallet;
     const daysLeft = this.calculateDaysLeft(balance, studentCount);
 
-    //TODO: Add messages to enum
-    if (daysLeft <= 5) return await this.sendNotification(userId, 'Low wallet balance', 'PUSH');
-    if (daysLeft <= 2) return this.sendNotification(userId, 'Critically low wallet balance', 'SMS');
+    if (daysLeft <= 5) return await this.sendNotification(userId, WalletMessages.LoWalletBalance, 'PUSH');
+    if (daysLeft <= 2) return this.sendNotification(userId, WalletMessages.CriticallyLowWalletBalance, 'SMS');
     if (daysLeft <= 0) await this.markWalletAsDepleted(wallet);
   }
 
   private async markWalletAsDepleted(wallet: Wallet): Promise<void> {
     await this.walletRepository.update(wallet.userId, { isWalletDepleted: true });
     await this.notifyWalletDepletion(wallet.userId, true);
-    //TODO: Add message to enum
-    await this.sendNotification(wallet.userId, 'Your wallet is depleted', 'SMS');
+
+    await this.sendNotification(wallet.userId, WalletMessages.DepletedWallet, 'SMS');
   }
 
   private async handleWalletRecovery(wallet: Wallet): Promise<void> {

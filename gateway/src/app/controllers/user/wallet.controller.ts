@@ -15,6 +15,7 @@ import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { User } from 'src/common/interfaces/user.interface';
 import { PaymentPatterns } from 'src/common/enums/payment.events';
 import { ServiceResponse } from 'src/common/interfaces/serviceResponse.interface';
+import { PaginationDto } from 'src/common/dtos/shared.dto';
 
 @Controller('wallet')
 @ApiTags('wallet')
@@ -25,7 +26,7 @@ export class WalletController {
   constructor(
     @Inject(Services.USER) private readonly userServiceClient: ClientProxy,
     @Inject(Services.PAYMENT) private readonly paymentServiceClient: ClientProxy,
-  ) {}
+  ) { }
 
   @Post('pay')
   @Roles(Role.ADMIN_CLUB)
@@ -90,11 +91,11 @@ export class WalletController {
 
   @Get()
   @Roles(Role.SUPER_ADMIN)
-  async findAll() {
+  async findAll(@Query() paginationDto: PaginationDto) {
     try {
       await checkConnection(Services.USER, this.userServiceClient);
 
-      const data = await lastValueFrom(this.userServiceClient.send(WalletPatterns.GetWallets, {}).pipe(timeout(this.timeout)));
+      const data = await lastValueFrom(this.userServiceClient.send(WalletPatterns.GetWallets, { ...paginationDto }).pipe(timeout(this.timeout)));
 
       return handleServiceResponse(data);
     } catch (error) {
