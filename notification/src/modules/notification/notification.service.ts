@@ -21,7 +21,7 @@ export class NotificationService {
   constructor(
     @InjectModel(Notification.name) private readonly notificationModel: Model<Notification>,
     @Inject(Services.USER) private readonly userServiceClient: ClientProxy,
-  ) {}
+  ) { }
 
   private readonly timeout: 4500;
 
@@ -114,7 +114,7 @@ export class NotificationService {
 
       this.validateObjectId(notificationId);
 
-      const notification = await this.findOneOrFail(notificationId, { senderId });
+      const notification = await this.findOneOrFail(notificationId, { senderId , type: NotificationType.PUSH });
 
       const transformedId = transformId(notification);
 
@@ -130,7 +130,7 @@ export class NotificationService {
 
       this.validateObjectId(notificationId);
 
-      await this.findOneOrFail(notificationId);
+      await this.findOneOrFail(notificationId, { type: NotificationType.PUSH });
 
       const notification = await this.notificationModel
         .findOneAndUpdate(
