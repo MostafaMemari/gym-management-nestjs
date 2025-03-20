@@ -31,7 +31,7 @@ export class PaymentController {
 
   @MessagePattern(PaymentPatterns.GetTransactions)
   getTransactions(@Payload() data: IPagination) {
-    return this.paymentService.findAllTransaction(data);
+    return this.paymentService.findTransactions(data);
   }
 
   @MessagePattern(PaymentPatterns.CheckConnection)
