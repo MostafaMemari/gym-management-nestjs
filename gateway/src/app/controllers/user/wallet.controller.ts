@@ -26,7 +26,7 @@ export class WalletController {
   constructor(
     @Inject(Services.USER) private readonly userServiceClient: ClientProxy,
     @Inject(Services.PAYMENT) private readonly paymentServiceClient: ClientProxy,
-  ) { }
+  ) {}
 
   @Post('pay')
   @Roles(Role.ADMIN_CLUB)

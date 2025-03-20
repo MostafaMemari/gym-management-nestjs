@@ -56,4 +56,4 @@ export class CreateNotificationDto {
   recipients: number[];
 }
 
-export class UpdateNotificationDto extends PartialType(OmitType(CreateNotificationDto, ['type'] as const)) { }
+export class UpdateNotificationDto extends PartialType(OmitType(CreateNotificationDto, ['type'] as const)) {}
