@@ -3,7 +3,7 @@ import { IsDateString, IsEnum, IsInt, IsNotEmpty, IsOptional, IsPositive, IsStri
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { SortOrder } from '../../enums/shared.enum';
-import { DayOfWeek } from '../../../common/enums/days-of-week.enum';
+import { DayOfWeek } from '../../enums/club-service/days-of-week.enum';
 import { ToArray } from '../../../common/decorators/transformers.decorator';
 
 export class CreateSessionDto {
@@ -56,17 +56,17 @@ export class CreateSessionDto {
   description: string;
 
   @IsNotEmpty()
+  @Transform(({ value }) => parseInt(value, 10))
   @IsInt()
   @IsPositive()
-  @Transform(({ value }) => parseInt(value, 10))
-  @ApiProperty({ type: 'integer', required: true, example: '' })
+  @ApiProperty({ type: 'number', example: '' })
   clubId: number;
 
   @IsNotEmpty()
+  @Transform(({ value }) => parseInt(value, 10))
   @IsInt()
   @IsPositive()
-  @Transform(({ value }) => parseInt(value, 10))
-  @ApiProperty({ type: 'integer', required: true, example: '' })
+  @ApiProperty({ type: 'number', example: '' })
   coachId: number;
 
   @IsOptional()

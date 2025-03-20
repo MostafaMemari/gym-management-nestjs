@@ -1,19 +1,19 @@
-import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 
 import { CoachEntity } from './entities/coach.entity';
+import { CacheKeys } from './enums/cache.enum';
 import { CoachMessages } from './enums/coach.message';
 import { ICoachCreateDto, ICoachFilter, ICoachUpdateDto } from './interfaces/coach.interface';
 import { CoachRepository } from './repositories/coach.repository';
-import { CacheKeys, CacheTTLSeconds } from './enums/cache.enum';
 
 import { CacheService } from '../cache/cache.service';
 import { ClubService } from '../club/club.service';
+import { ClubEntity } from '../club/entities/club.entity';
 import { ICreateClub } from '../club/interfaces/club.interface';
 import { AwsService } from '../s3AWS/s3AWS.service';
 import { StudentService } from '../student/student.service';
-import { ClubEntity } from '../club/entities/club.entity';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
 import { Gender } from '../../common/enums/gender.enum';
@@ -22,9 +22,9 @@ import { Services } from '../../common/enums/services.enum';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { IUser } from '../../common/interfaces/user.interface';
+import { checkConnection } from '../../common/utils/checkConnection.utils';
 import { isGenderAllowed } from '../../common/utils/functions';
 import { ResponseUtil } from '../../common/utils/response';
-import { checkConnection } from '../../common/utils/checkConnection.utils';
 
 @Injectable()
 export class CoachService {
@@ -52,11 +52,11 @@ export class CoachService {
       if (national_code) await this.validateUniqueNationalCode(national_code, userId);
 
       if (clubIds) {
-        ownedClubs = await this.clubService.validateOwnedClubs(clubIds, userId);
+        ownedClubs = await this.clubService.validateOwnershipByIds(clubIds, userId);
         this.validateCoachClubGender(gender, ownedClubs);
       }
 
-      imageKey = image ? await this.uploadCoachImage(image) : null;
+      imageKey = image ? await this.updateImage(image) : null;
 
       coachUserId = await this.createUserCoach();
 
@@ -68,6 +68,7 @@ export class CoachService {
         ownerId: userId,
       });
 
+      await this.clearCoachCacheByUser(userId);
       return ResponseUtil.success({ ...coach, userId: coachUserId }, CoachMessages.CREATE_SUCCESS);
     } catch (error) {
       await this.removeCoachData(coachUserId, imageKey);
@@ -82,12 +83,12 @@ export class CoachService {
 
     try {
       let coach = national_code ? await this.validateUniqueNationalCode(national_code, userId) : null;
-      if (!coach) coach = await this.checkCoachOwnership(coachId, userId);
+      if (!coach) coach = await this.validateOwnershipById(coachId, userId);
 
       const updateData = this.prepareUpdateData(updateCoachDto, coach);
 
       if (clubIds.length) {
-        const ownedClubs = clubIds?.length ? await this.clubService.validateOwnedClubs(clubIds, userId) : coach.clubs;
+        const ownedClubs = clubIds?.length ? await this.clubService.validateOwnershipByIds(clubIds, userId) : coach.clubs;
         const removedClubs = coach.clubs.filter((club) => !clubIds.includes(club.id));
         if (removedClubs.length) await this.studentService.validateRemovedClubsStudents(removedClubs, coachId);
         this.validateCoachClubGender(coach.gender, ownedClubs);
@@ -103,34 +104,28 @@ export class CoachService {
         await this.validateCoachGenderChange(gender, coachId);
       }
 
-      if (image) updateData.image_url = await this.uploadCoachImage(image);
+      if (image) updateData.image_url = await this.updateImage(image);
 
       await this.coachRepository.updateCoach(coach, { ...updateData });
 
       if (image && updateData.image_url && coach.image_url) await this.awsService.deleteFile(coach.image_url);
 
+      await this.clearCoachCacheByUser(userId);
       return ResponseUtil.success({ ...coach, ...updateData }, CoachMessages.UPDATE_SUCCESS);
     } catch (error) {
-      await this.removeCoachImage(imageKey);
+      await this.removeImage(imageKey);
       ResponseUtil.error(error?.message || CoachMessages.UPDATE_FAILURE, error?.status);
     }
   }
   async getAll(user: IUser, query: { queryCoachDto: ICoachFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
     const { take, page } = query.paginationDto;
+    const userId: number = user.id;
+
     try {
-      const userId: number = user.id;
-
-      const cacheKey = `${CacheKeys.COACHES}:${user.id}-${page}-${take}-${JSON.stringify(query.queryCoachDto)}`;
-
-      const cachedData = await this.cacheService.get<PageDto<CoachEntity>>(cacheKey);
-      if (cachedData) return ResponseUtil.success(cachedData.data, CoachMessages.GET_ALL_SUCCESS);
-
       const [coaches, count] = await this.coachRepository.getCoachesWithFilters(userId, query.queryCoachDto, page, take);
 
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(coaches, pageMetaDto);
-
-      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.COACHES);
 
       return ResponseUtil.success(result.data, CoachMessages.GET_ALL_SUCCESS);
     } catch (error) {
@@ -139,7 +134,7 @@ export class CoachService {
   }
   async findOneById(user: IUser, coachId: number): Promise<ServiceResponse> {
     try {
-      const coach = await this.checkCoachOwnership(coachId, user.id);
+      const coach = await this.validateOwnershipById(coachId, user.id);
 
       return ResponseUtil.success(coach, CoachMessages.GET_SUCCESS);
     } catch (error) {
@@ -147,8 +142,9 @@ export class CoachService {
     }
   }
   async removeById(user: IUser, coachId: number): Promise<ServiceResponse> {
+    const userId = user.id;
     try {
-      const coach = await this.checkCoachOwnership(coachId, user.id);
+      const coach = await this.validateOwnershipById(coachId, user.id);
 
       const hasStudents = await this.studentService.hasStudentsAssignedToCoach(coachId);
       if (hasStudents) throw new BadRequestException(CoachMessages.COACH_HAS_STUDENTS.replace('{coachId}', coachId.toString()));
@@ -157,13 +153,14 @@ export class CoachService {
 
       if (isRemoved) await this.removeCoachData(Number(coach.userId), coach.image_url);
 
+      await this.clearCoachCacheByUser(userId);
       return ResponseUtil.success(coach, CoachMessages.REMOVE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || CoachMessages.REMOVE_FAILURE, error?.status);
     }
   }
 
-  async checkCoachOwnership(coachId: number, userId: number): Promise<CoachEntity> {
+  async validateOwnershipById(coachId: number, userId: number): Promise<CoachEntity> {
     const coach = await this.coachRepository.findByIdAndOwner(coachId, userId);
     if (!coach) throw new NotFoundException(CoachMessages.NOT_FOUND);
     return coach;
@@ -190,14 +187,14 @@ export class CoachService {
 
     if (result?.error) throw new BadRequestException(result.error);
   }
-  private async uploadCoachImage(image: Express.Multer.File): Promise<string | undefined> {
+  private async updateImage(image: Express.Multer.File): Promise<string | undefined> {
     if (!image) return;
 
     const uploadedImage = await this.awsService.uploadSingleFile({ file: image, folderName: 'coaches' });
     return uploadedImage.key;
     // return (await this.awsService.uploadSingleFile({ file: image, folderName: 'coaches' }))?.key;
   }
-  private async removeCoachImage(imageKey: string): Promise<void> {
+  private async removeImage(imageKey: string): Promise<void> {
     if (!imageKey) return;
     await this.awsService.deleteFile(imageKey);
   }
@@ -205,6 +202,12 @@ export class CoachService {
     const coach = await this.coachRepository.findCoachByNationalCode(nationalCode, userId);
     if (coach) throw new BadRequestException(CoachMessages.DUPLICATE_ENTRY);
     return coach;
+  }
+  private async removeCoachData(coachUserId: number, imageKey: string | null) {
+    await Promise.all([
+      coachUserId ? this.removeCoachUserById(coachUserId) : Promise.resolve(),
+      imageKey ? this.removeImage(imageKey) : Promise.resolve(),
+    ]);
   }
 
   private validateCoachClubGender(coachGender: Gender, clubs: ICreateClub[]): void {
@@ -214,18 +217,14 @@ export class CoachService {
       throw new BadRequestException(CoachMessages.COACH_GENDER_MISMATCH.replace('{ids}', invalidClubs.join(', ')));
     }
   }
-
   private async validateCoachGenderChange(coachGender: Gender, coachId: number): Promise<void> {
-    const hasInvalidStudent = await this.studentService.hasStudentsByGender(
+    const hasInvalidStudent = await this.studentService.validateGenderCoachStudent(
       coachId,
       coachGender === Gender.Male ? Gender.Female : Gender.Male,
     );
 
-    if (hasInvalidStudent) {
-      throw new BadRequestException(CoachMessages.COACH_GENDER_CHANGE_NOT_ALLOWED);
-    }
+    if (hasInvalidStudent) throw new BadRequestException(CoachMessages.COACH_GENDER_CHANGE_NOT_ALLOWED);
   }
-
   private prepareUpdateData(updateDto: ICoachUpdateDto, coach: CoachEntity): Partial<CoachEntity> {
     return Object.fromEntries(
       Object.entries(updateDto).filter(
@@ -234,18 +233,13 @@ export class CoachService {
     );
   }
 
-  private async removeCoachData(coachUserId: number, imageKey: string | null) {
-    await Promise.all([
-      coachUserId ? this.removeCoachUserById(coachUserId) : Promise.resolve(),
-      imageKey ? this.removeCoachImage(imageKey) : Promise.resolve(),
-    ]);
+  async hasCoachWithGenderInClub(clubId: number, coachGender: Gender): Promise<boolean> {
+    return this.coachRepository.existsCoachByGenderInClub(clubId, coachGender);
   }
-
-  async existsCoachWithGenderInClub(clubId: number, gender: Gender): Promise<boolean> {
-    return this.coachRepository.existsCoachByGenderInClub(clubId, gender);
-  }
-
-  async existsCoachInClub(clubId: number): Promise<boolean> {
+  async hasCoachByClubId(clubId: number): Promise<boolean> {
     return this.coachRepository.existsCoachByClubId(clubId);
+  }
+  private async clearCoachCacheByUser(userId: number) {
+    await this.cacheService.delByPattern(`${CacheKeys.COACHES}-userId:${userId}*`);
   }
 }

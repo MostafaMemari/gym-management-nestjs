@@ -13,6 +13,7 @@ import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from '../../common/utils/response';
+import { CacheTTLMilliseconds } from 'src/common/enums/cache-time';
 
 @Injectable()
 export class BeltExamService {
@@ -22,13 +23,11 @@ export class BeltExamService {
     private readonly beltService: BeltService,
   ) {}
 
-  private readonly cacheTTLSeconds: number = 3600;
-
   async create(createBeltExamDto: IBeltExamCreateDto): Promise<ServiceResponse> {
     try {
       const { beltIds } = createBeltExamDto;
       if (beltIds) {
-        const belts = await this.beltService.validateBeltIds(beltIds);
+        const belts = await this.beltService.validateByIds(beltIds);
         createBeltExamDto.belts = belts;
       }
 
@@ -43,10 +42,10 @@ export class BeltExamService {
     try {
       const { beltIds } = updateBeltExamDto;
 
-      const beltExam = await this.validateBeltExamId(beltExamId);
+      const beltExam = await this.validateById(beltExamId);
 
       if (beltIds) {
-        const belts = await this.beltService.validateBeltIds(beltIds);
+        const belts = await this.beltService.validateByIds(beltIds);
         updateBeltExamDto.belts = belts;
       }
 
@@ -69,7 +68,7 @@ export class BeltExamService {
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(beltExams, pageMetaDto);
 
-      await this.cacheService.set(cacheKey, result, this.cacheTTLSeconds);
+      await this.cacheService.set(cacheKey, result, CacheTTLMilliseconds.GET_ALL_BELT_EXAMS);
 
       return ResponseUtil.success(result.data, BeltExamMessages.GET_ALL_SUCCESS);
     } catch (error) {
@@ -78,7 +77,7 @@ export class BeltExamService {
   }
   async findOneById(beltExamId: number): Promise<ServiceResponse> {
     try {
-      const beltExam = await this.validateBeltExamId(beltExamId);
+      const beltExam = await this.validateById(beltExamId);
 
       return ResponseUtil.success(beltExam, BeltExamMessages.GET_SUCCESS);
     } catch (error) {
@@ -87,7 +86,7 @@ export class BeltExamService {
   }
   async removeById(beltExamId: number): Promise<ServiceResponse> {
     try {
-      const beltExam = await this.validateBeltExamId(beltExamId);
+      const beltExam = await this.validateById(beltExamId);
 
       const removedBeltExam = await this.beltExamRepository.delete({ id: beltExamId });
 
@@ -98,7 +97,7 @@ export class BeltExamService {
     }
   }
 
-  async validateBeltExamId(beltExamId: number): Promise<BeltExamEntity> {
+  async validateById(beltExamId: number): Promise<BeltExamEntity> {
     const beltExam = await this.beltExamRepository.findOneBy({ id: beltExamId });
     if (!beltExam) throw new NotFoundException(BeltExamMessages.NOT_FOUND);
     return beltExam;

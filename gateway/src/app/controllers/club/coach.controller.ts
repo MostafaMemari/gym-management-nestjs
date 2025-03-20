@@ -21,13 +21,13 @@ import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { GetUser } from '../../../common/decorators/get-user.decorator';
 import { CreateCoachDto, QueryCoachDto, UpdateCoachDto } from '../../../common/dtos/club-service/coach.dto';
 import { PaginationDto } from '../../../common/dtos/shared.dto';
-import { CoachPatterns } from '../../../common/enums/club.events';
+import { CoachPatterns } from '../../../common/enums/club-service/club.events';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { UploadFile } from '../../../common/interceptors/upload-file.interceptor';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
 import { User } from '../../../common/interfaces/user.interface';
-import { UploadFileValidationPipe } from '../../../common/pipes/upload-file.pipe';
+import { FileValidationPipe } from '../../../common/pipes/upload-file.pipe';
 import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
 
@@ -43,7 +43,7 @@ export class CoachController {
   async create(
     @GetUser() user: User,
     @Body() createCoachDto: CreateCoachDto,
-    @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)'))
+    @UploadedFile(new FileValidationPipe(10 * 1024 * 1024, ['image/jpeg', 'image/png']))
     image: Express.Multer.File,
   ) {
     try {
@@ -71,7 +71,7 @@ export class CoachController {
     @GetUser() user: User,
     @Param('id', ParseIntPipe) id: number,
     @Body() updateCoachDto: UpdateCoachDto,
-    @UploadedFile(new UploadFileValidationPipe(10 * 1024 * 1024, 'image/(png|jpg|jpeg|webp)'))
+    @UploadedFile(new FileValidationPipe(10 * 1024 * 1024, ['image/jpeg', 'image/png']))
     image: Express.Multer.File,
   ) {
     try {

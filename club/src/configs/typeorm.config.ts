@@ -1,8 +1,5 @@
 import { TypeOrmModuleOptions, TypeOrmModuleAsyncOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ClubSubscriber } from '../modules/club/subscribers/club.subscriber';
-import { CoachSubscriber } from '../modules/coach/subscribers/coach.subscriber';
-import { StudentSubscriber } from '../modules/student/subscribers/student.subscriber';
 
 export const typeOrmConfig = (configService: ConfigService): TypeOrmModuleOptions => {
   const isProduction = configService.get<string>('NODE_ENV') === 'production';
@@ -20,6 +17,14 @@ export const typeOrmConfig = (configService: ConfigService): TypeOrmModuleOption
     synchronize: isSynchronizeEnabled,
     ssl: (isProduction && isSslEnabled) || (!isProduction && isSslEnabled) ? { rejectUnauthorized: false } : null,
     // extra: isProduction || isSslEnabled ? { ssl: { rejectUnauthorized: false } } : null,
+    cache: {
+      type: 'redis',
+      options: {
+        host: configService.get<string>('REDIS_HOST', '127.0.0.1'),
+        port: configService.get<number>('REDIS_PORT', 6379),
+      },
+      duration: 60000,
+    },
   };
 };
 

@@ -4,6 +4,3 @@ export enum CacheKeys {
 export enum CachePatterns {
   AGE_CATEGORIES = 'age_categories_list*',
 }
-export enum CacheTTLSeconds {
-  AGE_CATEGORIES = 3600,
-}

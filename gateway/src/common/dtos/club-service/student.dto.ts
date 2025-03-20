@@ -40,7 +40,7 @@ export class CreateStudentDto {
 
   @IsOptional()
   @ApiPropertyOptional({ type: 'string', format: 'binary' })
-  image?: string;
+  image?: Express.Multer.File;
 
   @IsOptional()
   @IsString()
@@ -70,9 +70,9 @@ export class CreateStudentDto {
   @ApiPropertyOptional({ type: String, maxLength: 100, minLength: 10, required: true, example: '' })
   address?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsDateString()
-  @ApiProperty({ type: Date, example: '2025-01-25' })
+  @ApiPropertyOptional({ type: Date, example: '2025-01-25' })
   birth_date: Date;
 
   @IsOptional()

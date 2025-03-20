@@ -6,13 +6,13 @@ export interface IStudentAttendance {
   status: AttendanceStatus;
 }
 
-export interface IRecordAttendance {
+export interface IRecordAttendanceDto {
   sessionId: number;
   date: Date;
   attendances: IStudentAttendance[];
 }
 
-export type IUpdateRecordAttendance = Partial<IRecordAttendance>;
+export type IUpdateRecordAttendance = Partial<IRecordAttendanceDto>;
 
 export interface IAttendanceFilter {
   start_date?: Date;

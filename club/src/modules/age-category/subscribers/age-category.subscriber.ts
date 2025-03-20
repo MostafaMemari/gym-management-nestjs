@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource, EntitySubscriberInterface, InsertEvent, UpdateEvent, RemoveEvent } from 'typeorm';
+import { DataSource, EntitySubscriberInterface, InsertEvent, RemoveEvent, UpdateEvent } from 'typeorm';
 
 import { AgeCategoryEntity } from '../entities/age-category.entity';
-import { CacheService } from '../../cache/cache.service';
 import { CachePatterns } from '../enums/cache.enum';
+
+import { CacheService } from '../../cache/cache.service';
 
 @Injectable()
 export class AgeCategorySubscriber implements EntitySubscriberInterface<AgeCategoryEntity> {

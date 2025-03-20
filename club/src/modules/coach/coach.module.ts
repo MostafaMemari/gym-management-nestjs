@@ -9,9 +9,7 @@ import { CoachController } from './coach.controller';
 import { CoachService } from './coach.service';
 import { CoachEntity } from './entities/coach.entity';
 import { CoachRepository } from './repositories/coach.repository';
-import { CoachSubscriber } from './subscribers/coach.subscriber';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ClubService } from '../club/club.service';
 import { ClubModule } from '../club/club.module';
 import { StudentModule } from '../student/student.module';
 
@@ -38,7 +36,7 @@ import { StudentModule } from '../student/student.module';
     forwardRef(() => StudentModule),
   ],
   controllers: [CoachController],
-  providers: [CoachService, CoachRepository, CoachSubscriber],
+  providers: [CoachService, CoachRepository],
   exports: [CoachService],
 })
 export class CoachModule {}

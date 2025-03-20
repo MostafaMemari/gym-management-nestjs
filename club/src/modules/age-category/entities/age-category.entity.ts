@@ -1,5 +1,7 @@
-import { Entity, Column } from 'typeorm';
+import { Column, Entity } from 'typeorm';
+
 import { AgeCategoryName } from '../enums/age-category.enum';
+
 import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 

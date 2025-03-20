@@ -1,8 +1,7 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { ArrayMinSize, IsArray, IsDateString, IsEnum, IsInt, IsOptional, IsString, Length, ValidateNested } from 'class-validator';
-import { IsDependentOn } from 'src/common/decorators/dependent-fields.decorator';
-import { ToArray } from '../../../common/decorators/transformers.decorator';
+import { ArrayMinSize, IsDateString, IsEnum, IsInt, IsNotEmpty, IsOptional, IsPositive, IsString, Length, ValidateNested } from 'class-validator';
+
 import { SortOrder } from 'src/common/enums/shared.enum';
 
 export enum AttendanceStatus {
@@ -12,9 +11,12 @@ export enum AttendanceStatus {
 }
 
 export class StudentAttendanceDto {
-  @ApiProperty({ type: 'string', example: 101 })
-  @IsString()
-  studentId: string;
+  @IsNotEmpty()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @IsPositive()
+  @ApiProperty({ type: 'integer', example: '' })
+  studentId: number;
 
   @ApiProperty({ example: AttendanceStatus.PRESENT, enum: AttendanceStatus })
   @IsEnum(AttendanceStatus)
@@ -22,9 +24,12 @@ export class StudentAttendanceDto {
 }
 
 export class RecordAttendanceDto {
-  @ApiProperty({ type: 'string', example: 1 })
-  @IsString()
-  sessionId: string;
+  @IsNotEmpty()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @IsPositive()
+  @ApiProperty({ type: 'integer', example: '' })
+  sessionId: number;
 
   @ApiProperty({ example: '2025-03-10', description: 'YYYY-MM-DD' })
   @IsDateString()

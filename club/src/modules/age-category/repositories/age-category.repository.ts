@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, In, Repository } from 'typeorm';
 
-import { EntityName } from '../../../common/enums/entity.enum';
 import { AgeCategoryEntity } from '../entities/age-category.entity';
+import { CacheKeys } from '../enums/cache.enum';
 import { IAgeCategoryCreateDto, IAgeCategoryFilter, IAgeCategoryUpdateDto } from '../interfaces/age-category.interface';
+
+import { EntityName } from '../../../common/enums/entity.enum';
+import { CacheTTLMilliseconds } from 'src/common/enums/cache-time';
 
 @Injectable()
 export class AgeCategoryRepository extends Repository<AgeCategoryEntity> {
@@ -22,6 +25,8 @@ export class AgeCategoryRepository extends Repository<AgeCategoryEntity> {
   }
 
   async getAgeCategoriesWithFilters(filters: IAgeCategoryFilter, page: number, take: number): Promise<[AgeCategoryEntity[], number]> {
+    const cacheKey = `${CacheKeys.AGE_CATEGORIES}-${page}-${take}-${JSON.stringify(filters)}`;
+
     const queryBuilder = this.createQueryBuilder(EntityName.AGE_CATEGORIES);
 
     if (filters?.search) {
@@ -43,6 +48,7 @@ export class AgeCategoryRepository extends Repository<AgeCategoryEntity> {
     return queryBuilder
       .skip((page - 1) * take)
       .take(take)
+      .cache(cacheKey, CacheTTLMilliseconds.GET_ALL_AGE_CATEGORIES)
       .getManyAndCount();
   }
 

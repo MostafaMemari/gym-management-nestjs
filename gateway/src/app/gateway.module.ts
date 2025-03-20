@@ -1,13 +1,15 @@
+import { APP_PIPE } from '@nestjs/core';
 import { Module, ValidationPipe } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { AuthController } from './controllers/auth/auth.controller';
 import { ConfigModule } from '@nestjs/config';
+
 import envConfig from '../configs/env.config';
-import { UserController } from './controllers/user/user.controller';
-import { APP_PIPE } from '@nestjs/core';
-import { StudentController } from './controllers/club/student.controller';
 import { Services } from '../common/enums/services.enum';
 import { AuthGuard } from '../common/guards/auth.guard';
+
+import { AuthController } from './controllers/auth/auth.controller';
+import { UserController } from './controllers/user/user.controller';
+import { StudentController } from './controllers/club/student.controller';
 import { CoachController } from './controllers/club/coach.controller';
 import { ClubController } from './controllers/club/club.controller';
 import { RbacController } from './controllers/auth/rbac.controller';
@@ -19,6 +21,9 @@ import { BeltExamController } from './controllers/club/belt-exams.controller';
 import { WalletController } from './controllers/user/wallet.controller';
 import { SessionController } from './controllers/club/session.controller';
 import { AttendanceController } from './controllers/club/attendance.controller';
+import { LessonController } from './controllers/academy/lesson.controller';
+import { CoursesController } from './controllers/academy/course.controller';
+import { ChaptersController } from './controllers/academy/chapter.controller';
 
 @Module({
   imports: [
@@ -99,6 +104,21 @@ import { AttendanceController } from './controllers/club/attendance.controller';
           },
         },
       },
+      {
+        name: Services.ACADEMY,
+        transport: Transport.RMQ,
+        options: {
+          urls: [process.env.RABBITMQ_URL],
+          queue: process.env.RABBITMQ_ACADEMY_SERVICE_QUEUE,
+          prefetchCount: 2,
+          isGlobalPrefetchCount: true,
+          noAck: true,
+          persistent: false,
+          queueOptions: {
+            // durable: process.env.NODE_ENV == 'production',
+          },
+        },
+      },
     ]),
   ],
   controllers: [
@@ -116,6 +136,9 @@ import { AttendanceController } from './controllers/club/attendance.controller';
     BeltExamController,
     SessionController,
     AttendanceController,
+    CoursesController,
+    LessonController,
+    ChaptersController,
   ],
   providers: [
     {

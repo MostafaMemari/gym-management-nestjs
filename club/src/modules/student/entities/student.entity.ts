@@ -1,4 +1,4 @@
-import { AfterLoad, Column, Entity, Index, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne } from 'typeorm';
+import { AfterLoad, Column, Entity, Index, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne } from 'typeorm';
 
 import { CoachEntity } from '../../coach/entities/coach.entity';
 
@@ -10,7 +10,7 @@ import { StudentBeltEntity } from './student-belt.entity';
 import { SessionEntity } from '../../../modules/session/entities/session.entity';
 import { AttendanceEntity } from '../../../modules/attendance/entities/attendance.entity';
 
-@Entity(EntityName.Students)
+@Entity(EntityName.STUDENTS)
 @Index(['full_name', 'national_code'])
 export class StudentEntity extends AbstractEntity {
   @Column({ type: 'integer', unique: true, nullable: false })
@@ -46,7 +46,7 @@ export class StudentEntity extends AbstractEntity {
   @Column({ type: 'int', nullable: true })
   membership_year?: number;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'date', nullable: true })
   birth_date: Date;
 
   @Column({ type: 'date', nullable: true })
@@ -73,6 +73,7 @@ export class StudentEntity extends AbstractEntity {
   beltInfo: StudentBeltEntity | null;
 
   @ManyToMany(() => SessionEntity, (session) => session.students)
+  @JoinTable()
   sessions: SessionEntity[];
 
   @OneToMany(() => AttendanceEntity, (attendance) => attendance.student)

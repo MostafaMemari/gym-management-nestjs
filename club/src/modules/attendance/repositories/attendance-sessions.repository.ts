@@ -2,9 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, In, QueryRunner, Repository } from 'typeorm';
 
 import { AttendanceSessionEntity } from '../entities/attendance-sessions.entity';
+import { CacheKeys } from '../enums/cache.enum';
+import { IAttendanceFilter } from '../interfaces/attendance.interface';
 
 import { EntityName } from '../../../common/enums/entity.enum';
-import { IAttendanceFilter } from '../interfaces/attendance.interface';
+import { CacheTTLMilliseconds } from '../../../common/enums/cache-time';
 
 @Injectable()
 export class AttendanceSessionRepository extends Repository<AttendanceSessionEntity> {
@@ -24,7 +26,9 @@ export class AttendanceSessionRepository extends Repository<AttendanceSessionEnt
     page: number,
     take: number,
   ): Promise<[AttendanceSessionEntity[], number]> {
-    const queryBuilder = this.createQueryBuilder(EntityName.AttendanceSessions)
+    const cacheKey = `${CacheKeys.ATTENDANCES}-userId:${userId}-${page}-${take}-${JSON.stringify(filters)}`;
+
+    const queryBuilder = this.createQueryBuilder(EntityName.ATTENDANCES_SESSIONS)
       .leftJoinAndSelect('attendance_sessions.attendances', 'attendances')
       .leftJoin('attendances.student', 'student')
       .addSelect(['student.id', 'student.full_name'])
@@ -54,6 +58,7 @@ export class AttendanceSessionRepository extends Repository<AttendanceSessionEnt
     return queryBuilder
       .skip((page - 1) * take)
       .take(take)
+      .cache(cacheKey, CacheTTLMilliseconds.GET_ALL_ATTENDANCES)
       .getManyAndCount();
   }
 
@@ -67,7 +72,7 @@ export class AttendanceSessionRepository extends Repository<AttendanceSessionEnt
   }
 
   async findOwnedById(attendanceId: number, userId: number): Promise<AttendanceSessionEntity | null> {
-    return this.createQueryBuilder(EntityName.AttendanceSessions)
+    return this.createQueryBuilder(EntityName.ATTENDANCES_SESSIONS)
       .leftJoin('attendance_sessions.session', 'session')
       .leftJoin('session.club', 'club')
       .where('attendance_sessions.id = :attendanceId', { attendanceId })
@@ -75,7 +80,7 @@ export class AttendanceSessionRepository extends Repository<AttendanceSessionEnt
       .getOne();
   }
   async findOwnedWithAttendances(attendanceId: number, userId: number): Promise<AttendanceSessionEntity | null> {
-    return this.createQueryBuilder(EntityName.AttendanceSessions)
+    return this.createQueryBuilder(EntityName.ATTENDANCES_SESSIONS)
       .leftJoinAndSelect('attendance_sessions.attendances', 'attendances')
       .leftJoin('attendance_sessions.session', 'session')
       .leftJoin('session.club', 'club')
@@ -84,7 +89,7 @@ export class AttendanceSessionRepository extends Repository<AttendanceSessionEnt
       .getOne();
   }
   async findOwnedWithStudents(attendanceId: number, userId: number): Promise<AttendanceSessionEntity | null> {
-    return this.createQueryBuilder(EntityName.AttendanceSessions)
+    return this.createQueryBuilder(EntityName.ATTENDANCES_SESSIONS)
       .leftJoinAndSelect('attendance_sessions.attendances', 'attendances')
       .leftJoin('attendances.student', 'student')
       .addSelect(['student.id', 'student.full_name'])

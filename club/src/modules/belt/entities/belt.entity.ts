@@ -1,5 +1,7 @@
 import { Entity, Column, ManyToMany, JoinTable } from 'typeorm';
+
 import { BeltName } from '../enums/belt-name.enum';
+
 import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 

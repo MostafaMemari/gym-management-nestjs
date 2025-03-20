@@ -1,11 +1,11 @@
-import { Injectable, PipeTransform } from '@nestjs/common';
+import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
 import { ParseFilePipe, MaxFileSizeValidator, FileTypeValidator } from '@nestjs/common/pipes';
 
 @Injectable()
-export class UploadFileValidationPipe implements PipeTransform {
+export class FileValidationPipe implements PipeTransform {
   constructor(
-    private maxSize: number,
-    private fileType: string,
+    private readonly maxSize: number,
+    private readonly allowedTypes: string[],
   ) {}
 
   transform(file: Express.Multer.File) {
@@ -13,7 +13,11 @@ export class UploadFileValidationPipe implements PipeTransform {
 
     return new ParseFilePipe({
       fileIsRequired: false,
-      validators: [new MaxFileSizeValidator({ maxSize: this.maxSize }), new FileTypeValidator({ fileType: this.fileType })],
+      validators: [new MaxFileSizeValidator({ maxSize: this.maxSize }), new FileTypeValidator({ fileType: this.allowedTypes.join('|') })],
+      exceptionFactory: (errors) => {
+        const errorMessages = Array.isArray(errors) ? errors.map((err) => err.message).join(', ') : 'Invalid file upload';
+        throw new BadRequestException(errorMessages);
+      },
     }).transform(file);
   }
 }

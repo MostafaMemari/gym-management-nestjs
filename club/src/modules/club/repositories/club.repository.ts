@@ -2,8 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, In, Repository } from 'typeorm';
 
 import { ClubEntity } from '../entities/club.entity';
-import { EntityName } from '../../../common/enums/entity.enum';
+import { CacheKeys } from '../enums/cache.enum';
 import { ICreateClub, ISearchClubQuery, IUpdateClub } from '../interfaces/club.interface';
+
+import { EntityName } from '../../../common/enums/entity.enum';
+import { CacheTTLMilliseconds } from 'src/common/enums/cache-time';
 
 @Injectable()
 export class ClubRepository extends Repository<ClubEntity> {
@@ -22,6 +25,8 @@ export class ClubRepository extends Repository<ClubEntity> {
   }
 
   async getClubsWithFilters(userId: number, filters: ISearchClubQuery, page: number, take: number): Promise<[ClubEntity[], number]> {
+    const cacheKey = `${CacheKeys.CLUBS}-userId:${userId}-${page}-${take}-${JSON.stringify(filters)}`;
+
     const queryBuilder = this.createQueryBuilder(EntityName.CLUBS).where('clubs.ownerId = :ownerId', { ownerId: userId });
 
     if (filters?.search) {
@@ -39,6 +44,7 @@ export class ClubRepository extends Repository<ClubEntity> {
     return queryBuilder
       .skip((page - 1) * take)
       .take(take)
+      .cache(cacheKey, CacheTTLMilliseconds.GET_ALL_CLUBS)
       .getManyAndCount();
   }
 

@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { AgeCategoryEntity } from './entities/age-category.entity';
 import { AgeCategoryMessages } from './enums/age-category.message';
-import { CacheKeys, CacheTTLSeconds } from './enums/cache.enum';
+import { CacheKeys } from './enums/cache.enum';
 import { IAgeCategoryCreateDto, IAgeCategoryFilter, IAgeCategoryUpdateDto } from './interfaces/age-category.interface';
 import { AgeCategoryRepository } from './repositories/age-category.repository';
 
@@ -28,7 +28,7 @@ export class AgeCategoryService {
   }
   async update(ageCategoryId: number, updateAgeCategoryDto: IAgeCategoryUpdateDto): Promise<ServiceResponse> {
     try {
-      const ageCategory = await this.validateAgeCategoryId(ageCategoryId);
+      const ageCategory = await this.validateById(ageCategoryId);
 
       const updatedAgeCategory = await this.ageCategoryRepository.updateAgeCategory(ageCategory, updateAgeCategoryDto);
 
@@ -41,17 +41,10 @@ export class AgeCategoryService {
     const { take, page } = query.paginationDto;
 
     try {
-      const cacheKey = `${CacheKeys.AGE_CATEGORIES}-${page}-${take}-${JSON.stringify(query.queryAgeCategoryDto)}`;
-
-      const cachedData = await this.cacheService.get<PageDto<AgeCategoryEntity>>(cacheKey);
-      if (cachedData) return ResponseUtil.success(cachedData.data, AgeCategoryMessages.GET_ALL_SUCCESS);
-
       const [ageCategories, count] = await this.ageCategoryRepository.getAgeCategoriesWithFilters(query.queryAgeCategoryDto, page, take);
 
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(ageCategories, pageMetaDto);
-
-      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.AGE_CATEGORIES);
 
       return ResponseUtil.success(result.data, AgeCategoryMessages.GET_ALL_SUCCESS);
     } catch (error) {
@@ -60,7 +53,7 @@ export class AgeCategoryService {
   }
   async findOneById(ageCategoryId: number): Promise<ServiceResponse> {
     try {
-      const ageCategory = await this.validateAgeCategoryId(ageCategoryId);
+      const ageCategory = await this.validateById(ageCategoryId);
 
       return ResponseUtil.success(ageCategory, AgeCategoryMessages.GET_SUCCESS);
     } catch (error) {
@@ -69,7 +62,7 @@ export class AgeCategoryService {
   }
   async removeById(ageCategoryId: number): Promise<ServiceResponse> {
     try {
-      const ageCategory = await this.validateAgeCategoryId(ageCategoryId);
+      const ageCategory = await this.validateById(ageCategoryId);
       const removedAgeCategory = await this.ageCategoryRepository.delete({ id: ageCategoryId });
 
       if (!removedAgeCategory.affected) ResponseUtil.error(AgeCategoryMessages.REMOVE_FAILURE);
@@ -80,7 +73,7 @@ export class AgeCategoryService {
     }
   }
 
-  async validateAgeCategoryId(ageCategoryId: number): Promise<AgeCategoryEntity> {
+  private async validateById(ageCategoryId: number): Promise<AgeCategoryEntity> {
     const ageCategory = await this.ageCategoryRepository.findOneBy({ id: ageCategoryId });
     if (!ageCategory) throw new NotFoundException(AgeCategoryMessages.NOT_FOUND);
     return ageCategory;

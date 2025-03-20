@@ -1,51 +1,62 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { DataSource } from 'typeorm';
 import { formatDate, isAfter } from 'date-fns';
+import { DataSource } from 'typeorm';
 
+import { AttendanceSessionEntity } from './entities/attendance-sessions.entity';
+import { AttendanceEntity } from './entities/attendance.entity';
+import { AttendanceMessages } from './enums/attendance.message';
+import { CacheKeys } from './enums/cache.enum';
+import { IAttendanceFilter, IRecordAttendanceDto, IStudentAttendance, IUpdateRecordAttendance } from './interfaces/attendance.interface';
+import { AttendanceSessionRepository } from './repositories/attendance-sessions.repository';
 import { AttendanceRepository } from './repositories/attendance.repository';
 
 import { CacheService } from '../cache/cache.service';
+import { SessionService } from '../session/session.service';
+import { StudentService } from '../student/student.service';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
 import { IPagination } from '../../common/interfaces/pagination.interface';
+import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { IUser } from '../../common/interfaces/user.interface';
 import { ResponseUtil } from '../../common/utils/response';
-import { SessionService } from '../session/session.service';
-import { AttendanceEntity } from './entities/attendance.entity';
-import { AttendanceMessages } from './enums/attendance.message';
-import { CacheKeys, CacheTTLSeconds } from './enums/cache.enum';
-import { IAttendanceFilter, IRecordAttendance, IUpdateRecordAttendance } from './interfaces/attendance.interface';
-import { AttendanceSessionRepository } from './repositories/attendance-sessions.repository';
-import { AttendanceSessionEntity } from './entities/attendance-sessions.entity';
 
 @Injectable()
 export class AttendanceService {
   constructor(
     private readonly attendanceSessionRepository: AttendanceSessionRepository,
     private readonly attendanceRepository: AttendanceRepository,
+    private readonly studentService: StudentService,
     private readonly sessionService: SessionService,
     private readonly cacheService: CacheService,
     private readonly dataSource: DataSource,
   ) {}
 
-  async create(user: IUser, createAttendanceDto: IRecordAttendance) {
+  async create(user: IUser, createAttendanceDto: IRecordAttendanceDto): Promise<ServiceResponse> {
     const { sessionId, date, attendances } = createAttendanceDto;
+    const userId = user.id;
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
+
     try {
-      const session = await this.sessionService.checkSessionOwnershipRelationStudents(sessionId, user.id);
+      const session = await this.sessionService.validateOwnershipRelationStudents(sessionId, user.id);
+
       this.checkDateIsNotInTheFuture(date);
       this.validateAllowedDays(session.days, date);
       await this.checkDuplicateAttendanceSession(sessionId, date);
 
-      const attendanceSession = await this.attendanceSessionRepository.createAttendanceSession({ date, session }, queryRunner);
+      await this.verifyCoachStudentsAttendance(attendances, session.coachId);
 
-      const validStudentIds = session.students.map((student) => student.id);
+      const attendanceSession = await this.attendanceSessionRepository.createAttendanceSession(
+        { date, sessionId: session.id, coachId: session.coachId },
+        queryRunner,
+      );
+
+      const sessionStudentIds = session.students.map((student) => student.id);
       const attendanceEntities = await this.attendanceRepository.createAttendanceEntities(
         attendances,
-        validStudentIds,
+        sessionStudentIds,
         attendanceSession,
         queryRunner,
       );
@@ -53,9 +64,11 @@ export class AttendanceService {
       if (attendanceEntities.length === 0) throw new BadRequestException(AttendanceMessages.NO_STUDENTS_ELIGIBLE);
 
       await queryRunner.commitTransaction();
+      await this.clearAttendanceCacheByUser(userId);
 
       return ResponseUtil.success({
         ...createAttendanceDto,
+        coachId: session.coachId,
         attendances: attendanceEntities.map((attendance) => ({
           studentId: attendance.studentId,
           status: attendance.status,
@@ -68,8 +81,9 @@ export class AttendanceService {
       await queryRunner.release();
     }
   }
-  async update(user: IUser, attendanceId: number, updateAttendanceDto: IUpdateRecordAttendance) {
+  async update(user: IUser, attendanceId: number, updateAttendanceDto: IUpdateRecordAttendance): Promise<ServiceResponse> {
     const { sessionId, date, attendances } = updateAttendanceDto;
+    const userId = user.id;
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -78,8 +92,8 @@ export class AttendanceService {
     let attendanceEntities = null;
 
     try {
-      const attendanceSession = await this.validateOwnership(attendanceId, user.id);
-      const session = await this.sessionService.checkSessionOwnershipRelationStudents(sessionId || attendanceSession.sessionId, user.id);
+      const attendanceSession = await this.validateOwnershipById(attendanceId, user.id);
+      const session = await this.sessionService.validateOwnershipRelationStudents(sessionId || attendanceSession.sessionId, user.id);
 
       if (date) {
         this.validateAllowedDays(session.days, date);
@@ -91,8 +105,11 @@ export class AttendanceService {
       }
 
       if (attendances) {
+        await this.verifyCoachStudentsAttendance(attendances, session.coachId);
+
         await this.attendanceRepository.deleteAttendanceBySession(attendanceSession.id, queryRunner);
         const validStudentIds = session.students.map((student) => student.id);
+
         attendanceEntities = await this.attendanceRepository.createAttendanceEntities(
           attendances,
           validStudentIds,
@@ -105,6 +122,7 @@ export class AttendanceService {
 
       await queryRunner.commitTransaction();
 
+      await this.clearAttendanceCacheByUser(userId);
       return ResponseUtil.success(
         {
           ...updateAttendanceDto,
@@ -124,15 +142,10 @@ export class AttendanceService {
       await queryRunner.release();
     }
   }
-  async getAll(user: IUser, query: { queryAttendanceDto: IAttendanceFilter; paginationDto: IPagination }): Promise<any> {
+  async getAll(user: IUser, query: { queryAttendanceDto: IAttendanceFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
     const { take, page } = query.paginationDto;
 
     try {
-      const cacheKey = `${CacheKeys.ATTENDANCES}-${user.id}-${page}-${take}-${JSON.stringify(query.queryAttendanceDto)}`;
-
-      const cachedData = await this.cacheService.get<PageDto<AttendanceEntity>>(cacheKey);
-      if (cachedData) return ResponseUtil.success(cachedData.data, AttendanceMessages.GET_ALL_SUCCESS);
-
       const [attendances, count] = await this.attendanceSessionRepository.getAttendancesWithFilters(
         user.id,
         query.queryAttendanceDto,
@@ -150,14 +163,13 @@ export class AttendanceService {
           id: attendance.student.id,
           full_name: attendance.student.full_name,
           status: attendance.status,
+          is_guest: attendance.is_guest,
           note: attendance?.note,
         })),
       }));
 
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(formattedData, pageMetaDto);
-
-      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.ATTENDANCES);
 
       // const report: IStudentAttendance = attendances.reduce((acc, session) => {
       //   const date = new Date(session.date);
@@ -178,15 +190,10 @@ export class AttendanceService {
       ResponseUtil.error(error?.message || AttendanceMessages.GET_ALL_FAILURE, error?.status);
     }
   }
-  async reportAll(user: IUser, query: { queryAttendanceDto: IAttendanceFilter; paginationDto: IPagination }): Promise<any> {
+  async reportAll(user: IUser, query: { queryAttendanceDto: IAttendanceFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
     const { take, page } = query.paginationDto;
 
     try {
-      const cacheKey = `${CacheKeys.ATTENDANCES}-${user.id}-${page}-${take}-${JSON.stringify(query.queryAttendanceDto)}`;
-
-      const cachedData = await this.cacheService.get<PageDto<AttendanceEntity>>(cacheKey);
-      if (cachedData) return ResponseUtil.success(cachedData.data, AttendanceMessages.GET_ALL_SUCCESS);
-
       const [attendances, count] = await this.attendanceSessionRepository.getAttendancesWithFilters(
         user.id,
         query.queryAttendanceDto,
@@ -207,59 +214,62 @@ export class AttendanceService {
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(formattedData, pageMetaDto);
 
-      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.ATTENDANCES);
-
       return ResponseUtil.success(result.data, AttendanceMessages.GET_ALL_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || AttendanceMessages.GET_ALL_FAILURE, error?.status);
     }
   }
-
-  async findOneById(user: IUser, attendanceId: number) {
+  async findOneById(user: IUser, attendanceId: number): Promise<ServiceResponse> {
     try {
-      const attendance = await this.validateOwnershipWithStudents(attendanceId, user.id);
+      const attendance = await this.validateOwnershipByIdWithStudents(attendanceId, user.id);
 
       return ResponseUtil.success(attendance, AttendanceMessages.GET_SUCCESS);
     } catch (error) {
-      return ResponseUtil.error(error?.message || AttendanceMessages.GET_FAILURE, error?.status);
+      ResponseUtil.error(error?.message || AttendanceMessages.GET_FAILURE, error?.status);
     }
   }
-  async remove(user: IUser, attendanceId: number) {
+  async remove(user: IUser, attendanceId: number): Promise<ServiceResponse> {
+    const userId = user.id;
     try {
-      const attendance = await this.validateOwnership(attendanceId, user.id);
+      const attendance = await this.validateOwnershipById(attendanceId, user.id);
 
       const removedClub = await this.attendanceSessionRepository.delete({ id: attendanceId });
 
       if (!removedClub.affected) ResponseUtil.error(AttendanceMessages.REMOVE_FAILURE);
-
+      await this.clearAttendanceCacheByUser(userId);
       return ResponseUtil.success(attendance, AttendanceMessages.REMOVE_SUCCESS);
     } catch (error) {
-      return ResponseUtil.error(error?.message || AttendanceMessages.REMOVE_FAILURE, error?.status);
+      ResponseUtil.error(error?.message || AttendanceMessages.REMOVE_FAILURE, error?.status);
     }
   }
 
-  async validateOwnership(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
+  private async validateOwnershipById(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
     const attendance = await this.attendanceSessionRepository.findOwnedById(attendanceId, userId);
     if (!attendance) throw new NotFoundException(AttendanceMessages.NOT_FOUND);
     return attendance;
   }
-  async validateOwnershipWithAttendances(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
+  private async validateOwnershipByIdWithAttendances(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
     const attendance = await this.attendanceSessionRepository.findOwnedWithAttendances(attendanceId, userId);
     if (!attendance) throw new NotFoundException(AttendanceMessages.NOT_FOUND);
     return attendance;
   }
-  async validateOwnershipWithStudents(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
+  private async validateOwnershipByIdWithStudents(attendanceId: number, userId: number): Promise<AttendanceSessionEntity> {
     const attendance = await this.attendanceSessionRepository.findOwnedWithStudents(attendanceId, userId);
     if (!attendance) throw new NotFoundException(AttendanceMessages.NOT_FOUND);
     return attendance;
   }
 
-  async checkDuplicateAttendanceSession(sessionId: number, date: Date): Promise<void> {
+  async verifyCoachStudentsAttendance(attendance: IStudentAttendance[], coachId: number) {
+    const studentIdsAttendances = attendance.map((attendance) => attendance.studentId);
+    await this.studentService.validateStudentsIdsByCoach(studentIdsAttendances, coachId);
+  }
+
+  private async checkDuplicateAttendanceSession(sessionId: number, date: Date): Promise<void> {
     const session = await this.attendanceSessionRepository.findAttendanceByIdAndDate(sessionId, date);
     if (session) throw new BadRequestException(AttendanceMessages.ALREADY_RECORDED);
   }
 
-  validateAllowedDays(allowedDays: string[], date: Date | string): void {
+  private validateAllowedDays(allowedDays: string[], date: Date | string): void {
     const inputDate = new Date(date);
 
     const dayOfWeek = formatDate(inputDate, 'EEEE');
@@ -268,13 +278,16 @@ export class AttendanceService {
       throw new BadRequestException(AttendanceMessages.INVALID_SESSION_DAY.replace('{dayOfWeek}', dayOfWeek));
     }
   }
-
-  checkDateIsNotInTheFuture(date: Date): void {
+  private checkDateIsNotInTheFuture(date: Date): void {
     const today = new Date();
     const inputDate = new Date(date);
 
     if (isAfter(inputDate, today)) {
       throw new BadRequestException(AttendanceMessages.FUTURE_DATE_NOT_ALLOWED);
     }
+  }
+
+  private async clearAttendanceCacheByUser(userId: number) {
+    await this.cacheService.delByPattern(`${CacheKeys.ATTENDANCES}-userId:${userId}*`);
   }
 }
