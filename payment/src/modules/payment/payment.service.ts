@@ -47,8 +47,7 @@ export class PaymentService {
 
       payment = await this.findOneOrThrow({ authority });
 
-      if (payment.status == TransactionStatus.SUCCESS || payment.status == TransactionStatus.FAILED)
-        throw new BadRequestException(PaymentMessages.FailedOrVerified);
+      if (payment.status !== TransactionStatus.PENDING) throw new BadRequestException(PaymentMessages.FailedOrVerified);
 
       const merchantId = process.env.ZARINPAL_MERCHANT_ID;
 
@@ -63,7 +62,9 @@ export class PaymentService {
 
       return ResponseUtil.success({ redirectUrl, payment }, PaymentMessages.VerifiedSuccess, HttpStatus.OK);
     } catch (error) {
-      await this.paymentRepository.update(payment.id, { status: TransactionStatus.FAILED });
+      if (payment?.id && payment.status === TransactionStatus.PENDING) {
+        await this.paymentRepository.update(payment.id, { status: TransactionStatus.FAILED });
+      }
       throw new RpcException(error);
     }
   }
