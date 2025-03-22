@@ -30,6 +30,7 @@ export enum BeltPatterns {
   CREATE = 'create_belt',
   UPDATE = 'update_belt',
   GET_ALL = 'get_belts',
+  GET_BY_IDS = 'get_belts_by_ids',
   GET_ONE = 'get_belt',
   REMOVE = 'remove_belt',
 }

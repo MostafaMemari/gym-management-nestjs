@@ -33,6 +33,7 @@ import { FilesValidationPipe } from '../../../common/pipes/upload-files.pipe';
 import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
 import { AwsService } from '../../../modules/s3AWS/s3AWS.service';
+import { BeltPatterns, ClubPatterns } from 'src/common/enums/club-service/club.events';
 
 @Controller('courses')
 @ApiTags('Courses')
@@ -40,6 +41,7 @@ import { AwsService } from '../../../modules/s3AWS/s3AWS.service';
 export class CoursesController {
   constructor(
     @Inject(Services.ACADEMY) private readonly coursesServiceClient: ClientProxy,
+    @Inject(Services.CLUB) private readonly clubServiceClient: ClientProxy,
     private readonly awsService: AwsService,
   ) {}
 
@@ -66,6 +68,7 @@ export class CoursesController {
     let intro_video_key: string | null = null;
 
     try {
+      await this.validateBeltIds(createCourseDto.beltIds);
       await checkConnection(Services.ACADEMY, this.coursesServiceClient);
 
       image_cover_key = files.cover_image ? await this.uploadFile(files.cover_image[0], 'academy/image_cover') : null;
@@ -158,6 +161,15 @@ export class CoursesController {
     } catch (error) {
       handleError(error, 'Failed to remove course', 'CoursesService');
     }
+  }
+
+  private async validateBeltIds(beltIds: number[]) {
+    await checkConnection(Services.CLUB, this.clubServiceClient, { pattern: ClubPatterns.CHECK_CONNECTION });
+
+    const result = await lastValueFrom(this.clubServiceClient.send(BeltPatterns.GET_BY_IDS, { beltIds }).pipe(timeout(5000)));
+
+    console.log(result);
+    if (result?.error) throw result;
   }
 
   private async uploadFile(file: Express.Multer.File, folderName: string): Promise<string | undefined> {
