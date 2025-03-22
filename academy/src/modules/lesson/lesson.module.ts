@@ -7,9 +7,10 @@ import { LessonService } from './lesson.service';
 import { LessonRepository } from './repositories/lesson.repository';
 import { LessonFileEntity } from './entities/lesson-files.entity';
 import { UserLessonProgressEntity } from './entities/user-lesson-progress.entity';
+import { ChapterModule } from '../chapter/chapter.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([LessonEntity, LessonFileEntity, UserLessonProgressEntity])],
+  imports: [TypeOrmModule.forFeature([LessonEntity, LessonFileEntity, UserLessonProgressEntity]), ChapterModule],
   controllers: [LessonController],
   providers: [LessonService, LessonRepository],
   exports: [LessonService],

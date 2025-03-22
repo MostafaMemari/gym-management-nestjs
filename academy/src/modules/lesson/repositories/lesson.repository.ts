@@ -14,10 +14,10 @@ export class LessonRepository extends Repository<LessonEntity> {
     super(LessonEntity, dataSource.createEntityManager());
   }
 
-  // async createAndSaveLesson(createLessonDto: ICreateLesson, ownerId: number): Promise<LessonEntity> {
-  //   const lesson = this.create({ ...createLessonDto });
-  //   return await this.save(lesson);
-  // }
+  async createAndSaveLesson(createLessonDto: ICreateLesson): Promise<LessonEntity> {
+    const lesson = this.create(createLessonDto);
+    return await this.save(lesson);
+  }
 
   // async updateLesson(lesson: LessonEntity, updateLessonDto: IUpdateLesson): Promise<LessonEntity> {
   //   const updatedLesson = this.merge(lesson, { ...updateLessonDto });

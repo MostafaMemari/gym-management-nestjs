@@ -40,7 +40,7 @@ import { BeltPatterns, ClubPatterns } from 'src/common/enums/club-service/club.e
 @AuthDecorator()
 export class CoursesController {
   constructor(
-    @Inject(Services.ACADEMY) private readonly coursesServiceClient: ClientProxy,
+    @Inject(Services.ACADEMY) private readonly courseServiceClient: ClientProxy,
     @Inject(Services.CLUB) private readonly clubServiceClient: ClientProxy,
     private readonly awsService: AwsService,
   ) {}
@@ -69,13 +69,13 @@ export class CoursesController {
 
     try {
       await this.validateBeltIds(createCourseDto.beltIds);
-      await checkConnection(Services.ACADEMY, this.coursesServiceClient);
+      await checkConnection(Services.ACADEMY, this.courseServiceClient);
 
-      image_cover_key = files.cover_image ? await this.uploadFile(files.cover_image[0], 'academy/image_cover') : null;
-      intro_video_key = files.intro_video ? await this.uploadFile(files.intro_video[0], 'academy/intro_video') : null;
+      image_cover_key = files.cover_image ? await this.uploadFile(files.cover_image[0], 'academy/course/image_cover') : null;
+      intro_video_key = files.intro_video ? await this.uploadFile(files.intro_video[0], 'academy/course/intro_video') : null;
 
       const data: ServiceResponse = await lastValueFrom(
-        this.coursesServiceClient
+        this.courseServiceClient
           .send(CoursePatterns.CREATE, {
             user,
             createCourseDto: { ...createCourseDto, image_cover_key, intro_video_key },
@@ -103,9 +103,9 @@ export class CoursesController {
     image: Express.Multer.File,
   ) {
     try {
-      await checkConnection(Services.ACADEMY, this.coursesServiceClient);
+      await checkConnection(Services.ACADEMY, this.courseServiceClient);
       const data: ServiceResponse = await lastValueFrom(
-        this.coursesServiceClient
+        this.courseServiceClient
           .send(CoursePatterns.UPDATE, {
             user,
             courseId: id,
@@ -123,10 +123,10 @@ export class CoursesController {
   @Get()
   async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto, @Query() queryCoursesDto: QueryCourseDto): Promise<any> {
     try {
-      await checkConnection(Services.ACADEMY, this.coursesServiceClient);
+      await checkConnection(Services.ACADEMY, this.courseServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.coursesServiceClient.send(CoursePatterns.GET_ALL, { user, queryCoursesDto, paginationDto }).pipe(timeout(5000)),
+        this.courseServiceClient.send(CoursePatterns.GET_ALL, { user, queryCoursesDto, paginationDto }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -136,10 +136,10 @@ export class CoursesController {
   @Get(':id')
   async findOne(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
-      await checkConnection(Services.ACADEMY, this.coursesServiceClient);
+      await checkConnection(Services.ACADEMY, this.courseServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.coursesServiceClient.send(CoursePatterns.GET_ONE, { user, courseId: id }).pipe(timeout(5000)),
+        this.courseServiceClient.send(CoursePatterns.GET_ONE, { user, courseId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -151,10 +151,10 @@ export class CoursesController {
   @Delete(':id')
   async remove(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
-      await checkConnection(Services.ACADEMY, this.coursesServiceClient);
+      await checkConnection(Services.ACADEMY, this.courseServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.coursesServiceClient.send(CoursePatterns.REMOVE, { user, courseId: id }).pipe(timeout(5000)),
+        this.courseServiceClient.send(CoursePatterns.REMOVE, { user, courseId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);

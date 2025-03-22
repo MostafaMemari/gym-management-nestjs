@@ -9,16 +9,23 @@ import { LessonMessages } from './enums/lesson.message';
 import { LessonRepository } from './repositories/lesson.repository';
 import { ICreateLesson, ISearchLessonQuery, IUpdateLesson } from './interfaces/lesson.interface';
 import { LessonEntity } from './entities/lesson.entity';
+import { ChapterService } from '../chapter/chapter.service';
 
 @Injectable()
 export class LessonService {
-  constructor(private readonly lessonRepository: LessonRepository) {}
+  constructor(private readonly lessonRepository: LessonRepository, private readonly chapterService: ChapterService) {}
 
   async create(createLessonDto: ICreateLesson): Promise<ServiceResponse> {
+    const { image_cover_key, video_key } = createLessonDto;
     try {
-      //   const lesson = await this.lessonRepository.createAndSaveLesson(createLessonDto);
+      await this.chapterService.validateById(createLessonDto.chapterId);
+      const lesson = await this.lessonRepository.createAndSaveLesson({
+        ...createLessonDto,
+        video: video_key,
+        cover_image: image_cover_key,
+      });
 
-      return ResponseUtil.success({}, LessonMessages.CREATE_SUCCESS);
+      return ResponseUtil.success(lesson, LessonMessages.CREATE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || LessonMessages.CREATE_FAILURE, error?.status);
     }

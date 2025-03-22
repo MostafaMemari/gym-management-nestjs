@@ -20,6 +20,9 @@ export class LessonEntity extends AbstractEntity {
   @Column({ nullable: true })
   video?: string;
 
+  @Column()
+  chapterId: number;
+
   @OneToMany(() => LessonFileEntity, (file) => file.lesson)
   files: LessonFileEntity[];
 

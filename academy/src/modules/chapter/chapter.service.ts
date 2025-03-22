@@ -70,7 +70,7 @@ export class ChapterService {
     }
   }
 
-  private async validateById(chapterId: number): Promise<ChapterEntity> {
+  async validateById(chapterId: number): Promise<ChapterEntity> {
     const chapter = await this.chapterRepository.findOneBy({ id: chapterId });
     if (!chapter) throw new NotFoundException(ChapterMessages.NOT_FOUND);
     return chapter;

@@ -1,9 +1,11 @@
 export interface ICreateLesson {
   title: string;
   content?: string;
-  chapterId: number;
-  cover_image?: Express.Multer.File;
-  video?: Express.Multer.File;
+  chapterId?: number;
+  image_cover_key?: string;
+  video_key?: string;
+  cover_image?: string;
+  video?: string;
 }
 
 export type IUpdateLesson = Partial<ICreateLesson>;
