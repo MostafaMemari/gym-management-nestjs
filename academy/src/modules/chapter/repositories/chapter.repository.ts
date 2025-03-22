@@ -14,10 +14,10 @@ export class ChapterRepository extends Repository<ChapterEntity> {
     super(ChapterEntity, dataSource.createEntityManager());
   }
 
-  // async createAndSaveChapter(createChapterDto: ICreateChapter): Promise<ChapterEntity> {
-  //   const chapter.entity = this.create({ ...createChapterDto });
-  //   return await this.save(chapter.entity);
-  // }
+  async createAndSaveChapter(createChapterDto: ICreateChapter): Promise<ChapterEntity> {
+    const chapter = this.create({ ...createChapterDto });
+    return await this.save(chapter);
+  }
 
   // async updateChapter(chapter.entity: ChapterEntity, updateChapterDto: IUpdateChapter): Promise<ChapterEntity> {
   //   const updatedChapter = this.merge(chapter.entity, { ...updateChapterDto });

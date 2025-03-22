@@ -13,6 +13,9 @@ export class ChapterEntity extends AbstractEntity {
   @Column({ nullable: true })
   description?: string;
 
+  @Column()
+  courseId: number;
+
   @ManyToOne(() => CourseEntity, (course) => course.chapters)
   course: CourseEntity;
 

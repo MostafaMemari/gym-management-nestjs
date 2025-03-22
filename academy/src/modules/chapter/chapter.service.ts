@@ -8,16 +8,18 @@ import { ChapterRepository } from './repositories/chapter.repository';
 import { ICreateChapter, ISearchChapterQuery, IUpdateChapter } from './interfaces/chapter.interface';
 import { ChapterEntity } from './entities/chapter.entity';
 import { ChapterMessages } from './enums/chapter.message';
+import { CourseService } from '../course/course.service';
 
 @Injectable()
 export class ChapterService {
-  constructor(private readonly chapterRepository: ChapterRepository) {}
+  constructor(private readonly chapterRepository: ChapterRepository, private readonly courseService: CourseService) {}
 
   async create(createChapterDto: ICreateChapter): Promise<ServiceResponse> {
     try {
-      // const chapter = await this.chapterRepository.createAndSaveChapter(createChapterDto);
+      await this.courseService.validateById(createChapterDto?.courseId);
+      const chapter = await this.chapterRepository.createAndSaveChapter({ ...createChapterDto });
 
-      return ResponseUtil.success({}, ChapterMessages.CREATE_SUCCESS);
+      return ResponseUtil.success(chapter, ChapterMessages.CREATE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || ChapterMessages.CREATE_FAILURE, error?.status);
     }

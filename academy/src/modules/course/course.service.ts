@@ -74,7 +74,7 @@ export class CourseService {
     }
   }
 
-  private async validateById(courseId: number): Promise<CourseEntity> {
+  async validateById(courseId: number): Promise<CourseEntity> {
     const course = await this.courseRepository.findOneBy({ id: courseId });
     if (!course) throw new NotFoundException(CourseMessages.NOT_FOUND);
     return course;
