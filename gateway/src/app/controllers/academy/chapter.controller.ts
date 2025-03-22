@@ -21,16 +21,16 @@ import { handleError, handleServiceResponse } from '../../../common/utils/handle
 @ApiTags('Chapters')
 @AuthDecorator()
 export class ChaptersController {
-  constructor(@Inject(Services.ACADEMY) private readonly chapterServiceClient: ClientProxy) {}
+  constructor(@Inject(Services.ACADEMY) private readonly academyServiceClient: ClientProxy) {}
 
   @Post()
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
   async create(@Body() createChapterDto: CreateChaptersDto) {
     try {
-      await checkConnection(Services.ACADEMY, this.chapterServiceClient);
+      await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.chapterServiceClient
+        this.academyServiceClient
           .send(ChapterPatterns.CREATE, {
             createChapterDto: { ...createChapterDto },
           })
@@ -66,9 +66,9 @@ export class ChaptersController {
     image: Express.Multer.File,
   ) {
     try {
-      await checkConnection(Services.ACADEMY, this.chapterServiceClient);
+      await checkConnection(Services.ACADEMY, this.academyServiceClient);
       const data: ServiceResponse = await lastValueFrom(
-        this.chapterServiceClient
+        this.academyServiceClient
           .send(ChapterPatterns.UPDATE, {
             user,
             chapterId: id,
@@ -86,10 +86,10 @@ export class ChaptersController {
   @Get()
   async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto, @Query() queryChaptersDto: QueryChaptersDto): Promise<any> {
     try {
-      await checkConnection(Services.ACADEMY, this.chapterServiceClient);
+      await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.chapterServiceClient.send(ChapterPatterns.GET_ALL, { user, queryChaptersDto, paginationDto }).pipe(timeout(5000)),
+        this.academyServiceClient.send(ChapterPatterns.GET_ALL, { user, queryChaptersDto, paginationDto }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -99,10 +99,10 @@ export class ChaptersController {
   @Get(':id')
   async findOne(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
-      await checkConnection(Services.ACADEMY, this.chapterServiceClient);
+      await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.chapterServiceClient.send(ChapterPatterns.GET_ONE, { user, chapterId: id }).pipe(timeout(5000)),
+        this.academyServiceClient.send(ChapterPatterns.GET_ONE, { user, chapterId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -114,10 +114,10 @@ export class ChaptersController {
   @Delete(':id')
   async remove(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
-      await checkConnection(Services.ACADEMY, this.chapterServiceClient);
+      await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.chapterServiceClient.send(ChapterPatterns.REMOVE, { user, chapterId: id }).pipe(timeout(5000)),
+        this.academyServiceClient.send(ChapterPatterns.REMOVE, { user, chapterId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);

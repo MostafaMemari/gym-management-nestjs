@@ -42,7 +42,7 @@ import { AwsService } from '../../../modules/s3AWS/s3AWS.service';
 @AuthDecorator()
 export class LessonController {
   constructor(
-    @Inject(Services.ACADEMY) private readonly lessonServiceClient: ClientProxy,
+    @Inject(Services.ACADEMY) private readonly academyServiceClient: ClientProxy,
     private readonly awsService: AwsService,
   ) {}
 
@@ -69,13 +69,13 @@ export class LessonController {
     let video_key: string | null = null;
 
     try {
-      await checkConnection(Services.ACADEMY, this.lessonServiceClient);
+      await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
       image_cover_key = files.cover_image ? await this.uploadFile(files.cover_image[0], 'academy/lesson/image_cover') : null;
       video_key = files.video ? await this.uploadFile(files.video[0], 'academy/lesson/intro_video') : null;
 
       const data: ServiceResponse = await lastValueFrom(
-        this.lessonServiceClient
+        this.academyServiceClient
           .send(LessonPatterns.CREATE, {
             user,
             createLessonDto: { ...createLessonDto, image_cover_key, video_key },
@@ -109,9 +109,9 @@ export class LessonController {
     image: Express.Multer.File,
   ) {
     try {
-      await checkConnection(Services.ACADEMY, this.lessonServiceClient);
+      await checkConnection(Services.ACADEMY, this.academyServiceClient);
       const data: ServiceResponse = await lastValueFrom(
-        this.lessonServiceClient
+        this.academyServiceClient
           .send(LessonPatterns.UPDATE, {
             user,
             lessonId: id,
@@ -129,10 +129,10 @@ export class LessonController {
   @Get()
   async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto, @Query() queryLessonDto: QueryLessonDto): Promise<any> {
     try {
-      await checkConnection(Services.ACADEMY, this.lessonServiceClient);
+      await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.lessonServiceClient.send(LessonPatterns.GET_ALL, { user, queryLessonDto, paginationDto }).pipe(timeout(5000)),
+        this.academyServiceClient.send(LessonPatterns.GET_ALL, { user, queryLessonDto, paginationDto }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -142,10 +142,10 @@ export class LessonController {
   @Get(':id')
   async findOne(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
-      await checkConnection(Services.ACADEMY, this.lessonServiceClient);
+      await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.lessonServiceClient.send(LessonPatterns.GET_ONE, { user, lessonId: id }).pipe(timeout(5000)),
+        this.academyServiceClient.send(LessonPatterns.GET_ONE, { user, lessonId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -157,10 +157,10 @@ export class LessonController {
   @Delete(':id')
   async remove(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
-      await checkConnection(Services.ACADEMY, this.lessonServiceClient);
+      await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.lessonServiceClient.send(LessonPatterns.REMOVE, { user, lessonId: id }).pipe(timeout(5000)),
+        this.academyServiceClient.send(LessonPatterns.REMOVE, { user, lessonId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);

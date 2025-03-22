@@ -19,10 +19,10 @@ export class CourseRepository extends Repository<CourseEntity> {
     return await this.save(course);
   }
 
-  // async updateCourse(course: CourseEntity, updateCourseDto: IUpdateCourse): Promise<CourseEntity> {
-  //   const updatedCourse = this.merge(course, { ...updateCourseDto });
-  //   return await this.save(updatedCourse);
-  // }
+  async updateCourse(course: CourseEntity, updateCourseDto: IUpdateCourse): Promise<CourseEntity> {
+    const updatedCourse = this.merge(course, { ...updateCourseDto });
+    return await this.save(updatedCourse);
+  }
 
   async getCoursesWithFilters(filters: ISearchCourseQuery, page: number, take: number): Promise<[CourseEntity[], number]> {
     const cacheKey = `${CacheKeys.COURSES}-${page}-${take}-${JSON.stringify(filters)}`;

@@ -23,11 +23,11 @@ export class CreateCourseDto {
 
   @IsOptional()
   @ApiPropertyOptional({ type: 'string', format: 'binary' })
-  cover_image?: Express.Multer.File;
+  cover_image?: Express.Multer.File | string;
 
   @IsOptional()
   @ApiPropertyOptional({ type: 'string', format: 'binary' })
-  intro_video: Express.Multer.File;
+  intro_video: Express.Multer.File | string;
 }
 
 export class UpdateCourseDto extends PartialType(CreateCourseDto) {}

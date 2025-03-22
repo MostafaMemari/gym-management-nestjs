@@ -40,7 +40,7 @@ import { BeltPatterns, ClubPatterns } from 'src/common/enums/club-service/club.e
 @AuthDecorator()
 export class CoursesController {
   constructor(
-    @Inject(Services.ACADEMY) private readonly courseServiceClient: ClientProxy,
+    @Inject(Services.ACADEMY) private readonly academyServiceClient: ClientProxy,
     @Inject(Services.CLUB) private readonly clubServiceClient: ClientProxy,
     private readonly awsService: AwsService,
   ) {}
@@ -60,73 +60,98 @@ export class CoursesController {
   )
   @ApiConsumes(SwaggerConsumes.MultipartData)
   async create(
-    @GetUser() user: User,
     @Body() createCourseDto: CreateCourseDto,
     @UploadedFiles() files: { cover_image?: Express.Multer.File; intro_video?: Express.Multer.File },
   ) {
-    let image_cover_key: string | null = null;
-    let intro_video_key: string | null = null;
+    let cover_image: string | null = null;
+    let intro_video: string | null = null;
 
     try {
       await this.validateBeltIds(createCourseDto.beltIds);
-      await checkConnection(Services.ACADEMY, this.courseServiceClient);
+      await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
-      image_cover_key = files.cover_image ? await this.uploadFile(files.cover_image[0], 'academy/course/image_cover') : null;
-      intro_video_key = files.intro_video ? await this.uploadFile(files.intro_video[0], 'academy/course/intro_video') : null;
+      cover_image = files.cover_image ? await this.uploadFile(files.cover_image[0], 'academy/course/image_cover') : null;
+      intro_video = files.intro_video ? await this.uploadFile(files.intro_video[0], 'academy/course/intro_video') : null;
 
       const data: ServiceResponse = await lastValueFrom(
-        this.courseServiceClient
+        this.academyServiceClient
           .send(CoursePatterns.CREATE, {
-            user,
-            createCourseDto: { ...createCourseDto, image_cover_key, intro_video_key },
+            createCourseDto: { ...createCourseDto, cover_image, intro_video },
           })
           .pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
     } catch (error) {
-      await this.removeFile(image_cover_key);
-      await this.removeFile(intro_video_key);
+      await this.removeFile(cover_image);
+      await this.removeFile(intro_video);
       console.log(error.message);
-      handleError(error, 'Failed to create lesson', 'CourseService');
+      handleError(error, 'Failed to create course', 'CourseService');
     }
   }
 
   @Put(':id')
-  @UseInterceptors(UploadFile('image'))
+  @UseInterceptors(
+    UploadFileFields([
+      { name: 'cover_image', maxCount: 1 },
+      { name: 'intro_video', maxCount: 1 },
+    ]),
+  )
+  @UsePipes(
+    new FilesValidationPipe({
+      cover_image: { types: ['image/jpeg', 'image/png'], maxSize: 10 * 1024 * 1024 },
+      intro_video: { types: ['video/mp4'], maxSize: 10 * 1024 * 1024 },
+    }),
+  )
   @ApiConsumes(SwaggerConsumes.MultipartData)
   async update(
-    @GetUser() user: User,
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateCoursesDto: UpdateCourseDto,
-    @UploadedFile(new FileValidationPipe(10 * 1024 * 1024, ['image/jpeg', 'image/png']))
-    image: Express.Multer.File,
+    @Body() updateCourseDto: UpdateCourseDto,
+    @UploadedFiles() files: { cover_image?: Express.Multer.File; intro_video?: Express.Multer.File },
   ) {
+    let cover_image: string | null = null;
+    let intro_video: string | null = null;
+
     try {
-      await checkConnection(Services.ACADEMY, this.courseServiceClient);
+      if (updateCourseDto?.beltIds) await this.validateBeltIds(updateCourseDto.beltIds);
+
+      await checkConnection(Services.ACADEMY, this.academyServiceClient);
+      const course = await this.findById(id);
+
+      cover_image = files.cover_image ? await this.uploadFile(files.cover_image[0], 'academy/course/image_cover') : null;
+      intro_video = files.intro_video ? await this.uploadFile(files.intro_video[0], 'academy/course/intro_video') : null;
+
+      const updatedData = { ...updateCourseDto };
+      if (cover_image) updatedData.cover_image = cover_image;
+      if (intro_video) updatedData.intro_video = intro_video;
+
+      Object.assign(course, updatedData);
+
       const data: ServiceResponse = await lastValueFrom(
-        this.courseServiceClient
+        this.academyServiceClient
           .send(CoursePatterns.UPDATE, {
-            user,
             courseId: id,
-            updateCoursesDto: { ...updateCoursesDto, image },
+            updateCourseDto: course,
           })
           .pipe(timeout(5000)),
       );
 
+      if (cover_image) await this.removeFile(course.cover_image);
+      if (intro_video) await this.removeFile(course.intro_video);
+
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to updated course', 'CoursesService');
+      handleError(error, 'Failed to update course', 'CourseService');
     }
   }
 
   @Get()
   async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto, @Query() queryCoursesDto: QueryCourseDto): Promise<any> {
     try {
-      await checkConnection(Services.ACADEMY, this.courseServiceClient);
+      await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.courseServiceClient.send(CoursePatterns.GET_ALL, { user, queryCoursesDto, paginationDto }).pipe(timeout(5000)),
+        this.academyServiceClient.send(CoursePatterns.GET_ALL, { user, queryCoursesDto, paginationDto }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -134,13 +159,11 @@ export class CoursesController {
   }
 
   @Get(':id')
-  async findOne(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
+  async findOne(@Param('id', ParseIntPipe) id: number) {
     try {
-      await checkConnection(Services.ACADEMY, this.courseServiceClient);
+      await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
-      const data: ServiceResponse = await lastValueFrom(
-        this.courseServiceClient.send(CoursePatterns.GET_ONE, { user, courseId: id }).pipe(timeout(5000)),
-      );
+      const data: ServiceResponse = await lastValueFrom(this.academyServiceClient.send(CoursePatterns.GET_ONE, { courseId: id }).pipe(timeout(5000)));
 
       return handleServiceResponse(data);
     } catch (error) {
@@ -151,10 +174,10 @@ export class CoursesController {
   @Delete(':id')
   async remove(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
-      await checkConnection(Services.ACADEMY, this.courseServiceClient);
+      await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.courseServiceClient.send(CoursePatterns.REMOVE, { user, courseId: id }).pipe(timeout(5000)),
+        this.academyServiceClient.send(CoursePatterns.REMOVE, { user, courseId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -163,12 +186,18 @@ export class CoursesController {
     }
   }
 
+  private async findById(id: number) {
+    const result = await lastValueFrom(this.academyServiceClient.send(CoursePatterns.GET_ONE, { courseId: id }).pipe(timeout(5000)));
+
+    if (result?.error) throw result;
+
+    return result.data;
+  }
   private async validateBeltIds(beltIds: number[]) {
     await checkConnection(Services.CLUB, this.clubServiceClient, { pattern: ClubPatterns.CHECK_CONNECTION });
 
     const result = await lastValueFrom(this.clubServiceClient.send(BeltPatterns.GET_BY_IDS, { beltIds }).pipe(timeout(5000)));
 
-    console.log(result);
     if (result?.error) throw result;
   }
 
@@ -178,7 +207,6 @@ export class CoursesController {
     const uploadedFile = await this.awsService.uploadSingleFile({ file, folderName });
     return uploadedFile.key;
   }
-
   private async removeFile(fileKey: string): Promise<void> {
     if (!fileKey) return;
     await this.awsService.deleteFile(fileKey);

@@ -30,9 +30,9 @@ export class CourseService {
   }
   async update(courseId: number, updateCourseDto: IUpdateCourse): Promise<ServiceResponse> {
     try {
-      const course = await this.validateById(courseId);
+      const course = await this.courseRepository.save(updateCourseDto);
 
-      return ResponseUtil.success({}, CourseMessages.UPDATE_FAILURE);
+      return ResponseUtil.success(course, CourseMessages.UPDATE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || CourseMessages.UPDATE_FAILURE, error?.status);
     }
