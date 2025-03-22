@@ -1,27 +1,37 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
+import { Services } from '../../common/enums/services.enum';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from '../../common/utils/response';
-import { CourseRepository } from './repositories/course.repository';
-import { ICreateCourse, ISearchCourseQuery, IUpdateCourse } from './interfaces/course.interface';
 import { CourseEntity } from './entities/course.entity';
 import { CourseMessages } from './enums/course.message';
+import { ICreateCourse, ISearchCourseQuery, IUpdateCourse } from './interfaces/course.interface';
+import { CourseRepository } from './repositories/course.repository';
+import { checkConnection } from 'src/common/utils/checkConnection.utils';
+import { ClubPatterns } from './enums/patterns.events';
+import { lastValueFrom, timeout } from 'rxjs';
 
 @Injectable()
 export class CourseService {
-  constructor(private readonly courseRepository: CourseRepository) {}
+  constructor(
+    @Inject(Services.CLUB) private readonly clubServiceClientProxy: ClientProxy,
+    private readonly courseRepository: CourseRepository,
+  ) {}
 
-  async create(createCourseDto: ICreateCourse): Promise<ServiceResponse> {
-    const { image_cover_key, intro_video_key } = createCourseDto;
-    console.log(createCourseDto);
+  async create(createCourseDto: ICreateCourse) {
+    const { beltIds, image_cover_key, intro_video_key } = createCourseDto;
+
     try {
+      await this.validateBeltIds(beltIds);
       const course = await this.courseRepository.createAndSaveCourse({
         ...createCourseDto,
         cover_image: image_cover_key,
         intro_video: intro_video_key,
       });
+
       return ResponseUtil.success(course, CourseMessages.CREATE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || CourseMessages.CREATE_FAILURE, error?.status);
@@ -77,5 +87,14 @@ export class CourseService {
     const course = await this.courseRepository.findOneBy({ id: courseId });
     if (!course) throw new NotFoundException(CourseMessages.NOT_FOUND);
     return course;
+  }
+
+  private async validateBeltIds(beltIds: number[]) {
+    await checkConnection(Services.CLUB, this.clubServiceClientProxy, { pattern: ClubPatterns.CHECK_CONNECTION });
+
+    const result = await lastValueFrom(this.clubServiceClientProxy.send(ClubPatterns.GET_BELT_BY_IDS, { beltIds }).pipe(timeout(5000)));
+
+    console.log(result);
+    if (result?.error) throw result;
   }
 }

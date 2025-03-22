@@ -5,4 +5,5 @@ export enum BeltPatterns {
   GET_ALL = 'get_belts',
   GET_ONE = 'get_belt',
   REMOVE = 'remove_belt',
+  GET_BELT_BY_IDS = 'get_belts_by_ids',
 }

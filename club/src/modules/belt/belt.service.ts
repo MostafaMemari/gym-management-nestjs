@@ -86,12 +86,22 @@ export class BeltService {
       ResponseUtil.error(error?.message || BeltMessages.REMOVE_FAILURE, error?.status);
     }
   }
+  async findByIds(beltIds: number[]): Promise<ServiceResponse> {
+    try {
+      const belts = await this.validateByIds(beltIds);
+
+      return ResponseUtil.success(belts, BeltMessages.GET_ALL_SUCCESS);
+    } catch (error) {
+      ResponseUtil.error(error?.message || BeltMessages.GET_FAILURE, error?.status);
+    }
+  }
 
   async validateById(beltId: number): Promise<BeltEntity> {
     const belt = await this.beltRepository.findOneBy({ id: beltId });
     if (!belt) throw new NotFoundException(BeltMessages.NOT_FOUND);
     return belt;
   }
+
   async validateByIds(beltIds: number[]): Promise<BeltEntity[]> {
     const foundBelts = await this.beltRepository.findByIds(beltIds);
     const foundIds = foundBelts.map((belt) => belt.id);
@@ -103,6 +113,7 @@ export class BeltService {
 
     return foundBelts;
   }
+
   async validateByIdWithRelation(beltId: number): Promise<BeltEntity> {
     const belt = await this.beltRepository.findOne({ where: { id: beltId }, relations: ['nextBelt'] });
     if (!belt) throw new NotFoundException(BeltMessages.NOT_FOUND);

@@ -50,7 +50,7 @@ export class LessonController {
   )
   @UsePipes(
     new FilesValidationPipe({
-      cover_image: { types: ['image/jpeg', 'image/png'], maxSize: 10 * 1024 * 1024 }, // حداکثر 10MB
+      cover_image: { types: ['image/jpeg', 'image/png'], maxSize: 10 * 1024 * 1024 },
       video: { types: ['video/mp4'], maxSize: 10 * 1024 * 1024 },
     }),
   )

@@ -1,8 +1,8 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsPositive, IsString } from 'class-validator';
-import { Transform } from 'class-transformer';
 
 import { SortOrder } from '../../../common/enums/shared.enum';
+import { ToArray } from 'src/common/decorators/transformers.decorator';
 
 export class CreateCourseDto {
   @IsNotEmpty()
@@ -16,11 +16,10 @@ export class CreateCourseDto {
   description: string;
 
   @IsNotEmpty()
-  @IsInt()
-  @IsPositive()
-  @Transform(({ value }) => parseInt(value, 10))
-  @ApiProperty({ type: 'integer', required: true, example: '' })
-  beltId: number;
+  @ToArray()
+  @IsInt({ each: true })
+  @ApiProperty({ type: 'array' })
+  beltIds: number[];
 
   @IsOptional()
   @ApiPropertyOptional({ type: 'string', format: 'binary' })

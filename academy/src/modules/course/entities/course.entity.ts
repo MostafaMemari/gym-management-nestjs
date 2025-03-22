@@ -12,8 +12,8 @@ export class CourseEntity extends AbstractEntity {
   @Column({ nullable: true })
   description?: string;
 
-  @Column()
-  beltId: number;
+  @Column({ type: 'simple-array' })
+  beltIds: number[];
 
   @Column({ nullable: true })
   cover_image?: string;

@@ -1,7 +1,7 @@
 export interface ICreateCourse {
   title: string;
   description?: string;
-  beltId: number;
+  beltIds: number[];
   cover_image?: string;
   intro_video?: string;
   image_cover_key?: string;
