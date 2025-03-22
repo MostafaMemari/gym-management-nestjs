@@ -141,6 +141,8 @@ export class CoursesController {
 
       return handleServiceResponse(data);
     } catch (error) {
+      await this.removeFile(cover_image);
+      await this.removeFile(intro_video);
       handleError(error, 'Failed to update course', 'CourseService');
     }
   }

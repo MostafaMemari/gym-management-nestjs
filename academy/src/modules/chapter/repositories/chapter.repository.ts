@@ -19,10 +19,10 @@ export class ChapterRepository extends Repository<ChapterEntity> {
     return await this.save(chapter);
   }
 
-  // async updateChapter(chapter.entity: ChapterEntity, updateChapterDto: IUpdateChapter): Promise<ChapterEntity> {
-  //   const updatedChapter = this.merge(chapter.entity, { ...updateChapterDto });
-  //   return await this.save(updatedChapter);
-  // }
+  async updateChapter(chapter: ChapterEntity, updateChapterDto: IUpdateChapter): Promise<ChapterEntity> {
+    const updatedChapter = this.merge(chapter, { ...updateChapterDto });
+    return await this.save(updatedChapter);
+  }
 
   async getChaptersWithFilters(filters: ISearchChapterQuery, page: number, take: number): Promise<[ChapterEntity[], number]> {
     const cacheKey = `${CacheKeys.CHAPTERS}-${page}-${take}-${JSON.stringify(filters)}`;

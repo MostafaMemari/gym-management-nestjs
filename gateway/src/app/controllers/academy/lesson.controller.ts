@@ -72,7 +72,7 @@ export class LessonController {
       await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
       image_cover_key = files.cover_image ? await this.uploadFile(files.cover_image[0], 'academy/lesson/image_cover') : null;
-      video_key = files.video ? await this.uploadFile(files.video[0], 'academy/lesson/intro_video') : null;
+      video_key = files.video ? await this.uploadFile(files.video[0], 'academy/lesson/video') : null;
 
       const data: ServiceResponse = await lastValueFrom(
         this.academyServiceClient
@@ -99,30 +99,57 @@ export class LessonController {
   }
 
   @Put(':id')
-  @UseInterceptors(UploadFile('image'))
+  @UseInterceptors(
+    UploadFileFields([
+      { name: 'cover_image', maxCount: 1 },
+      { name: 'video', maxCount: 1 },
+    ]),
+  )
+  @UsePipes(
+    new FilesValidationPipe({
+      cover_image: { types: ['image/jpeg', 'image/png'], maxSize: 10 * 1024 * 1024 },
+      video: { types: ['video/mp4'], maxSize: 10 * 1024 * 1024 },
+    }),
+  )
   @ApiConsumes(SwaggerConsumes.MultipartData)
   async update(
-    @GetUser() user: User,
     @Param('id', ParseIntPipe) id: number,
     @Body() updateLessonDto: UpdateLessonDto,
-    @UploadedFile(new FileValidationPipe(10 * 1024 * 1024, ['image/jpeg', 'image/png']))
-    image: Express.Multer.File,
+    @UploadedFiles() files: { cover_image?: Express.Multer.File; video?: Express.Multer.File },
   ) {
+    let cover_image: string | null = null;
+    let video: string | null = null;
+
     try {
       await checkConnection(Services.ACADEMY, this.academyServiceClient);
+      const lesson = await this.findById(id);
+
+      cover_image = files.cover_image ? await this.uploadFile(files.cover_image[0], 'academy/lesson/image_cover') : null;
+      video = files.video ? await this.uploadFile(files.video[0], 'academy/lesson/video') : null;
+
+      const updatedData = { ...updateLessonDto };
+      if (cover_image) updatedData.cover_image = cover_image;
+      if (video) updatedData.video = video;
+
+      Object.assign(lesson, updatedData);
+
       const data: ServiceResponse = await lastValueFrom(
         this.academyServiceClient
           .send(LessonPatterns.UPDATE, {
-            user,
             lessonId: id,
-            updateLessonDto: { ...updateLessonDto, image },
+            updateLessonDto: lesson,
           })
           .pipe(timeout(5000)),
       );
 
+      if (cover_image) await this.removeFile(lesson.cover_image);
+      if (video) await this.removeFile(lesson.video);
+
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to updated lesson', 'LessonService');
+      await this.removeFile(cover_image);
+      await this.removeFile(video);
+      handleError(error, 'Failed to update lesson', 'LessonService');
     }
   }
 
@@ -172,6 +199,14 @@ export class LessonController {
   @Put('progress')
   updateProgress(@Body() dto: UserLessonProgressDto) {
     // return this.lessonService.updateProgress(dto);
+  }
+
+  private async findById(id: number) {
+    const result = await lastValueFrom(this.academyServiceClient.send(LessonPatterns.GET_ONE, { lessonId: id }).pipe(timeout(5000)));
+
+    if (result?.error) throw result;
+
+    return result.data;
   }
 
   private async uploadFile(file: Express.Multer.File, folderName: string): Promise<string | undefined> {

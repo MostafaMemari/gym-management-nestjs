@@ -28,7 +28,9 @@ export class ChapterService {
     try {
       const chapter = await this.validateById(chapterId);
 
-      return ResponseUtil.success({}, ChapterMessages.UPDATE_FAILURE);
+      const updatedChapter = await this.chapterRepository.updateChapter(chapter, updateChapterDto);
+
+      return ResponseUtil.success(updatedChapter, ChapterMessages.UPDATE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || ChapterMessages.UPDATE_FAILURE, error?.status);
     }
