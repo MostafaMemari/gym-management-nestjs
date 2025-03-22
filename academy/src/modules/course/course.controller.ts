@@ -44,6 +44,6 @@ export class CourseController {
   remove(@Payload() data: { courseId: number }): Promise<ServiceResponse> {
     const { courseId } = data;
 
-    return this.courseService.findOneById(courseId);
+    return this.courseService.removeById(courseId);
   }
 }

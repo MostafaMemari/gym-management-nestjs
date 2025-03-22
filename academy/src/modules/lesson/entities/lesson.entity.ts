@@ -26,7 +26,7 @@ export class LessonEntity extends AbstractEntity {
   @OneToMany(() => LessonFileEntity, (file) => file.lesson)
   files: LessonFileEntity[];
 
-  @ManyToOne(() => ChapterEntity, (chapter) => chapter.lessons)
+  @ManyToOne(() => ChapterEntity, (chapter) => chapter.lessons, { onDelete: 'CASCADE' })
   chapter: ChapterEntity;
 
   @OneToMany(() => UserLessonProgressEntity, (progress) => progress.lesson)

@@ -16,7 +16,7 @@ export class ChapterEntity extends AbstractEntity {
   @Column()
   courseId: number;
 
-  @ManyToOne(() => CourseEntity, (course) => course.chapters)
+  @ManyToOne(() => CourseEntity, (course) => course.chapters, { onDelete: 'CASCADE' })
   course: CourseEntity;
 
   @OneToMany(() => LessonEntity, (lesson) => lesson.chapter)
