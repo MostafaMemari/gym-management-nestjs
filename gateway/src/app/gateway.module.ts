@@ -24,10 +24,12 @@ import { AttendanceController } from './controllers/club/attendance.controller';
 import { LessonController } from './controllers/academy/lesson.controller';
 import { CoursesController } from './controllers/academy/course.controller';
 import { ChaptersController } from './controllers/academy/chapter.controller';
+import { AwsModule } from '../modules/s3AWS/s3AWS.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot(envConfig()),
+    AwsModule,
     ClientsModule.register([
       {
         name: Services.AUTH,

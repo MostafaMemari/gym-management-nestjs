@@ -14,10 +14,15 @@ export class CourseService {
   constructor(private readonly courseRepository: CourseRepository) {}
 
   async create(createCourseDto: ICreateCourse): Promise<ServiceResponse> {
+    const { image_cover_key, intro_video_key } = createCourseDto;
+    console.log(createCourseDto);
     try {
-      // const course = await this.courseRepository.createAndSaveCourse(createCourseDto);
-
-      return ResponseUtil.success({}, CourseMessages.CREATE_SUCCESS);
+      const course = await this.courseRepository.createAndSaveCourse({
+        ...createCourseDto,
+        cover_image: image_cover_key,
+        intro_video: intro_video_key,
+      });
+      return ResponseUtil.success(course, CourseMessages.CREATE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || CourseMessages.CREATE_FAILURE, error?.status);
     }

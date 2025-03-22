@@ -29,15 +29,19 @@ import { UploadFile, UploadFileFields } from '../../../common/interceptors/uploa
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
 import { User } from '../../../common/interfaces/user.interface';
 import { FileValidationPipe } from '../../../common/pipes/upload-file.pipe';
+import { FilesValidationPipe } from '../../../common/pipes/upload-files.pipe';
 import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
-import { FilesValidationPipe } from 'src/common/pipes/upload-files.pipe';
+import { AwsService } from '../../../modules/s3AWS/s3AWS.service';
 
 @Controller('courses')
 @ApiTags('Courses')
 @AuthDecorator()
 export class CoursesController {
-  constructor(@Inject(Services.ACADEMY) private readonly coursesServiceClient: ClientProxy) {}
+  constructor(
+    @Inject(Services.ACADEMY) private readonly coursesServiceClient: ClientProxy,
+    private readonly awsService: AwsService,
+  ) {}
 
   @Post()
   @UseInterceptors(
@@ -56,25 +60,30 @@ export class CoursesController {
   async create(
     @GetUser() user: User,
     @Body() createCourseDto: CreateCourseDto,
-    @UploadedFiles() files: { cover_image?: Express.Multer.File[]; intro_video?: Express.Multer.File[] },
+    @UploadedFiles() files: { cover_image?: Express.Multer.File; intro_video?: Express.Multer.File },
   ) {
+    let image_cover_key: string | null = null;
+    let intro_video_key: string | null = null;
+
     try {
-      // console.log({ ...createCourseDto, coverImage, introVideo });
+      await checkConnection(Services.ACADEMY, this.coursesServiceClient);
 
-      return { ...createCourseDto };
-      // await checkConnection(Services.ACADEMY, this.coursesServiceClient);
+      image_cover_key = files.cover_image ? await this.uploadFile(files.cover_image[0], 'academy/image_cover') : null;
+      intro_video_key = files.intro_video ? await this.uploadFile(files.intro_video[0], 'academy/intro_video') : null;
 
-      // const data: ServiceResponse = await lastValueFrom(
-      //   this.coursesServiceClient
-      //     .send(CoursePatterns.CREATE, {
-      //       user,
-      //       createCourseDto: { ...createCourseDto, cover_image, intro_video },
-      //     })
-      //     .pipe(timeout(10000)),
-      // );
+      const data: ServiceResponse = await lastValueFrom(
+        this.coursesServiceClient
+          .send(CoursePatterns.CREATE, {
+            user,
+            createCourseDto: { ...createCourseDto, image_cover_key, intro_video_key },
+          })
+          .pipe(timeout(5000)),
+      );
 
-      // return handleServiceResponse(data);
+      return handleServiceResponse(data);
     } catch (error) {
+      await this.removeFile(image_cover_key);
+      await this.removeFile(intro_video_key);
       console.log(error.message);
       handleError(error, 'Failed to create lesson', 'CourseService');
     }
@@ -149,5 +158,17 @@ export class CoursesController {
     } catch (error) {
       handleError(error, 'Failed to remove course', 'CoursesService');
     }
+  }
+
+  private async uploadFile(file: Express.Multer.File, folderName: string): Promise<string | undefined> {
+    if (!file) return;
+
+    const uploadedFile = await this.awsService.uploadSingleFile({ file, folderName });
+    return uploadedFile.key;
+  }
+
+  private async removeFile(fileKey: string): Promise<void> {
+    if (!fileKey) return;
+    await this.awsService.deleteFile(fileKey);
   }
 }

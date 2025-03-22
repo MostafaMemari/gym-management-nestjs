@@ -28,7 +28,7 @@ export class CreateCourseDto {
 
   @IsOptional()
   @ApiPropertyOptional({ type: 'string', format: 'binary' })
-  intro_video: string;
+  intro_video: Express.Multer.File;
 }
 
 export class UpdateCourseDto extends PartialType(CreateCourseDto) {}

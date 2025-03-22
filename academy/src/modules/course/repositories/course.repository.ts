@@ -14,10 +14,10 @@ export class CourseRepository extends Repository<CourseEntity> {
     super(CourseEntity, dataSource.createEntityManager());
   }
 
-  // async createAndSaveCourse(createCourseDto: ICreateCourse): Promise<CourseEntity> {
-  //   const course = this.create({ ...createCourseDto });
-  //   return await this.save(course);
-  // }
+  async createAndSaveCourse(createCourseDto: ICreateCourse): Promise<CourseEntity> {
+    const course = this.create({ ...createCourseDto });
+    return await this.save(course);
+  }
 
   // async updateCourse(course: CourseEntity, updateCourseDto: IUpdateCourse): Promise<CourseEntity> {
   //   const updatedCourse = this.merge(course, { ...updateCourseDto });
