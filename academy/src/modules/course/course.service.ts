@@ -14,14 +14,8 @@ export class CourseService {
   constructor(private readonly courseRepository: CourseRepository) {}
 
   async create(createCourseDto: ICreateCourse) {
-    const { image_cover_key, intro_video_key } = createCourseDto;
-
     try {
-      const course = await this.courseRepository.createAndSaveCourse({
-        ...createCourseDto,
-        cover_image: image_cover_key,
-        intro_video: intro_video_key,
-      });
+      const course = await this.courseRepository.createAndSaveCourse({ ...createCourseDto });
 
       return ResponseUtil.success(course, CourseMessages.CREATE_SUCCESS);
     } catch (error) {
@@ -30,8 +24,7 @@ export class CourseService {
   }
   async update(courseId: number, updateCourseDto: IUpdateCourse): Promise<ServiceResponse> {
     try {
-      const course = await this.courseRepository.save(updateCourseDto);
-
+      const course = await this.courseRepository.update({ id: courseId }, { ...updateCourseDto });
       return ResponseUtil.success(course, CourseMessages.UPDATE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || CourseMessages.UPDATE_FAILURE, error?.status);
@@ -62,8 +55,6 @@ export class CourseService {
   }
   async removeById(courseId: number): Promise<ServiceResponse> {
     try {
-      await this.validateById(courseId);
-
       const removedCourse = await this.courseRepository.delete({ id: courseId });
 
       if (!removedCourse.affected) ResponseUtil.error(CourseMessages.REMOVE_FAILURE);

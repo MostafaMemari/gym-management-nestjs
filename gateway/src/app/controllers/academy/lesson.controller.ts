@@ -218,6 +218,6 @@ export class LessonController {
 
   private async removeFile(fileKey: string): Promise<void> {
     if (!fileKey) return;
-    await this.awsService.deleteFile(fileKey);
+    await this.awsService.removeFile(fileKey);
   }
 }

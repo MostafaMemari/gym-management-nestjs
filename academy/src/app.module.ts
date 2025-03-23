@@ -7,6 +7,7 @@ import { typeOrmConfigAsync } from './configs/typeorm.config';
 import { CourseModule } from './modules/course/course.module';
 import { ChapterModule } from './modules/chapter/chapter.module';
 import { LessonModule } from './modules/lesson/lesson.module';
+import { CacheModule } from './modules/cache/cache.module';
 
 @Module({
   imports: [

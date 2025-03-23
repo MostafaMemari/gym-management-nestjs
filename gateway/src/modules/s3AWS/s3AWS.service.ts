@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, DeleteObjectsCommand, CopyObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { lookup } from 'mime-types';
 import * as path from 'path';
 
@@ -65,11 +65,79 @@ export class AwsService {
     return { url: `https://node-bucket.storage.c2.liara.space/${key}` };
   }
 
-  async deleteFile(key: string) {
+  async uploadTempFile(file: Partial<Express.Multer.File>, folderName: string) {
+    // const folderName = `academy/course/temp`;
+    return await this.uploadSingleFile({ file, folderName, isPublic: true });
+  }
+
+  async moveFileToCourseFolder(oldKey: string, courseId: string) {
+    const newKey = oldKey.replace('temp', courseId);
+    const commandCopy = new CopyObjectCommand({
+      Bucket: this.bucketName,
+      CopySource: `${this.bucketName}/${oldKey}`,
+      Key: newKey,
+      ACL: 'public-read',
+    });
+
+    await this.client.send(commandCopy);
+
+    const commandDelete = new DeleteObjectCommand({
+      Bucket: this.bucketName,
+      Key: oldKey,
+    });
+
+    await this.client.send(commandDelete);
+
+    return {
+      url: (await this.getFileUrl(newKey)).url,
+      key: newKey,
+    };
+  }
+
+  async deleteCourseFolder(folderPath: string) {
+    // const folderPath = `academy/course/${courseId}/`;
+    const listCommand = new ListObjectsV2Command({
+      Bucket: this.bucketName,
+      Prefix: folderPath,
+    });
+
+    const { Contents } = await this.client.send(listCommand);
+
+    if (!Contents || Contents.length === 0) return;
+
+    const deleteCommand = new DeleteObjectsCommand({
+      Bucket: this.bucketName,
+      Delete: {
+        Objects: Contents.map(({ Key }) => ({ Key })),
+      },
+    });
+
+    await this.client.send(deleteCommand);
+  }
+
+  async removeFile(key: string) {
     try {
       const command = new DeleteObjectCommand({
         Bucket: this.bucketName,
         Key: key,
+      });
+
+      const deleteResult = await this.client.send(command);
+
+      return deleteResult;
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+  async removeFiles(keys: string[]) {
+    if (keys.length === 0) return;
+
+    try {
+      const command = new DeleteObjectsCommand({
+        Bucket: this.bucketName,
+        Delete: {
+          Objects: keys.map((key) => ({ Key: key })),
+        },
       });
 
       const deleteResult = await this.client.send(command);

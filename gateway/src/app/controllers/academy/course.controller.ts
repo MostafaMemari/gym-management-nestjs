@@ -63,29 +63,56 @@ export class CoursesController {
     @Body() createCourseDto: CreateCourseDto,
     @UploadedFiles() files: { cover_image?: Express.Multer.File; intro_video?: Express.Multer.File },
   ) {
-    let cover_image: string | null = null;
-    let intro_video: string | null = null;
+    let coverImageData: { url: string; key: string } | null = null;
+    let introVideoData: { url: string; key: string } | null = null;
 
     try {
       await this.validateBeltIds(createCourseDto.beltIds);
       await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
-      cover_image = files.cover_image ? await this.uploadFile(files.cover_image[0], 'academy/course/image_cover') : null;
-      intro_video = files.intro_video ? await this.uploadFile(files.intro_video[0], 'academy/course/intro_video') : null;
+      if (files.cover_image) {
+        coverImageData = await this.awsService.uploadTempFile(files.cover_image[0], 'academy/course/temp');
+      }
+      if (files.intro_video) {
+        introVideoData = await this.awsService.uploadTempFile(files.intro_video[0], 'academy/course/temp');
+      }
 
       const data: ServiceResponse = await lastValueFrom(
         this.academyServiceClient
           .send(CoursePatterns.CREATE, {
-            createCourseDto: { ...createCourseDto, cover_image, intro_video },
+            createCourseDto: {
+              ...createCourseDto,
+              cover_image: coverImageData?.key || null,
+              intro_video: introVideoData?.key || null,
+            },
           })
           .pipe(timeout(5000)),
       );
 
+      if (!data.error && data.data?.id) {
+        const courseId = data.data.id;
+
+        data.data.cover_image = coverImageData ? (await this.awsService.moveFileToCourseFolder(coverImageData.key, courseId)).key : null;
+
+        data.data.intro_video = introVideoData ? (await this.awsService.moveFileToCourseFolder(introVideoData.key, courseId)).key : null;
+
+        await lastValueFrom(
+          this.academyServiceClient.send(CoursePatterns.UPDATE, {
+            courseId,
+            updateCourseDto: {
+              cover_image: data.data.cover_image || null,
+              intro_video: data.data.intro_video || null,
+            },
+          }),
+        );
+      }
+
       return handleServiceResponse(data);
     } catch (error) {
-      await this.removeFile(cover_image);
-      await this.removeFile(intro_video);
-      console.log(error.message);
+      if (coverImageData) await this.awsService.removeFile(coverImageData.key);
+      if (introVideoData) await this.awsService.removeFile(introVideoData.key);
+
+      console.error(error.message);
       handleError(error, 'Failed to create course', 'CourseService');
     }
   }
@@ -148,12 +175,12 @@ export class CoursesController {
   }
 
   @Get()
-  async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto, @Query() queryCoursesDto: QueryCourseDto): Promise<any> {
+  async findAll(@Query() paginationDto: PaginationDto, @Query() queryCourseDto: QueryCourseDto): Promise<any> {
     try {
       await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.academyServiceClient.send(CoursePatterns.GET_ALL, { user, queryCoursesDto, paginationDto }).pipe(timeout(5000)),
+        this.academyServiceClient.send(CoursePatterns.GET_ALL, { queryCourseDto, paginationDto }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -174,13 +201,17 @@ export class CoursesController {
   }
 
   @Delete(':id')
-  async remove(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
+  async remove(@Param('id', ParseIntPipe) id: number) {
     try {
+      const course = await this.findById(id);
       await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
-      const data: ServiceResponse = await lastValueFrom(
-        this.academyServiceClient.send(CoursePatterns.REMOVE, { user, courseId: id }).pipe(timeout(5000)),
-      );
+      const data: ServiceResponse = await lastValueFrom(this.academyServiceClient.send(CoursePatterns.REMOVE, { courseId: id }).pipe(timeout(5000)));
+
+      if (!data.error) {
+        await this.removeFile(course.cover_image);
+        await this.removeFile(course.intro_video);
+      }
 
       return handleServiceResponse(data);
     } catch (error) {
@@ -211,6 +242,6 @@ export class CoursesController {
   }
   private async removeFile(fileKey: string): Promise<void> {
     if (!fileKey) return;
-    await this.awsService.deleteFile(fileKey);
+    await this.awsService.removeFile(fileKey);
   }
 }
