@@ -187,7 +187,9 @@ export class LessonController {
       );
 
       return handleServiceResponse(data);
-    } catch (error) {}
+    } catch (error) {
+      handleError(error, 'Failed to get lesson', 'LessonService');
+    }
   }
 
   @Get(':id')

@@ -40,7 +40,7 @@ export class ChapterRepository extends Repository<ChapterEntity> {
     return queryBuilder
       .skip((page - 1) * take)
       .take(take)
-      .cache(cacheKey, CacheTTLMilliseconds.GET_ALL_COURSES)
+      .cache(cacheKey, CacheTTLMilliseconds.GET_ALL_CHAPTERS)
       .getManyAndCount();
   }
 }

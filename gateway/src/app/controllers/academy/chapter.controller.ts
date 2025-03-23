@@ -44,6 +44,26 @@ export class ChaptersController {
     }
   }
 
+  @Put(':id')
+  @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
+  async update(@Param('id', ParseIntPipe) id: number, @Body() updateChapterDto: UpdateChaptersDto) {
+    try {
+      await checkConnection(Services.ACADEMY, this.academyServiceClient);
+      const data: ServiceResponse = await lastValueFrom(
+        this.academyServiceClient
+          .send(ChapterPatterns.UPDATE, {
+            chapterId: id,
+            updateChapterDto: { ...updateChapterDto },
+          })
+          .pipe(timeout(5000)),
+      );
+
+      return handleServiceResponse(data);
+    } catch (error) {
+      handleError(error, 'Failed to updated chapter', 'ChaptersService');
+    }
+  }
+
   @Get('course/:courseId')
   @ApiParam({ name: 'courseId', type: 'number' })
   getByCourse(@Param('courseId') courseId: number) {
@@ -54,34 +74,6 @@ export class ChaptersController {
   @ApiParam({ name: 'id', type: 'number' })
   getOne(@Param('id') id: number) {
     // return this.chapterService.getOne(id);
-  }
-
-  @Put(':id')
-  @UseInterceptors(UploadFile('image'))
-  @ApiConsumes(SwaggerConsumes.MultipartData)
-  async update(
-    @GetUser() user: User,
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateChaptersDto: UpdateChaptersDto,
-    @UploadedFile(new FileValidationPipe(10 * 1024 * 1024, ['image/jpeg', 'image/png']))
-    image: Express.Multer.File,
-  ) {
-    try {
-      await checkConnection(Services.ACADEMY, this.academyServiceClient);
-      const data: ServiceResponse = await lastValueFrom(
-        this.academyServiceClient
-          .send(ChapterPatterns.UPDATE, {
-            user,
-            chapterId: id,
-            updateChaptersDto: { ...updateChaptersDto, image },
-          })
-          .pipe(timeout(5000)),
-      );
-
-      return handleServiceResponse(data);
-    } catch (error) {
-      handleError(error, 'Failed to updated chapter', 'ChaptersService');
-    }
   }
 
   @Get()

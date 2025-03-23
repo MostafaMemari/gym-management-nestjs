@@ -8,7 +8,7 @@ import { CachePatterns } from '../enums/cache.enum';
 import { CacheService } from '../../cache/cache.service';
 
 @Injectable()
-export class lessonSubscriber implements EntitySubscriberInterface<LessonEntity> {
+export class LessonSubscriber implements EntitySubscriberInterface<LessonEntity> {
   constructor(@InjectDataSource() private readonly dataSource: DataSource, private readonly cacheService: CacheService) {
     this.dataSource.subscribers.push(this);
   }
