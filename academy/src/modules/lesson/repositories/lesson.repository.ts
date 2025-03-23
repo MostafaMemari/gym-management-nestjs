@@ -19,10 +19,10 @@ export class LessonRepository extends Repository<LessonEntity> {
     return await this.save(lesson);
   }
 
-  // async updateLesson(lesson: LessonEntity, updateLessonDto: IUpdateLesson): Promise<LessonEntity> {
-  //   const updatedLesson = this.merge(lesson, { ...updateLessonDto });
-  //   return await this.save(updatedLesson);
-  // }
+  async updateLesson(lesson: LessonEntity, updateLessonDto: IUpdateLesson): Promise<LessonEntity> {
+    const updatedLesson = this.merge(lesson, { ...updateLessonDto });
+    return await this.save(updatedLesson);
+  }
 
   async getLessonsWithFilters(filters: ISearchLessonQuery, page: number, take: number): Promise<[LessonEntity[], number]> {
     const cacheKey = `${CacheKeys.LESSONS}-${page}-${take}-${JSON.stringify(filters)}`;

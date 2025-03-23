@@ -1,24 +1,21 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
-import { IUser } from '../../common/interfaces/user.interface';
 import { ResponseUtil } from '../../common/utils/response';
 import { LessonMessages } from './enums/lesson.message';
 import { LessonRepository } from './repositories/lesson.repository';
 import { ICreateLesson, ISearchLessonQuery, IUpdateLesson } from './interfaces/lesson.interface';
 import { LessonEntity } from './entities/lesson.entity';
-import { ChapterService } from '../chapter/chapter.service';
 
 @Injectable()
 export class LessonService {
-  constructor(private readonly lessonRepository: LessonRepository, private readonly chapterService: ChapterService) {}
+  constructor(private readonly lessonRepository: LessonRepository) {}
 
-  async create(createLessonDto: ICreateLesson): Promise<ServiceResponse> {
+  async create(chapterId: number, createLessonDto: ICreateLesson): Promise<ServiceResponse> {
     try {
-      await this.chapterService.validateById(createLessonDto.chapterId);
-      const lesson = await this.lessonRepository.createAndSaveLesson({ ...createLessonDto });
+      const lesson = await this.lessonRepository.createAndSaveLesson({ ...createLessonDto, chapterId });
 
       return ResponseUtil.success(lesson, LessonMessages.CREATE_SUCCESS);
     } catch (error) {
@@ -27,11 +24,11 @@ export class LessonService {
   }
   async update(lessonId: number, updateLessonDto: IUpdateLesson): Promise<ServiceResponse> {
     try {
-      await this.lessonRepository.update({ id: lessonId }, { ...updateLessonDto });
+      const lesson = await this.validateById(lessonId);
 
-      const lesson = await this.lessonRepository.save(updateLessonDto);
+      const updatedLesson = await this.lessonRepository.updateLesson(lesson, updateLessonDto);
 
-      return ResponseUtil.success(lesson, LessonMessages.UPDATE_SUCCESS);
+      return ResponseUtil.success(updatedLesson, LessonMessages.UPDATE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || LessonMessages.UPDATE_FAILURE, error?.status);
     }

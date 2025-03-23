@@ -23,7 +23,7 @@ import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { GetUser } from '../../../common/decorators/get-user.decorator';
 import { CreateLessonDto, QueryLessonDto, UpdateLessonDto } from '../../../common/dtos/academy-service/lesson.dto';
 import { PaginationDto } from '../../../common/dtos/shared.dto';
-import { LessonPatterns } from '../../../common/enums/academy-service/academy.event';
+import { ChapterPatterns, LessonPatterns } from '../../../common/enums/academy-service/academy.event';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { UploadFile, UploadFileFields } from '../../../common/interceptors/upload-file.interceptor';
@@ -46,7 +46,7 @@ export class LessonController {
     private readonly awsService: AwsService,
   ) {}
 
-  @Post()
+  @Post('chapter/:chapterId')
   @UseInterceptors(
     UploadFileFields([
       { name: 'cover_image', maxCount: 1 },
@@ -61,7 +61,7 @@ export class LessonController {
   )
   @ApiConsumes(SwaggerConsumes.MultipartData)
   async create(
-    @GetUser() user: User,
+    @Param('chapterId', ParseIntPipe) chapterId: number,
     @Body() createLessonDto: CreateLessonDto,
     @UploadedFiles() files: { cover_image?: Express.Multer.File; video?: Express.Multer.File },
   ) {
@@ -70,35 +70,35 @@ export class LessonController {
 
     try {
       await checkConnection(Services.ACADEMY, this.academyServiceClient);
+      const chapter = await this.findChapterById(chapterId);
+      const courseId = chapter.courseId;
+      const tempFolder = `academy/course/${courseId}/chapter/${chapterId}/lesson/temp`;
 
       if (files.cover_image) {
-        coverImageData = await this.awsService.uploadTempFile(
-          files.cover_image[0],
-          `academy/course/chapter/${createLessonDto.chapterId}/lesson/temp`,
-        );
+        coverImageData = await this.awsService.uploadTempFile(files.cover_image[0], tempFolder);
       }
       if (files.video) {
-        videoData = await this.awsService.uploadTempFile(files.video[0], `academy/course/chapter/${createLessonDto.chapterId}/lesson/temp`);
+        videoData = await this.awsService.uploadTempFile(files.video[0], tempFolder);
       }
 
       const data: ServiceResponse = await lastValueFrom(
         this.academyServiceClient
           .send(LessonPatterns.CREATE, {
-            user,
+            chapterId,
             createLessonDto: { ...createLessonDto, cover_image: coverImageData?.key || null, video: videoData?.key || null },
           })
           .pipe(timeout(5000)),
       );
 
       if (!data.error && data.data?.id) {
-        const chapterId = data.data.id;
+        const lessonId = data.data.id;
 
-        data.data.cover_image = coverImageData ? (await this.awsService.moveFileToCourseFolder(coverImageData.key, chapterId)).key : null;
-        data.data.video = videoData ? (await this.awsService.moveFileToCourseFolder(videoData.key, chapterId)).key : null;
+        data.data.cover_image = coverImageData ? (await this.awsService.moveFileToCourseFolder(coverImageData.key, lessonId)).key : null;
+        data.data.video = videoData ? (await this.awsService.moveFileToCourseFolder(videoData.key, lessonId)).key : null;
 
         await lastValueFrom(
           this.academyServiceClient.send(LessonPatterns.UPDATE, {
-            chapterId,
+            lessonId,
             updateLessonDto: {
               cover_image: data.data.cover_image || null,
               video: data.data.video || null,
@@ -112,7 +112,6 @@ export class LessonController {
       if (coverImageData) await this.awsService.removeFile(coverImageData.key);
       if (videoData) await this.awsService.removeFile(videoData.key);
 
-      console.log(error.message);
       handleError(error, 'Failed to create lesson', 'LessonService');
     }
   }
@@ -226,6 +225,14 @@ export class LessonController {
     // return this.lessonService.updateProgress(dto);
   }
 
+  private async findChapterById(chapterId: number) {
+    const result = await lastValueFrom(this.academyServiceClient.send(ChapterPatterns.GET_ONE, { chapterId }).pipe(timeout(5000)));
+
+    if (result?.error) throw handleError(result.error, result.message, 'LessonService');
+
+    return result.data;
+  }
+
   private async findById(id: number) {
     const result = await lastValueFrom(this.academyServiceClient.send(LessonPatterns.GET_ONE, { lessonId: id }).pipe(timeout(5000)));
 
@@ -233,14 +240,12 @@ export class LessonController {
 
     return result.data;
   }
-
   private async uploadFile(file: Express.Multer.File, folderName: string): Promise<string | undefined> {
     if (!file) return;
 
     const uploadedFile = await this.awsService.uploadSingleFile({ file, folderName });
     return uploadedFile.key;
   }
-
   private async removeFile(fileKey: string): Promise<void> {
     if (!fileKey) return;
     await this.awsService.removeFile(fileKey);

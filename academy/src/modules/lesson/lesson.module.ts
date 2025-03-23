@@ -11,7 +11,7 @@ import { ChapterModule } from '../chapter/chapter.module';
 import { CacheModule } from '../cache/cache.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([LessonEntity, LessonFileEntity, UserLessonProgressEntity]), ChapterModule, CacheModule],
+  imports: [TypeOrmModule.forFeature([LessonEntity, LessonFileEntity, UserLessonProgressEntity]), CacheModule],
   controllers: [LessonController],
   providers: [LessonService, LessonRepository],
   exports: [LessonService],

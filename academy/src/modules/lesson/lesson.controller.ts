@@ -17,10 +17,10 @@ export class LessonController {
   }
 
   @MessagePattern(LessonPatterns.CREATE)
-  create(@Payload() data: { createLessonDto: ICreateLesson }): Promise<ServiceResponse> {
-    const { createLessonDto } = data;
+  create(@Payload() data: { chapterId: number; createLessonDto: ICreateLesson }): Promise<ServiceResponse> {
+    const { chapterId, createLessonDto } = data;
 
-    return this.lessonService.create(createLessonDto);
+    return this.lessonService.create(chapterId, createLessonDto);
   }
   @MessagePattern(LessonPatterns.UPDATE)
   update(@Payload() data: { lessonId: number; updateLessonDto: IUpdateLesson }): Promise<ServiceResponse> {
