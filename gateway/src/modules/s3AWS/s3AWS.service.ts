@@ -70,8 +70,8 @@ export class AwsService {
     return await this.uploadSingleFile({ file, folderName, isPublic: true });
   }
 
-  async moveFileToCourseFolder(oldKey: string, courseId: string) {
-    const newKey = oldKey.replace('temp', courseId);
+  async moveFileToCourseFolder(oldKey: string, id: string) {
+    const newKey = oldKey.replace('temp', id);
     const commandCopy = new CopyObjectCommand({
       Bucket: this.bucketName,
       CopySource: `${this.bucketName}/${oldKey}`,

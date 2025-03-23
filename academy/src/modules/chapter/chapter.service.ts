@@ -14,10 +14,10 @@ import { CourseService } from '../course/course.service';
 export class ChapterService {
   constructor(private readonly chapterRepository: ChapterRepository, private readonly courseService: CourseService) {}
 
-  async create(createChapterDto: ICreateChapter): Promise<ServiceResponse> {
+  async create(courseId: number, createChapterDto: ICreateChapter): Promise<ServiceResponse> {
     try {
-      await this.courseService.validateById(createChapterDto?.courseId);
-      const chapter = await this.chapterRepository.createAndSaveChapter({ ...createChapterDto });
+      await this.courseService.validateById(courseId);
+      const chapter = await this.chapterRepository.createAndSaveChapter({ ...createChapterDto, courseId });
 
       return ResponseUtil.success(chapter, ChapterMessages.CREATE_SUCCESS);
     } catch (error) {

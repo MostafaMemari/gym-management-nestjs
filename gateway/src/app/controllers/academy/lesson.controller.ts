@@ -65,28 +65,53 @@ export class LessonController {
     @Body() createLessonDto: CreateLessonDto,
     @UploadedFiles() files: { cover_image?: Express.Multer.File; video?: Express.Multer.File },
   ) {
-    let image_cover_key: string | null = null;
-    let video_key: string | null = null;
+    let coverImageData: { url: string; key: string } | null = null;
+    let videoData: { url: string; key: string } | null = null;
 
     try {
       await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
-      image_cover_key = files.cover_image ? await this.uploadFile(files.cover_image[0], 'academy/lesson/image_cover') : null;
-      video_key = files.video ? await this.uploadFile(files.video[0], 'academy/lesson/video') : null;
+      if (files.cover_image) {
+        coverImageData = await this.awsService.uploadTempFile(
+          files.cover_image[0],
+          `academy/course/chapter/${createLessonDto.chapterId}/lesson/temp`,
+        );
+      }
+      if (files.video) {
+        videoData = await this.awsService.uploadTempFile(files.video[0], `academy/course/chapter/${createLessonDto.chapterId}/lesson/temp`);
+      }
 
       const data: ServiceResponse = await lastValueFrom(
         this.academyServiceClient
           .send(LessonPatterns.CREATE, {
             user,
-            createLessonDto: { ...createLessonDto, image_cover_key, video_key },
+            createLessonDto: { ...createLessonDto, cover_image: coverImageData?.key || null, video: videoData?.key || null },
           })
           .pipe(timeout(5000)),
       );
 
+      if (!data.error && data.data?.id) {
+        const chapterId = data.data.id;
+
+        data.data.cover_image = coverImageData ? (await this.awsService.moveFileToCourseFolder(coverImageData.key, chapterId)).key : null;
+        data.data.video = videoData ? (await this.awsService.moveFileToCourseFolder(videoData.key, chapterId)).key : null;
+
+        await lastValueFrom(
+          this.academyServiceClient.send(LessonPatterns.UPDATE, {
+            chapterId,
+            updateLessonDto: {
+              cover_image: data.data.cover_image || null,
+              video: data.data.video || null,
+            },
+          }),
+        );
+      }
+
       return handleServiceResponse(data);
     } catch (error) {
-      await this.removeFile(image_cover_key);
-      await this.removeFile(video_key);
+      if (coverImageData) await this.awsService.removeFile(coverImageData.key);
+      if (videoData) await this.awsService.removeFile(videoData.key);
+
       console.log(error.message);
       handleError(error, 'Failed to create lesson', 'LessonService');
     }

@@ -93,7 +93,6 @@ export class CoursesController {
         const courseId = data.data.id;
 
         data.data.cover_image = coverImageData ? (await this.awsService.moveFileToCourseFolder(coverImageData.key, courseId)).key : null;
-
         data.data.intro_video = introVideoData ? (await this.awsService.moveFileToCourseFolder(introVideoData.key, courseId)).key : null;
 
         await lastValueFrom(
@@ -145,20 +144,17 @@ export class CoursesController {
       await checkConnection(Services.ACADEMY, this.academyServiceClient);
       const course = await this.findById(id);
 
-      cover_image = files.cover_image ? await this.uploadFile(files.cover_image[0], 'academy/course/image_cover') : null;
-      intro_video = files.intro_video ? await this.uploadFile(files.intro_video[0], 'academy/course/intro_video') : null;
+      cover_image = files.cover_image ? await this.uploadFile(files.cover_image[0], `academy/course/${id}`) : null;
+      intro_video = files.intro_video ? await this.uploadFile(files.intro_video[0], `academy/course/${id}`) : null;
 
-      const updatedData = { ...updateCourseDto };
-      if (cover_image) updatedData.cover_image = cover_image;
-      if (intro_video) updatedData.intro_video = intro_video;
-
-      Object.assign(course, updatedData);
+      if (cover_image) updateCourseDto.cover_image = cover_image;
+      if (intro_video) updateCourseDto.intro_video = intro_video;
 
       const data: ServiceResponse = await lastValueFrom(
         this.academyServiceClient
           .send(CoursePatterns.UPDATE, {
             courseId: id,
-            updateCourseDto: course,
+            updateCourseDto,
           })
           .pipe(timeout(5000)),
       );

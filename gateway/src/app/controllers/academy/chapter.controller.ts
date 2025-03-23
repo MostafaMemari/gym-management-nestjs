@@ -23,15 +23,16 @@ import { handleError, handleServiceResponse } from '../../../common/utils/handle
 export class ChaptersController {
   constructor(@Inject(Services.ACADEMY) private readonly academyServiceClient: ClientProxy) {}
 
-  @Post()
+  @Post('/course/:courseId')
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
-  async create(@Body() createChapterDto: CreateChaptersDto) {
+  async create(@Body() createChapterDto: CreateChaptersDto, @Param('courseId', ParseIntPipe) courseId: number) {
     try {
       await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
         this.academyServiceClient
           .send(ChapterPatterns.CREATE, {
+            courseId,
             createChapterDto: { ...createChapterDto },
           })
           .pipe(timeout(10000)),

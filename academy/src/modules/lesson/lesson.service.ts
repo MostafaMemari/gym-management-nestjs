@@ -16,14 +16,9 @@ export class LessonService {
   constructor(private readonly lessonRepository: LessonRepository, private readonly chapterService: ChapterService) {}
 
   async create(createLessonDto: ICreateLesson): Promise<ServiceResponse> {
-    const { image_cover_key, video_key } = createLessonDto;
     try {
       await this.chapterService.validateById(createLessonDto.chapterId);
-      const lesson = await this.lessonRepository.createAndSaveLesson({
-        ...createLessonDto,
-        video: video_key,
-        cover_image: image_cover_key,
-      });
+      const lesson = await this.lessonRepository.createAndSaveLesson({ ...createLessonDto });
 
       return ResponseUtil.success(lesson, LessonMessages.CREATE_SUCCESS);
     } catch (error) {
@@ -32,6 +27,8 @@ export class LessonService {
   }
   async update(lessonId: number, updateLessonDto: IUpdateLesson): Promise<ServiceResponse> {
     try {
+      await this.lessonRepository.update({ id: lessonId }, { ...updateLessonDto });
+
       const lesson = await this.lessonRepository.save(updateLessonDto);
 
       return ResponseUtil.success(lesson, LessonMessages.UPDATE_SUCCESS);
