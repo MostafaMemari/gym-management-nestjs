@@ -94,25 +94,25 @@ export class AwsService {
     };
   }
 
-  async deleteCourseFolder(folderPath: string) {
-    // const folderPath = `academy/course/${courseId}/`;
+  async removeFolder(folderPath: string) {
     const listCommand = new ListObjectsV2Command({
       Bucket: this.bucketName,
       Prefix: folderPath,
     });
 
     const { Contents } = await this.client.send(listCommand);
+    console.log(Contents);
 
     if (!Contents || Contents.length === 0) return;
 
-    const deleteCommand = new DeleteObjectsCommand({
-      Bucket: this.bucketName,
-      Delete: {
-        Objects: Contents.map(({ Key }) => ({ Key })),
-      },
-    });
+    for (const { Key } of Contents) {
+      const deleteCommand = new DeleteObjectCommand({
+        Bucket: this.bucketName,
+        Key: Key!,
+      });
 
-    await this.client.send(deleteCommand);
+      await this.client.send(deleteCommand);
+    }
   }
 
   async removeFile(key: string) {

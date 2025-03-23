@@ -204,10 +204,8 @@ export class CoursesController {
 
       const data: ServiceResponse = await lastValueFrom(this.academyServiceClient.send(CoursePatterns.REMOVE, { courseId: id }).pipe(timeout(5000)));
 
-      if (!data.error) {
-        await this.removeFile(course.cover_image);
-        await this.removeFile(course.intro_video);
-      }
+      const folderName = `academy/course/${course.id}`;
+      await this.awsService.removeFolder(folderName);
 
       return handleServiceResponse(data);
     } catch (error) {
