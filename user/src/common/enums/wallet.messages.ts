@@ -8,6 +8,6 @@ export enum WalletMessages {
   DepletedWallet = 'Your wallet is depleted.',
   LoWalletBalance = 'Low wallet balance.',
   CriticallyLowWalletBalance = 'Critically low wallet balance',
-  DailyWithdrawalFailed = 'Daily withdrawal process failed',
+  HourlyWithdrawalFailed = 'Hourly withdrawal process failed',
   AmountMustBeGreaterThanZero = 'Amount must be greater than zero.',
 }

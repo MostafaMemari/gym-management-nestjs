@@ -11,7 +11,7 @@ import { lastValueFrom, timeout } from 'rxjs';
 import { ClubPatterns } from '../../common/enums/club.events';
 import { NotificationPatterns } from '../../common/enums/notification.events';
 import { UserRepository } from '../user/user.repository';
-import { Role, Wallet } from '@prisma/client';
+import { Role, Wallet, WalletStatus } from '@prisma/client';
 import { IPagination } from '../../common/interfaces/user.interface';
 import { CacheKeys } from '../../common/enums/cache.enum';
 import { CacheService } from '../cache/cache.service';
@@ -21,7 +21,7 @@ import { pagination } from '../../common/utils/pagination.utils';
 export class WalletService {
   private readonly logger = new Logger(WalletService.name);
   private readonly timeout = 4500;
-  private readonly DAILY_COST_PER_STUDENT = 50000 / 30;
+  private readonly DAILY_COST_PER_STUDENT = Number.parseInt(process.env.DAILY_COST_PER_STUDENT);
   private readonly REDIS_EXPIRE_TIME = 600; //* Seconds
 
   constructor(
@@ -30,7 +30,7 @@ export class WalletService {
     @Inject(Services.CLUB) private readonly clubServiceClient: ClientProxy,
     @Inject(Services.NOTIFICATION) private readonly notificationServiceClient: ClientProxy,
     private readonly cache: CacheService,
-  ) {}
+  ) { }
 
   async findAll(paginationDto: IPagination): Promise<ServiceResponse> {
     try {
@@ -113,14 +113,12 @@ export class WalletService {
 
       if (wallet?.isBlocked) throw new BadRequestException(WalletMessages.BlockedWallet);
 
-      if (!wallet) wallet = await this.walletRepository.create({ userId });
+      if (!wallet) wallet = await this.walletRepository.create({ userId, lastWithdrawalDate: new Date() });
 
       wallet.balance += amount;
       await this.walletRepository.update(userId, { balance: wallet.balance });
 
-      if (wallet.isWalletDepleted) {
-        await this.handleWalletRecovery(wallet);
-      }
+      await this.tryToRecoveryWallet(wallet)
 
       return ResponseUtil.success({ wallet }, WalletMessages.ChargedWalletSuccess, HttpStatus.OK);
     } catch (error) {
@@ -128,74 +126,90 @@ export class WalletService {
     }
   }
 
-  @Cron(CronExpression.EVERY_12_HOURS)
-  async processDailyWithdraw(): Promise<void> {
-    this.logger.log('Starting daily withdrawal process...');
+  @Cron(CronExpression.EVERY_30_MINUTES)
+  async processHourlyWithdraw(): Promise<void> {
+    this.logger.log('Starting hourly withdrawal process...');
 
     try {
-      const wallets = await this.walletRepository.findAll({ where: { isBlocked: false } });
+      const wallets = await this.walletRepository.findAll({ where: { isBlocked: false, status: { not: WalletStatus.DEPLETED } } });
+
       this.logger.log(`Found ${wallets.length} active wallets for processing.`);
 
       for (const wallet of wallets) {
         if (!this.shouldWithdraw(wallet.lastWithdrawalDate)) continue;
 
-        await this.withdrawDailyCharge(wallet);
+        await this.withdrawHourlyCharge(wallet);
       }
 
-      this.logger.log('Daily withdrawal process completed successfully.');
+      this.logger.log('Hourly withdrawal process completed successfully.');
     } catch (error) {
       this.logger.error(`Failed to process withdraw: ${error.message}`, error.stack);
-      await this.notifySuperAdmin(WalletMessages.DailyWithdrawalFailed);
+      await this.notifySuperAdmin(WalletMessages.HourlyWithdrawalFailed);
     }
   }
 
-  private async withdrawDailyCharge(wallet: Wallet): Promise<void> {
+  private async withdrawHourlyCharge(wallet: Wallet): Promise<void> {
     const { userId } = wallet;
     const studentCount = await this.getStudentCount(userId);
     if (studentCount === 0) return;
 
-    const dailyCharge = this.calculateDailyCharge(studentCount);
-    wallet.balance -= dailyCharge;
+    const hourlyCharge = this.calculateHourlyCharge(studentCount);
+
+    wallet.balance -= hourlyCharge
+    if (wallet.balance < 0) wallet.balance = 0
 
     await this.walletRepository.update(userId, {
       balance: wallet.balance,
       lastWithdrawalDate: new Date(),
     });
 
-    this.logger.log(`Processed withdrawal for userId: ${userId}, deducted: ${dailyCharge}, new balance: ${wallet.balance}`);
+    this.logger.log(`Processed withdrawal for userId: ${userId}, deducted: ${hourlyCharge}, new balance: ${wallet.balance}`);
 
     await this.evaluateWalletBalance(wallet, studentCount);
   }
 
   private async evaluateWalletBalance(wallet: Wallet, studentCount: number): Promise<void> {
-    const { userId, balance } = wallet;
-    const daysLeft = this.calculateDaysLeft(balance, studentCount);
+    const { userId, balance, status } = wallet;
+    const hoursLeft = this.calculateHoursLeft(balance, studentCount);
 
-    if (daysLeft <= 5) return await this.sendNotification(userId, WalletMessages.LoWalletBalance, 'PUSH');
-    if (daysLeft <= 2) return this.sendNotification(userId, WalletMessages.CriticallyLowWalletBalance, 'SMS');
-    if (daysLeft <= 0) await this.markWalletAsDepleted(wallet);
+    if (hoursLeft <= 0 && status !== WalletStatus.DEPLETED) return await this.markWalletAsDepleted(wallet);
+
+    if (hoursLeft > 0 && hoursLeft <= 24 && status !== WalletStatus.CRITICAL_BALANCE) {
+      await this.walletRepository.update(userId, { status: WalletStatus.CRITICAL_BALANCE })
+      return this.sendNotification(userId, WalletMessages.CriticallyLowWalletBalance, 'SMS');
+    }
+
+    if (hoursLeft > 24 && hoursLeft <= 48 && status !== WalletStatus.LOW_BALANCE) {
+      await this.walletRepository.update(userId, { status: WalletStatus.LOW_BALANCE })
+      return await this.sendNotification(userId, WalletMessages.LoWalletBalance, 'PUSH');
+    }
+
+    if (hoursLeft > 48 && status !== WalletStatus.NONE) await this.walletRepository.update(userId, { status: WalletStatus.NONE })
   }
 
   private async markWalletAsDepleted(wallet: Wallet): Promise<void> {
-    await this.walletRepository.update(wallet.userId, { isWalletDepleted: true });
+    await this.walletRepository.update(wallet.userId, { status: WalletStatus.DEPLETED });
     await this.notifyWalletDepletion(wallet.userId, true);
 
     await this.sendNotification(wallet.userId, WalletMessages.DepletedWallet, 'SMS');
   }
 
-  private async handleWalletRecovery(wallet: Wallet): Promise<void> {
-    const studentCount = await this.getStudentCount(wallet.userId);
-    const daysLeft = this.calculateDaysLeft(wallet.balance, studentCount);
+  private async tryToRecoveryWallet(wallet: Wallet): Promise<void> {
+    const studentCount = await this.getStudentCount(wallet.userId)
+    await this.evaluateWalletBalance(wallet, studentCount)
 
-    if (daysLeft >= 5) {
-      await this.walletRepository.update(wallet.userId, { isWalletDepleted: false });
-      await this.notifyWalletDepletion(wallet.userId, false);
-    }
+    if (wallet.status !== WalletStatus.DEPLETED) return
+
+    const checkWallet = await this.walletRepository.findOne(wallet.id)
+
+    if (checkWallet && !this.shouldWithdraw(wallet.lastWithdrawalDate)) return
+
+    await this.withdrawHourlyCharge(wallet)
   }
 
   private shouldWithdraw(lastWithdrawalDate: Date): boolean {
-    const diffInHours = (Date.now() - new Date(lastWithdrawalDate).getTime()) / (1000 * 60 * 60);
-    return diffInHours >= 24;
+    const diffInHours = Math.abs(+((Date.now() - new Date(lastWithdrawalDate.toISOString()).getTime()) / (1000 * 60 * 60)).toFixed());
+    return diffInHours >= 1;
   }
 
   private async getStudentCount(userId: number): Promise<number> {
@@ -203,6 +217,12 @@ export class WalletService {
       const result: ServiceResponse = await lastValueFrom(
         this.clubServiceClient.send(ClubPatterns.GetCountStudentByOwner, { userId }).pipe(timeout(this.timeout)),
       );
+
+      if (result.error) {
+        this.logger.error(`Error fetching student count for userId: ${userId}. Error message: ${result.message}`);
+        return 0;
+      }
+
       return result?.data?.count || 0;
     } catch (error) {
       this.logger.error(`Failed to fetch student count for user ${userId}: ${error.message}`);
@@ -210,12 +230,13 @@ export class WalletService {
     }
   }
 
-  private calculateDailyCharge(studentCount: number): number {
-    return studentCount * this.DAILY_COST_PER_STUDENT;
+  private calculateHourlyCharge(studentCount: number): number {
+    const HOURLY_COST_PER_STUDENT = this.DAILY_COST_PER_STUDENT / 24;
+    return studentCount * HOURLY_COST_PER_STUDENT;
   }
 
-  private calculateDaysLeft(balance: number, studentCount: number): number {
-    return balance / this.calculateDailyCharge(studentCount);
+  private calculateHoursLeft(balance: number, studentCount: number): number {
+    return +(balance / this.calculateHourlyCharge(studentCount)).toFixed(0);
   }
 
   private async notifyWalletDepletion(userId: number, isDepleted: boolean) {
