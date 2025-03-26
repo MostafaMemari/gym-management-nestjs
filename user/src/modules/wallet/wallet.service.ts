@@ -30,7 +30,7 @@ export class WalletService {
     @Inject(Services.CLUB) private readonly clubServiceClient: ClientProxy,
     @Inject(Services.NOTIFICATION) private readonly notificationServiceClient: ClientProxy,
     private readonly cache: CacheService,
-  ) { }
+  ) {}
 
   async findAll(paginationDto: IPagination): Promise<ServiceResponse> {
     try {
@@ -118,7 +118,7 @@ export class WalletService {
       wallet.balance += amount;
       await this.walletRepository.update(userId, { balance: wallet.balance });
 
-      await this.tryToRecoveryWallet(wallet)
+      await this.tryToRecoveryWallet(wallet);
 
       return ResponseUtil.success({ wallet }, WalletMessages.ChargedWalletSuccess, HttpStatus.OK);
     } catch (error) {
@@ -155,8 +155,8 @@ export class WalletService {
 
     const hourlyCharge = this.calculateHourlyCharge(studentCount);
 
-    wallet.balance -= hourlyCharge
-    if (wallet.balance < 0) wallet.balance = 0
+    wallet.balance -= hourlyCharge;
+    if (wallet.balance < 0) wallet.balance = 0;
 
     await this.walletRepository.update(userId, {
       balance: wallet.balance,
@@ -175,16 +175,16 @@ export class WalletService {
     if (hoursLeft <= 0 && status !== WalletStatus.DEPLETED) return await this.markWalletAsDepleted(wallet);
 
     if (hoursLeft > 0 && hoursLeft <= 24 && status !== WalletStatus.CRITICAL_BALANCE) {
-      await this.walletRepository.update(userId, { status: WalletStatus.CRITICAL_BALANCE })
+      await this.walletRepository.update(userId, { status: WalletStatus.CRITICAL_BALANCE });
       return this.sendNotification(userId, WalletMessages.CriticallyLowWalletBalance, 'SMS');
     }
 
     if (hoursLeft > 24 && hoursLeft <= 48 && status !== WalletStatus.LOW_BALANCE) {
-      await this.walletRepository.update(userId, { status: WalletStatus.LOW_BALANCE })
+      await this.walletRepository.update(userId, { status: WalletStatus.LOW_BALANCE });
       return await this.sendNotification(userId, WalletMessages.LoWalletBalance, 'PUSH');
     }
 
-    if (hoursLeft > 48 && status !== WalletStatus.NONE) await this.walletRepository.update(userId, { status: WalletStatus.NONE })
+    if (hoursLeft > 48 && status !== WalletStatus.NONE) await this.walletRepository.update(userId, { status: WalletStatus.NONE });
   }
 
   private async markWalletAsDepleted(wallet: Wallet): Promise<void> {
@@ -195,16 +195,16 @@ export class WalletService {
   }
 
   private async tryToRecoveryWallet(wallet: Wallet): Promise<void> {
-    const studentCount = await this.getStudentCount(wallet.userId)
-    await this.evaluateWalletBalance(wallet, studentCount)
+    const studentCount = await this.getStudentCount(wallet.userId);
+    await this.evaluateWalletBalance(wallet, studentCount);
 
-    if (wallet.status !== WalletStatus.DEPLETED) return
+    if (wallet.status !== WalletStatus.DEPLETED) return;
 
-    const checkWallet = await this.walletRepository.findOne(wallet.id)
+    const checkWallet = await this.walletRepository.findOne(wallet.id);
 
-    if (checkWallet && !this.shouldWithdraw(wallet.lastWithdrawalDate)) return
+    if (checkWallet && !this.shouldWithdraw(wallet.lastWithdrawalDate)) return;
 
-    await this.withdrawHourlyCharge(wallet)
+    await this.withdrawHourlyCharge(wallet);
   }
 
   private shouldWithdraw(lastWithdrawalDate: Date): boolean {

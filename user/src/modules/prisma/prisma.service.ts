@@ -41,7 +41,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         if (wallet) return result;
 
         if (beforeUser && result.role == Role.ADMIN_CLUB) {
-          await this.wallet.create({ data: { userId: beforeUser.id , lastWithdrawalDate: new Date() } });
+          await this.wallet.create({ data: { userId: beforeUser.id, lastWithdrawalDate: new Date() } });
         }
 
         return result;
