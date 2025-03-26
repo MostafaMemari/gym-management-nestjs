@@ -45,8 +45,8 @@ model Wallet {
   isBlocked          Boolean      @default(false)
   lastWithdrawalDate DateTime     @default(now())
   status             WalletStatus @default(NONE)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @default(now())
 }
 
 model WalletDeduction {
