@@ -46,3 +46,12 @@ model Wallet {
   lastWithdrawalDate DateTime     @default(now())
   status             WalletStatus @default(NONE)
 }
+
+model WalletDeduction {
+  id               Int      @id() @default(autoincrement()) @db.Integer()
+  userId           Int      @db.Integer()
+  walletId         Int      @db.Integer()
+  deductionAmount  Int      @db.Integer()
+  remainingBalance Int      @db.Integer()
+  createdAt        DateTime @default(now())
+}
