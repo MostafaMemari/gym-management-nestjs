@@ -20,23 +20,29 @@ enum Role {
   SUPER_ADMIN
 }
 
-model User {
-  id Int @id() @default(autoincrement()) @db.Integer()
-  username String @db.VarChar(100) @unique
-  role Role @default(STUDENT)
-  mobile String?
-  password String? 
-  lastPasswordChange DateTime? 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+enum WalletStatus {
+  NONE
+  LOW_BALANCE
+  CRITICAL_BALANCE
+  DEPLETED
 }
 
+model User {
+  id                 Int       @id() @default(autoincrement()) @db.Integer()
+  username           String    @unique @db.VarChar(100)
+  role               Role      @default(STUDENT)
+  mobile             String?
+  password           String?
+  lastPasswordChange DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @default(now())
+}
 
 model Wallet {
-  id Int @id() @default(autoincrement()) @db.Integer()
-  userId Int @unique 
-  balance Int @default(100000)
-  isBlocked Boolean @default(false)
-  lastWithdrawalDate DateTime @default(now())
-  isWalletDepleted Boolean @default(false)
+  id                 Int          @id() @default(autoincrement()) @db.Integer()
+  userId             Int          @unique
+  balance            Int          @default(100000)
+  isBlocked          Boolean      @default(false)
+  lastWithdrawalDate DateTime     @default(now())
+  status             WalletStatus @default(NONE)
 }
