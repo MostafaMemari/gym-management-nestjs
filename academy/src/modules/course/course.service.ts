@@ -47,6 +47,20 @@ export class CourseService {
       ResponseUtil.error(error?.message || CourseMessages.GET_ALL_FAILURE, error?.status);
     }
   }
+  async getAllDetails(query: { queryCourseDto: ISearchCourseQuery; paginationDto: IPagination }): Promise<ServiceResponse> {
+    const { take, page } = query.paginationDto;
+
+    try {
+      const [courses, count] = await this.courseRepository.getCoursesWithDetails(query.queryCourseDto, page, take);
+
+      const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
+      const result = new PageDto(courses, pageMetaDto);
+
+      return ResponseUtil.success(result.data, CourseMessages.GET_ALL_SUCCESS);
+    } catch (error) {
+      ResponseUtil.error(error?.message || CourseMessages.GET_ALL_FAILURE, error?.status);
+    }
+  }
   async findOneById(courseId: number): Promise<ServiceResponse> {
     try {
       const course = await this.validateById(courseId);

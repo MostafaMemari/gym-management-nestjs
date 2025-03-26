@@ -29,7 +29,6 @@ import { ServiceResponse } from '../../../common/interfaces/serviceResponse.inte
 import { User } from '../../../common/interfaces/user.interface';
 import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
-import { UserLessonProgressDto } from '../../../common/dtos/academy-service/user-lesson-progress.dto';
 import { FilesValidationPipe } from '../../../common/pipes/upload-files.pipe';
 import { AwsService } from '../../../modules/s3AWS/s3AWS.service';
 
@@ -212,9 +211,19 @@ export class LessonController {
     }
   }
 
-  @Put('progress')
-  updateProgress(@Body() dto: UserLessonProgressDto) {
-    // return this.lessonService.updateProgress(dto);
+  @Post(':id/complete')
+  async completeLesson(@GetUser() user: User, @Param('id') id: number) {
+    try {
+      await checkConnection(Services.ACADEMY, this.academyServiceClient);
+
+      const data: ServiceResponse = await lastValueFrom(
+        this.academyServiceClient.send(LessonPatterns.MARK_LESSON_COMPLETED, { user, lessonId: id }).pipe(timeout(5000)),
+      );
+
+      return handleServiceResponse(data);
+    } catch (error) {
+      handleError(error, 'Failed to remove lesson', 'LessonService');
+    }
   }
 
   private async findChapterById(chapterId: number) {

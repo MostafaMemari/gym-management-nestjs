@@ -1,17 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
-import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
-import { IPagination } from '../../common/interfaces/pagination.interface';
-import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
-import { ResponseUtil } from '../../common/utils/response';
-import { LessonMessages } from './enums/lesson.message';
-import { LessonRepository } from './repositories/lesson.repository';
-import { ICreateLesson, ISearchLessonQuery, IUpdateLesson } from './interfaces/lesson.interface';
-import { LessonEntity } from './entities/lesson.entity';
+import { PageDto, PageMetaDto } from '../../../common/dtos/pagination.dto';
+import { IPagination } from '../../../common/interfaces/pagination.interface';
+import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
+import { ResponseUtil } from '../../../common/utils/response';
+import { LessonMessages } from '../enums/lesson.message';
+import { LessonRepository } from '../repositories/lesson.repository';
+import { ICreateLesson, ISearchLessonQuery, IUpdateLesson } from '../interfaces/lesson.interface';
+import { LessonEntity } from '../entities/lesson.entity';
+import { UserLessonProgressRepository } from '../repositories/user-lesson-progress.repository';
 
 @Injectable()
 export class LessonService {
-  constructor(private readonly lessonRepository: LessonRepository) {}
+  constructor(private readonly lessonRepository: LessonRepository, private readonly progressRepository: UserLessonProgressRepository) {}
 
   async create(chapterId: number, createLessonDto: ICreateLesson): Promise<ServiceResponse> {
     try {
@@ -67,6 +68,25 @@ export class LessonService {
       return ResponseUtil.success(removedLesson, LessonMessages.REMOVE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || LessonMessages.REMOVE_FAILURE, error?.status);
+    }
+  }
+
+  async getLessonsWithProgress(userId: number, chapterId: number) {
+    try {
+      const lessons = await this.lessonRepository.getLessonsByChapter(chapterId);
+      const progress = await this.progressRepository.getUserProgress(
+        userId,
+        lessons.map((l) => l.id),
+      );
+
+      const lesson = lessons.map((lesson) => ({
+        ...lesson,
+        is_completed: progress.some((p) => p.lesson.id === lesson.id && p.is_completed),
+      }));
+
+      return ResponseUtil.success(lesson, LessonMessages.GET_ALL_SUCCESS);
+    } catch (error) {
+      ResponseUtil.error(error?.message || LessonMessages.GET_ALL_FAILURE, error?.status);
     }
   }
 

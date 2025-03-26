@@ -24,6 +24,10 @@ export class LessonRepository extends Repository<LessonEntity> {
     return await this.save(updatedLesson);
   }
 
+  async getLessonsByChapter(chapterId: number): Promise<LessonEntity[]> {
+    return this.find({ where: { chapterId } });
+  }
+
   async getLessonsWithFilters(filters: ISearchLessonQuery, page: number, take: number): Promise<[LessonEntity[], number]> {
     const cacheKey = `${CacheKeys.LESSONS}-${page}-${take}-${JSON.stringify(filters)}`;
 

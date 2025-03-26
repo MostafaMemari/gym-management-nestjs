@@ -34,6 +34,12 @@ export class CourseController {
 
     return this.courseService.getAll({ queryCourseDto, paginationDto });
   }
+  @MessagePattern(CoursePatterns.GET_ALL_DETAILS)
+  findAllDetails(@Payload() data: { queryCourseDto: ISearchCourseQuery; paginationDto: IPagination }): Promise<ServiceResponse> {
+    const { queryCourseDto, paginationDto } = data;
+
+    return this.courseService.getAllDetails({ queryCourseDto, paginationDto });
+  }
   @MessagePattern(CoursePatterns.GET_ONE)
   findOne(@Payload() data: { courseId: number }): Promise<ServiceResponse> {
     const { courseId } = data;

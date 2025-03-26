@@ -179,6 +179,18 @@ export class CoursesController {
       return handleServiceResponse(data);
     } catch (error) {}
   }
+  @Get('details')
+  async findAllDetails(@Query() paginationDto: PaginationDto, @Query() queryCourseDto: QueryCourseDto): Promise<any> {
+    try {
+      await checkConnection(Services.ACADEMY, this.academyServiceClient);
+
+      const data: ServiceResponse = await lastValueFrom(
+        this.academyServiceClient.send(CoursePatterns.GET_ALL_DETAILS, { queryCourseDto, paginationDto }).pipe(timeout(5000)),
+      );
+
+      return handleServiceResponse(data);
+    } catch (error) {}
+  }
 
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number) {
