@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Post, Put, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiConsumes, ApiParam, ApiTags } from '@nestjs/swagger';
 import { lastValueFrom, timeout } from 'rxjs';
@@ -10,18 +10,20 @@ import { PaginationDto } from '../../../common/dtos/shared.dto';
 import { ChapterPatterns } from '../../../common/enums/academy-service/academy.event';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
-import { UploadFile } from '../../../common/interceptors/upload-file.interceptor';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
 import { User } from '../../../common/interfaces/user.interface';
-import { FileValidationPipe } from '../../../common/pipes/upload-file.pipe';
 import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
+import { AwsService } from '../../../modules/s3AWS/s3AWS.service';
 
 @Controller('chapters')
 @ApiTags('Chapters')
 @AuthDecorator()
 export class ChaptersController {
-  constructor(@Inject(Services.ACADEMY) private readonly academyServiceClient: ClientProxy) {}
+  constructor(
+    @Inject(Services.ACADEMY) private readonly academyServiceClient: ClientProxy,
+    private readonly awsService: AwsService,
+  ) {}
 
   @Post('/course/:courseId')
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
@@ -64,18 +66,6 @@ export class ChaptersController {
     }
   }
 
-  @Get('course/:courseId')
-  @ApiParam({ name: 'courseId', type: 'number' })
-  getByCourse(@Param('courseId') courseId: number) {
-    // return this.chapterService.getByCourse(courseId);
-  }
-
-  @Get(':id')
-  @ApiParam({ name: 'id', type: 'number' })
-  getOne(@Param('id') id: number) {
-    // return this.chapterService.getOne(id);
-  }
-
   @Get()
   async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto, @Query() queryChaptersDto: QueryChaptersDto): Promise<any> {
     try {
@@ -90,12 +80,12 @@ export class ChaptersController {
   }
 
   @Get(':id')
-  async findOne(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
+  async findOne(@Param('id', ParseIntPipe) id: number) {
     try {
       await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.academyServiceClient.send(ChapterPatterns.GET_ONE, { user, chapterId: id }).pipe(timeout(5000)),
+        this.academyServiceClient.send(ChapterPatterns.GET_ONE, { chapterId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -105,13 +95,18 @@ export class ChaptersController {
   }
 
   @Delete(':id')
-  async remove(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
+  async remove(@Param('id', ParseIntPipe) id: number) {
     try {
+      const chapter = (await this.findOne(id)).data;
       await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.academyServiceClient.send(ChapterPatterns.REMOVE, { user, chapterId: id }).pipe(timeout(5000)),
+        this.academyServiceClient.send(ChapterPatterns.REMOVE, { chapterId: id }).pipe(timeout(5000)),
       );
+
+      const folderName = `academy/course/${chapter.courseId}/chapter/${chapter.id}`;
+      await this.awsService.removeFolder(folderName);
+      data.data = { ...chapter };
 
       return handleServiceResponse(data);
     } catch (error) {

@@ -44,6 +44,6 @@ export class ChapterController {
   remove(@Payload() data: { chapterId: number }): Promise<ServiceResponse> {
     const { chapterId } = data;
 
-    return this.chapterService.findOneById(chapterId);
+    return this.chapterService.removeById(chapterId);
   }
 }

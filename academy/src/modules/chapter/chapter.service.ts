@@ -60,13 +60,11 @@ export class ChapterService {
   }
   async removeById(chapterId: number): Promise<ServiceResponse> {
     try {
-      await this.validateById(chapterId);
-
       const removedChapter = await this.chapterRepository.delete({ id: chapterId });
 
       if (!removedChapter.affected) ResponseUtil.error(ChapterMessages.REMOVE_FAILURE);
 
-      return ResponseUtil.success(removedChapter, ChapterMessages.REMOVE_SUCCESS);
+      return ResponseUtil.success({}, ChapterMessages.REMOVE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || ChapterMessages.REMOVE_FAILURE, error?.status);
     }

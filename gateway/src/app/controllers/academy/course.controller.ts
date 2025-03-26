@@ -9,7 +9,6 @@ import {
   Post,
   Put,
   Query,
-  UploadedFile,
   UploadedFiles,
   UseInterceptors,
   UsePipes,
@@ -19,16 +18,14 @@ import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { lastValueFrom, timeout } from 'rxjs';
 
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
-import { GetUser } from '../../../common/decorators/get-user.decorator';
 import { CreateCourseDto, QueryCourseDto, UpdateCourseDto } from '../../../common/dtos/academy-service/courses.dto';
 import { PaginationDto } from '../../../common/dtos/shared.dto';
 import { CoursePatterns } from '../../../common/enums/academy-service/academy.event';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
-import { UploadFile, UploadFileFields } from '../../../common/interceptors/upload-file.interceptor';
+import { UploadFileFields } from '../../../common/interceptors/upload-file.interceptor';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
-import { User } from '../../../common/interfaces/user.interface';
-import { FileValidationPipe } from '../../../common/pipes/upload-file.pipe';
+
 import { FilesValidationPipe } from '../../../common/pipes/upload-files.pipe';
 import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
@@ -142,7 +139,7 @@ export class CoursesController {
       if (updateCourseDto?.beltIds) await this.validateBeltIds(updateCourseDto.beltIds);
 
       await checkConnection(Services.ACADEMY, this.academyServiceClient);
-      const course = await this.findById(id);
+      const course = (await this.findOne(id)).data;
 
       cover_image = files.cover_image ? await this.uploadFile(files.cover_image[0], `academy/course/${id}`) : null;
       intro_video = files.intro_video ? await this.uploadFile(files.intro_video[0], `academy/course/${id}`) : null;
@@ -199,7 +196,7 @@ export class CoursesController {
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number) {
     try {
-      const course = await this.findById(id);
+      const course = (await this.findOne(id)).data;
       await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(this.academyServiceClient.send(CoursePatterns.REMOVE, { courseId: id }).pipe(timeout(5000)));
@@ -213,14 +210,7 @@ export class CoursesController {
     }
   }
 
-  private async findById(id: number) {
-    const result = await lastValueFrom(this.academyServiceClient.send(CoursePatterns.GET_ONE, { courseId: id }).pipe(timeout(5000)));
-
-    if (result?.error) throw result;
-
-    return result.data;
-  }
-  private async validateBeltIds(beltIds: number[]) {
+  async validateBeltIds(beltIds: number[]) {
     await checkConnection(Services.CLUB, this.clubServiceClient, { pattern: ClubPatterns.CHECK_CONNECTION });
 
     const result = await lastValueFrom(this.clubServiceClient.send(BeltPatterns.GET_BY_IDS, { beltIds }).pipe(timeout(5000)));
