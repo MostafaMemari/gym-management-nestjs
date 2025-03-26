@@ -179,17 +179,19 @@ export class CoursesController {
       return handleServiceResponse(data);
     } catch (error) {}
   }
-  @Get('details')
-  async findAllDetails(@Query() paginationDto: PaginationDto, @Query() queryCourseDto: QueryCourseDto): Promise<any> {
+  @Get(':id/details')
+  async findAllDetails(@Param('id', ParseIntPipe) id: number): Promise<any> {
     try {
       await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.academyServiceClient.send(CoursePatterns.GET_ALL_DETAILS, { queryCourseDto, paginationDto }).pipe(timeout(5000)),
+        this.academyServiceClient.send(CoursePatterns.GET_ONE_DETAILS, { courseId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
-    } catch (error) {}
+    } catch (error) {
+      handleError(error, 'Failed to get course details', 'CoursesService');
+    }
   }
 
   @Get(':id')

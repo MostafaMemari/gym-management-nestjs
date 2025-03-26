@@ -5,8 +5,8 @@ import { CourseEntity } from '../entities/course.entity';
 import { CacheKeys } from '../enums/cache.enum';
 import { ICreateCourse, ISearchCourseQuery, IUpdateCourse } from '../interfaces/course.interface';
 
+import { CacheTTLMilliseconds } from '../../../common/enums/cache-time';
 import { EntityName } from '../../../common/enums/entity.enum';
-import { CacheTTLMilliseconds } from 'src/common/enums/cache-time';
 
 @Injectable()
 export class CourseRepository extends Repository<CourseEntity> {
@@ -44,34 +44,13 @@ export class CourseRepository extends Repository<CourseEntity> {
       .getManyAndCount();
   }
 
-  async getCoursesWithDetails(filters: ISearchCourseQuery, page: number, take: number): Promise<[CourseEntity[], number]> {
-    const cacheKey = `${CacheKeys.COURSES_LIST_DETAILS}-${page}-${take}-${JSON.stringify(filters)}`;
-
+  async getCourseDetails(courseId: number): Promise<CourseEntity> {
     const queryBuilder = this.createQueryBuilder(EntityName.COURSES)
+      .where('courses.id = :courseId', { courseId })
       .leftJoinAndSelect('courses.chapters', 'chapters')
-      .leftJoinAndSelect('chapters.lessons', 'lessons');
+      .leftJoinAndSelect('chapters.lessons', 'lessons')
+      .select(['courses.id', 'courses.title', 'chapters.id', 'chapters.title', 'lessons.id', 'lessons.title']);
 
-    if (filters?.search) {
-      queryBuilder.andWhere('courses.name LIKE :search', { search: `%${filters.search}%` });
-    }
-
-    if (filters?.sort_order) {
-      queryBuilder.orderBy('courses.updated_at', filters.sort_order === 'asc' ? 'ASC' : 'DESC');
-    }
-
-    // for (const course of courses) {
-    //   for (const chapter of course.chapters) {
-    //     for (const lesson of chapter.lessons) {
-    //       const progress = await this.progressRepo.findOne({ where: { userId, lesson } });
-    //       lesson.is_completed = !!progress?.is_completed;
-    //     }
-    //   }
-    // }
-
-    return queryBuilder
-      .skip((page - 1) * take)
-      .take(take)
-      .cache(cacheKey, CacheTTLMilliseconds.GET_ALL_COURSES_DETAILS)
-      .getManyAndCount();
+    return queryBuilder.cache(CacheTTLMilliseconds.GET_ALL_COURSES_DETAILS).getOne();
   }
 }

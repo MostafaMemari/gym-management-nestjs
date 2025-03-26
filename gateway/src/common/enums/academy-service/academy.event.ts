@@ -3,8 +3,8 @@ export enum CoursePatterns {
   CREATE = 'create_course',
   UPDATE = 'update_course',
   GET_ALL = 'get_courses',
-  GET_ALL_DETAILS = 'get_courses_details',
   GET_ONE = 'get_course',
+  GET_ONE_DETAILS = 'get_course_details',
   REMOVE = 'remove_course',
 }
 
