@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -10,7 +9,6 @@ import {
   Post,
   Put,
   Query,
-  UploadedFile,
   UploadedFiles,
   UseInterceptors,
   UsePipes,
@@ -26,14 +24,12 @@ import { PaginationDto } from '../../../common/dtos/shared.dto';
 import { ChapterPatterns, LessonPatterns } from '../../../common/enums/academy-service/academy.event';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
-import { UploadFile, UploadFileFields } from '../../../common/interceptors/upload-file.interceptor';
+import { UploadFileFields } from '../../../common/interceptors/upload-file.interceptor';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
 import { User } from '../../../common/interfaces/user.interface';
-import { FileValidationPipe } from '../../../common/pipes/upload-file.pipe';
 import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
 import { UserLessonProgressDto } from '../../../common/dtos/academy-service/user-lesson-progress.dto';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { FilesValidationPipe } from '../../../common/pipes/upload-files.pipe';
 import { AwsService } from '../../../modules/s3AWS/s3AWS.service';
 
@@ -114,12 +110,6 @@ export class LessonController {
 
       handleError(error, 'Failed to create lesson', 'LessonService');
     }
-  }
-
-  @Get('chapter/:chapterId')
-  @ApiParam({ name: 'chapterId', type: 'number' })
-  getByChapter(@Param('chapterId') chapterId: number) {
-    // return this.lessonService.getByChapter(chapterId);
   }
 
   @Put(':id')
@@ -234,7 +224,6 @@ export class LessonController {
 
     return result.data;
   }
-
   private async findById(id: number) {
     const result = await lastValueFrom(this.academyServiceClient.send(LessonPatterns.GET_ONE, { lessonId: id }).pipe(timeout(5000)));
 

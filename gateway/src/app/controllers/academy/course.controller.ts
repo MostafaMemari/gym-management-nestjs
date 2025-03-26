@@ -217,7 +217,6 @@ export class CoursesController {
 
     if (result?.error) throw result;
   }
-
   private async uploadFile(file: Express.Multer.File, folderName: string): Promise<string | undefined> {
     if (!file) return;
 
