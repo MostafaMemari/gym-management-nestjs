@@ -1,19 +1,21 @@
-import { BadRequestException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ZarinpalService } from '../http/zarinpal.service';
 import { RpcException } from '@nestjs/microservices';
 import { ISendRequest } from '../../common/interfaces/http.interface';
 import { IPagination, IVerifyPayment } from '../../common/interfaces/payment.interface';
 import { PaymentRepository } from './payment.repository';
-import { Prisma, Transaction, TransactionStatus } from '@prisma/client';
+import { Transaction, TransactionStatus } from '@prisma/client';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from '../../common/utils/response.utils';
 import { PaymentMessages } from '../../common/enums/payment.messages';
 import { CacheService } from '../cache/cache.service';
 import { pagination } from '../../common/utils/pagination.utils';
 import { CacheKeys } from '../../common/enums/cache.enum';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class PaymentService {
+  private logger = new Logger(PaymentService.name);
   private REDIS_EXPIRE_TIME = 600; //* Seconds
 
   constructor(
@@ -21,6 +23,29 @@ export class PaymentService {
     private readonly paymentRepository: PaymentRepository,
     private readonly cacheService: CacheService,
   ) {}
+
+  @Cron(CronExpression.EVERY_12_HOURS)
+  async handelStaleTransactions() {
+    try {
+      this.logger.log('Checking for expired transactions...');
+
+      const transactions = await this.paymentRepository.findByArgs({}, { where: { status: TransactionStatus.PENDING } });
+
+      const now = new Date();
+      const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+      transactions.forEach(async (transaction) => {
+        if (new Date(transaction.createdAt) < twentyFourHoursAgo) {
+          await this.paymentRepository.update(transaction.id, { status: TransactionStatus.FAILED });
+          this.logger.warn(`Transaction ${transaction.id} marked as FAILED due to timeout.`);
+        }
+      });
+
+      this.logger.log('Expired transactions processing completed.');
+    } catch (error) {
+      this.logger.error(`Error processing stale transactions: ${error.message}`, error.stack);
+    }
+  }
 
   async getGatewayUrl(data: ISendRequest) {
     try {

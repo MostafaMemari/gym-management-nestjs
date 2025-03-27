@@ -22,6 +22,7 @@
     "@nestjs/mapped-types": "*",
     "@nestjs/microservices": "^11.0.1",
     "@nestjs/platform-express": "^10.0.0",
+    "@nestjs/schedule": "^5.0.1",
     "@prisma/client": "^6.4.1",
     "amqp-connection-manager": "^4.1.14",
     "amqplib": "^0.10.5",

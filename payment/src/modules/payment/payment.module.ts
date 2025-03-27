@@ -7,9 +7,10 @@ import { HttpApiModule } from '../http/http.module';
 import { PaymentRepository } from './payment.repository';
 import { PrismaModule } from '../prisma/prisma.module';
 import { CacheModule } from '../cache/cache.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
-  imports: [ConfigModule.forRoot(envConfig()), HttpApiModule, PrismaModule, CacheModule],
+  imports: [ScheduleModule.forRoot(), ConfigModule.forRoot(envConfig()), HttpApiModule, PrismaModule, CacheModule],
   controllers: [PaymentController],
   providers: [PaymentService, PaymentRepository],
 })
