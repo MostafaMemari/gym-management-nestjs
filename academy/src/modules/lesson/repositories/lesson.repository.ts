@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 import { LessonEntity } from '../entities/lesson.entity';
-import { CacheKeys } from '../enums/cache.enum';
 import { ICreateLesson, ISearchLessonQuery, IUpdateLesson } from '../interfaces/lesson.interface';
 
 import { EntityName } from '../../../common/enums/entity.enum';
-import { CacheTTLMilliseconds } from 'src/common/enums/cache-time';
+import { CacheKeys, CacheTTLMilliseconds } from 'src/common/enums/cache';
 
 @Injectable()
 export class LessonRepository extends Repository<LessonEntity> {

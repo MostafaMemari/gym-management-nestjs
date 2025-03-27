@@ -205,6 +205,12 @@ export class LessonController {
         this.academyServiceClient.send(LessonPatterns.REMOVE, { user, lessonId: id }).pipe(timeout(5000)),
       );
 
+      if (!data.error) {
+        const lesson = data.data;
+        if (lesson?.cover_image) this.removeFile(lesson?.cover_image);
+        if (lesson?.video) this.removeFile(lesson?.video);
+      }
+
       return handleServiceResponse(data);
     } catch (error) {
       handleError(error, 'Failed to remove lesson', 'LessonService');

@@ -59,13 +59,11 @@ export class LessonService {
   }
   async removeById(lessonId: number): Promise<ServiceResponse> {
     try {
-      await this.validateById(lessonId);
+      const lesson = await this.validateById(lessonId);
 
-      const removedLesson = await this.lessonRepository.delete({ id: lessonId });
+      await this.lessonRepository.remove(lesson);
 
-      if (!removedLesson.affected) ResponseUtil.error(LessonMessages.REMOVE_FAILURE);
-
-      return ResponseUtil.success(removedLesson, LessonMessages.REMOVE_SUCCESS);
+      return ResponseUtil.success(lesson, LessonMessages.REMOVE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || LessonMessages.REMOVE_FAILURE, error?.status);
     }

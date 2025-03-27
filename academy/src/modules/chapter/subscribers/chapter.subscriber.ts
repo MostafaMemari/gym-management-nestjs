@@ -3,8 +3,9 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, EntitySubscriberInterface, InsertEvent, RemoveEvent, UpdateEvent } from 'typeorm';
 
 import { ChapterEntity } from '../entities/chapter.entity';
-import { CachePatterns } from '../enums/cache.enum';
+
 import { CacheService } from '../../../modules/cache/cache.service';
+import { CachePatterns } from '../../../common/enums/cache';
 
 @Injectable()
 export class ChapterSubscriber implements EntitySubscriberInterface<ChapterEntity> {
@@ -17,18 +18,25 @@ export class ChapterSubscriber implements EntitySubscriberInterface<ChapterEntit
   }
 
   async afterInsert(event: InsertEvent<ChapterEntity>) {
-    await this.clearCache();
+    const { courseId } = event.entity;
+
+    await this.clearCache(courseId);
   }
 
   async afterUpdate(event: UpdateEvent<ChapterEntity>) {
-    await this.clearCache();
+    const { courseId } = event.entity;
+
+    await this.clearCache(courseId);
   }
 
   async afterRemove(event: RemoveEvent<ChapterEntity>) {
-    await this.clearCache();
+    const { courseId } = event.entity;
+
+    await this.clearCache(courseId);
   }
 
-  private async clearCache() {
+  private async clearCache(courseId: number = null) {
     await this.cacheService.delByPattern(CachePatterns.CHAPTERS);
+    await this.cacheService.delByPattern(CachePatterns.COURSE_DETAILS_BY_ID.replace('{courseId}', courseId.toString()));
   }
 }

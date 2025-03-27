@@ -97,16 +97,18 @@ export class ChaptersController {
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number) {
     try {
-      const chapter = (await this.findOne(id)).data;
       await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
         this.academyServiceClient.send(ChapterPatterns.REMOVE, { chapterId: id }).pipe(timeout(5000)),
       );
 
-      const folderName = `academy/course/${chapter.courseId}/chapter/${chapter.id}`;
-      await this.awsService.removeFolder(folderName);
-      data.data = { ...chapter };
+      if (!data.error) {
+        const chapter = data.data;
+
+        const folderName = `academy/course/${chapter.courseId}/chapter/${chapter.id}`;
+        await this.awsService.removeFolder(folderName);
+      }
 
       return handleServiceResponse(data);
     } catch (error) {

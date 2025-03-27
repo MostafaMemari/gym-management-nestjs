@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, In, Repository } from 'typeorm';
 
 import { ChapterEntity } from '../entities/chapter.entity';
-import { CacheKeys } from '../enums/cache.enum';
+
 import { ICreateChapter, ISearchChapterQuery, IUpdateChapter } from '../interfaces/chapter.interface';
 
 import { EntityName } from '../../../common/enums/entity.enum';
-import { CacheTTLMilliseconds } from '../../../common/enums/cache-time';
+import { CacheKeys, CacheTTLMilliseconds } from '../../../common/enums/cache';
 
 @Injectable()
 export class ChapterRepository extends Repository<ChapterEntity> {

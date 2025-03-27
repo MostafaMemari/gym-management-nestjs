@@ -67,11 +67,11 @@ export class CourseService {
   }
   async removeById(courseId: number): Promise<ServiceResponse> {
     try {
-      const removedCourse = await this.courseRepository.delete({ id: courseId });
+      const course = await this.validateById(courseId);
 
-      if (!removedCourse.affected) ResponseUtil.error(CourseMessages.REMOVE_FAILURE);
+      await this.courseRepository.remove(course);
 
-      return ResponseUtil.success(removedCourse, CourseMessages.REMOVE_SUCCESS);
+      return ResponseUtil.success(course, CourseMessages.REMOVE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || CourseMessages.REMOVE_FAILURE, error?.status);
     }

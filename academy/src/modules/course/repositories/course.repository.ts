@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, In, Repository } from 'typeorm';
 
 import { CourseEntity } from '../entities/course.entity';
-import { CacheKeys } from '../enums/cache.enum';
 import { ICreateCourse, ISearchCourseQuery, IUpdateCourse } from '../interfaces/course.interface';
 
-import { CacheTTLMilliseconds } from '../../../common/enums/cache-time';
+import { CacheTTLMilliseconds } from '../../../common/enums/cache';
 import { EntityName } from '../../../common/enums/entity.enum';
+import { CacheKeys } from '../../../common/enums/cache';
 
 @Injectable()
 export class CourseRepository extends Repository<CourseEntity> {
@@ -45,12 +45,14 @@ export class CourseRepository extends Repository<CourseEntity> {
   }
 
   async getCourseDetails(courseId: number): Promise<CourseEntity> {
+    const cacheKey = `${CacheKeys.COURSE_DETAILS}-${courseId}`;
+
     const queryBuilder = this.createQueryBuilder(EntityName.COURSES)
       .where('courses.id = :courseId', { courseId })
       .leftJoinAndSelect('courses.chapters', 'chapters')
       .leftJoinAndSelect('chapters.lessons', 'lessons')
       .select(['courses.id', 'courses.title', 'chapters.id', 'chapters.title', 'lessons.id', 'lessons.title']);
 
-    return queryBuilder.cache(CacheTTLMilliseconds.GET_ALL_COURSES_DETAILS).getOne();
+    return queryBuilder.cache(cacheKey, CacheTTLMilliseconds.GET_COURSE_DETAILS).getOne();
   }
 }
