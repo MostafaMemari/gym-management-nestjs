@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "WalletStatus" ADD VALUE 'INSUFFICIENT_FUNDS';

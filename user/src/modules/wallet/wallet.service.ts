@@ -154,6 +154,7 @@ export class WalletService {
     if (studentCount === 0) return;
 
     const hourlyCharge = this.calculateHourlyCharge(studentCount);
+    console.log(this.withdrawHourlyCharge.name, hourlyCharge, wallet);
 
     wallet.balance -= hourlyCharge;
     if (wallet.balance < 0) wallet.balance = 0;
@@ -163,28 +164,50 @@ export class WalletService {
       lastWithdrawalDate: new Date(),
     });
 
+    await this.walletRepository.createDeduction({
+      userId: userId,
+      walletId: wallet.id,
+      deductionAmount: hourlyCharge,
+      remainingBalance: wallet.balance,
+    });
+
     this.logger.log(`Processed withdrawal for userId: ${userId}, deducted: ${hourlyCharge}, new balance: ${wallet.balance}`);
 
     await this.evaluateWalletBalance(wallet, studentCount);
+
+    if (wallet.balance < hourlyCharge * 2) {
+      this.logger.log(`User ${userId} does not have enough balance. Skipping deduction.`);
+      await this.walletRepository.update(userId, { status: WalletStatus.DEPLETED });
+      return;
+    }
   }
 
   private async evaluateWalletBalance(wallet: Wallet, studentCount: number): Promise<void> {
     const { userId, balance, status } = wallet;
     const hoursLeft = this.calculateHoursLeft(balance, studentCount);
+    console.log(this.evaluateWalletBalance.name, hoursLeft, wallet);
 
-    if (hoursLeft <= 0 && status !== WalletStatus.DEPLETED) return await this.markWalletAsDepleted(wallet);
+    if (hoursLeft === 0 && status !== WalletStatus.DEPLETED) return await this.markWalletAsDepleted(wallet);
 
     if (hoursLeft > 0 && hoursLeft <= 24 && status !== WalletStatus.CRITICAL_BALANCE) {
-      await this.walletRepository.update(userId, { status: WalletStatus.CRITICAL_BALANCE });
+      await this.changeWalletStatus(wallet.id, WalletStatus.CRITICAL_BALANCE);
       return this.sendNotification(userId, WalletMessages.CriticallyLowWalletBalance, 'SMS');
     }
 
     if (hoursLeft > 24 && hoursLeft <= 48 && status !== WalletStatus.LOW_BALANCE) {
-      await this.walletRepository.update(userId, { status: WalletStatus.LOW_BALANCE });
+      await this.changeWalletStatus(wallet.id, WalletStatus.LOW_BALANCE);
       return await this.sendNotification(userId, WalletMessages.LoWalletBalance, 'PUSH');
     }
 
-    if (hoursLeft > 48 && status !== WalletStatus.NONE) await this.walletRepository.update(userId, { status: WalletStatus.NONE });
+    if (hoursLeft > 48 && status !== WalletStatus.NONE) await this.changeWalletStatus(wallet.id, WalletStatus.NONE);
+  }
+
+  async changeWalletStatus(walletId: number, status: WalletStatus): Promise<void | never> {
+    const updatedWallet = await this.walletRepository.update(walletId, { status });
+
+    if (status !== WalletStatus.DEPLETED) return await this.notifyWalletDepletion(updatedWallet.userId, false);
+
+    await this.notifyWalletDepletion(updatedWallet.userId, true);
   }
 
   private async markWalletAsDepleted(wallet: Wallet): Promise<void> {
@@ -197,10 +220,11 @@ export class WalletService {
   private async tryToRecoveryWallet(wallet: Wallet): Promise<void> {
     const studentCount = await this.getStudentCount(wallet.userId);
     await this.evaluateWalletBalance(wallet, studentCount);
-
-    if (wallet.status !== WalletStatus.DEPLETED) return;
+    console.log(this.tryToRecoveryWallet.name, wallet, studentCount);
 
     const checkWallet = await this.walletRepository.findOne(wallet.id);
+
+    if (checkWallet.status == WalletStatus.DEPLETED) return;
 
     if (checkWallet && !this.shouldWithdraw(wallet.lastWithdrawalDate)) return;
 
@@ -209,6 +233,7 @@ export class WalletService {
 
   private shouldWithdraw(lastWithdrawalDate: Date): boolean {
     const diffInHours = Math.abs(+((Date.now() - new Date(lastWithdrawalDate.toISOString()).getTime()) / (1000 * 60 * 60)).toFixed());
+    console.log(diffInHours);
     return diffInHours >= 1;
   }
 
@@ -223,6 +248,7 @@ export class WalletService {
         return 0;
       }
 
+      result.data.count = 300;
       return result?.data?.count || 0;
     } catch (error) {
       this.logger.error(`Failed to fetch student count for user ${userId}: ${error.message}`);
