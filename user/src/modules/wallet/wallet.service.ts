@@ -154,7 +154,6 @@ export class WalletService {
     if (studentCount === 0) return;
 
     const hourlyCharge = this.calculateHourlyCharge(studentCount);
-    console.log(this.withdrawHourlyCharge.name, hourlyCharge, wallet);
 
     wallet.balance -= hourlyCharge;
     if (wallet.balance < 0) wallet.balance = 0;
@@ -185,7 +184,6 @@ export class WalletService {
   private async evaluateWalletBalance(wallet: Wallet, studentCount: number): Promise<void> {
     const { userId, balance, status } = wallet;
     const hoursLeft = this.calculateHoursLeft(balance, studentCount);
-    console.log(this.evaluateWalletBalance.name, hoursLeft, wallet);
 
     if (hoursLeft === 0 && status !== WalletStatus.DEPLETED) return await this.markWalletAsDepleted(wallet);
 
@@ -220,7 +218,6 @@ export class WalletService {
   private async tryToRecoveryWallet(wallet: Wallet): Promise<void> {
     const studentCount = await this.getStudentCount(wallet.userId);
     await this.evaluateWalletBalance(wallet, studentCount);
-    console.log(this.tryToRecoveryWallet.name, wallet, studentCount);
 
     const checkWallet = await this.walletRepository.findOne(wallet.id);
 
@@ -233,7 +230,6 @@ export class WalletService {
 
   private shouldWithdraw(lastWithdrawalDate: Date): boolean {
     const diffInHours = Math.abs(+((Date.now() - new Date(lastWithdrawalDate.toISOString()).getTime()) / (1000 * 60 * 60)).toFixed());
-    console.log(diffInHours);
     return diffInHours >= 1;
   }
 
@@ -248,6 +244,7 @@ export class WalletService {
         return 0;
       }
 
+      //TODO: Remove make student count
       result.data.count = 300;
       return result?.data?.count || 0;
     } catch (error) {
