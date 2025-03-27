@@ -17,32 +17,46 @@ export class StudentRepository extends Repository<StudentEntity> {
     super(StudentEntity, dataSource.createEntityManager());
   }
 
-  async createStudent(data: Partial<StudentEntity>, queryRunner?: QueryRunner): Promise<StudentEntity> {
+  async createStudent(data: Partial<StudentEntity>, userId: number, queryRunner?: QueryRunner): Promise<StudentEntity> {
     const student = this.create(data);
+    queryRunner.data = { userId };
 
     return queryRunner ? await queryRunner.manager.save(student) : await this.save(student);
   }
 
-  async updateStudent(student: StudentEntity, updateData: Partial<StudentEntity>) {
-    const hasRelations = ['coach', 'club'].some((rel) => updateData.hasOwnProperty(rel));
+  async updateStudent(student: StudentEntity, updateData: Partial<StudentEntity>, userId: number) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    if (hasRelations) {
+    try {
+      queryRunner.data = { userId };
+
       const updatedStudent = this.merge(student, updateData);
-      return await this.save(updatedStudent);
-    } else {
-      return await this.update(student.id, updateData);
+      const result = await queryRunner.manager.save(updatedStudent);
+
+      await queryRunner.commitTransaction();
+
+      return result;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
     }
   }
 
-  async removeStudentById(studentId: number): Promise<boolean> {
+  async removeStudent(student: StudentEntity, userId: number): Promise<StudentEntity> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.startTransaction();
 
     try {
-      const removedStudent = await queryRunner.manager.delete(StudentEntity, studentId);
+      queryRunner.data = { userId };
+
+      const result = await queryRunner.manager.remove(student);
+
       await queryRunner.commitTransaction();
 
-      return removedStudent.affected > 0;
+      return result;
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;
@@ -176,7 +190,7 @@ export class StudentRepository extends Repository<StudentEntity> {
   async findByIdAndOwner(studentId: number, userId: number): Promise<StudentEntity> {
     const student = await this.createQueryBuilder(EntityName.STUDENTS)
       .where('students.id = :studentId', { studentId })
-      .leftJoinAndSelect('students.club', 'club')
+      .leftJoin('students.club', 'club')
       .andWhere('club.ownerId = :userId', { userId })
       .getOne();
 

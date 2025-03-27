@@ -83,15 +83,14 @@ export class CoachRepository extends Repository<CoachEntity> {
       .getManyAndCount();
   }
 
-  async removeCoachById(coachId: number): Promise<boolean> {
+  async removeCoach(coach: CoachEntity): Promise<void> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.startTransaction();
 
     try {
-      const removedCoach = await queryRunner.manager.delete(CoachEntity, coachId);
-      await queryRunner.commitTransaction();
+      await queryRunner.manager.remove(coach);
 
-      return removedCoach.affected > 0;
+      await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;

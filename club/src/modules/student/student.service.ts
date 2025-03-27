@@ -67,11 +67,8 @@ export class StudentService {
       studentUserId = await this.createUserStudent();
 
       const student = await this.studentRepository.createStudent(
-        {
-          ...createStudentDto,
-          image_url: imageKey,
-          userId: studentUserId,
-        },
+        { ...createStudentDto, image_url: imageKey, userId: studentUserId },
+        userId,
         queryRunner,
       );
 
@@ -116,14 +113,14 @@ export class StudentService {
 
       if (image) updateData.image_url = await this.updateImage(image);
 
-      await this.studentRepository.updateStudent(student, updateData);
+      const studentUpdated = await this.studentRepository.updateStudent(student, updateData, userId);
 
       if (image && updateData.image_url && student.image_url) {
         await this.awsService.deleteFile(student.image_url);
       }
 
       await this.clearStudentCacheByUser(userId);
-      return ResponseUtil.success({ ...student, ...updateData }, StudentMessages.UPDATE_SUCCESS);
+      return ResponseUtil.success(studentUpdated, StudentMessages.UPDATE_SUCCESS);
     } catch (error) {
       await this.removeImage(imageKey);
       ResponseUtil.error(error?.message || StudentMessages.UPDATE_FAILURE, error?.status);
@@ -180,12 +177,12 @@ export class StudentService {
       const userId = user.id;
       const student = await this.validateOwnershipById(studentId, userId);
 
-      const isRemoved = await this.studentRepository.removeStudentById(studentId);
+      const studentRemoved = await this.studentRepository.removeStudent(student, userId);
 
-      if (isRemoved) this.removeStudentData(Number(student.userId), student.image_url);
+      this.removeStudentData(Number(student.userId), student.image_url);
 
       await this.clearStudentCacheByUser(userId);
-      return ResponseUtil.success(student, StudentMessages.REMOVE_SUCCESS);
+      return ResponseUtil.success(studentRemoved, StudentMessages.REMOVE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || StudentMessages.REMOVE_FAILURE, error?.status);
     }
@@ -233,6 +230,7 @@ export class StudentService {
             clubId,
             userId: userStudentId,
           },
+          userId,
           queryRunner,
         );
 

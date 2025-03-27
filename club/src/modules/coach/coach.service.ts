@@ -139,14 +139,14 @@ export class CoachService {
   async removeById(user: IUser, coachId: number): Promise<ServiceResponse> {
     const userId = user.id;
     try {
-      const coach = await this.validateOwnershipById(coachId, user.id);
+      const coach = await this.validateOwnershipById(coachId, userId);
 
       const hasStudents = await this.studentService.hasStudentsAssignedToCoach(coachId);
       if (hasStudents) throw new BadRequestException(CoachMessages.COACH_HAS_STUDENTS.replace('{coachId}', coachId.toString()));
 
-      const isRemoved = await this.coachRepository.removeCoachById(coachId);
+      await this.coachRepository.removeCoach(coach);
 
-      if (isRemoved) await this.removeCoachData(Number(coach.userId), coach.image_url);
+      await this.removeCoachData(Number(coach.userId), coach.image_url);
 
       return ResponseUtil.success(coach, CoachMessages.REMOVE_SUCCESS);
     } catch (error) {

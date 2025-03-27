@@ -9,6 +9,7 @@ import { StudentBeltRepository } from './repositories/student-belt.repository';
 import { StudentRepository } from './repositories/student.repository';
 import { StudentController } from './student.controller';
 import { StudentService } from './student.service';
+import { StudentSubscriber } from './subscribers/student.subscriber';
 
 import { AgeCategoryModule } from '../age-category/age-category.module';
 import { BeltModule } from '../belt/belt.module';
@@ -44,7 +45,7 @@ import { Services } from '../../common/enums/services.enum';
     forwardRef(() => CoachModule),
   ],
   controllers: [StudentController],
-  providers: [StudentService, StudentRepository, StudentBeltRepository],
+  providers: [StudentService, StudentRepository, StudentBeltRepository, StudentSubscriber],
   exports: [StudentService, StudentRepository],
 })
 export class StudentModule {}
