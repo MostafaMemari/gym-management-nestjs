@@ -4,7 +4,7 @@ import { DataSource, EntitySubscriberInterface, InsertEvent, UpdateEvent, Remove
 
 import { StudentEntity } from '../entities/student.entity';
 import { CacheService } from '../../cache/cache.service';
-import { CacheKeys } from 'src/common/enums/cache';
+import { CacheKeys } from '../../../common/enums/cache';
 
 @Injectable()
 export class StudentSubscriber implements EntitySubscriberInterface<StudentEntity> {
@@ -18,19 +18,19 @@ export class StudentSubscriber implements EntitySubscriberInterface<StudentEntit
 
   async afterInsert(event: InsertEvent<StudentEntity>) {
     const { userId } = event.manager.queryRunner?.data;
-    console.log('insert', userId);
+
     await this.clearCache(userId);
   }
 
   async afterUpdate(event: UpdateEvent<StudentEntity>) {
     const { userId } = event.manager.queryRunner?.data;
-    console.log('update', userId);
+
     await this.clearCache(userId);
   }
 
   async afterRemove(event: RemoveEvent<StudentEntity>) {
     const { userId } = event.manager.queryRunner?.data;
-    console.log('remove', userId);
+
     await this.clearCache(userId);
   }
 
