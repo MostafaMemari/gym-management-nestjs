@@ -70,20 +70,18 @@ export class WalletController {
         frontendUrl: process.env.PAYMENT_FRONTEND_URL,
       };
 
-      const data: ServiceResponse = await lastValueFrom(
+      const verifiedPayment: ServiceResponse = await lastValueFrom(
         this.paymentServiceClient.send(PaymentPatterns.VerifyPayment, verifyData).pipe(timeout(this.timeout)),
       );
 
-      const { data: paymentData } = handleServiceResponse(data);
-      const walletData = { userId: user.id, amount: paymentData.payment.amount / 10 };
+      const { data: paymentData } = handleServiceResponse(verifiedPayment);
+      const walletData = { userId: user.id, amount: (paymentData.payment.amount as number) / 10 };
 
-      const result: ServiceResponse = await lastValueFrom(
+      const { data: chargedWalletData, ...responseMetadata }: ServiceResponse = await lastValueFrom(
         this.userServiceClient.send(WalletPatterns.ChargeWallet, walletData).pipe(timeout(this.timeout)),
       );
 
-      result.data.payment = paymentData.payment;
-
-      return handleServiceResponse(result);
+      return handleServiceResponse({ data: Object.assign(chargedWalletData, paymentData), ...responseMetadata });
     } catch (error) {
       handleError(error, 'Failed to verify pay', Services.USER);
     }
