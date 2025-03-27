@@ -17,24 +17,24 @@ export class ClubSubscriber implements EntitySubscriberInterface<ClubEntity> {
   }
 
   async afterInsert(event: InsertEvent<ClubEntity>) {
-    const { ownerId } = event.entity;
+    const { owner_id } = event.entity;
 
-    await this.clearCache(ownerId);
+    await this.clearCache(owner_id);
   }
 
   async afterUpdate(event: UpdateEvent<ClubEntity>) {
-    const { ownerId } = event.entity;
+    const { owner_id } = event.entity;
 
-    await this.clearCache(ownerId);
+    await this.clearCache(owner_id);
   }
 
   async afterRemove(event: RemoveEvent<ClubEntity>) {
-    const { ownerId } = event.entity;
+    const { owner_id } = event.entity;
 
-    await this.clearCache(ownerId);
+    await this.clearCache(owner_id);
   }
 
   private async clearCache(userId: number) {
-    await this.cacheService.delByPattern(`${CacheKeys.CLUBS}:userId:${userId}*`);
+    await this.cacheService.delByPattern(`${CacheKeys.CLUBS}`.replace(':userId', userId.toString()) + '*');
   }
 }

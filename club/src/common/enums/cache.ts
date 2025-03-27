@@ -1,11 +1,11 @@
 export enum CacheKeys {
-  CLUBS = 'clubs_list',
+  STUDENTS = 'students_list-:userId',
+  STUDENTS_SUMMARY = 'students_list_summary-:userId',
 
-  STUDENTS = 'students_list',
-  STUDENTS_SUMMARY = 'students_list_summary',
+  CLUBS = 'clubs_list-:userId',
+  COACHES = 'coaches_list-:userId',
+  SESSIONS = 'sessions_list-:userId',
 
-  COACHES = 'coaches_list',
-  SESSIONS = 'sessions_list',
   BELT_EXAMS = 'belt_exams_list',
   BELTS = 'belts_list',
   ATTENDANCES = 'attendances_list',

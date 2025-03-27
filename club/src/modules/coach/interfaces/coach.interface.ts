@@ -9,8 +9,8 @@ export interface ICoachCreateDto {
   national_code: string;
   phone_number?: string;
   birth_date?: Date;
-  userId?: number;
-  clubIds?: number[];
+  user_id?: number;
+  club_ids?: number[];
 }
 
 export type ICoachUpdateDto = Partial<ICoachCreateDto>;

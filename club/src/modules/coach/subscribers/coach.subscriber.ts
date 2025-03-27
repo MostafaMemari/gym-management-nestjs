@@ -17,24 +17,24 @@ export class CoachSubscriber implements EntitySubscriberInterface<CoachEntity> {
   }
 
   async afterInsert(event: InsertEvent<CoachEntity>) {
-    const { ownerId } = event.entity;
+    const { owner_id } = event.entity;
 
-    await this.clearCache(ownerId);
+    await this.clearCache(owner_id);
   }
 
   async afterUpdate(event: UpdateEvent<CoachEntity>) {
-    const { ownerId } = event.entity;
+    const { owner_id } = event.entity;
 
-    await this.clearCache(ownerId);
+    await this.clearCache(owner_id);
   }
 
   async afterRemove(event: RemoveEvent<CoachEntity>) {
-    const { ownerId } = event.entity;
+    const { owner_id } = event.entity;
 
-    await this.clearCache(ownerId);
+    await this.clearCache(owner_id);
   }
 
   private async clearCache(userId: number) {
-    await this.cacheService.delByPattern(`${CacheKeys.COACHES}:userId:${userId}*`);
+    await this.cacheService.delByPattern(`${CacheKeys.COACHES}`.replace(':userId', userId.toString()) + '*');
   }
 }

@@ -38,7 +38,7 @@ export class CoachService {
   ) {}
 
   async create(user: IUser, createCoachDto: ICoachCreateDto): Promise<ServiceResponse> {
-    const { clubIds, national_code, gender, image } = createCoachDto;
+    const { club_ids, national_code, gender, image } = createCoachDto;
     const userId: number = user.id;
 
     let imageKey: string | null = null;
@@ -48,8 +48,8 @@ export class CoachService {
     try {
       if (national_code) await this.validateUniqueNationalCode(national_code, userId);
 
-      if (clubIds) {
-        ownedClubs = await this.clubService.validateOwnershipByIds(clubIds, userId);
+      if (club_ids) {
+        ownedClubs = await this.clubService.validateOwnershipByIds(club_ids, userId);
         this.validateCoachClubGender(gender, ownedClubs);
       }
 
@@ -62,7 +62,7 @@ export class CoachService {
         image_url: imageKey,
         clubs: ownedClubs,
         userId: coachUserId,
-        ownerId: userId,
+        owner_id: userId,
       });
 
       return ResponseUtil.success({ ...coach, userId: coachUserId }, CoachMessages.CREATE_SUCCESS);
@@ -72,7 +72,7 @@ export class CoachService {
     }
   }
   async update(user: IUser, coachId: number, updateCoachDto: ICoachUpdateDto): Promise<ServiceResponse> {
-    const { clubIds = [], national_code, gender, image } = updateCoachDto;
+    const { club_ids = [], national_code, gender, image } = updateCoachDto;
     const userId: number = user.id;
 
     let imageKey: string | null = null;
@@ -83,9 +83,9 @@ export class CoachService {
 
       const updateData = this.prepareUpdateData(updateCoachDto, coach);
 
-      if (clubIds.length) {
-        const ownedClubs = clubIds?.length ? await this.clubService.validateOwnershipByIds(clubIds, userId) : coach.clubs;
-        const removedClubs = coach.clubs.filter((club) => !clubIds.includes(club.id));
+      if (club_ids.length) {
+        const ownedClubs = club_ids?.length ? await this.clubService.validateOwnershipByIds(club_ids, userId) : coach.clubs;
+        const removedClubs = coach.clubs.filter((club) => !club_ids.includes(club.id));
         if (removedClubs.length) await this.studentService.validateRemovedClubsStudents(removedClubs, coachId);
         this.validateCoachClubGender(coach.gender, ownedClubs);
         updateData.clubs = ownedClubs;
@@ -222,7 +222,7 @@ export class CoachService {
   private prepareUpdateData(updateDto: ICoachUpdateDto, coach: CoachEntity): Partial<CoachEntity> {
     return Object.fromEntries(
       Object.entries(updateDto).filter(
-        ([key, value]) => key !== 'image' && key !== 'clubIds' && value !== undefined && value !== coach[key],
+        ([key, value]) => key !== 'image' && key !== 'club_ids' && value !== undefined && value !== coach[key],
       ),
     );
   }

@@ -75,7 +75,7 @@ export class CreateCoachDto {
   @ToArray()
   @IsInt({ each: true })
   @ApiPropertyOptional({ type: 'array' })
-  clubIds: number[];
+  club_ids: number[];
 }
 
 export class UpdateCoachDto extends PartialType(CreateCoachDto) {}

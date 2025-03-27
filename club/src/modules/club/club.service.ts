@@ -26,9 +26,8 @@ export class ClubService {
   ) {}
 
   async create(user: IUser, createClubDto: ICreateClub): Promise<ServiceResponse> {
-    const userId = user.id;
     try {
-      const club = await this.clubRepository.createAndSaveClub(createClubDto, userId);
+      const club = await this.clubRepository.createAndSaveClub(createClubDto, user.id);
 
       return ResponseUtil.success(club, ClubMessages.CREATE_SUCCESS);
     } catch (error) {
@@ -36,10 +35,9 @@ export class ClubService {
     }
   }
   async update(user: IUser, clubId: number, updateClubDto: IUpdateClub): Promise<ServiceResponse> {
-    const userId = user.id;
     try {
       const { genders } = updateClubDto;
-      const club = await this.validateOwnershipById(clubId, userId);
+      const club = await this.validateOwnershipById(clubId, user.id);
 
       if (genders && genders !== club.genders) {
         await this.validateGenderRemoval(genders, clubId, club.genders);
@@ -76,15 +74,13 @@ export class ClubService {
     }
   }
   async removeById(user: IUser, clubId: number): Promise<ServiceResponse> {
-    const userId = user.id;
-
     try {
-      const club = await this.validateOwnershipById(clubId, userId);
+      const club = await this.validateOwnershipById(clubId, user.id);
 
       const isClubAssignedToCoaches = await this.coachService.hasCoachByClubId(clubId);
       if (isClubAssignedToCoaches) throw new BadRequestException(ClubMessages.CANNOT_REMOVE_ASSIGNED_COACHES);
 
-      await this.clubRepository.remove(club);
+      await this.clubRepository.removeClub(club);
 
       return ResponseUtil.success(club, ClubMessages.REMOVE_SUCCESS);
     } catch (error) {

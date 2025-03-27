@@ -40,7 +40,7 @@ export class CoachEntity extends AbstractEntity {
   birth_date: Date;
 
   @Column({ type: 'integer', nullable: false })
-  ownerId: number;
+  owner_id: number;
 
   @OneToMany(() => StudentEntity, (student) => student.coach)
   students: StudentEntity[];

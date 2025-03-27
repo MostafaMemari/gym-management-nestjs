@@ -25,7 +25,7 @@ export class ClubEntity extends AbstractEntity {
   address?: string;
 
   @Column({ type: 'integer', nullable: false })
-  ownerId: number;
+  owner_id: number;
 
   @ManyToMany(() => CoachEntity, (coach) => coach.clubs)
   @JoinTable()
