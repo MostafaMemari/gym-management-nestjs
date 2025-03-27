@@ -51,7 +51,7 @@ export class StudentService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
-    const { clubId, coachId, beltId, belt_date, national_code, gender, image } = createStudentDto;
+    const { club_id, coach_id, belt_id, belt_date, national_code, gender, image } = createStudentDto;
     const userId: number = user.id;
 
     let imageKey: string | null = null;
@@ -59,8 +59,8 @@ export class StudentService {
 
     try {
       if (national_code) await this.validateUniqueNationalCode(national_code, userId);
-      const { club, coach } = await this.validateOwnershipClubAndCoach(userId, clubId, coachId);
-      this.validateClubIdInCoach(clubId, coach);
+      const { club, coach } = await this.validateOwnershipClubAndCoach(userId, club_id, coach_id);
+      this.validateClubIdInCoach(club_id, coach);
       this.validateStudentGender(gender, coach, club);
 
       imageKey = image ? await this.updateImage(image) : null;
@@ -72,8 +72,8 @@ export class StudentService {
         queryRunner,
       );
 
-      if (beltId && belt_date) {
-        const belt = await this.beltService.validateByIdWithRelation(beltId);
+      if (belt_id && belt_date) {
+        const belt = await this.beltService.validateByIdWithRelation(belt_id);
         const nextBeltDate = this.beltService.calculateNextBeltDate(belt_date, belt.duration_month);
         await this.studentBeltRepository.createStudentBelt(student, belt, belt_date, nextBeltDate, queryRunner);
       }
@@ -90,7 +90,7 @@ export class StudentService {
     }
   }
   async update(user: IUser, studentId: number, updateStudentDto: IStudentUpdateDto): Promise<ServiceResponse> {
-    const { clubId, coachId, beltId, national_code, gender, image } = updateStudentDto;
+    const { club_id, coach_id, belt_id, national_code, gender, image } = updateStudentDto;
     const userId: number = user.id;
 
     let imageKey: string | null = null;
@@ -99,17 +99,17 @@ export class StudentService {
       let student = national_code ? await this.validateUniqueNationalCode(national_code, userId) : null;
       if (!student) student = await this.validateOwnershipById(studentId, userId);
 
-      if (beltId) await this.beltService.validateById(beltId);
+      if (belt_id) await this.beltService.validateById(belt_id);
 
-      if (clubId || coachId || gender) {
-        const { club, coach } = await this.validateOwnershipClubAndCoach(userId, clubId ?? student.clubId, coachId ?? student.coachId);
+      if (club_id || coach_id || gender) {
+        const { club, coach } = await this.validateOwnershipClubAndCoach(userId, club_id ?? student.club_id, coach_id ?? student.coach_id);
         this.validateClubIdInCoach(club.id, coach);
         this.validateStudentGender(gender ?? student.gender, coach, club);
       }
 
       const updateData = this.prepareUpdateData(updateStudentDto, student);
-      if (clubId !== undefined) updateData.clubId = clubId;
-      if (coachId !== undefined) updateData.coachId = coachId;
+      if (club_id !== undefined) updateData.club_id = club_id;
+      if (coach_id !== undefined) updateData.coach_id = coach_id;
 
       if (image) updateData.image_url = await this.updateImage(image);
 
@@ -192,15 +192,15 @@ export class StudentService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
-    const { clubId, coachId, gender } = studentData;
+    const { club_id, coach_id, gender } = studentData;
     const userId: number = user.id;
     const studentUserIds = [];
 
     try {
       const belts = await this.beltService.getNamesAndIds();
 
-      const { club, coach } = await this.validateOwnershipClubAndCoach(userId, clubId, coachId);
-      this.validateClubIdInCoach(clubId, coach);
+      const { club, coach } = await this.validateOwnershipClubAndCoach(userId, club_id, coach_id);
+      this.validateClubIdInCoach(club_id, coach);
       this.validateStudentGender(gender, coach, club);
 
       const students: any = JSON.parse(Buffer.from(studentsJson.buffer).toString('utf-8'));
@@ -214,7 +214,7 @@ export class StudentService {
         const userStudentId = await this.createUserStudent();
         if (userStudentId) studentUserIds.push(userStudentId);
 
-        const beltId = belts.find((belt) => belt.name === student.belt)?.id;
+        const belt_id = belts.find((belt) => belt.name === student.belt)?.id;
         const beltDate = shmasiToMiladi(student.belt_date as any);
 
         await this.validateUniqueNationalCode(student.national_code, userId);
@@ -226,16 +226,16 @@ export class StudentService {
             birth_date: birthDate,
             membership_year: membershipYear,
             gender,
-            coachId,
-            clubId,
+            coach_id,
+            club_id,
             userId: userStudentId,
           },
           userId,
           queryRunner,
         );
 
-        if (beltId && beltDate) {
-          const belt = await this.beltService.validateByIdWithRelation(beltId);
+        if (belt_id && beltDate) {
+          const belt = await this.beltService.validateByIdWithRelation(belt_id);
           const nextBeltDate = this.beltService.calculateNextBeltDate(beltDate, belt.duration_month);
           await this.studentBeltRepository.createStudentBelt(studentCreate, belt, beltDate, nextBeltDate, queryRunner);
         }
@@ -329,28 +329,28 @@ export class StudentService {
     if (!student) throw new NotFoundException(StudentMessages.NOT_FOUND);
     return student;
   }
-  private async validateOwnershipClubAndCoach(userId: number, clubId?: number, coachId?: number) {
-    const club = clubId ? await this.clubService.validateOwnershipById(clubId, userId) : null;
-    const coach = coachId ? await this.coachService.validateOwnershipById(coachId, userId) : null;
+  private async validateOwnershipClubAndCoach(userId: number, club_id?: number, coach_id?: number) {
+    const club = club_id ? await this.clubService.validateOwnershipById(club_id, userId) : null;
+    const coach = coach_id ? await this.coachService.validateOwnershipById(coach_id, userId) : null;
     return { club, coach };
   }
   private validateStudentGender(gender: Gender, coach?: CoachEntity, club?: ClubEntity) {
     if (coach && !isSameGender(gender, coach.gender)) throw new BadRequestException(StudentMessages.COACH_GENDER_MISMATCH);
     if (club && !isGenderAllowed(gender, club.genders)) throw new BadRequestException(StudentMessages.CLUB_GENDER_MISMATCH);
   }
-  private validateClubIdInCoach(clubId: number, coach: CoachEntity): void {
-    const exists = coach.clubs.some((club) => club.id === clubId);
+  private validateClubIdInCoach(club_id: number, coach: CoachEntity): void {
+    const exists = coach.clubs.some((club) => club.id === club_id);
     if (!exists) {
       throw new BadRequestException(
-        StudentMessages.COACH_NOT_IN_CLUB.replace('{coachId}', coach.id.toString()).replace('{clubId}', clubId.toString()),
+        StudentMessages.COACH_NOT_IN_CLUB.replace('{coach_id}', coach.id.toString()).replace('{club_id}', club_id.toString()),
       );
     }
   }
-  async validateRemovedClubsStudents(clubs: ClubEntity[], coachId: number): Promise<void> {
+  async validateRemovedClubsStudents(clubs: ClubEntity[], coach_id: number): Promise<void> {
     const clubsWithStudents: string[] = [];
 
     for (const club of clubs) {
-      const hasStudents = await this.studentRepository.existsStudentsInClub(club.id, coachId);
+      const hasStudents = await this.studentRepository.existsStudentsInClub(club.id, coach_id);
       if (hasStudents) clubsWithStudents.push(`${club.id}`);
     }
 
@@ -358,8 +358,8 @@ export class StudentService {
       throw new BadRequestException(StudentMessages.MULTIPLE_NOT_FOUND.replace('{ids}', clubsWithStudents.join(', ')));
     }
   }
-  async validateStudentsIdsByCoachAndGender(studentIds: number[], coachId: number, gender: Gender): Promise<StudentEntity[]> {
-    const foundStudents = await this.studentRepository.findByIdsAndCoachAndGender(studentIds, coachId, gender);
+  async validateStudentsIdsByCoachAndGender(studentIds: number[], coach_id: number, gender: Gender): Promise<StudentEntity[]> {
+    const foundStudents = await this.studentRepository.findByIdsAndCoachAndGender(studentIds, coach_id, gender);
     const foundIds = foundStudents.map((student) => student.id);
     const invalidIds = studentIds.filter((id) => !foundIds.includes(id));
 
@@ -369,8 +369,8 @@ export class StudentService {
 
     return foundStudents;
   }
-  async validateStudentsIdsByCoach(studentIds: number[], coachId: number): Promise<StudentEntity[]> {
-    const foundStudents = await this.studentRepository.findByIdsAndCoach(studentIds, coachId);
+  async validateStudentsIdsByCoach(studentIds: number[], coach_id: number): Promise<StudentEntity[]> {
+    const foundStudents = await this.studentRepository.findByIdsAndCoach(studentIds, coach_id);
     const foundIds = foundStudents.map((student) => student.id);
     const invalidIds = studentIds.filter((id) => !foundIds.includes(id));
 
@@ -381,11 +381,11 @@ export class StudentService {
     return foundStudents;
   }
 
-  async validateGenderCoachStudent(coachId: number, gender: Gender): Promise<boolean> {
-    return await this.studentRepository.existsByCoachIdAndCoachGender(coachId, gender);
+  async validateGenderCoachStudent(coach_id: number, gender: Gender): Promise<boolean> {
+    return await this.studentRepository.existsByCoachIdAndCoachGender(coach_id, gender);
   }
-  async hasStudentsAssignedToCoach(coachId: number): Promise<boolean> {
-    return await this.studentRepository.existsByCoachId(coachId);
+  async hasStudentsAssignedToCoach(coach_id: number): Promise<boolean> {
+    return await this.studentRepository.existsByCoachId(coach_id);
   }
 
   private prepareUpdateData(updateDto: IStudentUpdateDto, student: StudentEntity): Partial<StudentEntity> {

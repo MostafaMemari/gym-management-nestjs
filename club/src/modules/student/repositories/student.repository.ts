@@ -95,10 +95,10 @@ export class StudentRepository extends Repository<StudentEntity> {
       queryBuilder.andWhere('students.phone_number LIKE :phoneNumber', { phoneNumber: `%${filters?.phone_number}%` });
     }
     if (filters?.club_id) {
-      queryBuilder.andWhere('students.clubId = :club', { club: filters?.club_id });
+      queryBuilder.andWhere('students.club_id = :club', { club: filters?.club_id });
     }
     if (filters?.coach_id) {
-      queryBuilder.andWhere('students.coachId = :coach', { coach: filters?.coach_id });
+      queryBuilder.andWhere('students.coach_id = :coach', { coach: filters?.coach_id });
     }
 
     if (filters?.belt_ids?.length) {
@@ -163,10 +163,10 @@ export class StudentRepository extends Repository<StudentEntity> {
       queryBuilder.andWhere('students.phone_number LIKE :phoneNumber', { phoneNumber: `%${filters?.phone_number}%` });
     }
     if (filters?.club_id) {
-      queryBuilder.andWhere('students.clubId = :club', { club: filters?.club_id });
+      queryBuilder.andWhere('students.club_id = :club', { club: filters?.club_id });
     }
     if (filters?.coach_id) {
-      queryBuilder.andWhere('students.coachId = :coach', { coach: filters?.coach_id });
+      queryBuilder.andWhere('students.coach_id = :coach', { coach: filters?.coach_id });
     }
     if (filters?.sort_by && validSortFields.includes(filters.sort_by)) {
       queryBuilder.orderBy(`students.${filters.sort_by}`, filters.sort_order === 'asc' ? 'ASC' : 'DESC');
@@ -207,19 +207,19 @@ export class StudentRepository extends Repository<StudentEntity> {
     return student;
   }
 
-  async existsStudentsInClub(clubId: number, coachId: number): Promise<boolean> {
-    const count = await this.count({ where: { club: { id: clubId }, coach: { id: coachId } } });
+  async existsStudentsInClub(club_id: number, coach_id: number): Promise<boolean> {
+    const count = await this.count({ where: { club: { id: club_id }, coach: { id: coach_id } } });
 
     return count > 0;
   }
 
-  async existsByCoachId(coachId: number): Promise<boolean> {
-    const count = await this.count({ where: { coach: { id: coachId } } });
+  async existsByCoachId(coach_id: number): Promise<boolean> {
+    const count = await this.count({ where: { coach: { id: coach_id } } });
     return count > 0;
   }
 
-  async existsByCoachIdAndCoachGender(coachId: number, gender: Gender): Promise<boolean> {
-    const studentExists = await this.findOne({ where: { coachId, gender } });
+  async existsByCoachIdAndCoachGender(coach_id: number, gender: Gender): Promise<boolean> {
+    const studentExists = await this.findOne({ where: { coach_id, gender } });
     return !!studentExists;
   }
 
@@ -279,11 +279,11 @@ export class StudentRepository extends Repository<StudentEntity> {
     return this.find({ where: { id: In(ids) } });
   }
 
-  async findByIdsAndCoachAndGender(ids: number[], coachId: number, gender: Gender): Promise<StudentEntity[]> {
-    return this.find({ where: { id: In(ids), gender, coachId } });
+  async findByIdsAndCoachAndGender(ids: number[], coach_id: number, gender: Gender): Promise<StudentEntity[]> {
+    return this.find({ where: { id: In(ids), gender, coach_id } });
   }
-  async findByIdsAndCoach(ids: number[], coachId: number): Promise<StudentEntity[]> {
-    return this.find({ where: { id: In(ids), coachId } });
+  async findByIdsAndCoach(ids: number[], coach_id: number): Promise<StudentEntity[]> {
+    return this.find({ where: { id: In(ids), coach_id } });
   }
 }
 

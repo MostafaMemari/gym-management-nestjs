@@ -56,17 +56,17 @@ export class StudentEntity extends AbstractEntity {
   expire_image_date?: Date;
 
   @Column({ type: 'integer', nullable: true })
-  coachId: number;
+  coach_id: number;
 
   @Column({ type: 'integer', nullable: true })
-  clubId: number;
+  club_id: number;
 
   @ManyToOne(() => CoachEntity, (coach) => coach.students, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn()
+  @JoinColumn({ name: 'coach_id', referencedColumnName: 'id' })
   coach: CoachEntity;
 
   @ManyToOne(() => ClubEntity, (club) => club.students, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn()
+  @JoinColumn({ name: 'club_id', referencedColumnName: 'id' })
   club: ClubEntity;
 
   @OneToOne(() => StudentBeltEntity, (beltInfo) => beltInfo.student, { nullable: true })

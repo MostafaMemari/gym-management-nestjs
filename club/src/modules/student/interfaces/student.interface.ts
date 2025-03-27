@@ -16,14 +16,14 @@ export interface IStudentCreateDto {
   belt_date?: Date;
   membership_year?: number;
   userId?: number;
-  coachId?: number;
-  clubId?: number;
-  beltId?: number;
+  coach_id?: number;
+  club_id?: number;
+  belt_id?: number;
 }
 
 export type IStudentUpdateDto = Partial<IStudentCreateDto>;
 
-export interface IStudentBulkCreateDto extends Pick<IStudentCreateDto, 'clubId' | 'coachId' | 'gender'> {}
+export interface IStudentBulkCreateDto extends Pick<IStudentCreateDto, 'club_id' | 'coach_id' | 'gender'> {}
 
 export interface IStudentFilter {
   search?: string;
