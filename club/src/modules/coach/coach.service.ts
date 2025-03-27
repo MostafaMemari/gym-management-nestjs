@@ -3,12 +3,10 @@ import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 
 import { CoachEntity } from './entities/coach.entity';
-import { CacheKeys } from './enums/cache.enum';
 import { CoachMessages } from './enums/coach.message';
 import { ICoachCreateDto, ICoachFilter, ICoachUpdateDto } from './interfaces/coach.interface';
 import { CoachRepository } from './repositories/coach.repository';
 
-import { CacheService } from '../cache/cache.service';
 import { ClubService } from '../club/club.service';
 import { ClubEntity } from '../club/entities/club.entity';
 import { ICreateClub } from '../club/interfaces/club.interface';
@@ -35,7 +33,6 @@ export class CoachService {
     private readonly coachRepository: CoachRepository,
 
     private readonly awsService: AwsService,
-    private readonly cacheService: CacheService,
     @Inject(forwardRef(() => ClubService)) private readonly clubService: ClubService,
     @Inject(forwardRef(() => StudentService)) private readonly studentService: StudentService,
   ) {}
@@ -68,7 +65,6 @@ export class CoachService {
         ownerId: userId,
       });
 
-      await this.clearCoachCacheByUser(userId);
       return ResponseUtil.success({ ...coach, userId: coachUserId }, CoachMessages.CREATE_SUCCESS);
     } catch (error) {
       await this.removeCoachData(coachUserId, imageKey);
@@ -110,7 +106,6 @@ export class CoachService {
 
       if (image && updateData.image_url && coach.image_url) await this.awsService.deleteFile(coach.image_url);
 
-      await this.clearCoachCacheByUser(userId);
       return ResponseUtil.success({ ...coach, ...updateData }, CoachMessages.UPDATE_SUCCESS);
     } catch (error) {
       await this.removeImage(imageKey);
@@ -153,7 +148,6 @@ export class CoachService {
 
       if (isRemoved) await this.removeCoachData(Number(coach.userId), coach.image_url);
 
-      await this.clearCoachCacheByUser(userId);
       return ResponseUtil.success(coach, CoachMessages.REMOVE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || CoachMessages.REMOVE_FAILURE, error?.status);
@@ -238,8 +232,5 @@ export class CoachService {
   }
   async hasCoachByClubId(clubId: number): Promise<boolean> {
     return this.coachRepository.existsCoachByClubId(clubId);
-  }
-  private async clearCoachCacheByUser(userId: number) {
-    await this.cacheService.delByPattern(`${CacheKeys.COACHES}-userId:${userId}*`);
   }
 }

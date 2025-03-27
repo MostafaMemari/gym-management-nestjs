@@ -4,7 +4,6 @@ import { BeltExamEntity } from './entities/belt-exam.entity';
 import { BeltExamMessages } from './enums/belt-exam.message';
 import { IBeltExamCreateDto, IBeltExamUpdateDto, IBeltExamFilter } from './interfaces/belt-exam.interface';
 import { BeltExamRepository } from './repositories/belt-exam.repository';
-import { CacheKeys } from './enums/cache.enum';
 
 import { BeltService } from '../belt/belt.service';
 import { CacheService } from '../cache/cache.service';
@@ -13,7 +12,7 @@ import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from '../../common/utils/response';
-import { CacheTTLMilliseconds } from 'src/common/enums/cache-time';
+import { CacheKeys, CacheTTLMilliseconds } from '../../common/enums/cache';
 
 @Injectable()
 export class BeltExamService {

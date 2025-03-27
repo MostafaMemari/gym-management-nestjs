@@ -5,8 +5,8 @@ import { BeltEntity } from '../entities/belt.entity';
 import { IBeltCreateDto, IBeltFilter, IBeltUpdateDto } from '../interfaces/belt.interface';
 
 import { EntityName } from '../../../common/enums/entity.enum';
-import { CacheKeys } from '../enums/cache.enum';
-import { CacheTTLMilliseconds } from 'src/common/enums/cache-time';
+import { CacheKeys } from '../../../common/enums/cache';
+import { CacheTTLMilliseconds } from 'src/common/enums/cache';
 
 @Injectable()
 export class BeltRepository extends Repository<BeltEntity> {

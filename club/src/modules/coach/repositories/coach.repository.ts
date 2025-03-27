@@ -4,8 +4,8 @@ import { CoachEntity } from '../entities/coach.entity';
 import { ICoachFilter } from '../interfaces/coach.interface';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
-import { CacheKeys } from '../enums/cache.enum';
-import { CacheTTLMilliseconds } from '../../../common/enums/cache-time';
+import { CacheKeys } from '../../../common/enums/cache';
+import { CacheTTLMilliseconds } from '../../../common/enums/cache';
 
 @Injectable()
 export class CoachRepository extends Repository<CoachEntity> {

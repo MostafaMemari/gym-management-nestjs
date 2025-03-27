@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { SessionEntity } from './entities/session.entity';
-import { CacheKeys } from './enums/cache.enum';
 import { SessionMessages } from './enums/session.message';
 import { ICreateSession, ISessionFilter, IUpdateSession } from './interfaces/session.interface';
 import { SessionRepository } from './repositories/session.repository';
@@ -11,6 +10,7 @@ import { ClubService } from '../club/club.service';
 import { StudentService } from '../student/student.service';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
+import { CacheKeys } from '../../common/enums/cache';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { IUser } from '../../common/interfaces/user.interface';

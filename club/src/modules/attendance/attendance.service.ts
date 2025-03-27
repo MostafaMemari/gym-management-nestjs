@@ -3,9 +3,7 @@ import { formatDate, isAfter } from 'date-fns';
 import { DataSource } from 'typeorm';
 
 import { AttendanceSessionEntity } from './entities/attendance-sessions.entity';
-import { AttendanceEntity } from './entities/attendance.entity';
 import { AttendanceMessages } from './enums/attendance.message';
-import { CacheKeys } from './enums/cache.enum';
 import { IAttendanceFilter, IRecordAttendanceDto, IStudentAttendance, IUpdateRecordAttendance } from './interfaces/attendance.interface';
 import { AttendanceSessionRepository } from './repositories/attendance-sessions.repository';
 import { AttendanceRepository } from './repositories/attendance.repository';
@@ -15,6 +13,7 @@ import { SessionService } from '../session/session.service';
 import { StudentService } from '../student/student.service';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
+import { CacheKeys } from '../../common/enums/cache';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { IUser } from '../../common/interfaces/user.interface';

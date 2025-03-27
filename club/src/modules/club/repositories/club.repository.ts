@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, In, Repository } from 'typeorm';
 
 import { ClubEntity } from '../entities/club.entity';
-import { CacheKeys } from '../enums/cache.enum';
+import { CacheKeys } from '../../../common/enums/cache';
 import { ICreateClub, ISearchClubQuery, IUpdateClub } from '../interfaces/club.interface';
 
 import { EntityName } from '../../../common/enums/entity.enum';
-import { CacheTTLMilliseconds } from 'src/common/enums/cache-time';
+import { CacheTTLMilliseconds } from 'src/common/enums/cache';
 
 @Injectable()
 export class ClubRepository extends Repository<ClubEntity> {

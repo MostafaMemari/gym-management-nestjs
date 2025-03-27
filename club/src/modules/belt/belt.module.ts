@@ -5,7 +5,7 @@ import { BeltController } from './belt.controller';
 import { BeltService } from './belt.service';
 import { BeltEntity } from './entities/belt.entity';
 import { BeltRepository } from './repositories/belt.repository';
-import { BeltSubscriber } from './subscribers/club.subscriber';
+import { BeltSubscriber } from './subscribers/belt.subscriber';
 
 import { CacheModule } from '../cache/cache.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';

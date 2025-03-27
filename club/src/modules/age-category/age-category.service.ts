@@ -2,7 +2,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { AgeCategoryEntity } from './entities/age-category.entity';
 import { AgeCategoryMessages } from './enums/age-category.message';
-import { CacheKeys } from './enums/cache.enum';
 import { IAgeCategoryCreateDto, IAgeCategoryFilter, IAgeCategoryUpdateDto } from './interfaces/age-category.interface';
 import { AgeCategoryRepository } from './repositories/age-category.repository';
 

@@ -3,9 +3,9 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, EntitySubscriberInterface, InsertEvent, RemoveEvent, UpdateEvent } from 'typeorm';
 
 import { AgeCategoryEntity } from '../entities/age-category.entity';
-import { CachePatterns } from '../enums/cache.enum';
 
 import { CacheService } from '../../cache/cache.service';
+import { CacheKeys } from '../../../common/enums/cache';
 
 @Injectable()
 export class AgeCategorySubscriber implements EntitySubscriberInterface<AgeCategoryEntity> {
@@ -30,6 +30,6 @@ export class AgeCategorySubscriber implements EntitySubscriberInterface<AgeCateg
   }
 
   private async clearCache() {
-    await this.cacheService.delByPattern(CachePatterns.AGE_CATEGORIES);
+    await this.cacheService.delByPattern(`${CacheKeys.AGE_CATEGORIES}*`);
   }
 }

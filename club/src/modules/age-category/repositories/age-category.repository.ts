@@ -2,11 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, In, Repository } from 'typeorm';
 
 import { AgeCategoryEntity } from '../entities/age-category.entity';
-import { CacheKeys } from '../enums/cache.enum';
 import { IAgeCategoryCreateDto, IAgeCategoryFilter, IAgeCategoryUpdateDto } from '../interfaces/age-category.interface';
 
 import { EntityName } from '../../../common/enums/entity.enum';
-import { CacheTTLMilliseconds } from 'src/common/enums/cache-time';
+import { CacheKeys, CacheTTLMilliseconds } from '../../../common/enums/cache';
 
 @Injectable()
 export class AgeCategoryRepository extends Repository<AgeCategoryEntity> {

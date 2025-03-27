@@ -2,7 +2,6 @@ import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException 
 import { RpcException } from '@nestjs/microservices';
 
 import { ClubEntity } from './entities/club.entity';
-import { CacheKeys } from './enums/cache.enum';
 import { ClubMessages } from './enums/club.message';
 import { ICreateClub, ISearchClubQuery, IUpdateClub } from './interfaces/club.interface';
 import { ClubRepository } from './repositories/club.repository';
@@ -16,6 +15,7 @@ import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { IUser } from '../../common/interfaces/user.interface';
 import { ResponseUtil } from '../../common/utils/response';
+import { CacheKeys } from 'src/common/enums/cache';
 
 @Injectable()
 export class ClubService {
@@ -28,9 +28,8 @@ export class ClubService {
   async create(user: IUser, createClubDto: ICreateClub): Promise<ServiceResponse> {
     const userId = user.id;
     try {
-      const club = await this.clubRepository.createAndSaveClub(createClubDto, user.id);
+      const club = await this.clubRepository.createAndSaveClub(createClubDto, userId);
 
-      await this.clearClubCacheByUser(userId);
       return ResponseUtil.success(club, ClubMessages.CREATE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || ClubMessages.CREATE_FAILURE, error?.status);
@@ -48,7 +47,6 @@ export class ClubService {
 
       const updatedClub = await this.clubRepository.updateClub(club, updateClubDto);
 
-      await this.clearClubCacheByUser(userId);
       return ResponseUtil.success({ ...updatedClub }, ClubMessages.UPDATE_FAILURE);
     } catch (error) {
       ResponseUtil.error(error?.message || ClubMessages.UPDATE_FAILURE, error?.status);
@@ -81,17 +79,14 @@ export class ClubService {
     const userId = user.id;
 
     try {
-      await this.validateOwnershipById(clubId, user.id);
+      const club = await this.validateOwnershipById(clubId, userId);
 
       const isClubAssignedToCoaches = await this.coachService.hasCoachByClubId(clubId);
       if (isClubAssignedToCoaches) throw new BadRequestException(ClubMessages.CANNOT_REMOVE_ASSIGNED_COACHES);
 
-      const removedClub = await this.clubRepository.delete({ id: clubId });
+      await this.clubRepository.remove(club);
 
-      if (!removedClub.affected) ResponseUtil.error(ClubMessages.REMOVE_FAILURE);
-
-      await this.clearClubCacheByUser(userId);
-      return ResponseUtil.success(removedClub, ClubMessages.REMOVE_SUCCESS);
+      return ResponseUtil.success(club, ClubMessages.REMOVE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || ClubMessages.REMOVE_FAILURE, error?.status);
     }
@@ -146,8 +141,5 @@ export class ClubService {
   async validateCoachInClub(club: ClubEntity, coachId: number): Promise<void> {
     const coach = club.coaches.find((coach) => coach.id === coachId);
     if (!coach) throw new BadRequestException(ClubMessages.COACH_NOT_ASSIGNED);
-  }
-  private async clearClubCacheByUser(userId: number) {
-    await this.cacheService.delByPattern(`${CacheKeys.CLUBS}-userId:${userId}*`);
   }
 }

@@ -4,7 +4,8 @@ import { DataSource, EntitySubscriberInterface, InsertEvent, UpdateEvent, Remove
 
 import { BeltEntity } from '../entities/belt.entity';
 import { CacheService } from '../../cache/cache.service';
-import { CachePatterns } from '../enums/cache.enum';
+
+import { CacheKeys } from '../../../common/enums/cache';
 
 @Injectable()
 export class BeltSubscriber implements EntitySubscriberInterface<BeltEntity> {
@@ -29,6 +30,6 @@ export class BeltSubscriber implements EntitySubscriberInterface<BeltEntity> {
   }
 
   private async clearCache() {
-    await this.cacheService.delByPattern(CachePatterns.BELTS);
+    await this.cacheService.delByPattern(CacheKeys.BELTS);
   }
 }

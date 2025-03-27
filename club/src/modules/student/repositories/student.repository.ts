@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, In, QueryRunner, Repository } from 'typeorm';
 
 import { StudentEntity } from '../entities/student.entity';
-import { CacheKeys } from '../enums/cache.enum';
+import { CacheKeys } from '../../../common/enums/cache';
 import { IStudentFilter } from '../interfaces/student.interface';
 
-import { CacheTTLMilliseconds } from '../../../common/enums/cache-time';
+import { CacheTTLMilliseconds } from '../../../common/enums/cache';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
 import { AgeCategoryEntity } from '../../../modules/age-category/entities/age-category.entity';
