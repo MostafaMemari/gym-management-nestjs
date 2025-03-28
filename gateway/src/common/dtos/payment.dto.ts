@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsNotEmpty, IsNumber, IsPositive, IsString, MaxLength, Min, MinLength , Max } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsPositive, IsString, MaxLength, Min, MinLength, Max } from 'class-validator';
 
 export class PaymentDto {
   @IsNotEmpty()
@@ -11,7 +11,7 @@ export class PaymentDto {
     required: true,
     nullable: false,
     minimum: 1000,
-    maximum: 200_000_000
+    maximum: 200_000_000,
   })
   @Min(1000)
   @Max(200_000_000)

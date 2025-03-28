@@ -12,7 +12,7 @@ import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { Roles } from '../../../common/decorators/role.decorator';
 import { Role } from '../../../common/enums/role.enum';
 import { GetUser } from '../../../common/decorators/get-user.decorator';
-import { UpdateUserDto } from '../../../common/dtos/user.dto';
+import { UpdateUserDto } from '../../../common/dtos/user-service/user.dto';
 import { User } from '../../../common/interfaces/user.interface';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 

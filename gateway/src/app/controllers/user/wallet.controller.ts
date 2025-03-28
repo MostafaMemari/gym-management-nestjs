@@ -16,6 +16,7 @@ import { User } from 'src/common/interfaces/user.interface';
 import { PaymentPatterns } from 'src/common/enums/payment.events';
 import { ServiceResponse } from 'src/common/interfaces/serviceResponse.interface';
 import { PaginationDto } from 'src/common/dtos/shared.dto';
+import { QueryWalletDeductionsDto } from 'src/common/dtos/user-service/wallet.dto';
 
 @Controller('wallet')
 @ApiTags('wallet')
@@ -98,6 +99,21 @@ export class WalletController {
       return handleServiceResponse(data);
     } catch (error) {
       handleError(error, 'Failed to get wallets', Services.USER);
+    }
+  }
+
+  @Get('deductions')
+  async findAllDeductions(@Query() deductionFilers: QueryWalletDeductionsDto) {
+    try {
+      await checkConnection(Services.USER, this.userServiceClient);
+
+      const data = await lastValueFrom(
+        this.userServiceClient.send(WalletPatterns.GetWalletsDeductions, { ...deductionFilers }).pipe(timeout(this.timeout)),
+      );
+
+      return handleServiceResponse(data);
+    } catch (error) {
+      handleError(error, 'Failed to get all deductions', Services.USER);
     }
   }
 
