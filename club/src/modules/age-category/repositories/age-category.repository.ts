@@ -50,10 +50,6 @@ export class AgeCategoryRepository extends Repository<AgeCategoryEntity> {
       .cache(cacheKey, CacheTTLMilliseconds.GET_ALL_AGE_CATEGORIES)
       .getManyAndCount();
   }
-
-  async findByIds(clubIds: number[]): Promise<AgeCategoryEntity[]> {
-    return this.find({ where: { id: In(clubIds) } });
-  }
 }
 
 const validSortFields = ['start_date', 'end_date', 'updated_at', 'created_at'];

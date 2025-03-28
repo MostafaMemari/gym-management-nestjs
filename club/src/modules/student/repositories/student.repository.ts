@@ -17,59 +17,24 @@ export class StudentRepository extends Repository<StudentEntity> {
     super(StudentEntity, dataSource.createEntityManager());
   }
 
-  async createStudent(data: Partial<StudentEntity>, userId: number, queryRunner?: QueryRunner): Promise<StudentEntity> {
+  async createStudent(data: Partial<StudentEntity>, queryRunner?: QueryRunner): Promise<StudentEntity> {
     const student = this.create(data);
-    queryRunner.data = { userId };
-
     return queryRunner ? await queryRunner.manager.save(student) : await this.save(student);
   }
-
-  async updateStudent(student: StudentEntity, updateData: Partial<StudentEntity>, userId: number) {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      queryRunner.data = { userId };
-
-      const updatedStudent = this.merge(student, updateData);
-      const result = await queryRunner.manager.save(updatedStudent);
-
-      await queryRunner.commitTransaction();
-
-      return result;
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-    } finally {
-      await queryRunner.release();
-    }
+  async updateStudent(student: StudentEntity, updateData: Partial<StudentEntity>) {
+    const updatedStudent = this.merge(student, updateData);
+    return await this.save(updatedStudent);
+  }
+  async removeStudent(student: StudentEntity): Promise<StudentEntity> {
+    return await this.remove(student);
   }
 
-  async removeStudent(student: StudentEntity, userId: number): Promise<StudentEntity> {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.startTransaction();
-
-    try {
-      queryRunner.data = { userId };
-
-      const result = await queryRunner.manager.remove(student);
-
-      await queryRunner.commitTransaction();
-
-      return result;
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } finally {
-      await queryRunner.release();
-    }
-  }
-
-  async getStudentsWithFilters(userId: number, filters: IStudentFilter, page: number, take: number): Promise<[StudentEntity[], number]> {
-    const cacheKey = `${CacheKeys.STUDENTS}-${page}-${take}-${JSON.stringify(filters)}`.replace('{userId}', userId.toString());
+  async getStudentsWithFilters(ownerId: number, filters: IStudentFilter, page: number, take: number): Promise<[StudentEntity[], number]> {
+    const cacheKey = `${CacheKeys.STUDENTS}-${page}-${take}-${JSON.stringify(filters)}`.replace(':ownerId', ownerId.toString());
 
     const queryBuilder = this.createQueryBuilder(EntityName.STUDENTS)
-      .innerJoin('students.gym', 'gym', 'gym.owner_id = :userId', { userId })
+      .where('students.owner_id = :ownerId', { ownerId })
+      .leftJoin('students.gym', 'gym')
       .addSelect(['gym.id', 'gym.name'])
       .leftJoin('students.coach', 'coach')
       .addSelect(['coach.id', 'coach.full_name'])
@@ -139,16 +104,14 @@ export class StudentRepository extends Repository<StudentEntity> {
     return [mappedStudents, totalCount];
   }
   async getStudentsSummaryWithFilters(
-    userId: number,
+    ownerId: number,
     filters: IStudentFilter,
     page: number,
     take: number,
   ): Promise<[StudentEntity[], number]> {
-    const cacheKey = `${CacheKeys.STUDENTS_SUMMARY}-${page}-${take}-${JSON.stringify(filters)}`.replace('{userId}', userId.toString());
+    const cacheKey = `${CacheKeys.STUDENTS_SUMMARY}-${page}-${take}-${JSON.stringify(filters)}`.replace('{ownerId}', ownerId.toString());
 
-    const queryBuilder = this.createQueryBuilder(EntityName.STUDENTS).innerJoin('students.gym', 'gym', 'gym.owner_id = :userId', {
-      userId,
-    });
+    const queryBuilder = this.createQueryBuilder(EntityName.STUDENTS).where('students.owner_id = :ownerId', { ownerId });
 
     if (filters?.search) {
       queryBuilder.andWhere('(students.full_name LIKE :search OR students.national_code LIKE :search)', { search: `%${filters.search}%` });
@@ -187,24 +150,12 @@ export class StudentRepository extends Repository<StudentEntity> {
       .getManyAndCount();
   }
 
-  async findByIdAndOwner(studentId: number, userId: number): Promise<StudentEntity> {
-    const student = await this.createQueryBuilder(EntityName.STUDENTS)
-      .where('students.id = :studentId', { studentId })
-      .leftJoin('students.gym', 'gym')
-      .andWhere('gym.owner_id = :userId', { userId })
-      .getOne();
-
-    return student;
+  async findByIdAndOwner(studentId: number, ownerId: number): Promise<StudentEntity> {
+    return await this.findOne({ where: { id: studentId, owner_id: ownerId } });
   }
 
-  async findStudentByNationalCode(nationalCode: string, userId: number): Promise<StudentEntity> {
-    const student = await this.createQueryBuilder(EntityName.STUDENTS)
-      .where('students.national_code = :nationalCode', { nationalCode })
-      .leftJoinAndSelect('students.gym', 'gym')
-      .andWhere('gym.owner_id = :userId', { userId })
-      .getOne();
-
-    return student;
+  async findStudentByNationalCode(nationalCode: string, ownerId: number): Promise<StudentEntity> {
+    return await this.findOneBy({ national_code: nationalCode, owner_id: ownerId });
   }
 
   async existsStudentsInGym(gym_id: number, coach_id: number): Promise<boolean> {

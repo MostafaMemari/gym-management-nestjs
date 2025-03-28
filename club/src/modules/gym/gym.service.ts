@@ -42,7 +42,7 @@ export class GymService {
         await this.validateGenderRemoval(genders, gymId, gym.genders);
       }
 
-      const updatedGym = await this.gymRepository.updateGym(gym, updateGymDto);
+      const updatedGym = await this.gymRepository.updateMergeAndSave(gym, updateGymDto);
 
       return ResponseUtil.success({ ...updatedGym }, GymMessages.UPDATE_FAILURE);
     } catch (error) {

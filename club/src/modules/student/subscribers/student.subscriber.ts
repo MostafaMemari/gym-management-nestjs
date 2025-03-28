@@ -17,25 +17,25 @@ export class StudentSubscriber implements EntitySubscriberInterface<StudentEntit
   }
 
   async afterInsert(event: InsertEvent<StudentEntity>) {
-    const { userId } = event.manager.queryRunner?.data;
+    const { owner_id } = event.entity;
 
-    await this.clearCache(userId);
+    await this.clearCache(owner_id);
   }
 
   async afterUpdate(event: UpdateEvent<StudentEntity>) {
-    const { userId } = event.manager.queryRunner?.data;
+    const { owner_id } = event.entity;
 
-    await this.clearCache(userId);
+    await this.clearCache(owner_id);
   }
 
   async afterRemove(event: RemoveEvent<StudentEntity>) {
-    const { userId } = event.manager.queryRunner?.data;
+    const { owner_id } = event.entity;
 
-    await this.clearCache(userId);
+    await this.clearCache(owner_id);
   }
 
-  private async clearCache(userId: number) {
-    await this.cacheService.delByPattern(`${CacheKeys.STUDENTS}`.replace(':userId', userId.toString()) + '*');
-    await this.cacheService.delByPattern(`${CacheKeys.STUDENTS_SUMMARY}`.replace(':userId', userId.toString()) + '*');
+  private async clearCache(ownerId: number) {
+    await this.cacheService.delByPattern(`${CacheKeys.STUDENTS}`.replace(':ownerId', ownerId.toString()) + '*');
+    await this.cacheService.delByPattern(`${CacheKeys.STUDENTS_SUMMARY}`.replace(':ownerId', ownerId.toString()) + '*');
   }
 }

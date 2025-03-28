@@ -30,6 +30,6 @@ export class AgeCategorySubscriber implements EntitySubscriberInterface<AgeCateg
   }
 
   private async clearCache() {
-    await this.cacheService.delByPattern(`${CacheKeys.AGE_CATEGORIES}*`);
+    await this.cacheService.delByPattern(CacheKeys.AGE_CATEGORIES + '*');
   }
 }

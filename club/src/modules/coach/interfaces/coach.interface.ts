@@ -20,7 +20,7 @@ export interface ICoachFilter {
   gender?: Gender;
   is_active?: boolean;
   phone_number?: string;
-  gymIds?: number[];
+  gym_Ids?: number[];
   sort_by?: 'birth_date' | 'sports_insurance_date' | 'expire_image_date';
   sort_order?: 'asc' | 'desc';
 }

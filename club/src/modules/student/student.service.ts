@@ -4,7 +4,6 @@ import { lastValueFrom, timeout } from 'rxjs';
 import { DataSource } from 'typeorm';
 
 import { StudentEntity } from './entities/student.entity';
-import { CacheKeys } from './enums/cache.enum';
 import { StudentMessages } from './enums/student.message';
 import { IStudentBulkCreateDto, IStudentCreateDto, IStudentFilter, IStudentUpdateDto } from './interfaces/student.interface';
 import { StudentBeltRepository } from './repositories/student-belt.repository';
@@ -52,14 +51,13 @@ export class StudentService {
     await queryRunner.startTransaction();
 
     const { gym_id, coach_id, belt_id, belt_date, national_code, gender, image } = createStudentDto;
-    const userId: number = user.id;
 
     let imageKey: string | null = null;
     let studentUserId: number | null = null;
 
     try {
-      if (national_code) await this.validateUniqueNationalCode(national_code, userId);
-      const { gym, coach } = await this.validateOwnershipGymAndCoach(userId, gym_id, coach_id);
+      if (national_code) await this.validateUniqueNationalCode(national_code, user.id);
+      const { gym, coach } = await this.validateOwnershipGymAndCoach(user.id, gym_id, coach_id);
       this.validateGymIdInCoach(gym_id, coach);
       this.validateStudentGender(gender, coach, gym);
 
@@ -68,7 +66,6 @@ export class StudentService {
 
       const student = await this.studentRepository.createStudent(
         { ...createStudentDto, image_url: imageKey, userId: studentUserId },
-        userId,
         queryRunner,
       );
 
@@ -79,7 +76,6 @@ export class StudentService {
       }
 
       await queryRunner.commitTransaction();
-      await this.clearStudentCacheByUser(userId);
       return ResponseUtil.success({ ...student, userId: studentUserId }, StudentMessages.CREATE_SUCCESS);
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -91,18 +87,16 @@ export class StudentService {
   }
   async update(user: IUser, studentId: number, updateStudentDto: IStudentUpdateDto): Promise<ServiceResponse> {
     const { gym_id, coach_id, belt_id, national_code, gender, image } = updateStudentDto;
-    const userId: number = user.id;
-
     let imageKey: string | null = null;
 
     try {
-      let student = national_code ? await this.validateUniqueNationalCode(national_code, userId) : null;
-      if (!student) student = await this.validateOwnershipById(studentId, userId);
+      let student = national_code ? await this.validateUniqueNationalCode(national_code, user.id) : null;
+      if (!student) student = await this.validateOwnershipById(studentId, user.id);
 
       if (belt_id) await this.beltService.validateById(belt_id);
 
       if (gym_id || coach_id || gender) {
-        const { gym, coach } = await this.validateOwnershipGymAndCoach(userId, gym_id ?? student.gym_id, coach_id ?? student.coach_id);
+        const { gym, coach } = await this.validateOwnershipGymAndCoach(user.id, gym_id ?? student.gym_id, coach_id ?? student.coach_id);
         this.validateGymIdInCoach(gym.id, coach);
         this.validateStudentGender(gender ?? student.gender, coach, gym);
       }
@@ -113,13 +107,12 @@ export class StudentService {
 
       if (image) updateData.image_url = await this.updateImage(image);
 
-      const studentUpdated = await this.studentRepository.updateStudent(student, updateData, userId);
+      const studentUpdated = await this.studentRepository.updateStudent(student, updateData);
 
       if (image && updateData.image_url && student.image_url) {
         await this.awsService.deleteFile(student.image_url);
       }
 
-      await this.clearStudentCacheByUser(userId);
       return ResponseUtil.success(studentUpdated, StudentMessages.UPDATE_SUCCESS);
     } catch (error) {
       await this.removeImage(imageKey);
@@ -174,14 +167,12 @@ export class StudentService {
   }
   async removeById(user: IUser, studentId: number): Promise<ServiceResponse> {
     try {
-      const userId = user.id;
-      const student = await this.validateOwnershipById(studentId, userId);
+      const student = await this.validateOwnershipById(studentId, user.id);
 
-      const studentRemoved = await this.studentRepository.removeStudent(student, userId);
+      const studentRemoved = await this.studentRepository.removeStudent(student);
 
       this.removeStudentData(Number(student.userId), student.image_url);
 
-      await this.clearStudentCacheByUser(userId);
       return ResponseUtil.success(studentRemoved, StudentMessages.REMOVE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || StudentMessages.REMOVE_FAILURE, error?.status);
@@ -230,7 +221,6 @@ export class StudentService {
             gym_id,
             userId: userStudentId,
           },
-          userId,
           queryRunner,
         );
 
@@ -242,7 +232,6 @@ export class StudentService {
       }
       await queryRunner.commitTransaction();
 
-      await this.clearStudentCacheByUser(userId);
       return ResponseUtil.success(
         { count: studentUserIds.length + 1 },
         StudentMessages.BULK_CREATE_SUCCESS.replace('{count}', (studentUserIds.length + 1).toString()),
@@ -395,10 +384,5 @@ export class StudentService {
       }
       return acc;
     }, {} as Partial<StudentEntity>);
-  }
-
-  private async clearStudentCacheByUser(userId: number) {
-    await this.cacheService.delByPattern(`${CacheKeys.STUDENTS}-userId:${userId}*`);
-    await this.cacheService.delByPattern(`${CacheKeys.STUDENTS_SUMMARY}-userId:${userId}*`);
   }
 }

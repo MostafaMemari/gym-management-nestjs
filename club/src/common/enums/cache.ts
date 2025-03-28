@@ -1,10 +1,10 @@
 export enum CacheKeys {
-  STUDENTS = 'students_list-:userId',
-  STUDENTS_SUMMARY = 'students_list_summary-:userId',
+  STUDENTS = 'students_list-:ownerId',
+  STUDENTS_SUMMARY = 'students_list_summary-:ownerId',
 
-  CLUBS = 'clubs_list-:userId',
-  COACHES = 'coaches_list-:userId',
-  SESSIONS = 'sessions_list-:userId',
+  CLUBS = 'clubs_list-:ownerId',
+  COACHES = 'coaches_list-:ownerId',
+  SESSIONS = 'sessions_list-:ownerId',
 
   BELT_EXAMS = 'belt_exams_list',
   BELTS = 'belts_list',
@@ -13,14 +13,16 @@ export enum CacheKeys {
 }
 
 export enum CacheTTLMilliseconds {
-  GET_ALL_STUDENTS = 3600 * 1000,
-  GET_ALL_STUDENTS_SUMMARY = 3600 * 1000,
+  GET_ALL_STUDENTS = 3600 * 1000 * 1, // 1h
+  GET_ALL_STUDENTS_SUMMARY = 3600 * 1000 * 1,
+  GET_ALL_COACHES = 3600 * 1000 * 1,
+  GET_ALL_CLUBS = 3600 * 1000 * 1,
+  GET_ALL_SESSIONS = 3600 * 1000 * 1,
+  GET_ALL_BELTS = 3600 * 1000 * 1,
+  GET_ALL_ATTENDANCES = 3600 * 1000 * 1,
+  GET_ALL_AGE_CATEGORIES = 3600 * 1000 * 1,
+}
 
-  GET_ALL_COACHES = 3600 * 1000,
-  GET_ALL_CLUBS = 3600 * 1000,
-  GET_ALL_SESSIONS = 3600 * 1000,
-  GET_ALL_BELT_EXAMS = 3600 * 1000 * 60,
-  GET_ALL_BELTS = 3600 * 1000,
-  GET_ALL_ATTENDANCES = 3600 * 1000,
-  GET_ALL_AGE_CATEGORIES = 3600 * 1000,
+export enum CacheTTLSeconds {
+  GET_ALL_BELT_EXAMS = 3600 * 1, // 60h
 }

@@ -17,11 +17,10 @@ export class GymRepository extends Repository<GymEntity> {
     const gym = this.create({ ...createGymDto, owner_id: ownerId });
     return await this.save(gym);
   }
-  async updateGym(gym: GymEntity, updateGymDto: IUpdateGym): Promise<GymEntity> {
+  async updateMergeAndSave(gym: GymEntity, updateGymDto: IUpdateGym): Promise<GymEntity> {
     const updatedGym = this.merge(gym, { ...updateGymDto });
     return await this.save(updatedGym);
   }
-
   async removeGym(gym: GymEntity): Promise<GymEntity> {
     return await this.remove(gym);
   }
