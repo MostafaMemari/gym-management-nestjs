@@ -1,5 +1,5 @@
 import { BadRequestException, HttpStatus, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { IChargeWallet } from '../../common/interfaces/wallet.interface';
+import { IChargeWallet, IWalletDeductionFilter } from '../../common/interfaces/wallet.interface';
 import { WalletRepository } from './wallet.repository';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
@@ -11,7 +11,7 @@ import { lastValueFrom, timeout } from 'rxjs';
 import { ClubPatterns } from '../../common/enums/club.events';
 import { NotificationPatterns } from '../../common/enums/notification.events';
 import { UserRepository } from '../user/user.repository';
-import { Role, Wallet, WalletDeduction, WalletStatus } from '@prisma/client';
+import { Prisma, Role, Wallet, WalletDeduction, WalletStatus } from '@prisma/client';
 import { IPagination } from '../../common/interfaces/user.interface';
 import { CacheKeys } from '../../common/enums/cache.enum';
 import { CacheService } from '../cache/cache.service';
@@ -75,15 +75,39 @@ export class WalletService {
     }
   }
 
-  async findAllDeductions(paginationDto: IPagination) {
+  async findAllDeductions(deductionFilters: IWalletDeductionFilter) {
     try {
-      const cacheKey = `${CacheKeys.WalletDeduction}_${paginationDto.page || 1}_${paginationDto.take || 20}`;
+      const paginationDto = { take: deductionFilters.take, page: deductionFilters.page };
+
+      const sortedDto = Object.keys(deductionFilters)
+        .sort()
+        .reduce((obj, key) => ({ ...obj, [key]: deductionFilters[key] }), {});
+
+      const cacheKey = `${CacheKeys.WalletDeduction}_${JSON.stringify(sortedDto)}`;
 
       const deductionsWalletsCache = await this.cache.get<null | WalletDeduction[]>(cacheKey);
 
       if (deductionsWalletsCache) return ResponseUtil.success({ ...pagination(paginationDto, deductionsWalletsCache) }, '', HttpStatus.OK);
 
-      const deductionWallets = await this.walletRepository.findAllDeductions({ orderBy: { createdAt: 'desc' } });
+      const filters: Partial<Prisma.WalletDeductionWhereInput> = {};
+
+      if (deductionFilters.walletId) filters.walletId = deductionFilters.walletId;
+      if (deductionFilters.userId) filters.userId = deductionFilters.userId;
+      if (deductionFilters.minAmount || deductionFilters.maxAmount) {
+        filters.deductionAmount = {};
+        if (deductionFilters.minAmount) filters.deductionAmount.gte = deductionFilters.minAmount;
+        if (deductionFilters.maxAmount) filters.deductionAmount.lte = deductionFilters.maxAmount;
+      }
+      if (deductionFilters.startDate || deductionFilters.endDate) {
+        filters.createdAt = {};
+        if (deductionFilters.startDate) filters.createdAt.gte = new Date(deductionFilters.startDate);
+        if (deductionFilters.endDate) filters.createdAt.lte = new Date(deductionFilters.endDate);
+      }
+
+      const deductionWallets = await this.walletRepository.findAllDeductions({
+        where: filters,
+        orderBy: { [deductionFilters.sortBy || 'createdAt']: deductionFilters.sortDirection || 'desc' },
+      });
 
       await this.cache.set(cacheKey, deductionWallets, this.REDIS_EXPIRE_TIME);
 

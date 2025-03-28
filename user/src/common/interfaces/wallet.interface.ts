@@ -5,7 +5,7 @@ export interface IChargeWallet {
   amount: number;
 }
 
-export interface IGetAllDeductions extends IPagination {
+export interface IWalletDeductionFilter extends IPagination {
   userId?: number;
   walletId?: number;
   minAmount?: number;

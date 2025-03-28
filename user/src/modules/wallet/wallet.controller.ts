@@ -2,7 +2,7 @@ import { Controller } from '@nestjs/common';
 import { WalletService } from './wallet.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { WalletPatterns } from '../../common/enums/wallet.events';
-import { IChargeWallet } from '../../common/interfaces/wallet.interface';
+import { IChargeWallet, IWalletDeductionFilter } from '../../common/interfaces/wallet.interface';
 import { IPagination } from '../../common/interfaces/user.interface';
 
 @Controller()
@@ -25,7 +25,7 @@ export class WalletController {
   }
 
   @MessagePattern(WalletPatterns.GetWalletsDeductions)
-  getWalletsDeductions(@Payload() data: IPagination) {
+  getWalletsDeductions(@Payload() data: IWalletDeductionFilter) {
     return this.walletService.findAllDeductions(data);
   }
 
