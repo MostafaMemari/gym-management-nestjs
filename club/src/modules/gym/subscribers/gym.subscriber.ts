@@ -2,33 +2,33 @@ import { Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, EntitySubscriberInterface, InsertEvent, UpdateEvent, RemoveEvent } from 'typeorm';
 
-import { ClubEntity } from '../entities/club.entity';
+import { GymEntity } from '../entities/gym.entity';
 import { CacheService } from '../../cache/cache.service';
 import { CacheKeys } from 'src/common/enums/cache';
 
 @Injectable()
-export class ClubSubscriber implements EntitySubscriberInterface<ClubEntity> {
+export class GymSubscriber implements EntitySubscriberInterface<GymEntity> {
   constructor(@InjectDataSource() private readonly dataSource: DataSource, private readonly cacheService: CacheService) {
     this.dataSource.subscribers.push(this);
   }
 
   listenTo() {
-    return ClubEntity;
+    return GymEntity;
   }
 
-  async afterInsert(event: InsertEvent<ClubEntity>) {
+  async afterInsert(event: InsertEvent<GymEntity>) {
     const { owner_id } = event.entity;
 
     await this.clearCache(owner_id);
   }
 
-  async afterUpdate(event: UpdateEvent<ClubEntity>) {
+  async afterUpdate(event: UpdateEvent<GymEntity>) {
     const { owner_id } = event.entity;
 
     await this.clearCache(owner_id);
   }
 
-  async afterRemove(event: RemoveEvent<ClubEntity>) {
+  async afterRemove(event: RemoveEvent<GymEntity>) {
     const { owner_id } = event.entity;
 
     await this.clearCache(owner_id);

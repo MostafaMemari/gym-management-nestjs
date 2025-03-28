@@ -5,7 +5,7 @@ import { CoachEntity } from '../../coach/entities/coach.entity';
 import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
-import { ClubEntity } from '../../../modules/club/entities/club.entity';
+import { GymEntity } from '../../gym/entities/gym.entity';
 import { StudentBeltEntity } from './student-belt.entity';
 import { SessionEntity } from '../../../modules/session/entities/session.entity';
 import { AttendanceEntity } from '../../../modules/attendance/entities/attendance.entity';
@@ -59,15 +59,18 @@ export class StudentEntity extends AbstractEntity {
   coach_id: number;
 
   @Column({ type: 'integer', nullable: true })
-  club_id: number;
+  gym_id: number;
 
-  @ManyToOne(() => CoachEntity, (coach) => coach.students, { nullable: true, onDelete: 'SET NULL' })
+  @Column({ type: 'integer', nullable: false })
+  owner_id: number;
+
+  @ManyToOne(() => CoachEntity, (coach) => coach.students, { nullable: false, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'coach_id', referencedColumnName: 'id' })
   coach: CoachEntity;
 
-  @ManyToOne(() => ClubEntity, (club) => club.students, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'club_id', referencedColumnName: 'id' })
-  club: ClubEntity;
+  @ManyToOne(() => GymEntity, (gym) => gym.students, { nullable: false, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'gym_id', referencedColumnName: 'id' })
+  gym: GymEntity;
 
   @OneToOne(() => StudentBeltEntity, (beltInfo) => beltInfo.student, { nullable: true })
   beltInfo: StudentBeltEntity | null;

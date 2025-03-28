@@ -12,8 +12,8 @@ import { StudentRepository } from './repositories/student.repository';
 
 import { BeltService } from '../belt/belt.service';
 import { CacheService } from '../cache/cache.service';
-import { ClubService } from '../club/club.service';
-import { ClubEntity } from '../club/entities/club.entity';
+import { GymService } from '../gym/gym.service';
+import { GymEntity } from '../gym/entities/gym.entity';
 import { CoachService } from '../coach/coach.service';
 import { CoachEntity } from '../coach/entities/coach.entity';
 import { AwsService } from '../s3AWS/s3AWS.service';
@@ -40,7 +40,7 @@ export class StudentService {
     private readonly studentBeltRepository: StudentBeltRepository,
     private readonly awsService: AwsService,
     private readonly cacheService: CacheService,
-    private readonly clubService: ClubService,
+    private readonly gymService: GymService,
     private readonly beltService: BeltService,
     private readonly dataSource: DataSource,
     @Inject(forwardRef(() => CoachService)) private readonly coachService: CoachService,
@@ -51,7 +51,7 @@ export class StudentService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
-    const { club_id, coach_id, belt_id, belt_date, national_code, gender, image } = createStudentDto;
+    const { gym_id, coach_id, belt_id, belt_date, national_code, gender, image } = createStudentDto;
     const userId: number = user.id;
 
     let imageKey: string | null = null;
@@ -59,9 +59,9 @@ export class StudentService {
 
     try {
       if (national_code) await this.validateUniqueNationalCode(national_code, userId);
-      const { club, coach } = await this.validateOwnershipClubAndCoach(userId, club_id, coach_id);
-      this.validateClubIdInCoach(club_id, coach);
-      this.validateStudentGender(gender, coach, club);
+      const { gym, coach } = await this.validateOwnershipGymAndCoach(userId, gym_id, coach_id);
+      this.validateGymIdInCoach(gym_id, coach);
+      this.validateStudentGender(gender, coach, gym);
 
       imageKey = image ? await this.updateImage(image) : null;
       studentUserId = await this.createUserStudent();
@@ -90,7 +90,7 @@ export class StudentService {
     }
   }
   async update(user: IUser, studentId: number, updateStudentDto: IStudentUpdateDto): Promise<ServiceResponse> {
-    const { club_id, coach_id, belt_id, national_code, gender, image } = updateStudentDto;
+    const { gym_id, coach_id, belt_id, national_code, gender, image } = updateStudentDto;
     const userId: number = user.id;
 
     let imageKey: string | null = null;
@@ -101,14 +101,14 @@ export class StudentService {
 
       if (belt_id) await this.beltService.validateById(belt_id);
 
-      if (club_id || coach_id || gender) {
-        const { club, coach } = await this.validateOwnershipClubAndCoach(userId, club_id ?? student.club_id, coach_id ?? student.coach_id);
-        this.validateClubIdInCoach(club.id, coach);
-        this.validateStudentGender(gender ?? student.gender, coach, club);
+      if (gym_id || coach_id || gender) {
+        const { gym, coach } = await this.validateOwnershipGymAndCoach(userId, gym_id ?? student.gym_id, coach_id ?? student.coach_id);
+        this.validateGymIdInCoach(gym.id, coach);
+        this.validateStudentGender(gender ?? student.gender, coach, gym);
       }
 
       const updateData = this.prepareUpdateData(updateStudentDto, student);
-      if (club_id !== undefined) updateData.club_id = club_id;
+      if (gym_id !== undefined) updateData.gym_id = gym_id;
       if (coach_id !== undefined) updateData.coach_id = coach_id;
 
       if (image) updateData.image_url = await this.updateImage(image);
@@ -192,16 +192,16 @@ export class StudentService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
-    const { club_id, coach_id, gender } = studentData;
+    const { gym_id, coach_id, gender } = studentData;
     const userId: number = user.id;
     const studentUserIds = [];
 
     try {
       const belts = await this.beltService.getNamesAndIds();
 
-      const { club, coach } = await this.validateOwnershipClubAndCoach(userId, club_id, coach_id);
-      this.validateClubIdInCoach(club_id, coach);
-      this.validateStudentGender(gender, coach, club);
+      const { gym, coach } = await this.validateOwnershipGymAndCoach(userId, gym_id, coach_id);
+      this.validateGymIdInCoach(gym_id, coach);
+      this.validateStudentGender(gender, coach, gym);
 
       const students: any = JSON.parse(Buffer.from(studentsJson.buffer).toString('utf-8'));
 
@@ -227,7 +227,7 @@ export class StudentService {
             membership_year: membershipYear,
             gender,
             coach_id,
-            club_id,
+            gym_id,
             userId: userStudentId,
           },
           userId,
@@ -329,33 +329,33 @@ export class StudentService {
     if (!student) throw new NotFoundException(StudentMessages.NOT_FOUND);
     return student;
   }
-  private async validateOwnershipClubAndCoach(userId: number, club_id?: number, coach_id?: number) {
-    const club = club_id ? await this.clubService.validateOwnershipById(club_id, userId) : null;
+  private async validateOwnershipGymAndCoach(userId: number, gym_id?: number, coach_id?: number) {
+    const gym = gym_id ? await this.gymService.validateOwnershipById(gym_id, userId) : null;
     const coach = coach_id ? await this.coachService.validateOwnershipById(coach_id, userId) : null;
-    return { club, coach };
+    return { gym, coach };
   }
-  private validateStudentGender(gender: Gender, coach?: CoachEntity, club?: ClubEntity) {
+  private validateStudentGender(gender: Gender, coach?: CoachEntity, gym?: GymEntity) {
     if (coach && !isSameGender(gender, coach.gender)) throw new BadRequestException(StudentMessages.COACH_GENDER_MISMATCH);
-    if (club && !isGenderAllowed(gender, club.genders)) throw new BadRequestException(StudentMessages.CLUB_GENDER_MISMATCH);
+    if (gym && !isGenderAllowed(gender, gym.genders)) throw new BadRequestException(StudentMessages.CLUB_GENDER_MISMATCH);
   }
-  private validateClubIdInCoach(club_id: number, coach: CoachEntity): void {
-    const exists = coach.clubs.some((club) => club.id === club_id);
+  private validateGymIdInCoach(gym_id: number, coach: CoachEntity): void {
+    const exists = coach.gyms.some((gym) => gym.id === gym_id);
     if (!exists) {
       throw new BadRequestException(
-        StudentMessages.COACH_NOT_IN_CLUB.replace('{coach_id}', coach.id.toString()).replace('{club_id}', club_id.toString()),
+        StudentMessages.COACH_NOT_IN_CLUB.replace('{coach_id}', coach.id.toString()).replace('{gym_id}', gym_id.toString()),
       );
     }
   }
-  async validateRemovedClubsStudents(clubs: ClubEntity[], coach_id: number): Promise<void> {
-    const clubsWithStudents: string[] = [];
+  async validateRemovedGymsStudents(gyms: GymEntity[], coach_id: number): Promise<void> {
+    const gymsWithStudents: string[] = [];
 
-    for (const club of clubs) {
-      const hasStudents = await this.studentRepository.existsStudentsInClub(club.id, coach_id);
-      if (hasStudents) clubsWithStudents.push(`${club.id}`);
+    for (const gym of gyms) {
+      const hasStudents = await this.studentRepository.existsStudentsInGym(gym.id, coach_id);
+      if (hasStudents) gymsWithStudents.push(`${gym.id}`);
     }
 
-    if (clubsWithStudents.length > 0) {
-      throw new BadRequestException(StudentMessages.MULTIPLE_NOT_FOUND.replace('{ids}', clubsWithStudents.join(', ')));
+    if (gymsWithStudents.length > 0) {
+      throw new BadRequestException(StudentMessages.MULTIPLE_NOT_FOUND.replace('{ids}', gymsWithStudents.join(', ')));
     }
   }
   async validateStudentsIdsByCoachAndGender(studentIds: number[], coach_id: number, gender: Gender): Promise<StudentEntity[]> {

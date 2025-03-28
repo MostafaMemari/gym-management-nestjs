@@ -17,13 +17,13 @@ export interface IStudentCreateDto {
   membership_year?: number;
   userId?: number;
   coach_id?: number;
-  club_id?: number;
+  gym_id?: number;
   belt_id?: number;
 }
 
 export type IStudentUpdateDto = Partial<IStudentCreateDto>;
 
-export interface IStudentBulkCreateDto extends Pick<IStudentCreateDto, 'club_id' | 'coach_id' | 'gender'> {}
+export interface IStudentBulkCreateDto extends Pick<IStudentCreateDto, 'gym_id' | 'coach_id' | 'gender'> {}
 
 export interface IStudentFilter {
   search?: string;
@@ -32,7 +32,7 @@ export interface IStudentFilter {
   phone_number?: string;
   expire_image_date?: string;
   coach_id?: string;
-  club_id?: string;
+  gym_id?: string;
   belt_ids?: number[];
   age_category_ids: number[];
   sort_by?: 'birth_date' | 'sports_insurance_date' | 'expire_image_date';

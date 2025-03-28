@@ -69,8 +69,8 @@ export class StudentRepository extends Repository<StudentEntity> {
     const cacheKey = `${CacheKeys.STUDENTS}-${page}-${take}-${JSON.stringify(filters)}`.replace('{userId}', userId.toString());
 
     const queryBuilder = this.createQueryBuilder(EntityName.STUDENTS)
-      .innerJoin('students.club', 'club', 'club.owner_id = :userId', { userId })
-      .addSelect(['club.id', 'club.name'])
+      .innerJoin('students.gym', 'gym', 'gym.owner_id = :userId', { userId })
+      .addSelect(['gym.id', 'gym.name'])
       .leftJoin('students.coach', 'coach')
       .addSelect(['coach.id', 'coach.full_name'])
       .leftJoinAndSelect('students.beltInfo', 'beltInfo')
@@ -94,8 +94,8 @@ export class StudentRepository extends Repository<StudentEntity> {
     if (filters?.phone_number) {
       queryBuilder.andWhere('students.phone_number LIKE :phoneNumber', { phoneNumber: `%${filters?.phone_number}%` });
     }
-    if (filters?.club_id) {
-      queryBuilder.andWhere('students.club_id = :club', { club: filters?.club_id });
+    if (filters?.gym_id) {
+      queryBuilder.andWhere('students.gym_id = :gym', { gym: filters?.gym_id });
     }
     if (filters?.coach_id) {
       queryBuilder.andWhere('students.coach_id = :coach', { coach: filters?.coach_id });
@@ -146,7 +146,7 @@ export class StudentRepository extends Repository<StudentEntity> {
   ): Promise<[StudentEntity[], number]> {
     const cacheKey = `${CacheKeys.STUDENTS_SUMMARY}-${page}-${take}-${JSON.stringify(filters)}`.replace('{userId}', userId.toString());
 
-    const queryBuilder = this.createQueryBuilder(EntityName.STUDENTS).innerJoin('students.club', 'club', 'club.owner_id = :userId', {
+    const queryBuilder = this.createQueryBuilder(EntityName.STUDENTS).innerJoin('students.gym', 'gym', 'gym.owner_id = :userId', {
       userId,
     });
 
@@ -162,8 +162,8 @@ export class StudentRepository extends Repository<StudentEntity> {
     if (filters?.phone_number) {
       queryBuilder.andWhere('students.phone_number LIKE :phoneNumber', { phoneNumber: `%${filters?.phone_number}%` });
     }
-    if (filters?.club_id) {
-      queryBuilder.andWhere('students.club_id = :club', { club: filters?.club_id });
+    if (filters?.gym_id) {
+      queryBuilder.andWhere('students.gym_id = :gym', { gym: filters?.gym_id });
     }
     if (filters?.coach_id) {
       queryBuilder.andWhere('students.coach_id = :coach', { coach: filters?.coach_id });
@@ -190,8 +190,8 @@ export class StudentRepository extends Repository<StudentEntity> {
   async findByIdAndOwner(studentId: number, userId: number): Promise<StudentEntity> {
     const student = await this.createQueryBuilder(EntityName.STUDENTS)
       .where('students.id = :studentId', { studentId })
-      .leftJoin('students.club', 'club')
-      .andWhere('club.owner_id = :userId', { userId })
+      .leftJoin('students.gym', 'gym')
+      .andWhere('gym.owner_id = :userId', { userId })
       .getOne();
 
     return student;
@@ -200,15 +200,15 @@ export class StudentRepository extends Repository<StudentEntity> {
   async findStudentByNationalCode(nationalCode: string, userId: number): Promise<StudentEntity> {
     const student = await this.createQueryBuilder(EntityName.STUDENTS)
       .where('students.national_code = :nationalCode', { nationalCode })
-      .leftJoinAndSelect('students.club', 'club')
-      .andWhere('club.owner_id = :userId', { userId })
+      .leftJoinAndSelect('students.gym', 'gym')
+      .andWhere('gym.owner_id = :userId', { userId })
       .getOne();
 
     return student;
   }
 
-  async existsStudentsInClub(club_id: number, coach_id: number): Promise<boolean> {
-    const count = await this.count({ where: { club: { id: club_id }, coach: { id: coach_id } } });
+  async existsStudentsInGym(gym_id: number, coach_id: number): Promise<boolean> {
+    const count = await this.count({ where: { gym: { id: gym_id }, coach: { id: coach_id } } });
 
     return count > 0;
   }
@@ -226,9 +226,9 @@ export class StudentRepository extends Repository<StudentEntity> {
   async findStudentWithRelations(studentId: number): Promise<StudentEntity> {
     const student = await this.createQueryBuilder(EntityName.STUDENTS)
       .where('students.id = :studentId', { studentId })
-      .leftJoin('students.club', 'club')
+      .leftJoin('students.gym', 'gym')
       .leftJoin('students.coach', 'coach')
-      .select(['students', 'club.id', 'club.name', 'coach.id', 'coach.full_name'])
+      .select(['students', 'gym.id', 'gym.name', 'coach.id', 'coach.full_name'])
       .leftJoinAndSelect('students.beltInfo', 'beltInfo')
       .leftJoinAndSelect('beltInfo.belt', 'belt')
       .leftJoinAndSelect(
@@ -270,8 +270,8 @@ export class StudentRepository extends Repository<StudentEntity> {
 
   async countStudentsByOwner(owner_id: number): Promise<number> {
     return this.createQueryBuilder(EntityName.STUDENTS)
-      .leftJoin('students.club', 'club')
-      .where('club.owner_id = :owner_id', { owner_id })
+      .leftJoin('students.gym', 'gym')
+      .where('gym.owner_id = :owner_id', { owner_id })
       .getCount();
   }
 

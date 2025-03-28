@@ -10,7 +10,7 @@ export interface ICoachCreateDto {
   phone_number?: string;
   birth_date?: Date;
   user_id?: number;
-  club_ids?: number[];
+  gym_ids?: number[];
 }
 
 export type ICoachUpdateDto = Partial<ICoachCreateDto>;
@@ -20,7 +20,7 @@ export interface ICoachFilter {
   gender?: Gender;
   is_active?: boolean;
   phone_number?: string;
-  clubIds?: number[];
+  gymIds?: number[];
   sort_by?: 'birth_date' | 'sports_insurance_date' | 'expire_image_date';
   sort_order?: 'asc' | 'desc';
 }

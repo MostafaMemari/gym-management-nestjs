@@ -7,9 +7,9 @@ import { CoachMessages } from './enums/coach.message';
 import { ICoachCreateDto, ICoachFilter, ICoachUpdateDto } from './interfaces/coach.interface';
 import { CoachRepository } from './repositories/coach.repository';
 
-import { ClubService } from '../club/club.service';
-import { ClubEntity } from '../club/entities/club.entity';
-import { ICreateClub } from '../club/interfaces/club.interface';
+import { GymService } from '../gym/gym.service';
+import { GymEntity } from '../gym/entities/gym.entity';
+import { ICreateGym } from '../gym/interfaces/gym.interface';
 import { AwsService } from '../s3AWS/s3AWS.service';
 import { StudentService } from '../student/student.service';
 
@@ -33,24 +33,24 @@ export class CoachService {
     private readonly coachRepository: CoachRepository,
 
     private readonly awsService: AwsService,
-    @Inject(forwardRef(() => ClubService)) private readonly clubService: ClubService,
+    @Inject(forwardRef(() => GymService)) private readonly gymService: GymService,
     @Inject(forwardRef(() => StudentService)) private readonly studentService: StudentService,
   ) {}
 
   async create(user: IUser, createCoachDto: ICoachCreateDto): Promise<ServiceResponse> {
-    const { club_ids, national_code, gender, image } = createCoachDto;
+    const { gym_ids, national_code, gender, image } = createCoachDto;
     const userId: number = user.id;
 
     let imageKey: string | null = null;
     let coachUserId: number | null = null;
-    let ownedClubs: ClubEntity[] | null;
+    let ownedGyms: GymEntity[] | null;
 
     try {
       if (national_code) await this.validateUniqueNationalCode(national_code, userId);
 
-      if (club_ids) {
-        ownedClubs = await this.clubService.validateOwnershipByIds(club_ids, userId);
-        this.validateCoachClubGender(gender, ownedClubs);
+      if (gym_ids) {
+        ownedGyms = await this.gymService.validateOwnershipByIds(gym_ids, userId);
+        this.validateCoachGymGender(gender, ownedGyms);
       }
 
       imageKey = image ? await this.updateImage(image) : null;
@@ -60,7 +60,7 @@ export class CoachService {
       const coach = await this.coachRepository.createCoachWithTransaction({
         ...createCoachDto,
         image_url: imageKey,
-        clubs: ownedClubs,
+        gyms: ownedGyms,
         userId: coachUserId,
         owner_id: userId,
       });
@@ -72,7 +72,7 @@ export class CoachService {
     }
   }
   async update(user: IUser, coachId: number, updateCoachDto: ICoachUpdateDto): Promise<ServiceResponse> {
-    const { club_ids = [], national_code, gender, image } = updateCoachDto;
+    const { gym_ids = [], national_code, gender, image } = updateCoachDto;
     const userId: number = user.id;
 
     let imageKey: string | null = null;
@@ -83,20 +83,20 @@ export class CoachService {
 
       const updateData = this.prepareUpdateData(updateCoachDto, coach);
 
-      if (club_ids.length) {
-        const ownedClubs = club_ids?.length ? await this.clubService.validateOwnershipByIds(club_ids, userId) : coach.clubs;
-        const removedClubs = coach.clubs.filter((club) => !club_ids.includes(club.id));
-        if (removedClubs.length) await this.studentService.validateRemovedClubsStudents(removedClubs, coachId);
-        this.validateCoachClubGender(coach.gender, ownedClubs);
-        updateData.clubs = ownedClubs;
+      if (gym_ids.length) {
+        const ownedGyms = gym_ids?.length ? await this.gymService.validateOwnershipByIds(gym_ids, userId) : coach.gyms;
+        const removedGyms = coach.gyms.filter((gym) => !gym_ids.includes(gym.id));
+        if (removedGyms.length) await this.studentService.validateRemovedGymsStudents(removedGyms, coachId);
+        this.validateCoachGymGender(coach.gender, ownedGyms);
+        updateData.gyms = ownedGyms;
       } else {
-        await this.studentService.validateRemovedClubsStudents(coach.clubs, coachId);
-        this.validateCoachClubGender(coach.gender, coach.clubs);
-        updateData.clubs = [];
+        await this.studentService.validateRemovedGymsStudents(coach.gyms, coachId);
+        this.validateCoachGymGender(coach.gender, coach.gyms);
+        updateData.gyms = [];
       }
 
       if (gender && gender !== coach.gender) {
-        this.validateCoachClubGender(gender, updateData.clubs ?? coach.clubs);
+        this.validateCoachGymGender(gender, updateData.gyms ?? coach.gyms);
         await this.validateCoachGenderChange(gender, coachId);
       }
 
@@ -204,11 +204,11 @@ export class CoachService {
     ]);
   }
 
-  private validateCoachClubGender(coachGender: Gender, clubs: ICreateClub[]): void {
-    const invalidClubs = clubs.filter((club) => !isGenderAllowed(coachGender, club.genders)).map((club) => club.id);
+  private validateCoachGymGender(coachGender: Gender, gyms: ICreateGym[]): void {
+    const invalidGyms = gyms.filter((gym) => !isGenderAllowed(coachGender, gym.genders)).map((gym) => gym.id);
 
-    if (invalidClubs.length > 0) {
-      throw new BadRequestException(CoachMessages.COACH_GENDER_MISMATCH.replace('{ids}', invalidClubs.join(', ')));
+    if (invalidGyms.length > 0) {
+      throw new BadRequestException(CoachMessages.COACH_GENDER_MISMATCH.replace('{ids}', invalidGyms.join(', ')));
     }
   }
   private async validateCoachGenderChange(coachGender: Gender, coachId: number): Promise<void> {
@@ -222,15 +222,15 @@ export class CoachService {
   private prepareUpdateData(updateDto: ICoachUpdateDto, coach: CoachEntity): Partial<CoachEntity> {
     return Object.fromEntries(
       Object.entries(updateDto).filter(
-        ([key, value]) => key !== 'image' && key !== 'club_ids' && value !== undefined && value !== coach[key],
+        ([key, value]) => key !== 'image' && key !== 'gym_ids' && value !== undefined && value !== coach[key],
       ),
     );
   }
 
-  async hasCoachWithGenderInClub(clubId: number, coachGender: Gender): Promise<boolean> {
-    return this.coachRepository.existsCoachByGenderInClub(clubId, coachGender);
+  async hasCoachWithGenderInGym(gymId: number, coachGender: Gender): Promise<boolean> {
+    return this.coachRepository.existsCoachByGenderInGym(gymId, coachGender);
   }
-  async hasCoachByClubId(clubId: number): Promise<boolean> {
-    return this.coachRepository.existsCoachByClubId(clubId);
+  async hasCoachByGymId(gymId: number): Promise<boolean> {
+    return this.coachRepository.existsCoachByGymId(gymId);
   }
 }

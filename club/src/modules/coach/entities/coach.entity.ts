@@ -6,7 +6,7 @@ import { SessionEntity } from '../../../modules/session/entities/session.entity'
 import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
-import { ClubEntity } from '../../../modules/club/entities/club.entity';
+import { GymEntity } from '../../gym/entities/gym.entity';
 import { AttendanceSessionEntity } from 'src/modules/attendance/entities/attendance-sessions.entity';
 
 @Entity(EntityName.COACHES)
@@ -45,8 +45,8 @@ export class CoachEntity extends AbstractEntity {
   @OneToMany(() => StudentEntity, (student) => student.coach)
   students: StudentEntity[];
 
-  @ManyToMany(() => ClubEntity, (club) => club.coaches)
-  clubs: ClubEntity[];
+  @ManyToMany(() => GymEntity, (gym) => gym.coaches)
+  gyms: GymEntity[];
 
   @OneToMany(() => SessionEntity, (session) => session.coach)
   sessions: SessionEntity;

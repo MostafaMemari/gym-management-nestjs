@@ -10,7 +10,7 @@ import { CoachService } from './coach.service';
 import { CoachEntity } from './entities/coach.entity';
 import { CoachRepository } from './repositories/coach.repository';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ClubModule } from '../club/club.module';
+import { GymModule } from '../gym/gym.module';
 import { StudentModule } from '../student/student.module';
 
 @Module({
@@ -32,7 +32,7 @@ import { StudentModule } from '../student/student.module';
     TypeOrmModule.forFeature([CoachEntity]),
     CacheModule,
     AwsModule,
-    forwardRef(() => ClubModule),
+    forwardRef(() => GymModule),
     forwardRef(() => StudentModule),
   ],
   controllers: [CoachController],

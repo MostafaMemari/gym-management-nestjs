@@ -31,11 +31,11 @@ export class CoachRepository extends Repository<CoachEntity> {
   }
 
   async updateCoach(coach: CoachEntity, updateData: Partial<CoachEntity>) {
-    const hasRelations = ['clubs'].some((rel) => updateData.hasOwnProperty(rel));
+    const hasRelations = ['gyms'].some((rel) => updateData.hasOwnProperty(rel));
 
     if (hasRelations) {
-      if (updateData.clubs) {
-        coach.clubs = updateData.clubs;
+      if (updateData.gyms) {
+        coach.gyms = updateData.gyms;
       }
 
       const updatedCoach = this.merge(coach, updateData);
@@ -100,24 +100,24 @@ export class CoachRepository extends Repository<CoachEntity> {
   }
 
   async findCoachByNationalCode(nationalCode: string, owner_id: number): Promise<CoachEntity | null> {
-    return this.findOne({ where: { national_code: nationalCode, owner_id }, relations: ['clubs'] });
+    return this.findOne({ where: { national_code: nationalCode, owner_id }, relations: ['gyms'] });
   }
 
   async findByIdAndOwner(coachId: number, owner_id: number): Promise<CoachEntity | null> {
-    return this.findOne({ where: { id: coachId, owner_id }, relations: ['clubs'] });
+    return this.findOne({ where: { id: coachId, owner_id }, relations: ['gyms'] });
   }
 
-  async existsCoachByGenderInClub(club_id: number, gender: Gender): Promise<boolean> {
+  async existsCoachByGenderInGym(gym_id: number, gender: Gender): Promise<boolean> {
     const count = await this.createQueryBuilder(EntityName.COACHES)
-      .innerJoin('coaches.clubs', 'club')
-      .where('club.id = :club_id', { club_id })
+      .innerJoin('coaches.gyms', 'gym')
+      .where('gym.id = :gym_id', { gym_id })
       .andWhere('coaches.gender = :gender', { gender })
       .getCount();
 
     return count > 0;
   }
-  async existsCoachByClubId(club_id: number): Promise<boolean> {
-    const count = await this.count({ where: { clubs: { id: club_id } } });
+  async existsCoachByGymId(gym_id: number): Promise<boolean> {
+    const count = await this.count({ where: { gyms: { id: gym_id } } });
     return count > 0;
   }
 }
