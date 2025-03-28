@@ -11,7 +11,7 @@ import { lastValueFrom, timeout } from 'rxjs';
 import { ClubPatterns } from '../../common/enums/club.events';
 import { NotificationPatterns } from '../../common/enums/notification.events';
 import { UserRepository } from '../user/user.repository';
-import { Role, Wallet, WalletStatus } from '@prisma/client';
+import { Role, Wallet, WalletDeduction, WalletStatus } from '@prisma/client';
 import { IPagination } from '../../common/interfaces/user.interface';
 import { CacheKeys } from '../../common/enums/cache.enum';
 import { CacheService } from '../cache/cache.service';
@@ -70,6 +70,24 @@ export class WalletService {
       if (wallet.isBlocked) throw new BadRequestException(WalletMessages.BlockedWallet);
 
       return ResponseUtil.success({ wallet }, '', HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
+  async findAllDeductions(paginationDto: IPagination) {
+    try {
+      const cacheKey = `${CacheKeys.WalletDeduction}_${paginationDto.page || 1}_${paginationDto.take || 20}`;
+
+      const deductionsWalletsCache = await this.cache.get<null | WalletDeduction[]>(cacheKey);
+
+      if (deductionsWalletsCache) return ResponseUtil.success({ ...pagination(paginationDto, deductionsWalletsCache) }, '', HttpStatus.OK);
+
+      const deductionWallets = await this.walletRepository.findAllDeductions({ orderBy: { createdAt: 'desc' } });
+
+      await this.cache.set(cacheKey, deductionWallets, this.REDIS_EXPIRE_TIME);
+
+      return ResponseUtil.success({ ...pagination(paginationDto, deductionWallets) }, '', HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }

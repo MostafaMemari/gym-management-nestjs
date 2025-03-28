@@ -24,6 +24,11 @@ export class WalletController {
     return this.walletService.findOneByUser(data);
   }
 
+  @MessagePattern(WalletPatterns.GetWalletsDeductions)
+  getWalletsDeductions(@Payload() data: IPagination) {
+    return this.walletService.findAllDeductions(data);
+  }
+
   @MessagePattern(WalletPatterns.BlockWallet)
   block(@Payload() data: { walletId: number }) {
     return this.walletService.block(data);

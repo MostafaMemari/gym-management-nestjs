@@ -36,4 +36,8 @@ export class WalletRepository {
   createDeduction(data: Prisma.WalletDeductionCreateInput): Promise<Prisma.WalletDeductionCreateInput> {
     return this.prisma.walletDeduction.create({ data });
   }
+
+  findAllDeductions(args: Prisma.WalletDeductionFindManyArgs = {}): Promise<WalletDeduction[]> {
+    return this.prisma.walletDeduction.findMany(args);
+  }
 }
