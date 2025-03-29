@@ -105,6 +105,9 @@ export class GymService {
     if (!gym) throw new NotFoundException(GymMessages.NOT_BELONG_TO_USER);
     return gym;
   }
+  async checkGymAndCoachEligibility(gymId: number, coachId: number, gender: Gender, userId: number): Promise<GymEntity> {
+    return await this.gymRepository.validateGymOwnershipAndCoachGender(gymId, coachId, gender, userId);
+  }
   async validateOwnershipByIdWithCoaches(gymId: number, userId: number): Promise<GymEntity> {
     const gym = await this.gymRepository.findByIdAndOwnerRelationCoaches(gymId, userId);
     if (!gym) throw new NotFoundException(GymMessages.NOT_BELONG_TO_USER);

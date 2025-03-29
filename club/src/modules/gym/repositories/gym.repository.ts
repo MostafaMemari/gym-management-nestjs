@@ -6,6 +6,7 @@ import { ICreateGym, ISearchGymQuery, IUpdateGym } from '../interfaces/gym.inter
 
 import { CacheKeys, CacheTTLMilliseconds } from '../../../common/enums/cache';
 import { EntityName } from '../../../common/enums/entity.enum';
+import { Gender } from 'src/common/enums/gender.enum';
 
 @Injectable()
 export class GymRepository extends Repository<GymEntity> {
@@ -51,6 +52,16 @@ export class GymRepository extends Repository<GymEntity> {
 
   async findByIdAndOwner(gymId: number, ownerId: number): Promise<GymEntity | null> {
     return this.findOne({ where: { id: gymId, owner_id: ownerId } });
+  }
+  async validateGymOwnershipAndCoachGender(gymId: number, coachId: number, gender: Gender, userId: number): Promise<GymEntity | null> {
+    return await this.createQueryBuilder(EntityName.GYMS)
+      .where('gyms.id = :gymId', { gymId })
+      .andWhere('gyms.owner_id = :ownerId', { ownerId: userId })
+      .leftJoin('gyms.coaches', 'coaches')
+      .andWhere('coaches.id = :coachId', { coachId })
+      .andWhere(`FIND_IN_SET(:gender, gyms.genders)`, { gender: gender })
+      .andWhere('coaches.gender = :gender', { gender })
+      .getOne();
   }
   async findByIdAndOwnerRelationCoaches(gymId: number, ownerId: number): Promise<GymEntity | null> {
     return this.findOne({ where: { id: gymId, owner_id: ownerId }, relations: ['coaches'] });

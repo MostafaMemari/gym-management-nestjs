@@ -98,7 +98,6 @@ export class CreateStudentDto {
   @IsInt()
   @IsPositive()
   @Transform(({ value }) => parseInt(value, 10))
-  @IsDependentOn('belt_date')
   @ApiProperty({ type: 'integer', required: true, example: '' })
   coach_id: number;
 
@@ -106,9 +105,8 @@ export class CreateStudentDto {
   @IsInt()
   @IsPositive()
   @Transform(({ value }) => parseInt(value, 10))
-  @IsDependentOn('belt_date')
   @ApiProperty({ type: 'integer', required: true, example: '' })
-  club_id: number;
+  gym_id: number;
 
   @IsOptional()
   @IsInt()
@@ -128,7 +126,7 @@ export class CreateStudentDto {
 export class UpdateStudentDto extends PartialType(CreateStudentDto) {}
 // export class UpdateStudentDto extends PartialType(OmitType(CreateStudentDto, ['beltId', 'belt_date', 'expire_image_date'] as const)) {}
 
-export class BulkCreateStudentsDto extends PickType(CreateStudentDto, ['gender', 'coach_id', 'club_id'] as const) {
+export class BulkCreateStudentsDto extends PickType(CreateStudentDto, ['gender', 'coach_id', 'gym_id'] as const) {
   @IsOptional()
   @ApiPropertyOptional({ type: 'string', format: 'binary' })
   studentsFile?: string;
@@ -171,7 +169,7 @@ export class QueryStudentDto {
   @IsOptional()
   @IsString()
   @ApiPropertyOptional({ type: 'string', example: '' })
-  club_id: string;
+  gym_id: string;
 
   @IsOptional()
   @ToArray()

@@ -25,7 +25,6 @@ import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { checkConnection } from '../../common/utils/checkConnection.utils';
 import { shmasiToMiladi } from '../../common/utils/date/convertDate';
-import { isGenderAllowed, isSameGender } from '../../common/utils/functions';
 import { ResponseUtil } from '../../common/utils/response';
 
 @Injectable()
@@ -40,7 +39,6 @@ export class StudentService {
     private readonly gymService: GymService,
     private readonly beltService: BeltService,
     private readonly dataSource: DataSource,
-    @Inject(forwardRef(() => CoachService)) private readonly coachService: CoachService,
   ) {}
 
   async create(userId: number, createStudentDto: IStudentCreateDto): Promise<ServiceResponse> {
@@ -56,22 +54,13 @@ export class StudentService {
     try {
       if (national_code) await this.validateUniqueNationalCode(national_code, userId);
 
-      if (gym_id) {
-        await this.gymService.validateOwnershipById(gym_id, userId);
-      }
-      if (coach_id) {
-        await this.coachService.validateOwnershipById(coach_id, userId);
-      }
-
-      const { gym, coach } = await this.validateOwnershipGymAndCoach(userId, gym_id, coach_id);
-      this.validateGymIdInCoach(gym_id, coach);
-      this.validateStudentGender(gender, coach, gym);
+      await this.validateStudentGymAndCoach(gym_id, coach_id, gender, userId);
 
       imageKey = image ? await this.updateImage(image) : null;
       studentUserId = await this.createUserStudent();
 
       const student = await this.studentRepository.createStudent(
-        { ...createStudentDto, image_url: imageKey, user_id: studentUserId },
+        { ...createStudentDto, image_url: imageKey, user_id: studentUserId, owner_id: userId },
         queryRunner,
       );
 
@@ -102,9 +91,7 @@ export class StudentService {
       if (belt_id) await this.beltService.validateById(belt_id);
 
       if (gym_id || coach_id || gender) {
-        const { gym, coach } = await this.validateOwnershipGymAndCoach(userId, gym_id ?? student.gym_id, coach_id ?? student.coach_id);
-        this.validateGymIdInCoach(gym.id, coach);
-        this.validateStudentGender(gender ?? student.gender, coach, gym);
+        await this.validateStudentGymAndCoach(gym_id ?? student.gym_id, coach_id ?? student.coach_id, gender ?? student.gender, userId);
       }
 
       const updateData = this.prepareUpdateData(updateStudentDto, student);
@@ -195,9 +182,7 @@ export class StudentService {
     try {
       const belts = await this.beltService.getNamesAndIds();
 
-      const { gym, coach } = await this.validateOwnershipGymAndCoach(userId, gym_id, coach_id);
-      this.validateGymIdInCoach(gym_id, coach);
-      this.validateStudentGender(gender, coach, gym);
+      await this.validateStudentGymAndCoach(gym_id, coach_id, gender, userId);
 
       const students: any = JSON.parse(Buffer.from(studentsJson.buffer).toString('utf-8'));
 
@@ -327,23 +312,13 @@ export class StudentService {
     if (!student) throw new NotFoundException(StudentMessages.NOT_FOUND);
     return student;
   }
-  private async validateOwnershipGymAndCoach(userId: number, gym_id?: number, coach_id?: number) {
-    const gym = gym_id ? await this.gymService.validateOwnershipById(gym_id, userId) : null;
-    const coach = coach_id ? await this.coachService.validateOwnershipById(coach_id, userId) : null;
-    return { gym, coach };
+
+  async validateStudentGymAndCoach(gymId: number, coachId: number, gender: Gender, userId: number): Promise<void> {
+    const gym = await this.gymService.checkGymAndCoachEligibility(gymId, coachId, gender, userId);
+
+    if (!gym) throw new BadRequestException(StudentMessages.INVALID_GYM_OR_COACH);
   }
-  private validateStudentGender(gender: Gender, coach?: CoachEntity, gym?: GymEntity) {
-    if (coach && !isSameGender(gender, coach.gender)) throw new BadRequestException(StudentMessages.COACH_GENDER_MISMATCH);
-    if (gym && !isGenderAllowed(gender, gym.genders)) throw new BadRequestException(StudentMessages.CLUB_GENDER_MISMATCH);
-  }
-  private validateGymIdInCoach(gym_id: number, coach: CoachEntity): void {
-    const exists = coach.gyms.some((gym) => gym.id === gym_id);
-    if (!exists) {
-      throw new BadRequestException(
-        StudentMessages.COACH_NOT_IN_CLUB.replace('{coach_id}', coach.id.toString()).replace('{gym_id}', gym_id.toString()),
-      );
-    }
-  }
+
   async validateRemovedGymsStudents(gyms: GymEntity[], coach_id: number): Promise<void> {
     const gymsWithStudents: string[] = [];
 
