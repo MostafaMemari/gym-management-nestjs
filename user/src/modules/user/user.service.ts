@@ -191,6 +191,8 @@ export class UserService {
 
   async findByIds(userDto: { usersIds: number[] }) {
     try {
+      if (!userDto.usersIds?.length) return ResponseUtil.success({ users: [] }, '', HttpStatus.OK);
+
       const users = await this.userRepository.findAll({ where: { id: { in: userDto.usersIds } }, omit: { password: true } });
 
       return ResponseUtil.success({ users }, '', HttpStatus.OK);
