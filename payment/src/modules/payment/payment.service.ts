@@ -2,7 +2,7 @@ import { BadRequestException, HttpStatus, Injectable, Logger, NotFoundException 
 import { ZarinpalService } from '../http/zarinpal.service';
 import { RpcException } from '@nestjs/microservices';
 import { ISendRequest } from '../../common/interfaces/http.interface';
-import { IPagination, ITransactionsFilters, IVerifyPayment } from '../../common/interfaces/payment.interface';
+import { IMyTransactionsFilers, ITransactionsFilters, IVerifyPayment } from '../../common/interfaces/payment.interface';
 import { PaymentRepository } from './payment.repository';
 import { Prisma, Transaction, TransactionStatus } from '@prisma/client';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
@@ -22,7 +22,7 @@ export class PaymentService {
     private readonly zarinpalService: ZarinpalService,
     private readonly paymentRepository: PaymentRepository,
     private readonly cacheService: CacheService,
-  ) {}
+  ) { }
 
   @Cron(CronExpression.EVERY_12_HOURS)
   async handelStaleTransactions() {
@@ -94,21 +94,11 @@ export class PaymentService {
     }
   }
 
-  async findUserTransactions({ userId, ...paginationDto }: IPagination & { userId: number }): Promise<ServiceResponse> {
+  async findUserTransactions(transactionsFilters: IMyTransactionsFilers & { userId: number }): Promise<ServiceResponse> {
     try {
-      const cacheKey = `${CacheKeys.Transaction}_${paginationDto.page || 1}_${paginationDto.take || 20}_${userId}`;
+      if (!transactionsFilters.userId) throw new BadRequestException(PaymentMessages.RequiredUserId)
 
-      const cacheData = await this.cacheService.get<null | Transaction[]>(cacheKey);
-
-      if (cacheData) {
-        return ResponseUtil.success({ ...pagination(paginationDto, cacheData) }, '', HttpStatus.OK);
-      }
-
-      const transactions = await this.paymentRepository.findByArgs({ userId });
-
-      await this.cacheService.set(cacheKey, transactions, this.REDIS_EXPIRE_TIME);
-
-      return ResponseUtil.success({ transactions: pagination(paginationDto, transactions) }, '', HttpStatus.OK);
+      return await this.findTransactions(transactionsFilters)
     } catch (error) {
       throw new RpcException(error);
     }
@@ -128,7 +118,7 @@ export class PaymentService {
     try {
       const paginationDto = { page, take };
       const { authority, endDate, maxAmount, minAmount, sortBy, sortDirection, startDate, status, userId } = transactionsFiltersDto;
-      
+
       const sortedDto = Object.keys(transactionsFiltersDto)
         .sort()
         .reduce((obj, key) => ({ ...obj, [key]: transactionsFiltersDto[key] }), {});
@@ -148,8 +138,8 @@ export class PaymentService {
       if (status) filters.status = status;
       if (minAmount || maxAmount) {
         filters.amount = {};
-        if (minAmount) filters.amount.gte = minAmount;
-        if (maxAmount) filters.amount.lte = maxAmount;
+        if (minAmount) filters.amount.gte = minAmount * 10;
+        if (maxAmount) filters.amount.lte = maxAmount * 10;
       }
       if (startDate || endDate) {
         filters.createdAt = {};

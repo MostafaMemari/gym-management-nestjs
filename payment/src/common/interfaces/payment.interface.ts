@@ -25,3 +25,5 @@ export interface ITransactionsFilters extends IPagination {
   sortBy?: 'createdAt' | 'updatedAt' | 'amount';
   sortDirection?: 'asc' | 'desc';
 }
+
+export interface IMyTransactionsFilers extends Omit<ITransactionsFilters, 'userId'> {}
