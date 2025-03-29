@@ -45,7 +45,7 @@ export class GymController {
   remove(@Payload() data: { user: IUser; gymId: number }): Promise<ServiceResponse> {
     const { user, gymId } = data;
 
-    return this.gymService.findOneById(user, gymId);
+    return this.gymService.removeById(user, gymId);
   }
 
   @MessagePattern(GymPatterns.WALLET_DEPLETED)

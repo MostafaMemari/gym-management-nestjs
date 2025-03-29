@@ -34,7 +34,7 @@ export class GymSubscriber implements EntitySubscriberInterface<GymEntity> {
     await this.clearCache(owner_id);
   }
 
-  private async clearCache(userId: number) {
-    await this.cacheService.delByPattern(`${CacheKeys.CLUBS}`.replace(':userId', userId.toString()) + '*');
+  private async clearCache(ownerId: number) {
+    await this.cacheService.delByPattern(`${CacheKeys.GYMS}`.replace(':ownerId', ownerId.toString()) + '*');
   }
 }

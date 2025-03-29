@@ -14,7 +14,7 @@ export class GymRepository extends Repository<GymEntity> {
     super(GymEntity, dataSource.createEntityManager());
   }
 
-  async createAndSaveGym(createGymDto: ICreateGym, ownerId: number): Promise<GymEntity> {
+  async createAndSave(createGymDto: ICreateGym, ownerId: number): Promise<GymEntity> {
     const gym = this.create({ ...createGymDto, owner_id: ownerId });
     return await this.save(gym);
   }
@@ -26,10 +26,10 @@ export class GymRepository extends Repository<GymEntity> {
     return await this.remove(gym);
   }
 
-  async getGymsWithFilters(userId: number, filters: ISearchGymQuery, page: number, take: number): Promise<[GymEntity[], number]> {
-    const cacheKey = `${CacheKeys.CLUBS}-userId:${userId}-${page}-${take}-${JSON.stringify(filters)}`;
+  async getGymsWithFilters(ownerId: number, filters: ISearchGymQuery, page: number, take: number): Promise<[GymEntity[], number]> {
+    const cacheKey = `${CacheKeys.GYMS}-${page}-${take}-${JSON.stringify(filters)}`.replace(':ownerId', ownerId.toString());
 
-    const queryBuilder = this.createQueryBuilder(EntityName.GYMS).where('gyms.owner_id = :owner_id', { owner_id: userId });
+    const queryBuilder = this.createQueryBuilder(EntityName.GYMS).where('gyms.owner_id = :owner_id', { owner_id: ownerId });
 
     if (filters?.search) {
       queryBuilder.andWhere('gyms.name LIKE :search', { search: `%${filters.search}%` });
@@ -46,7 +46,7 @@ export class GymRepository extends Repository<GymEntity> {
     return queryBuilder
       .skip((page - 1) * take)
       .take(take)
-      .cache(cacheKey, CacheTTLMilliseconds.GET_ALL_CLUBS)
+      .cache(cacheKey, CacheTTLMilliseconds.GET_ALL_GYMS)
       .getManyAndCount();
   }
 

@@ -2,7 +2,7 @@ export enum CacheKeys {
   STUDENTS = 'students_list-:ownerId',
   STUDENTS_SUMMARY = 'students_list_summary-:ownerId',
 
-  CLUBS = 'clubs_list-:ownerId',
+  GYMS = 'gyms_list-:ownerId',
   COACHES = 'coaches_list-:ownerId',
   SESSIONS = 'sessions_list-:ownerId',
 
@@ -16,7 +16,7 @@ export enum CacheTTLMilliseconds {
   GET_ALL_STUDENTS = 3600 * 1000 * 1, // 1h
   GET_ALL_STUDENTS_SUMMARY = 3600 * 1000 * 1,
   GET_ALL_COACHES = 3600 * 1000 * 1,
-  GET_ALL_CLUBS = 3600 * 1000 * 1,
+  GET_ALL_GYMS = 3600 * 1000 * 1,
   GET_ALL_SESSIONS = 3600 * 1000 * 1,
   GET_ALL_BELTS = 3600 * 1000 * 1,
   GET_ALL_ATTENDANCES = 3600 * 1000 * 1,

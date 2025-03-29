@@ -6,7 +6,6 @@ import { GymMessages } from './enums/gym.message';
 import { ICreateGym, ISearchGymQuery, IUpdateGym } from './interfaces/gym.interface';
 import { GymRepository } from './repositories/gym.repository';
 
-import { CacheService } from '../cache/cache.service';
 import { CoachService } from '../coach/coach.service';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
@@ -20,13 +19,12 @@ import { ResponseUtil } from '../../common/utils/response';
 export class GymService {
   constructor(
     private readonly gymRepository: GymRepository,
-    private readonly cacheService: CacheService,
     @Inject(forwardRef(() => CoachService)) private readonly coachService: CoachService,
   ) {}
 
   async create(user: IUser, createGymDto: ICreateGym): Promise<ServiceResponse> {
     try {
-      const gym = await this.gymRepository.createAndSaveGym(createGymDto, user.id);
+      const gym = await this.gymRepository.createAndSave(createGymDto, user.id);
 
       return ResponseUtil.success(gym, GymMessages.CREATE_SUCCESS);
     } catch (error) {
