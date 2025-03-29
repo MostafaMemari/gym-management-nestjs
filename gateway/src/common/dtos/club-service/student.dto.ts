@@ -27,10 +27,16 @@ export class CreateStudentDto {
   @ApiProperty({ type: String, minLength: 5, maxLength: 80, required: true, example: 'مصطفی معماری' })
   full_name: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsEnum(Gender)
-  @ApiPropertyOptional({ example: 'male', enum: Gender })
+  @ApiProperty({ example: 'male', enum: Gender })
   gender: Gender;
+
+  @IsNotEmpty()
+  @IsString()
+  @MinLength(10)
+  @ApiProperty({ type: String, example: '', minLength: 10, maxLength: 10 })
+  national_code: string;
 
   @IsOptional()
   @ToBoolean()
@@ -47,12 +53,6 @@ export class CreateStudentDto {
   @Length(2, 80)
   @ApiPropertyOptional({ type: String, maxLength: 80, minLength: 2, required: true, example: '' })
   father_name?: string;
-
-  @IsOptional()
-  @IsString()
-  @MinLength(10)
-  @ApiPropertyOptional({ type: String, example: '', minLength: 10, maxLength: 10 })
-  national_code: string;
 
   @IsOptional()
   @IsPhoneNumber('IR')
@@ -94,20 +94,20 @@ export class CreateStudentDto {
   @ApiPropertyOptional({ type: 'integer', required: false, example: 1402 })
   membership_year?: number;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsInt()
   @IsPositive()
   @Transform(({ value }) => parseInt(value, 10))
   @IsDependentOn('belt_date')
-  @ApiPropertyOptional({ type: 'integer', required: true, example: '' })
+  @ApiProperty({ type: 'integer', required: true, example: '' })
   coach_id: number;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsInt()
   @IsPositive()
   @Transform(({ value }) => parseInt(value, 10))
   @IsDependentOn('belt_date')
-  @ApiPropertyOptional({ type: 'integer', required: true, example: '' })
+  @ApiProperty({ type: 'integer', required: true, example: '' })
   club_id: number;
 
   @IsOptional()
