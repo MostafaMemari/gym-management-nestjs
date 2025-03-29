@@ -11,12 +11,12 @@ export class BeltExamRepository extends Repository<BeltExamEntity> {
     super(BeltExamEntity, dataSource.createEntityManager());
   }
 
-  async createAndSaveBeltExam(createBeltExamDto: IBeltExamCreateDto): Promise<BeltExamEntity> {
+  async createAndSave(createBeltExamDto: IBeltExamCreateDto): Promise<BeltExamEntity> {
     const beltExam = this.create({ ...createBeltExamDto });
     return await this.save(beltExam);
   }
 
-  async updateBeltExam(beltExam: BeltExamEntity, updateBeltExamDto: IBeltExamUpdateDto): Promise<BeltExamEntity> {
+  async updateMergeAndSave(beltExam: BeltExamEntity, updateBeltExamDto: IBeltExamUpdateDto): Promise<BeltExamEntity> {
     const updatedBeltExam = this.merge(beltExam, { ...updateBeltExamDto });
     return await this.save(updatedBeltExam);
   }

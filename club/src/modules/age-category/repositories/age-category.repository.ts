@@ -13,12 +13,11 @@ export class AgeCategoryRepository extends Repository<AgeCategoryEntity> {
     super(AgeCategoryEntity, dataSource.createEntityManager());
   }
 
-  async createAndSaveAgeCategory(cateAgeCategoryDto: IAgeCategoryCreateDto): Promise<AgeCategoryEntity> {
+  async createAndSave(cateAgeCategoryDto: IAgeCategoryCreateDto): Promise<AgeCategoryEntity> {
     const ageCategory = this.create({ ...cateAgeCategoryDto });
     return await this.save(ageCategory);
   }
-
-  async updateAgeCategory(ageCategory: AgeCategoryEntity, updateAgeCategoryDto: IAgeCategoryUpdateDto): Promise<AgeCategoryEntity> {
+  async updateMergeAndSave(ageCategory: AgeCategoryEntity, updateAgeCategoryDto: IAgeCategoryUpdateDto): Promise<AgeCategoryEntity> {
     const updatedAgeCategory = this.merge(ageCategory, { ...updateAgeCategoryDto });
     return await this.save(updatedAgeCategory);
   }

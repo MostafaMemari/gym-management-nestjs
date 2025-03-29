@@ -30,7 +30,7 @@ export class StudentRepository extends Repository<StudentEntity> {
   }
 
   async getStudentsWithFilters(ownerId: number, filters: IStudentFilter, page: number, take: number): Promise<[StudentEntity[], number]> {
-    const cacheKey = `${CacheKeys.STUDENTS}-${page}-${take}-${JSON.stringify(filters)}`.replace(':ownerId', ownerId.toString());
+    const cacheKey = `${CacheKeys.STUDENTS}-${page}-${take}-${JSON.stringify(filters)}`.replace(':userId', ownerId.toString());
 
     const queryBuilder = this.createQueryBuilder(EntityName.STUDENTS)
       .where('students.owner_id = :ownerId', { ownerId })

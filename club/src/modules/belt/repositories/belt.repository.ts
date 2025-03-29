@@ -14,14 +14,15 @@ export class BeltRepository extends Repository<BeltEntity> {
     super(BeltEntity, dataSource.createEntityManager());
   }
 
-  async createAndSaveBelt(createBeltDto: IBeltCreateDto): Promise<BeltEntity> {
+  async createAndSave(createBeltDto: IBeltCreateDto): Promise<BeltEntity> {
     const belt = this.create({ ...createBeltDto });
     return await this.save(belt);
   }
-  async updateBelt(belt: BeltEntity, updateBeltDto: IBeltUpdateDto): Promise<BeltEntity> {
+  async updateMergeAndSave(belt: BeltEntity, updateBeltDto: IBeltUpdateDto): Promise<BeltEntity> {
     const updatedBelt = this.merge(belt, { ...updateBeltDto });
     return await this.save(updatedBelt);
   }
+
   async getBeltsWithFilters(filters: IBeltFilter, page: number, take: number): Promise<[BeltEntity[], number]> {
     const cacheKey = `${CacheKeys.BELTS}-${page}-${take}-${JSON.stringify(filters)}`;
 

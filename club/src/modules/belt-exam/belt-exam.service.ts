@@ -30,7 +30,7 @@ export class BeltExamService {
         createBeltExamDto.belts = belts;
       }
 
-      const beltExam = await this.beltExamRepository.createAndSaveBeltExam(createBeltExamDto);
+      const beltExam = await this.beltExamRepository.createAndSave(createBeltExamDto);
 
       return ResponseUtil.success(beltExam, BeltExamMessages.CREATE_SUCCESS);
     } catch (error) {
@@ -48,7 +48,7 @@ export class BeltExamService {
         updateBeltExamDto.belts = belts;
       }
 
-      const updatedBeltExam = await this.beltExamRepository.updateBeltExam(beltExam, updateBeltExamDto);
+      const updatedBeltExam = await this.beltExamRepository.updateMergeAndSave(beltExam, updateBeltExamDto);
 
       return ResponseUtil.success({ ...updatedBeltExam }, BeltExamMessages.UPDATE_SUCCESS);
     } catch (error) {

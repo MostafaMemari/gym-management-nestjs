@@ -18,7 +18,7 @@ export class AgeCategoryService {
 
   async create(createAgeCategoryDto: IAgeCategoryCreateDto): Promise<ServiceResponse> {
     try {
-      const ageCategory = await this.ageCategoryRepository.createAndSaveAgeCategory(createAgeCategoryDto);
+      const ageCategory = await this.ageCategoryRepository.createAndSave(createAgeCategoryDto);
 
       return ResponseUtil.success(ageCategory, AgeCategoryMessages.CREATE_SUCCESS);
     } catch (error) {
@@ -29,7 +29,7 @@ export class AgeCategoryService {
     try {
       const ageCategory = await this.validateById(ageCategoryId);
 
-      const updatedAgeCategory = await this.ageCategoryRepository.updateAgeCategory(ageCategory, updateAgeCategoryDto);
+      const updatedAgeCategory = await this.ageCategoryRepository.updateMergeAndSave(ageCategory, updateAgeCategoryDto);
 
       return ResponseUtil.success({ ...updatedAgeCategory }, AgeCategoryMessages.UPDATE_SUCCESS);
     } catch (error) {
@@ -62,9 +62,8 @@ export class AgeCategoryService {
   async removeById(ageCategoryId: number): Promise<ServiceResponse> {
     try {
       const ageCategory = await this.validateById(ageCategoryId);
-      const removedAgeCategory = await this.ageCategoryRepository.delete({ id: ageCategoryId });
 
-      if (!removedAgeCategory.affected) ResponseUtil.error(AgeCategoryMessages.REMOVE_FAILURE);
+      await this.ageCategoryRepository.remove(ageCategory);
 
       return ResponseUtil.success(ageCategory, AgeCategoryMessages.REMOVE_SUCCESS);
     } catch (error) {

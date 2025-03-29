@@ -28,9 +28,8 @@ export class SessionService {
   async create(user: IUser, createSessionDto: ICreateSession): Promise<ServiceResponse> {
     try {
       const { gymId, coachId, studentIds } = createSessionDto;
-      const userId = user.id;
 
-      const gym = await this.gymService.validateOwnershipByIdWithCoaches(gymId, userId);
+      const gym = await this.gymService.validateOwnershipByIdWithCoaches(gymId, user.id);
       await this.gymService.validateCoachInGym(gym, coachId);
       const coach = gym.coaches.find((coach) => coach.id === coachId);
 
@@ -40,7 +39,7 @@ export class SessionService {
 
       const session = await this.sessionRepository.createAndSaveSession(createSessionDto);
 
-      await this.clearSessionCacheByUser(userId);
+      await this.clearSessionCacheByUser(user.id);
       return ResponseUtil.success(
         {
           ...session,

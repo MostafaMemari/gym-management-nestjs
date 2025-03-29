@@ -27,7 +27,7 @@ export class GymRepository extends Repository<GymEntity> {
   }
 
   async getGymsWithFilters(ownerId: number, filters: ISearchGymQuery, page: number, take: number): Promise<[GymEntity[], number]> {
-    const cacheKey = `${CacheKeys.GYMS}-${page}-${take}-${JSON.stringify(filters)}`.replace(':ownerId', ownerId.toString());
+    const cacheKey = `${CacheKeys.GYMS}-${page}-${take}-${JSON.stringify(filters)}`.replace(':userId', ownerId.toString());
 
     const queryBuilder = this.createQueryBuilder(EntityName.GYMS).where('gyms.owner_id = :owner_id', { owner_id: ownerId });
 
