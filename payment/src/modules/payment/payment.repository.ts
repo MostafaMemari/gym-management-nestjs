@@ -18,6 +18,10 @@ export class PaymentRepository {
     return this.prisma.transaction.findMany({ where: { ...args }, orderBy: { createdAt: 'desc' }, ...filters });
   }
 
+  findAll(args: Prisma.TransactionFindManyArgs = {}) {
+    return this.prisma.transaction.findMany(args);
+  }
+
   update(transactionId: number, data: Partial<Transaction>) {
     return this.prisma.transaction.update({ where: { id: transactionId }, data: { ...data, updatedAt: new Date() } });
   }

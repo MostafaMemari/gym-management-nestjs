@@ -2,9 +2,9 @@ import { BadRequestException, HttpStatus, Injectable, Logger, NotFoundException 
 import { ZarinpalService } from '../http/zarinpal.service';
 import { RpcException } from '@nestjs/microservices';
 import { ISendRequest } from '../../common/interfaces/http.interface';
-import { IPagination, IVerifyPayment } from '../../common/interfaces/payment.interface';
+import { IPagination, ITransactionsFilters, IVerifyPayment } from '../../common/interfaces/payment.interface';
 import { PaymentRepository } from './payment.repository';
-import { Transaction, TransactionStatus } from '@prisma/client';
+import { Prisma, Transaction, TransactionStatus } from '@prisma/client';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from '../../common/utils/response.utils';
 import { PaymentMessages } from '../../common/enums/payment.messages';
@@ -124,9 +124,16 @@ export class PaymentService {
     }
   }
 
-  async findTransactions(paginationDto: IPagination): Promise<ServiceResponse> {
+  async findTransactions({ page, take, ...transactionsFiltersDto }: ITransactionsFilters): Promise<ServiceResponse> {
     try {
-      const cacheKey = `${CacheKeys.Transaction}_${paginationDto.page || 1}_${paginationDto.take || 20}`;
+      const paginationDto = { page, take };
+      const { authority, endDate, maxAmount, minAmount, sortBy, sortDirection, startDate, status, userId } = transactionsFiltersDto;
+      
+      const sortedDto = Object.keys(transactionsFiltersDto)
+        .sort()
+        .reduce((obj, key) => ({ ...obj, [key]: transactionsFiltersDto[key] }), {});
+
+      const cacheKey = `${CacheKeys.Transaction}_${JSON.stringify(sortedDto)}`;
 
       const cacheData = await this.cacheService.get<null | Transaction[]>(cacheKey);
 
@@ -134,7 +141,26 @@ export class PaymentService {
         return ResponseUtil.success({ ...pagination(paginationDto, cacheData) }, '', HttpStatus.OK);
       }
 
-      const transactions = await this.paymentRepository.findByArgs();
+      const filters: Prisma.TransactionWhereInput = {};
+
+      if (userId) filters.userId = userId;
+      if (authority) filters.authority = authority;
+      if (status) filters.status = status;
+      if (minAmount || maxAmount) {
+        filters.amount = {};
+        if (minAmount) filters.amount.gte = minAmount;
+        if (maxAmount) filters.amount.lte = maxAmount;
+      }
+      if (startDate || endDate) {
+        filters.createdAt = {};
+        if (startDate) filters.createdAt.gte = new Date(startDate);
+        if (endDate) filters.createdAt.lte = new Date(endDate);
+      }
+
+      const transactions = await this.paymentRepository.findAll({
+        where: filters,
+        orderBy: { [sortBy || 'createdAt']: sortDirection || 'desc' },
+      });
 
       await this.cacheService.set(cacheKey, transactions, this.REDIS_EXPIRE_TIME);
 
