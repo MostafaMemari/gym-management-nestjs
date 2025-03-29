@@ -14,12 +14,12 @@ import { AttendanceEntity } from '../../../modules/attendance/entities/attendanc
 @Index(['full_name', 'national_code'])
 export class StudentEntity extends AbstractEntity {
   @Column({ type: 'integer', unique: true, nullable: false })
-  userId: number;
+  user_id: number;
 
   @Column({ type: 'varchar', length: 80 })
   full_name: string;
 
-  @Column({ type: 'enum', enum: Gender })
+  @Column({ type: 'enum', enum: Gender, nullable: true })
   gender: Gender;
 
   @Column({ type: 'boolean', default: true })
@@ -31,7 +31,7 @@ export class StudentEntity extends AbstractEntity {
   @Column({ type: 'varchar', length: 80, nullable: true })
   father_name?: string;
 
-  @Column({ type: 'varchar', length: 10, unique: true })
+  @Column({ type: 'varchar', length: 10, unique: true, nullable: true })
   national_code: string;
 
   @Column({ type: 'varchar', length: 15, nullable: true })
@@ -55,22 +55,22 @@ export class StudentEntity extends AbstractEntity {
   @Column({ type: 'date', nullable: true })
   expire_image_date?: Date;
 
-  @Column({ type: 'integer', nullable: true })
-  coach_id: number;
+  @Column({ type: 'integer', nullable: false })
+  gym_id: number;
 
   @Column({ type: 'integer', nullable: true })
-  gym_id: number;
+  coach_id: number;
 
   @Column({ type: 'integer', nullable: false })
   owner_id: number;
 
-  @ManyToOne(() => CoachEntity, (coach) => coach.students, { nullable: false, onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'coach_id', referencedColumnName: 'id' })
-  coach: CoachEntity;
-
-  @ManyToOne(() => GymEntity, (gym) => gym.students, { nullable: false, onDelete: 'SET NULL' })
+  @ManyToOne(() => GymEntity, (gym) => gym.students, { nullable: false })
   @JoinColumn({ name: 'gym_id', referencedColumnName: 'id' })
-  gym: GymEntity;
+  gym: GymEntity | null;
+
+  @ManyToOne(() => CoachEntity, (coach) => coach.students, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'coach_id', referencedColumnName: 'id' })
+  coach: CoachEntity | null;
 
   @OneToOne(() => StudentBeltEntity, (beltInfo) => beltInfo.student, { nullable: true })
   beltInfo: StudentBeltEntity | null;

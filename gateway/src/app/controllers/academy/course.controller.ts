@@ -30,7 +30,7 @@ import { FilesValidationPipe } from '../../../common/pipes/upload-files.pipe';
 import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
 import { AwsService } from '../../../modules/s3AWS/s3AWS.service';
-import { BeltPatterns, ClubPatterns } from 'src/common/enums/club-service/club.events';
+import { BeltPatterns, GymPatterns } from '../../../common/enums/club-service/gym.events';
 
 @Controller('courses')
 @ApiTags('Courses')
@@ -227,7 +227,7 @@ export class CoursesController {
   }
 
   async validateBeltIds(beltIds: number[]) {
-    await checkConnection(Services.CLUB, this.clubServiceClient, { pattern: ClubPatterns.CHECK_CONNECTION });
+    await checkConnection(Services.CLUB, this.clubServiceClient, { pattern: GymPatterns.CHECK_CONNECTION });
 
     const result = await lastValueFrom(this.clubServiceClient.send(BeltPatterns.GET_BY_IDS, { beltIds }).pipe(timeout(5000)));
 

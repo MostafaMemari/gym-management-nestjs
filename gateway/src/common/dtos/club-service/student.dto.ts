@@ -27,9 +27,9 @@ export class CreateStudentDto {
   @ApiProperty({ type: String, minLength: 5, maxLength: 80, required: true, example: 'مصطفی معماری' })
   full_name: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsEnum(Gender)
-  @ApiProperty({ example: 'male', enum: Gender })
+  @ApiPropertyOptional({ example: 'male', enum: Gender })
   gender: Gender;
 
   @IsOptional()
@@ -48,10 +48,10 @@ export class CreateStudentDto {
   @ApiPropertyOptional({ type: String, maxLength: 80, minLength: 2, required: true, example: '' })
   father_name?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   @MinLength(10)
-  @ApiProperty({ type: String, example: '', minLength: 10, maxLength: 10 })
+  @ApiPropertyOptional({ type: String, example: '', minLength: 10, maxLength: 10 })
   national_code: string;
 
   @IsOptional()
@@ -87,12 +87,6 @@ export class CreateStudentDto {
   expire_image_date?: Date;
 
   @IsOptional()
-  @IsDateString()
-  @IsDependentOn('beltId')
-  @ApiPropertyOptional({ type: String, example: '' })
-  belt_date?: Date;
-
-  @IsOptional()
   @IsInt()
   @Min(1371)
   @Max(1449)
@@ -100,18 +94,20 @@ export class CreateStudentDto {
   @ApiPropertyOptional({ type: 'integer', required: false, example: 1402 })
   membership_year?: number;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsInt()
   @IsPositive()
   @Transform(({ value }) => parseInt(value, 10))
-  @ApiProperty({ type: 'integer', required: true, example: '' })
+  @IsDependentOn('belt_date')
+  @ApiPropertyOptional({ type: 'integer', required: true, example: '' })
   coach_id: number;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsInt()
   @IsPositive()
   @Transform(({ value }) => parseInt(value, 10))
-  @ApiProperty({ type: 'integer', required: true, example: '' })
+  @IsDependentOn('belt_date')
+  @ApiPropertyOptional({ type: 'integer', required: true, example: '' })
   club_id: number;
 
   @IsOptional()
@@ -121,6 +117,12 @@ export class CreateStudentDto {
   @IsDependentOn('belt_date')
   @ApiPropertyOptional({ type: 'integer', required: true, example: '' })
   belt_id?: number;
+
+  @IsOptional()
+  @IsDateString()
+  @IsDependentOn('beltId')
+  @ApiPropertyOptional({ type: String, example: '' })
+  belt_date?: Date;
 }
 
 export class UpdateStudentDto extends PartialType(CreateStudentDto) {}

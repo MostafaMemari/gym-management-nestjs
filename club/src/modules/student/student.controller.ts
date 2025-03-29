@@ -22,38 +22,38 @@ export class StudentController {
   create(@Payload() data: { user: IUser; createStudentDto: IStudentCreateDto }): Promise<ServiceResponse> {
     const { user, createStudentDto } = data;
 
-    return this.studentService.create(user, createStudentDto);
+    return this.studentService.create(user.id, createStudentDto);
   }
   @MessagePattern(StudentPatterns.UPDATE)
   update(@Payload() data: { user: IUser; studentId: number; updateStudentDto: IStudentUpdateDto }): Promise<ServiceResponse> {
     const { user, studentId, updateStudentDto } = data;
 
-    return this.studentService.update(user, studentId, updateStudentDto);
+    return this.studentService.update(user.id, studentId, updateStudentDto);
   }
   @MessagePattern(StudentPatterns.GET_ONE)
   findOne(@Payload() data: { user: IUser; studentId: number }): Promise<ServiceResponse> {
     const { user, studentId } = data;
 
-    return this.studentService.findOneById(user, studentId);
+    return this.studentService.findOneById(user.id, studentId);
     // return this.studentService.getOneDetails(studentId);
   }
   @MessagePattern(StudentPatterns.GET_ALL)
   findAll(@Payload() data: { user: IUser; queryStudentDto: IStudentFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
     const { user, queryStudentDto, paginationDto } = data;
 
-    return this.studentService.getAll(user, { queryStudentDto, paginationDto });
+    return this.studentService.getAll(user.id, { queryStudentDto, paginationDto });
   }
   @MessagePattern(StudentPatterns.GET_ALL_SUMMARY)
   findAllSummary(@Payload() data: { user: IUser; queryStudentDto: IStudentFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
     const { user, queryStudentDto, paginationDto } = data;
 
-    return this.studentService.getAllSummary(user, { queryStudentDto, paginationDto });
+    return this.studentService.getAllSummary(user.id, { queryStudentDto, paginationDto });
   }
   @MessagePattern(StudentPatterns.REMOVE)
   remove(@Payload() data: { user: IUser; studentId: number }): Promise<ServiceResponse> {
     const { user, studentId } = data;
 
-    return this.studentService.removeById(user, studentId);
+    return this.studentService.removeById(user.id, studentId);
   }
 
   @MessagePattern(StudentPatterns.BULK_CREATE)
@@ -62,7 +62,7 @@ export class StudentController {
   ): Promise<ServiceResponse> {
     const { user, studentData, studentsJson } = data;
 
-    return this.studentService.bulkCreate(user, studentData, studentsJson);
+    return this.studentService.bulkCreate(user.id, studentData, studentsJson);
   }
   @MessagePattern(StudentPatterns.GET_BY_NATIONAL_CODE)
   getOneByNationalCode(@Payload() data: { nationalCode: string }): Promise<ServiceResponse> {

@@ -17,13 +17,13 @@ export enum CoachPatterns {
   GET_ONE = 'get_coach',
   REMOVE = 'remove_coach',
 }
-export enum ClubPatterns {
+export enum GymPatterns {
   CHECK_CONNECTION = 'check_connection',
-  CREATE = 'create_club',
-  UPDATE = 'update_club',
-  GET_ALL = 'get_clubs',
-  GET_ONE = 'get_club',
-  REMOVE = 'remove_club',
+  CREATE = 'create_gym',
+  UPDATE = 'update_gym',
+  GET_ALL = 'get_gyms',
+  GET_ONE = 'get_gym',
+  REMOVE = 'remove_gym',
 }
 export enum BeltPatterns {
   CHECK_CONNECTION = 'check_connection',

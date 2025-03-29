@@ -23,7 +23,6 @@ import { UserPatterns } from '../../common/enums/patterns.events';
 import { Services } from '../../common/enums/services.enum';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
-import { IUser } from '../../common/interfaces/user.interface';
 import { checkConnection } from '../../common/utils/checkConnection.utils';
 import { shmasiToMiladi } from '../../common/utils/date/convertDate';
 import { isGenderAllowed, isSameGender } from '../../common/utils/functions';
@@ -31,21 +30,20 @@ import { ResponseUtil } from '../../common/utils/response';
 
 @Injectable()
 export class StudentService {
-  private readonly timeout: number = 4500;
+  private readonly userServiceTimeout: number = 4500;
 
   constructor(
     @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
     private readonly studentRepository: StudentRepository,
     private readonly studentBeltRepository: StudentBeltRepository,
     private readonly awsService: AwsService,
-    private readonly cacheService: CacheService,
     private readonly gymService: GymService,
     private readonly beltService: BeltService,
     private readonly dataSource: DataSource,
     @Inject(forwardRef(() => CoachService)) private readonly coachService: CoachService,
   ) {}
 
-  async create(user: IUser, createStudentDto: IStudentCreateDto): Promise<ServiceResponse> {
+  async create(userId: number, createStudentDto: IStudentCreateDto): Promise<ServiceResponse> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -56,8 +54,16 @@ export class StudentService {
     let studentUserId: number | null = null;
 
     try {
-      if (national_code) await this.validateUniqueNationalCode(national_code, user.id);
-      const { gym, coach } = await this.validateOwnershipGymAndCoach(user.id, gym_id, coach_id);
+      if (national_code) await this.validateUniqueNationalCode(national_code, userId);
+
+      if (gym_id) {
+        await this.gymService.validateOwnershipById(gym_id, userId);
+      }
+      if (coach_id) {
+        await this.coachService.validateOwnershipById(coach_id, userId);
+      }
+
+      const { gym, coach } = await this.validateOwnershipGymAndCoach(userId, gym_id, coach_id);
       this.validateGymIdInCoach(gym_id, coach);
       this.validateStudentGender(gender, coach, gym);
 
@@ -65,7 +71,7 @@ export class StudentService {
       studentUserId = await this.createUserStudent();
 
       const student = await this.studentRepository.createStudent(
-        { ...createStudentDto, image_url: imageKey, userId: studentUserId },
+        { ...createStudentDto, image_url: imageKey, user_id: studentUserId },
         queryRunner,
       );
 
@@ -85,18 +91,18 @@ export class StudentService {
       await queryRunner.release();
     }
   }
-  async update(user: IUser, studentId: number, updateStudentDto: IStudentUpdateDto): Promise<ServiceResponse> {
+  async update(userId: number, studentId: number, updateStudentDto: IStudentUpdateDto): Promise<ServiceResponse> {
     const { gym_id, coach_id, belt_id, national_code, gender, image } = updateStudentDto;
     let imageKey: string | null = null;
 
     try {
-      let student = national_code ? await this.validateUniqueNationalCode(national_code, user.id) : null;
-      if (!student) student = await this.validateOwnershipById(studentId, user.id);
+      let student = national_code ? await this.validateUniqueNationalCode(national_code, userId) : null;
+      if (!student) student = await this.validateOwnershipById(studentId, userId);
 
       if (belt_id) await this.beltService.validateById(belt_id);
 
       if (gym_id || coach_id || gender) {
-        const { gym, coach } = await this.validateOwnershipGymAndCoach(user.id, gym_id ?? student.gym_id, coach_id ?? student.coach_id);
+        const { gym, coach } = await this.validateOwnershipGymAndCoach(userId, gym_id ?? student.gym_id, coach_id ?? student.coach_id);
         this.validateGymIdInCoach(gym.id, coach);
         this.validateStudentGender(gender ?? student.gender, coach, gym);
       }
@@ -119,11 +125,11 @@ export class StudentService {
       ResponseUtil.error(error?.message || StudentMessages.UPDATE_FAILURE, error?.status);
     }
   }
-  async getAll(user: IUser, query: { queryStudentDto: IStudentFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
+  async getAll(userId: number, query: { queryStudentDto: IStudentFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
     const { take, page } = query.paginationDto;
 
     try {
-      const [students, count] = await this.studentRepository.getStudentsWithFilters(user.id, query.queryStudentDto, page, take);
+      const [students, count] = await this.studentRepository.getStudentsWithFilters(userId, query.queryStudentDto, page, take);
 
       const pageMetaDto = new PageMetaDto(count, query.paginationDto);
       const result = new PageDto(students, pageMetaDto);
@@ -133,11 +139,11 @@ export class StudentService {
       ResponseUtil.error(error?.message || StudentMessages.GET_ALL_FAILURE, error?.status);
     }
   }
-  async getAllSummary(user: IUser, query: { queryStudentDto: IStudentFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
+  async getAllSummary(userId: number, query: { queryStudentDto: IStudentFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
     const { take, page } = query.paginationDto;
 
     try {
-      const [students, count] = await this.studentRepository.getStudentsSummaryWithFilters(user.id, query.queryStudentDto, page, take);
+      const [students, count] = await this.studentRepository.getStudentsSummaryWithFilters(userId, query.queryStudentDto, page, take);
 
       const pageMetaDto = new PageMetaDto(count, query.paginationDto);
       const result = new PageDto(students, pageMetaDto);
@@ -147,9 +153,9 @@ export class StudentService {
       ResponseUtil.error(error?.message || StudentMessages.GET_ALL_FAILURE, error?.status);
     }
   }
-  async findOneById(user: IUser, studentId: number): Promise<ServiceResponse> {
+  async findOneById(userId: number, studentId: number): Promise<ServiceResponse> {
     try {
-      const student = await this.validateOwnershipById(studentId, user.id);
+      const student = await this.validateOwnershipById(studentId, userId);
 
       return ResponseUtil.success(student, StudentMessages.GET_SUCCESS);
     } catch (error) {
@@ -165,26 +171,25 @@ export class StudentService {
       ResponseUtil.error(error?.message || StudentMessages.GET_FAILURE, error?.status);
     }
   }
-  async removeById(user: IUser, studentId: number): Promise<ServiceResponse> {
+  async removeById(userId: number, studentId: number): Promise<ServiceResponse> {
     try {
-      const student = await this.validateOwnershipById(studentId, user.id);
+      const student = await this.validateOwnershipById(studentId, userId);
 
       const studentRemoved = await this.studentRepository.removeStudent(student);
 
-      this.removeStudentData(Number(student.userId), student.image_url);
+      this.removeStudentData(Number(student.user_id), student.image_url);
 
       return ResponseUtil.success(studentRemoved, StudentMessages.REMOVE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || StudentMessages.REMOVE_FAILURE, error?.status);
     }
   }
-  async bulkCreate(user: IUser, studentData: IStudentBulkCreateDto, studentsJson: Express.Multer.File): Promise<ServiceResponse> {
+  async bulkCreate(userId: number, studentData: IStudentBulkCreateDto, studentsJson: Express.Multer.File): Promise<ServiceResponse> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     const { gym_id, coach_id, gender } = studentData;
-    const userId: number = user.id;
     const studentUserIds = [];
 
     try {
@@ -219,7 +224,7 @@ export class StudentService {
             gender,
             coach_id,
             gym_id,
-            userId: userStudentId,
+            user_id: userStudentId,
           },
           queryRunner,
         );
@@ -269,7 +274,7 @@ export class StudentService {
     await checkConnection(Services.USER, this.userServiceClientProxy, { pattern: UserPatterns.CHECK_CONNECTION });
 
     const result = await lastValueFrom(
-      this.userServiceClientProxy.send(UserPatterns.CREATE_STUDENT, { username }).pipe(timeout(this.timeout)),
+      this.userServiceClientProxy.send(UserPatterns.CREATE_STUDENT, { username }).pipe(timeout(this.userServiceTimeout)),
     );
 
     if (result?.error) throw result;
@@ -280,7 +285,9 @@ export class StudentService {
 
     await checkConnection(Services.USER, this.userServiceClientProxy, { pattern: UserPatterns.CHECK_CONNECTION });
 
-    const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.REMOVE_ONE, { userId }).pipe(timeout(this.timeout)));
+    const result = await lastValueFrom(
+      this.userServiceClientProxy.send(UserPatterns.REMOVE_ONE, { userId }).pipe(timeout(this.userServiceTimeout)),
+    );
     if (result?.error) throw result;
   }
   private async removeStudentsUserByIds(userIds: number[]): Promise<void> {
@@ -288,7 +295,9 @@ export class StudentService {
 
     await checkConnection(Services.USER, this.userServiceClientProxy, { pattern: UserPatterns.CHECK_CONNECTION });
 
-    const result = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.REMOVE_MANY, { userIds }).pipe(timeout(this.timeout)));
+    const result = await lastValueFrom(
+      this.userServiceClientProxy.send(UserPatterns.REMOVE_MANY, { userIds }).pipe(timeout(this.userServiceTimeout)),
+    );
     if (result?.error) throw result;
   }
   private async updateImage(image: Express.Multer.File): Promise<string | undefined> {

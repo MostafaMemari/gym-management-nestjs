@@ -2,10 +2,10 @@ import { IsArray, IsEnum, IsNotEmpty, IsOptional, IsString, Length } from 'class
 
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { Gender, SortOrder } from '../../../common/enums/shared.enum';
-import { ToArray } from '../../../common/decorators/transformers.decorator';
+import { Gender, SortOrder } from '../../enums/shared.enum';
+import { ToArray } from '../../decorators/transformers.decorator';
 
-export class CreateClubDto {
+export class CreateGymDto {
   @IsNotEmpty()
   @IsString()
   @Length(2, 120)
@@ -47,9 +47,9 @@ export class CreateClubDto {
   address?: string;
 }
 
-export class UpdateClubDto extends PartialType(CreateClubDto) {}
+export class UpdateGymDto extends PartialType(CreateGymDto) {}
 
-export class QueryClubDto {
+export class QueryGymDto {
   @IsOptional()
   @IsString()
   @ApiPropertyOptional({ type: 'string', example: '', description: '' })

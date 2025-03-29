@@ -11,7 +11,7 @@ import { AuthController } from './controllers/auth/auth.controller';
 import { UserController } from './controllers/user/user.controller';
 import { StudentController } from './controllers/club/student.controller';
 import { CoachController } from './controllers/club/coach.controller';
-import { ClubController } from './controllers/club/club.controller';
+import { GymController } from './controllers/club/gym.controller';
 import { RbacController } from './controllers/auth/rbac.controller';
 import { NotificationController } from './controllers/notification.controller';
 import { BeltController } from './controllers/club/belt.controller';
@@ -132,7 +132,7 @@ import { AwsModule } from '../modules/s3AWS/s3AWS.module';
     NotificationController,
     StudentController,
     CoachController,
-    ClubController,
+    GymController,
     BeltController,
     AgeCategoryController,
     BeltExamController,

@@ -21,7 +21,7 @@ import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { GetUser } from '../../../common/decorators/get-user.decorator';
 import { CreateCoachDto, QueryCoachDto, UpdateCoachDto } from '../../../common/dtos/club-service/coach.dto';
 import { PaginationDto } from '../../../common/dtos/shared.dto';
-import { CoachPatterns } from '../../../common/enums/club-service/club.events';
+import { CoachPatterns } from '../../../common/enums/club-service/gym.events';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { UploadFile } from '../../../common/interceptors/upload-file.interceptor';
