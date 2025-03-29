@@ -33,7 +33,7 @@ import { StudentModule } from '../student/student.module';
     CacheModule,
     AwsModule,
     forwardRef(() => GymModule),
-    forwardRef(() => StudentModule),
+    StudentModule,
   ],
   controllers: [CoachController],
   providers: [CoachService, CoachRepository],

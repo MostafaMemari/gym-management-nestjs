@@ -1,4 +1,4 @@
-import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 import { DataSource } from 'typeorm';
@@ -10,11 +10,8 @@ import { StudentBeltRepository } from './repositories/student-belt.repository';
 import { StudentRepository } from './repositories/student.repository';
 
 import { BeltService } from '../belt/belt.service';
-import { CacheService } from '../cache/cache.service';
 import { GymService } from '../gym/gym.service';
 import { GymEntity } from '../gym/entities/gym.entity';
-import { CoachService } from '../coach/coach.service';
-import { CoachEntity } from '../coach/entities/coach.entity';
 import { AwsService } from '../s3AWS/s3AWS.service';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
@@ -53,7 +50,6 @@ export class StudentService {
 
     try {
       if (national_code) await this.validateUniqueNationalCode(national_code, userId);
-
       await this.validateStudentGymAndCoach(gym_id, coach_id, gender, userId);
 
       imageKey = image ? await this.updateImage(image) : null;

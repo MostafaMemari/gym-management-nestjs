@@ -15,7 +15,6 @@ import { AgeCategoryModule } from '../age-category/age-category.module';
 import { BeltModule } from '../belt/belt.module';
 import { CacheModule } from '../cache/cache.module';
 import { GymModule } from '../gym/gym.module';
-import { CoachModule } from '../coach/coach.module';
 import { AwsModule } from '../s3AWS/s3AWS.module';
 
 import { Services } from '../../common/enums/services.enum';
@@ -42,7 +41,6 @@ import { Services } from '../../common/enums/services.enum';
     GymModule,
     BeltModule,
     AgeCategoryModule,
-    forwardRef(() => CoachModule),
   ],
   controllers: [StudentController],
   providers: [StudentService, StudentRepository, StudentBeltRepository, StudentSubscriber],

@@ -13,7 +13,7 @@ import { AttendanceSessionEntity } from 'src/modules/attendance/entities/attenda
 @Index(['full_name', 'national_code'])
 export class CoachEntity extends AbstractEntity {
   @Column({ type: 'integer', unique: true, nullable: false })
-  userId: Number;
+  user_id: Number;
 
   @Column({ type: 'varchar', length: 80 })
   full_name: string;
@@ -45,7 +45,7 @@ export class CoachEntity extends AbstractEntity {
   @OneToMany(() => StudentEntity, (student) => student.coach)
   students: StudentEntity[];
 
-  @ManyToMany(() => GymEntity, (gym) => gym.coaches)
+  @ManyToMany(() => GymEntity, (gym) => gym.coaches, { onDelete: 'CASCADE' })
   gyms: GymEntity[];
 
   @OneToMany(() => SessionEntity, (session) => session.coach)

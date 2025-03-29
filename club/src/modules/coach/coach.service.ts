@@ -33,36 +33,34 @@ export class CoachService {
     private readonly coachRepository: CoachRepository,
 
     private readonly awsService: AwsService,
+    private readonly studentService: StudentService,
     @Inject(forwardRef(() => GymService)) private readonly gymService: GymService,
-    @Inject(forwardRef(() => StudentService)) private readonly studentService: StudentService,
   ) {}
 
   async create(user: IUser, createCoachDto: ICoachCreateDto): Promise<ServiceResponse> {
     const { gym_ids, national_code, gender, image } = createCoachDto;
-    const userId: number = user.id;
 
     let imageKey: string | null = null;
     let coachUserId: number | null = null;
     let ownedGyms: GymEntity[] | null;
 
     try {
-      if (national_code) await this.validateUniqueNationalCode(national_code, userId);
+      if (national_code) await this.validateUniqueNationalCode(national_code, user.id);
 
       if (gym_ids) {
-        ownedGyms = await this.gymService.validateOwnershipByIds(gym_ids, userId);
+        ownedGyms = await this.gymService.validateOwnershipByIds(gym_ids, user.id);
         this.validateCoachGymGender(gender, ownedGyms);
       }
 
       imageKey = image ? await this.updateImage(image) : null;
-
       coachUserId = await this.createUserCoach();
 
       const coach = await this.coachRepository.createCoachWithTransaction({
         ...createCoachDto,
         image_url: imageKey,
         gyms: ownedGyms,
-        userId: coachUserId,
-        owner_id: userId,
+        user_id: coachUserId,
+        owner_id: user.id,
       });
 
       return ResponseUtil.success({ ...coach, userId: coachUserId }, CoachMessages.CREATE_SUCCESS);
@@ -146,7 +144,7 @@ export class CoachService {
 
       await this.coachRepository.removeCoach(coach);
 
-      await this.removeCoachData(Number(coach.userId), coach.image_url);
+      await this.removeCoachData(Number(coach.user_id), coach.image_url);
 
       return ResponseUtil.success(coach, CoachMessages.REMOVE_SUCCESS);
     } catch (error) {
