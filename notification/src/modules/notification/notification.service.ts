@@ -18,12 +18,12 @@ import { UserPatterns } from '../../common/enums/user.events';
 
 @Injectable()
 export class NotificationService {
+  private timeout: number = 4500;
+
   constructor(
     @InjectModel(Notification.name) private readonly notificationModel: Model<Notification>,
     @Inject(Services.USER) private readonly userServiceClient: ClientProxy,
-  ) { }
-
-  private readonly timeout: 4500;
+  ) {}
 
   async create(createNotificationDto: ICreateNotification): Promise<ServiceResponse> {
     try {
@@ -114,7 +114,7 @@ export class NotificationService {
 
       this.validateObjectId(notificationId);
 
-      const notification = await this.findOneOrFail(notificationId, { senderId , type: NotificationType.PUSH });
+      const notification = await this.findOneOrFail(notificationId, { senderId, type: NotificationType.PUSH });
 
       const transformedId = transformId(notification);
 
