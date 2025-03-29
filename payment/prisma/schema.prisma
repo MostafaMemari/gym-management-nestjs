@@ -17,14 +17,15 @@ enum TransactionStatus {
   PENDING
   SUCCESS
   FAILED
+  REFUNDED
 }
 
 model Transaction {
-  id Int @id @default(autoincrement())
-  userId Int
-  amount Int
-  status TransactionStatus @default(PENDING)
+  id        Int               @id @default(autoincrement())
+  userId    Int
+  amount    Int
+  status    TransactionStatus @default(PENDING)
   authority String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @default(now())
 }
