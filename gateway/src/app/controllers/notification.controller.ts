@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Inject, Param, Post, Put } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Inject, Param, Post, Put } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { Services } from '../../common/enums/services.enum';
@@ -14,6 +14,7 @@ import { CreateNotificationDto, UpdateNotificationDto } from '../../common/dtos/
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 import { User } from '../../common/interfaces/user.interface';
+import { NotificationMessages } from '../../common/enums/shared.messages';
 
 @Controller('notification')
 @ApiTags('notification')
@@ -32,6 +33,9 @@ export class NotificationController {
 
       const notificationData = { ...notificationDto, senderId: user.id };
       notificationData.recipients = notificationData.recipients.filter((item) => typeof item == 'number');
+
+      if (notificationData.recipients.length > 100 && notificationData.type == 'SMS')
+        throw new BadRequestException(NotificationMessages.MaximumRecipients);
 
       const data: ServiceResponse = await lastValueFrom(
         this.notificationServiceClient.send(NotificationPatterns.CreateNotification, notificationData).pipe(timeout(this.timeout)),

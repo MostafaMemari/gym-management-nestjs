@@ -12,7 +12,7 @@ import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { GetUser } from '../../../common/decorators/get-user.decorator';
 import { User } from '../../../common/interfaces/user.interface';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
-import { RbacMessages } from '../../../common/enums/auth.messages';
+import { RbacMessages } from '../../../common/enums/shared.messages';
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { checkConnection } from '../../../common/utils/checkConnection.utils';
 
