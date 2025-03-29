@@ -13,3 +13,16 @@ export enum WalletDeductionSortBy {
   DeductionAmount = 'deductionAmount',
   RemainingBalance = 'remainingBalance',
 }
+
+export enum TransactionsSortBy {
+  Amount = 'amount',
+  CreatedAt = 'createdAt',
+  updatedAt = 'updatedAt',
+}
+
+export enum TransactionStatus {
+  SUCCESS = 'SUCCESS',
+  FAILED = 'FAILED',
+  PENDING = 'PENDING',
+  REFUNDED = 'REFUNDED',
+}

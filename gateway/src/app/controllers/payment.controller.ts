@@ -3,7 +3,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { Services } from '../../common/enums/services.enum';
 import { AuthDecorator } from '../../common/decorators/auth.decorator';
-import { PaymentDto } from '../../common/dtos/payment.dto';
+import { PaymentDto, QueryTransactionsDto } from '../../common/dtos/payment.dto';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 import { User } from '../../common/interfaces/user.interface';
 import { handleError, handleServiceResponse } from '../../common/utils/handleError.utils';
@@ -82,11 +82,13 @@ export class PaymentController {
 
   @Get('transactions')
   @Roles(Role.SUPER_ADMIN)
-  async getTransactions(@Query() paginationDto: PaginationDto) {
+  async getTransactions(@Query() transactionFilterDto: QueryTransactionsDto) {
     try {
       await checkConnection(Services.PAYMENT, this.paymentServiceClient);
 
-      const data = await lastValueFrom(this.paymentServiceClient.send(PaymentPatterns.GetTransactions, paginationDto).pipe(timeout(this.timeout)));
+      const data = await lastValueFrom(
+        this.paymentServiceClient.send(PaymentPatterns.GetTransactions, transactionFilterDto).pipe(timeout(this.timeout)),
+      );
 
       return handleServiceResponse(data);
     } catch (error) {
