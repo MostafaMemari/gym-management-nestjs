@@ -3,7 +3,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { Services } from '../../common/enums/services.enum';
 import { AuthDecorator } from '../../common/decorators/auth.decorator';
-import { PaymentDto, QueryTransactionsDto } from '../../common/dtos/payment.dto';
+import { PaymentDto, QueryMyTransactionsDto, QueryTransactionsDto } from '../../common/dtos/payment.dto';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 import { User } from '../../common/interfaces/user.interface';
 import { handleError, handleServiceResponse } from '../../common/utils/handleError.utils';
@@ -13,7 +13,7 @@ import { checkConnection } from '../../common/utils/checkConnection.utils';
 import { PaymentPatterns } from '../../common/enums/payment.events';
 import { Roles } from '../../common/decorators/role.decorator';
 import { Role } from '../../common/enums/role.enum';
-import { PaginationDto } from '../../common/dtos/shared.dto';
+import { AccessRole } from '../../common/decorators/accessRole.decorator';
 
 @Controller('payment')
 @ApiTags('payment')
@@ -64,11 +64,11 @@ export class PaymentController {
   }
 
   @Get('my/transactions')
-  async getMyTransactions(@GetUser() user: User, @Query() paginationDto: PaginationDto) {
+  async getMyTransactions(@GetUser() user: User, @Query() transactionsFilters: QueryMyTransactionsDto) {
     try {
       await checkConnection(Services.PAYMENT, this.paymentServiceClient);
 
-      const transactionsData = { userId: user.id, ...paginationDto };
+      const transactionsData = { userId: user.id, ...transactionsFilters };
 
       const data = await lastValueFrom(
         this.paymentServiceClient.send(PaymentPatterns.GetUserTransactions, transactionsData).pipe(timeout(this.timeout)),
@@ -76,12 +76,13 @@ export class PaymentController {
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to get transactions', Services.PAYMENT);
+      handleError(error, 'Failed to get your transactions', Services.PAYMENT);
     }
   }
 
   @Get('transactions')
   @Roles(Role.SUPER_ADMIN)
+  @AccessRole(Role.SUPER_ADMIN)
   async getTransactions(@Query() transactionFilterDto: QueryTransactionsDto) {
     try {
       await checkConnection(Services.PAYMENT, this.paymentServiceClient);
@@ -98,6 +99,7 @@ export class PaymentController {
 
   @Get('transaction/:id')
   @Roles(Role.SUPER_ADMIN)
+  @AccessRole(Role.SUPER_ADMIN)
   async getOneTransaction(@Param('id', ParseIntPipe) id: number) {
     try {
       await checkConnection(Services.PAYMENT, this.paymentServiceClient);

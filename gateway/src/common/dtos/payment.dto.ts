@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, OmitType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsPositive, IsString, MaxLength, Min, MinLength, Max, IsDate, IsEnum, IsOptional } from 'class-validator';
 import { PaginationDto } from './shared.dto';
@@ -49,9 +49,13 @@ export class QueryTransactionsDto extends PaginationDto {
   @IsOptional()
   @IsNumber()
   @IsPositive()
+  @Min(1000)
+  @Max(200_000_000)
   @Transform(({ value }) => +value)
   @ApiProperty({
     type: 'number',
+    minimum: 1000,
+    maximum: 200_000_000,
     nullable: true,
     required: false,
   })
@@ -60,9 +64,13 @@ export class QueryTransactionsDto extends PaginationDto {
   @IsOptional()
   @IsNumber()
   @IsPositive()
+  @Min(1000)
+  @Max(200_000_000)
   @Transform(({ value }) => +value)
   @ApiProperty({
     type: 'number',
+    minimum: 1000,
+    maximum: 200_000_000,
     nullable: true,
     required: false,
   })
@@ -120,3 +128,5 @@ export class QueryTransactionsDto extends PaginationDto {
   })
   sortDirection?: 'asc' | 'desc';
 }
+
+export class QueryMyTransactionsDto extends OmitType(QueryTransactionsDto, ['userId']) {}
