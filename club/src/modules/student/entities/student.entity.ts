@@ -9,6 +9,7 @@ import { GymEntity } from '../../gym/entities/gym.entity';
 import { StudentBeltEntity } from './student-belt.entity';
 import { SessionEntity } from '../../../modules/session/entities/session.entity';
 import { AttendanceEntity } from '../../../modules/attendance/entities/attendance.entity';
+import { Role } from 'src/common/enums/role.enum';
 
 @Entity(EntityName.STUDENTS)
 @Index(['full_name', 'national_code'])
@@ -68,6 +69,9 @@ export class StudentEntity extends AbstractEntity {
   @ManyToOne(() => CoachEntity, (coach) => coach.students)
   @JoinColumn({ name: 'coach_id' })
   coach: CoachEntity | null;
+
+  @Column({ type: 'integer', nullable: false })
+  created_by: number;
 
   @OneToOne(() => StudentBeltEntity, (beltInfo) => beltInfo.student, { nullable: true })
   beltInfo: StudentBeltEntity | null;

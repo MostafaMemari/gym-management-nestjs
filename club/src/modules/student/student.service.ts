@@ -38,7 +38,7 @@ export class StudentService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async createByAdmin(adminId: number, createStudentDto: IStudentCreateDto): Promise<ServiceResponse> {
+  async create(userId: number, createStudentDto: IStudentCreateDto): Promise<ServiceResponse> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -50,13 +50,14 @@ export class StudentService {
 
     try {
       if (national_code) await this.validateUniqueNationalCode(national_code);
-      await this.validateStudentGymAndCoach(gym_id, coach_id, gender);
+
+      await this.validateStudentGymAndCoachUserId(gym_id, coach_id ?? userId, gender);
 
       imageKey = image ? await this.updateImage(image) : null;
       studentUserId = await this.createUserStudent();
 
       const student = await this.studentRepository.createStudent(
-        { ...createStudentDto, image_url: imageKey, user_id: studentUserId },
+        { ...createStudentDto, image_url: imageKey, user_id: studentUserId, created_by: userId },
         queryRunner,
       );
 
@@ -67,7 +68,7 @@ export class StudentService {
       }
 
       await queryRunner.commitTransaction();
-      return ResponseUtil.success({ ...student, userId: studentUserId }, StudentMessages.CREATE_SUCCESS);
+      return ResponseUtil.success({ ...student }, StudentMessages.CREATE_SUCCESS);
     } catch (error) {
       await queryRunner.rollbackTransaction();
       await this.removeStudentData(studentUserId, imageKey);
@@ -76,44 +77,7 @@ export class StudentService {
       await queryRunner.release();
     }
   }
-  async createByCoach(coachId: number, createStudentDto: IStudentCreateDto): Promise<ServiceResponse> {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
 
-    const { gym_id, belt_id, belt_date, national_code, gender, image } = createStudentDto;
-
-    let imageKey: string | null = null;
-    let studentUserId: number | null = null;
-
-    try {
-      if (national_code) await this.validateUniqueNationalCode(national_code);
-      await this.validateStudentGymAndCoach(gym_id, coachId, gender);
-
-      imageKey = image ? await this.updateImage(image) : null;
-      studentUserId = await this.createUserStudent();
-
-      const student = await this.studentRepository.createStudent(
-        { ...createStudentDto, image_url: imageKey, user_id: studentUserId },
-        queryRunner,
-      );
-
-      if (belt_id && belt_date) {
-        const belt = await this.beltService.validateByIdWithRelation(belt_id);
-        const nextBeltDate = this.beltService.calculateNextBeltDate(belt_date, belt.duration_month);
-        await this.studentBeltRepository.createStudentBelt(student, belt, belt_date, nextBeltDate, queryRunner);
-      }
-
-      await queryRunner.commitTransaction();
-      return ResponseUtil.success({ ...student, userId: studentUserId }, StudentMessages.CREATE_SUCCESS);
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      await this.removeStudentData(studentUserId, imageKey);
-      ResponseUtil.error(error?.message || StudentMessages.CREATE_FAILURE, error?.status);
-    } finally {
-      await queryRunner.release();
-    }
-  }
   async update(userId: number, studentId: number, updateStudentDto: IStudentUpdateDto): Promise<ServiceResponse> {
     const { gym_id, coach_id, belt_id, national_code, gender, image } = updateStudentDto;
     let imageKey: string | null = null;
@@ -125,7 +89,7 @@ export class StudentService {
       if (belt_id) await this.beltService.validateById(belt_id);
 
       if (gym_id || coach_id || gender) {
-        await this.validateStudentGymAndCoach(gym_id ?? student.gym_id, coach_id ?? student.coach_id, gender ?? student.gender);
+        await this.validateStudentGymAndCoachUserId(gym_id ?? student.gym_id, coach_id ?? student.coach_id, gender ?? student.gender);
       }
 
       const updateData = this.prepareUpdateData(updateStudentDto, student);
@@ -216,7 +180,7 @@ export class StudentService {
     try {
       const belts = await this.beltService.getNamesAndIds();
 
-      await this.validateStudentGymAndCoach(gym_id, coach_id, gender);
+      await this.validateStudentGymAndCoachUserId(gym_id, coach_id, gender);
 
       const students: any = JSON.parse(Buffer.from(studentsJson.buffer).toString('utf-8'));
 
@@ -353,8 +317,8 @@ export class StudentService {
     return student;
   }
 
-  async validateStudentGymAndCoach(gymId: number, coachId: number, gender: Gender): Promise<void> {
-    const gym = await this.gymService.checkGymAndCoachEligibility(gymId, coachId, gender);
+  async validateStudentGymAndCoachUserId(gymId: number, coachUserId: number, gender: Gender): Promise<void> {
+    const gym = await this.gymService.checkGymAndCoachEligibility(gymId, coachUserId, gender);
 
     if (!gym) throw new BadRequestException(StudentMessages.INVALID_GYM_OR_COACH);
   }

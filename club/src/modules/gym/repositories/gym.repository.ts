@@ -53,11 +53,11 @@ export class GymRepository extends Repository<GymEntity> {
   async findByIdAndOwner(gymId: number, adminId: number): Promise<GymEntity | null> {
     return this.findOne({ where: { id: gymId, admin_id: adminId } });
   }
-  async validateGymOwnershipAndCoachGender(gymId: number, coachId: number, gender: Gender): Promise<GymEntity | null> {
+  async validateGymAndCoachGender(gymId: number, coachUserId: number, gender: Gender): Promise<GymEntity | null> {
     return await this.createQueryBuilder(EntityName.GYMS)
       .where('gyms.id = :gymId', { gymId })
       .leftJoin('gyms.coaches', 'coaches')
-      .andWhere('coaches.id = :coachId', { coachId })
+      .andWhere('coaches.user_id = :coachUserId', { coachUserId })
       .andWhere(`FIND_IN_SET(:gender, gyms.genders)`, { gender: gender })
       .andWhere('coaches.gender = :gender', { gender })
       .getOne();

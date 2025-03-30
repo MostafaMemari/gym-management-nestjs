@@ -52,7 +52,7 @@ export class UserController {
 
   @Get('profile')
   getProfile(@GetUser() user: User) {
-    return handleServiceResponse({ data: { user }, error: false, message: '', status: HttpStatus.OK });
+    return handleServiceResponse({ data: { ...user }, error: false, message: '', status: HttpStatus.OK });
   }
 
   @Put('profile')

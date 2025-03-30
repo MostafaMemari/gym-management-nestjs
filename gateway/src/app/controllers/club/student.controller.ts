@@ -37,6 +37,8 @@ import { User } from '../../../common/interfaces/user.interface';
 import { FileValidationPipe } from '../../../common/pipes/upload-file.pipe';
 import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
+import { Role } from '../../../common/enums/role.enum';
+import { Roles } from '../../../common/decorators/role.decorator';
 
 @Controller('students')
 @ApiTags('Students')
@@ -45,6 +47,7 @@ export class StudentController {
   constructor(@Inject(Services.CLUB) private readonly clubServiceClient: ClientProxy) {}
 
   @Post('admin')
+  @Roles(Role.ADMIN_CLUB)
   @UseInterceptors(UploadFile('image'))
   @ApiConsumes(SwaggerConsumes.MultipartData)
   async createByAdmin(
@@ -71,6 +74,7 @@ export class StudentController {
     }
   }
   @Post('coach')
+  @Roles(Role.COACH)
   @UseInterceptors(UploadFile('image'))
   @ApiConsumes(SwaggerConsumes.MultipartData)
   async createByCoach(

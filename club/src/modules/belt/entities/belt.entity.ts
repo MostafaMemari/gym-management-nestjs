@@ -2,11 +2,11 @@ import { Entity, Column, ManyToMany, JoinTable } from 'typeorm';
 
 import { BeltName } from '../enums/belt-name.enum';
 
-import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
+import { BaseEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 
 @Entity(EntityName.BELTS)
-export class BeltEntity extends AbstractEntity {
+export class BeltEntity extends BaseEntity {
   @Column({ type: 'enum', enum: BeltName, unique: true })
   name: BeltName;
 

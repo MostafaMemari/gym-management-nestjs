@@ -23,16 +23,14 @@ export class StudentController {
   }
 
   @MessagePattern(StudentPatterns.CREATE)
-  @UseInterceptors(ClearCacheInterceptor)
+  // @UseInterceptors(ClearCacheInterceptor)
   create(@Payload() data: { user: IUser; createStudentDto: IStudentCreateDto }): Promise<ServiceResponse> {
     const { user, createStudentDto } = data;
 
-    if (user.role === Role.ADMIN_CLUB) {
-      return this.studentService.createByAdmin(user.id, createStudentDto);
-    } else if (user.role === Role.COACH) {
-      return this.studentService.createByCoach(user.id, createStudentDto);
-    }
+    if (user.role === Role.ADMIN_CLUB) return this.studentService.create(user.id, createStudentDto);
+    if (user.role === Role.COACH) return this.studentService.create(user.id, createStudentDto);
   }
+
   @MessagePattern(StudentPatterns.UPDATE)
   @UseInterceptors(ClearCacheInterceptor)
   async update(@Payload() data: { user: IUser; studentId: number; updateStudentDto: IStudentUpdateDto }): Promise<ServiceResponse> {

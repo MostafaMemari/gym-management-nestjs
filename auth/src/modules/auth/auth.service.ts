@@ -162,7 +162,7 @@ export class AuthService {
 
       if (!result.data) throw new NotFoundException(AuthMessages.NotFoundStudent);
 
-      const tokens = await this.generateTokens({ id: result.data?.userId });
+      const tokens = await this.generateTokens({ id: result.data?.user_id });
 
       return ResponseUtil.success({ ...tokens }, AuthMessages.SigninSuccess, HttpStatus.OK);
     } catch (error) {
@@ -182,7 +182,7 @@ export class AuthService {
 
       if (!result.data) throw new NotFoundException(AuthMessages.NotFoundCoach);
 
-      const tokens = await this.generateTokens({ id: result.data?.userId });
+      const tokens = await this.generateTokens({ id: result.data?.user_id });
 
       return ResponseUtil.success({ ...tokens }, AuthMessages.SigninSuccess, HttpStatus.OK);
     } catch (error) {
