@@ -4,13 +4,17 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { ICreateGym, IUpdateGym, ISearchGymQuery } from './interfaces/gym.interface';
 import { GymPatterns } from './patterns/gym.pattern';
 import { GymService } from './gym.service';
+
+import { CacheService } from '../cache/cache.service';
+
+import { CacheKeys } from '../../common/enums/cache';
 import { IUser } from '../../common/interfaces/user.interface';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 
 @Controller()
 export class GymController {
-  constructor(private readonly gymService: GymService) {}
+  constructor(private readonly gymService: GymService, private readonly cacheService: CacheService) {}
 
   @MessagePattern(GymPatterns.CHECK_CONNECTION)
   checkConnection() {
@@ -18,16 +22,22 @@ export class GymController {
   }
 
   @MessagePattern(GymPatterns.CREATE)
-  create(@Payload() data: { user: IUser; createGymDto: ICreateGym }): Promise<ServiceResponse> {
+  async create(@Payload() data: { user: IUser; createGymDto: ICreateGym }): Promise<ServiceResponse> {
     const { user, createGymDto } = data;
 
-    return this.gymService.create(user, createGymDto);
+    const result = await this.gymService.create(user, createGymDto);
+    if (!result.error) void this.clearCache(user.id);
+
+    return result;
   }
   @MessagePattern(GymPatterns.UPDATE)
-  update(@Payload() data: { user: IUser; gymId: number; updateGymDto: IUpdateGym }): Promise<ServiceResponse> {
+  async update(@Payload() data: { user: IUser; gymId: number; updateGymDto: IUpdateGym }): Promise<ServiceResponse> {
     const { user, gymId, updateGymDto } = data;
 
-    return this.gymService.update(user, gymId, updateGymDto);
+    const result = await this.gymService.update(user, gymId, updateGymDto);
+    if (!result.error) void this.clearCache(user.id);
+
+    return result;
   }
   @MessagePattern(GymPatterns.GET_ALL)
   findAll(@Payload() data: { user: IUser; queryGymDto: ISearchGymQuery; paginationDto: IPagination }): Promise<ServiceResponse> {
@@ -42,10 +52,13 @@ export class GymController {
     return this.gymService.findOneById(user, gymId);
   }
   @MessagePattern(GymPatterns.REMOVE)
-  remove(@Payload() data: { user: IUser; gymId: number }): Promise<ServiceResponse> {
+  async remove(@Payload() data: { user: IUser; gymId: number }): Promise<ServiceResponse> {
     const { user, gymId } = data;
 
-    return this.gymService.removeById(user, gymId);
+    const result = await this.gymService.removeById(user, gymId);
+    if (!result.error) void this.clearCache(user.id);
+
+    return result;
   }
 
   @MessagePattern(GymPatterns.WALLET_DEPLETED)
@@ -53,5 +66,9 @@ export class GymController {
     const { userId, isWalletDepleted } = data;
 
     return this.gymService.updateWalletDepletionStatus(userId, isWalletDepleted);
+  }
+
+  private async clearCache(ownerId: number) {
+    await this.cacheService.delByPattern(`${CacheKeys.GYMS}`.replace(':userId', ownerId.toString()) + '*');
   }
 }
