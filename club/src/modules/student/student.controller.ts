@@ -8,10 +8,12 @@ import { StudentService } from './student.service';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { IUser } from '../../common/interfaces/user.interface';
+import { CacheService } from '../cache/cache.service';
+import { CacheKeys } from 'src/common/enums/cache';
 
 @Controller()
 export class StudentController {
-  constructor(private readonly studentService: StudentService) {}
+  constructor(private readonly studentService: StudentService, private readonly cacheService: CacheService) {}
 
   @MessagePattern(StudentPatterns.CHECK_CONNECTION)
   checkConnection() {
@@ -19,16 +21,22 @@ export class StudentController {
   }
 
   @MessagePattern(StudentPatterns.CREATE)
-  create(@Payload() data: { user: IUser; createStudentDto: IStudentCreateDto }): Promise<ServiceResponse> {
+  async create(@Payload() data: { user: IUser; createStudentDto: IStudentCreateDto }): Promise<ServiceResponse> {
     const { user, createStudentDto } = data;
 
-    return this.studentService.create(user.id, createStudentDto);
+    const result = await this.studentService.create(user.id, createStudentDto);
+    if (!result.error) void this.clearCache(user.id);
+
+    return result;
   }
   @MessagePattern(StudentPatterns.UPDATE)
-  update(@Payload() data: { user: IUser; studentId: number; updateStudentDto: IStudentUpdateDto }): Promise<ServiceResponse> {
+  async update(@Payload() data: { user: IUser; studentId: number; updateStudentDto: IStudentUpdateDto }): Promise<ServiceResponse> {
     const { user, studentId, updateStudentDto } = data;
 
-    return this.studentService.update(user.id, studentId, updateStudentDto);
+    const result = await this.studentService.update(user.id, studentId, updateStudentDto);
+    if (!result.error) void this.clearCache(user.id);
+
+    return result;
   }
   @MessagePattern(StudentPatterns.GET_ONE)
   findOne(@Payload() data: { user: IUser; studentId: number }): Promise<ServiceResponse> {
@@ -50,10 +58,13 @@ export class StudentController {
     return this.studentService.getAllSummary(user.id, { queryStudentDto, paginationDto });
   }
   @MessagePattern(StudentPatterns.REMOVE)
-  remove(@Payload() data: { user: IUser; studentId: number }): Promise<ServiceResponse> {
+  async remove(@Payload() data: { user: IUser; studentId: number }): Promise<ServiceResponse> {
     const { user, studentId } = data;
 
-    return this.studentService.removeById(user.id, studentId);
+    const result = await this.studentService.removeById(user.id, studentId);
+    if (!result.error) void this.clearCache(user.id);
+
+    return result;
   }
 
   @MessagePattern(StudentPatterns.BULK_CREATE)
@@ -76,5 +87,10 @@ export class StudentController {
     const { userId } = data;
 
     return this.studentService.getCountStudentsByOwner(userId);
+  }
+
+  private async clearCache(ownerId: number) {
+    await this.cacheService.delByPattern(`${CacheKeys.STUDENTS}`.replace(':userId', ownerId.toString()) + '*');
+    await this.cacheService.delByPattern(`${CacheKeys.STUDENTS_SUMMARY}`.replace(':userId', ownerId.toString()) + '*');
   }
 }
