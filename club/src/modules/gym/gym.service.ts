@@ -103,8 +103,11 @@ export class GymService {
     if (!gym) throw new NotFoundException(GymMessages.NOT_BELONG_TO_USER);
     return gym;
   }
-  async checkGymAndCoachEligibility(gymId: number, coachUserId: number, gender: Gender): Promise<GymEntity> {
-    return await this.gymRepository.validateGymAndCoachGender(gymId, coachUserId, gender);
+  async checkGymAndCoachUserIdEligibility(gymId: number, coachUserId: number, gender: Gender): Promise<GymEntity> {
+    return await this.gymRepository.validateGymAndCoachUserIdGender(gymId, coachUserId, gender);
+  }
+  async checkGymAndCoachEligibility(gymId: number, coachId: number, gender: Gender): Promise<GymEntity> {
+    return await this.gymRepository.validateGymAndCoachGender(gymId, coachId, gender);
   }
   async validateOwnershipByIdWithCoaches(gymId: number, userId: number): Promise<GymEntity> {
     const gym = await this.gymRepository.findByIdAndOwnerRelationCoaches(gymId, userId);

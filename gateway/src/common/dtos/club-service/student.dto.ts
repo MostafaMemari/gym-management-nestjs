@@ -122,107 +122,13 @@ export class CreateStudentByAdminDto {
   @ApiPropertyOptional({ type: String, example: '' })
   belt_date?: Date;
 }
-export class CreateStudentByCoachDto {
-  @IsNotEmpty()
-  @IsString()
-  @Length(5, 80)
-  @ApiProperty({ type: String, minLength: 5, maxLength: 80, required: true, example: 'مصطفی معماری' })
-  full_name: string;
 
-  @IsNotEmpty()
-  @IsEnum(Gender)
-  @ApiProperty({ example: 'male', enum: Gender })
-  gender: Gender;
+export class CreateStudentByCoachDto extends OmitType(CreateStudentByAdminDto, ['coach_id']) {}
 
-  @IsNotEmpty()
-  @IsString()
-  @MinLength(10)
-  @ApiProperty({ type: String, example: '', minLength: 10, maxLength: 10 })
-  national_code: string;
+export class UpdateStudentByAdminDto extends PartialType(OmitType(CreateStudentByAdminDto, ['belt_id', 'belt_date'])) {}
+export class UpdateStudentByCoachDto extends PartialType(OmitType(CreateStudentByCoachDto, ['belt_id', 'belt_date'])) {}
 
-  @IsOptional()
-  @ToBoolean()
-  @IsBoolean()
-  @ApiPropertyOptional({ type: Boolean, example: true })
-  is_active?: boolean;
-
-  @IsOptional()
-  @ApiPropertyOptional({ type: 'string', format: 'binary' })
-  image?: Express.Multer.File;
-
-  @IsOptional()
-  @IsString()
-  @Length(2, 80)
-  @ApiPropertyOptional({ type: String, maxLength: 80, minLength: 2, required: true, example: '' })
-  father_name?: string;
-
-  @IsOptional()
-  @IsPhoneNumber('IR')
-  @ApiPropertyOptional({ type: String, example: '09388366510' })
-  phone_number: string;
-
-  @IsOptional()
-  @Length(9, 12)
-  @ApiPropertyOptional({ type: String, example: '' })
-  landline_number?: string;
-
-  @IsOptional()
-  @IsString()
-  @Length(10, 200)
-  @ApiPropertyOptional({ type: String, maxLength: 100, minLength: 10, required: true, example: '' })
-  address?: string;
-
-  @IsOptional()
-  @IsDateString()
-  @ApiPropertyOptional({ type: Date, example: '2025-01-25' })
-  birth_date: Date;
-
-  @IsOptional()
-  @IsDateString()
-  @ApiPropertyOptional({ type: Date, example: '' })
-  sports_insurance_date?: Date;
-
-  @IsOptional()
-  @IsDateString()
-  @Transform(({ value }) => value?.trim())
-  @ApiPropertyOptional({ type: String, example: '' })
-  expire_image_date?: Date;
-
-  @IsOptional()
-  @IsInt()
-  @Min(1371)
-  @Max(1449)
-  @Transform(({ value }) => (value !== null && value !== undefined ? parseInt(value, 10) : null))
-  @ApiPropertyOptional({ type: 'integer', required: false, example: 1402 })
-  membership_year?: number;
-
-  @IsNotEmpty()
-  @IsInt()
-  @IsPositive()
-  @Transform(({ value }) => parseInt(value, 10))
-  @ApiProperty({ type: 'integer', required: true, example: '' })
-  gym_id: number;
-
-  @IsOptional()
-  @IsInt()
-  @IsPositive()
-  @Transform(({ value }) => parseInt(value, 10))
-  @IsDependentOn('belt_date')
-  @ApiPropertyOptional({ type: 'integer', required: true, example: '' })
-  belt_id?: number;
-
-  @IsOptional()
-  @IsDateString()
-  @IsDependentOn('beltId')
-  @ApiPropertyOptional({ type: String, example: '' })
-  belt_date?: Date;
-}
-
-export class UpdateStudentByAdminDto extends PartialType(CreateStudentByAdminDto) {}
-export class UpdateStudentByCoachDto extends PartialType(CreateStudentByCoachDto) {}
-// export class UpdateStudentDto extends PartialType(OmitType(CreateStudentDto, ['beltId', 'belt_date', 'expire_image_date'] as const)) {}
-
-export class BulkCreateStudentsDto extends PickType(CreateStudentByAdminDto, ['gender', 'coach_id', 'gym_id'] as const) {
+export class BulkCreateStudentsDto extends PickType(CreateStudentByAdminDto, ['gender', 'coach_id', 'gym_id']) {
   @IsOptional()
   @ApiPropertyOptional({ type: 'string', format: 'binary' })
   studentsFile?: string;

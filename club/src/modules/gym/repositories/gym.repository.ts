@@ -53,11 +53,20 @@ export class GymRepository extends Repository<GymEntity> {
   async findByIdAndOwner(gymId: number, adminId: number): Promise<GymEntity | null> {
     return this.findOne({ where: { id: gymId, admin_id: adminId } });
   }
-  async validateGymAndCoachGender(gymId: number, coachUserId: number, gender: Gender): Promise<GymEntity | null> {
+  async validateGymAndCoachUserIdGender(gymId: number, coachUserId: number, gender: Gender): Promise<GymEntity | null> {
     return await this.createQueryBuilder(EntityName.GYMS)
+      .innerJoin('gyms.coaches', 'coaches')
       .where('gyms.id = :gymId', { gymId })
-      .leftJoin('gyms.coaches', 'coaches')
       .andWhere('coaches.user_id = :coachUserId', { coachUserId })
+      .andWhere(`FIND_IN_SET(:gender, gyms.genders)`, { gender: gender })
+      .andWhere('coaches.gender = :gender', { gender })
+      .getOne();
+  }
+  async validateGymAndCoachGender(gymId: number, coachId: number, gender: Gender): Promise<GymEntity | null> {
+    return await this.createQueryBuilder(EntityName.GYMS)
+      .innerJoin('gyms.coaches', 'coaches')
+      .where('gyms.id = :gymId', { gymId })
+      .andWhere('coaches.id = :coachId', { coachId })
       .andWhere(`FIND_IN_SET(:gender, gyms.genders)`, { gender: gender })
       .andWhere('coaches.gender = :gender', { gender })
       .getOne();

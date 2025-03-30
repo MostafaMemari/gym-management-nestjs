@@ -27,8 +27,7 @@ export class StudentController {
   create(@Payload() data: { user: IUser; createStudentDto: IStudentCreateDto }): Promise<ServiceResponse> {
     const { user, createStudentDto } = data;
 
-    if (user.role === Role.ADMIN_CLUB) return this.studentService.create(user.id, createStudentDto);
-    if (user.role === Role.COACH) return this.studentService.create(user.id, createStudentDto);
+    return this.studentService.create(user, createStudentDto);
   }
 
   @MessagePattern(StudentPatterns.UPDATE)
@@ -36,10 +35,7 @@ export class StudentController {
   async update(@Payload() data: { user: IUser; studentId: number; updateStudentDto: IStudentUpdateDto }): Promise<ServiceResponse> {
     const { user, studentId, updateStudentDto } = data;
 
-    const result = await this.studentService.update(user.id, studentId, updateStudentDto);
-    if (!result.error) void this.clearCache(user.id);
-
-    return result;
+    return await this.studentService.update(user, studentId, updateStudentDto);
   }
   @MessagePattern(StudentPatterns.GET_ONE)
   findOne(@Payload() data: { user: IUser; studentId: number }): Promise<ServiceResponse> {

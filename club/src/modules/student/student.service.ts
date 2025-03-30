@@ -23,6 +23,8 @@ import { ServiceResponse } from '../../common/interfaces/serviceResponse.interfa
 import { checkConnection } from '../../common/utils/checkConnection.utils';
 import { shmasiToMiladi } from '../../common/utils/date/convertDate';
 import { ResponseUtil } from '../../common/utils/response';
+import { IUser } from '../../common/interfaces/user.interface';
+import { Role } from '../../common/enums/role.enum';
 
 @Injectable()
 export class StudentService {
@@ -38,7 +40,7 @@ export class StudentService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async create(userId: number, createStudentDto: IStudentCreateDto): Promise<ServiceResponse> {
+  async create(user: IUser, createStudentDto: IStudentCreateDto): Promise<ServiceResponse> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -51,13 +53,14 @@ export class StudentService {
     try {
       if (national_code) await this.validateUniqueNationalCode(national_code);
 
-      await this.validateStudentGymAndCoachUserId(gym_id, coach_id ?? userId, gender);
+      if (user.role === Role.ADMIN_CLUB) await this.validateStudentGymAndCoach(gym_id, coach_id, gender);
+      if (user.role === Role.COACH) await this.validateStudentGymAndCoachUserId(gym_id, user.id, gender);
 
       imageKey = image ? await this.updateImage(image) : null;
       studentUserId = await this.createUserStudent();
 
-      const student = await this.studentRepository.createStudent(
-        { ...createStudentDto, image_url: imageKey, user_id: studentUserId, created_by: userId },
+      const student = await this.studentRepository.createAndSave(
+        { ...createStudentDto, image_url: imageKey, user_id: studentUserId, created_by: user.id },
         queryRunner,
       );
 
@@ -78,18 +81,18 @@ export class StudentService {
     }
   }
 
-  async update(userId: number, studentId: number, updateStudentDto: IStudentUpdateDto): Promise<ServiceResponse> {
-    const { gym_id, coach_id, belt_id, national_code, gender, image } = updateStudentDto;
+  async update(user: IUser, studentId: number, updateStudentDto: IStudentUpdateDto): Promise<ServiceResponse> {
+    const { gym_id, coach_id, national_code, gender, image } = updateStudentDto;
     let imageKey: string | null = null;
+    let student: StudentEntity = null;
 
     try {
-      let student = national_code ? await this.validateUniqueNationalCode(national_code) : null;
-      if (!student) student = await this.validateStudentByAdmin(studentId, userId);
-
-      if (belt_id) await this.beltService.validateById(belt_id);
+      await this.validateUniqueNationalCode(national_code);
+      if (user.role === Role.ADMIN_CLUB) student = await this.validateStudentByAdmin(studentId, user.id);
+      if (user.role === Role.COACH) student = await this.validateStudentByCoachUserId(studentId, user.id);
 
       if (gym_id || coach_id || gender) {
-        await this.validateStudentGymAndCoachUserId(gym_id ?? student.gym_id, coach_id ?? student.coach_id, gender ?? student.gender);
+        await this.validateStudentGymAndCoach(gym_id ?? student.gym_id, coach_id ?? student.coach_id, gender ?? student.gender);
       }
 
       const updateData = this.prepareUpdateData(updateStudentDto, student);
@@ -98,7 +101,7 @@ export class StudentService {
 
       if (image) updateData.image_url = await this.updateImage(image);
 
-      const studentUpdated = await this.studentRepository.updateStudent(student, updateData);
+      const studentUpdated = await this.studentRepository.updateMergeAndSave(student, updateData);
 
       if (image && updateData.image_url && student.image_url) {
         await this.awsService.deleteFile(student.image_url);
@@ -198,7 +201,7 @@ export class StudentService {
 
         await this.validateUniqueNationalCode(student.national_code);
 
-        const studentCreate = await this.studentRepository.createStudent(
+        const studentCreate = await this.studentRepository.createAndSave(
           {
             full_name: fullName,
             national_code: nationalCode,
@@ -310,6 +313,11 @@ export class StudentService {
     if (!student) throw new NotFoundException(StudentMessages.NOT_FOUND);
     return student;
   }
+  private async validateStudentByCoachUserId(studentId: number, adminId: number): Promise<StudentEntity> {
+    const student = await this.studentRepository.findByIdAndCoachUserId(studentId, adminId);
+    if (!student) throw new NotFoundException(StudentMessages.NOT_FOUND);
+    return student;
+  }
 
   private async validateStudentByCoach(studentId: number, coachId: number): Promise<StudentEntity> {
     const student = await this.studentRepository.findByIdAndCoach(studentId, coachId);
@@ -318,6 +326,11 @@ export class StudentService {
   }
 
   async validateStudentGymAndCoachUserId(gymId: number, coachUserId: number, gender: Gender): Promise<void> {
+    const gym = await this.gymService.checkGymAndCoachUserIdEligibility(gymId, coachUserId, gender);
+
+    if (!gym) throw new BadRequestException(StudentMessages.INVALID_GYM_OR_COACH);
+  }
+  async validateStudentGymAndCoach(gymId: number, coachUserId: number, gender: Gender): Promise<void> {
     const gym = await this.gymService.checkGymAndCoachEligibility(gymId, coachUserId, gender);
 
     if (!gym) throw new BadRequestException(StudentMessages.INVALID_GYM_OR_COACH);

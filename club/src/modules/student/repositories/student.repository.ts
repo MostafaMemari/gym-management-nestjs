@@ -17,11 +17,11 @@ export class StudentRepository extends Repository<StudentEntity> {
     super(StudentEntity, dataSource.createEntityManager());
   }
 
-  async createStudent(data: Partial<StudentEntity>, queryRunner?: QueryRunner): Promise<StudentEntity> {
+  async createAndSave(data: Partial<StudentEntity>, queryRunner?: QueryRunner): Promise<StudentEntity> {
     const student = this.create(data);
     return queryRunner ? await queryRunner.manager.save(student) : await this.save(student);
   }
-  async updateStudent(student: StudentEntity, updateData: Partial<StudentEntity>) {
+  async updateMergeAndSave(student: StudentEntity, updateData: Partial<StudentEntity>) {
     const updatedStudent = this.merge(student, updateData);
     return await this.save(updatedStudent);
   }
@@ -155,6 +155,13 @@ export class StudentRepository extends Repository<StudentEntity> {
       .where('students.id = :studentId', { studentId })
       .innerJoin('students.gym', 'gym')
       .andWhere('gym.admin_id = :adminId', { adminId })
+      .getOne();
+  }
+  async findByIdAndCoachUserId(studentId: number, coachUserId: number): Promise<StudentEntity> {
+    return this.createQueryBuilder(EntityName.STUDENTS)
+      .where('students.id = :studentId', { studentId })
+      .innerJoin('students.coach', 'coach')
+      .andWhere('coach.user_id = :coachUserId', { coachUserId })
       .getOne();
   }
 
