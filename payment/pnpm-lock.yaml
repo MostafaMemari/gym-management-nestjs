@@ -56,6 +56,9 @@ importers:
       rxjs:
         specifier: ^7.8.1
         version: 7.8.1
+      zarinpal-node-sdk:
+        specifier: ^2.1.0
+        version: 2.1.0
     devDependencies:
       '@nestjs/cli':
         specifier: ^10.0.0
@@ -2044,6 +2047,9 @@ packages:
     resolution: {integrity: sha512-Ux4ygGWsu2c7isFWe8Yu1YluJmqVhxqK2cLXNQA5AcC3QfbGNpM7fu0Y8b/z16pXLnFxZYvWhd3fhBY9DLmC6Q==}
     engines: {node: '>=6'}
 
+  zarinpal-node-sdk@2.1.0:
+    resolution: {integrity: sha512-2POMwR2hT0/LB6pOxLqDRDpD+4ntqxpe7OSuNijSEdaG7PkFQLk2DS+OVWediex6ePzFTddG0OR8j/N/LAYAlA==}
+
 snapshots:
 
   '@acuminous/bitsyntax@0.1.2':
@@ -4030,3 +4036,10 @@ snapshots:
   yargs-parser@21.1.1: {}
 
   yn@3.1.1: {}
+
+  zarinpal-node-sdk@2.1.0:
+    dependencies:
+      axios: 1.8.1
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - debug

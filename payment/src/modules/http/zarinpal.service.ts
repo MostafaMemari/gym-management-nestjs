@@ -3,6 +3,8 @@ import { BadRequestException, Injectable, InternalServerErrorException } from '@
 import { ISendRequest, IVerifyRequest } from '../../common/interfaces/http.interface';
 import { RpcException } from '@nestjs/microservices';
 import { catchError, lastValueFrom, map } from 'rxjs';
+import ZarinpalSdk from 'zarinpal-node-sdk';
+import { IRefund } from '../../common/interfaces/payment.interface';
 
 @Injectable()
 export class ZarinpalService {
@@ -48,6 +50,31 @@ export class ZarinpalService {
       throw new BadRequestException('Connection failed in zarinpal');
     } catch (error) {
       throw new RpcException(error);
+    }
+  }
+
+  async refund(refundDto: IRefund) {
+    try {
+      const { amount, sessionId, description, reason } = refundDto;
+
+      const zarinpal = new ZarinpalSdk({
+        accessToken: process.env.ZARINPAL_ACCESS_TOKEN,
+        merchantId: process.env.ZARINPAL_MERCHANT_ID,
+      });
+
+      const result = await zarinpal.refunds.create({
+        amount,
+        sessionId,
+        method: `PAYA`,
+        reason,
+        description,
+      });
+
+      return result.data.resource || result.data;
+    } catch (error) {
+      if (error?.message && typeof error.message == 'string') throw new RpcException({ message: `Zarinpal refund failed: ${error.message}` });
+
+      throw new RpcException({ message: 'Zarinpal refund failed !!!' });
     }
   }
 

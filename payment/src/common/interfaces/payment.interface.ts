@@ -5,6 +5,14 @@ export interface IVerifyPayment {
   status: string;
   frontendUrl: string;
 }
+
+export interface IRefund {
+  sessionId: string;
+  amount: number;
+  description?: string;
+  reason?: 'CUSTOMER_REQUEST' | 'DUPLICATE_TRANSACTION' | 'SUSPICIOUS_TRANSACTION' | 'OTHER';
+}
+
 export interface IPagination {
   take?: number;
   page?: number;
