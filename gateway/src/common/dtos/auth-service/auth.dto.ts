@@ -149,3 +149,15 @@ export class SigninStudentDto {
   })
   nationalCode: string;
 }
+export class SigninCoachDto {
+  @IsNotEmpty()
+  @IsString()
+  @MinLength(10)
+  @ApiProperty({
+    type: 'string',
+    example: '',
+    minLength: 10,
+    maxLength: 10,
+  })
+  nationalCode: string;
+}

@@ -5,4 +5,6 @@ export enum CoachPatterns {
   GET_ALL = 'get_coaches',
   GET_ONE = 'get_coach',
   REMOVE = 'remove_coach',
+
+  GET_BY_NATIONAL_CODE = 'get_coach_by_national_code',
 }

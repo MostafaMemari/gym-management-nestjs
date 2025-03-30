@@ -149,6 +149,15 @@ export class CoachService {
       ResponseUtil.error(error?.message || CoachMessages.REMOVE_FAILURE, error?.status);
     }
   }
+  async getOneByNationalCode(nationalCode: string): Promise<ServiceResponse> {
+    try {
+      const coach = await this.coachRepository.findOneBy({ national_code: nationalCode });
+      if (!coach) throw new NotFoundException(CoachMessages.NOT_FOUND);
+      return ResponseUtil.success(coach, CoachMessages.GET_SUCCESS);
+    } catch (error) {
+      ResponseUtil.error(error?.message || CoachMessages.UPDATE_FAILURE, error?.status);
+    }
+  }
 
   async validateByAdmin(coachId: number, adminId: number): Promise<CoachEntity> {
     const coach = await this.coachRepository.findByIdAndAdmin(coachId);

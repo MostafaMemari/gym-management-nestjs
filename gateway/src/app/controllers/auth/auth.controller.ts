@@ -9,6 +9,7 @@ import {
   ForgetPasswordDto,
   RefreshTokenDto,
   RestPasswordDto,
+  SigninCoachDto,
   SigninDto,
   SigninStudentDto,
   SignoutDto,
@@ -68,6 +69,21 @@ export class AuthController {
       return handleServiceResponse(data);
     } catch (error) {
       handleError(error, 'Failed to signin student', 'AuthService');
+    }
+  }
+
+  @Post('signin-coach')
+  @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
+  async signinCoach(@Body() signinCoachDto: SigninCoachDto) {
+    try {
+      await checkConnection(Services.AUTH, this.authServiceClient);
+      const data: ServiceResponse = await lastValueFrom(
+        this.authServiceClient.send(AuthPatterns.SigninCoach, signinCoachDto).pipe(timeout(this.timeout)),
+      );
+
+      return handleServiceResponse(data);
+    } catch (error) {
+      handleError(error, 'Failed to signin coach', 'AuthService');
     }
   }
 

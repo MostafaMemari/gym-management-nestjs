@@ -7,6 +7,7 @@ export enum StudentPatterns {
   GET_ALL_SUMMARY = 'get_students_summary',
   GET_ONE = 'get_student',
   REMOVE = 'remove_student',
+
   GET_BY_NATIONAL_CODE = 'get_student_by_national_code',
   GET_COUNT_BY_OWNER = 'get_count_students_by_owner',
 }

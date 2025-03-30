@@ -82,7 +82,7 @@ export class StudentController {
     return this.studentService.bulkCreate(user.id, studentData, studentsJson);
   }
   @MessagePattern(StudentPatterns.GET_BY_NATIONAL_CODE)
-  getOneByNationalCode(@Payload() data: { nationalCode: string }): Promise<ServiceResponse> {
+  getByNationalCode(@Payload() data: { nationalCode: string }): Promise<ServiceResponse> {
     const { nationalCode } = data;
 
     return this.studentService.getOneByNationalCode(nationalCode);

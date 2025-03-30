@@ -59,6 +59,12 @@ export class CoachController {
 
     return result;
   }
+  @MessagePattern(CoachPatterns.GET_BY_NATIONAL_CODE)
+  getByNationalCode(@Payload() data: { nationalCode: string }): Promise<ServiceResponse> {
+    const { nationalCode } = data;
+
+    return this.coachService.getOneByNationalCode(nationalCode);
+  }
 
   private async clearCache(ownerId: number) {
     await this.cacheService.delByPattern(`${CacheKeys.COACHES}`.replace(':userId', ownerId.toString()) + '*');
