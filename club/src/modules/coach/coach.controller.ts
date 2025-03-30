@@ -33,7 +33,7 @@ export class CoachController {
   async update(@Payload() data: { user: IUser; coachId: number; updateCoachDto: ICoachUpdateDto }): Promise<ServiceResponse> {
     const { user, coachId, updateCoachDto } = data;
 
-    const result = await this.coachService.update(user, coachId, updateCoachDto);
+    const result = await this.coachService.update(user.id, coachId, updateCoachDto);
     if (!result.error) void this.clearCache(user.id);
 
     return result;

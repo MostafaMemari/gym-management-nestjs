@@ -61,9 +61,6 @@ export class StudentEntity extends AbstractEntity {
   @Column({ type: 'integer', nullable: true })
   coach_id: number;
 
-  @Column({ type: 'integer', nullable: false })
-  owner_id: number;
-
   @ManyToOne(() => GymEntity, (gym) => gym.students)
   @JoinColumn({ name: 'gym_id' })
   gym: GymEntity | null;
@@ -76,7 +73,11 @@ export class StudentEntity extends AbstractEntity {
   beltInfo: StudentBeltEntity | null;
 
   @ManyToMany(() => SessionEntity, (session) => session.students)
-  @JoinTable()
+  @JoinTable({
+    name: 'student_sessions',
+    joinColumn: { name: 'student_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'coach_id', referencedColumnName: 'id' },
+  })
   sessions: SessionEntity[];
 
   @OneToMany(() => AttendanceEntity, (attendance) => attendance.student)

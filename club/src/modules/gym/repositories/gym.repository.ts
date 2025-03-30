@@ -14,8 +14,8 @@ export class GymRepository extends Repository<GymEntity> {
     super(GymEntity, dataSource.createEntityManager());
   }
 
-  async createAndSave(createGymDto: ICreateGym, ownerId: number): Promise<GymEntity> {
-    const gym = this.create({ ...createGymDto, owner_id: ownerId });
+  async createAndSave(createGymDto: ICreateGym, adminId: number): Promise<GymEntity> {
+    const gym = this.create({ ...createGymDto, admin_id: adminId });
     return await this.save(gym);
   }
   async updateMergeAndSave(gym: GymEntity, updateGymDto: IUpdateGym): Promise<GymEntity> {
@@ -26,10 +26,10 @@ export class GymRepository extends Repository<GymEntity> {
     return await this.remove(gym);
   }
 
-  async getGymsWithFilters(ownerId: number, filters: ISearchGymQuery, page: number, take: number): Promise<[GymEntity[], number]> {
-    const cacheKey = `${CacheKeys.GYMS}-${page}-${take}-${JSON.stringify(filters)}`.replace(':userId', ownerId.toString());
+  async getGymsWithFilters(adminId: number, filters: ISearchGymQuery, page: number, take: number): Promise<[GymEntity[], number]> {
+    const cacheKey = `${CacheKeys.GYMS}-${page}-${take}-${JSON.stringify(filters)}`.replace(':userId', adminId.toString());
 
-    const queryBuilder = this.createQueryBuilder(EntityName.GYMS).where('gyms.owner_id = :owner_id', { owner_id: ownerId });
+    const queryBuilder = this.createQueryBuilder(EntityName.GYMS).where('gyms.admin_id = :admin_id', { admin_id: adminId });
 
     if (filters?.search) {
       queryBuilder.andWhere('gyms.name LIKE :search', { search: `%${filters.search}%` });
@@ -50,38 +50,37 @@ export class GymRepository extends Repository<GymEntity> {
       .getManyAndCount();
   }
 
-  async findByIdAndOwner(gymId: number, ownerId: number): Promise<GymEntity | null> {
-    return this.findOne({ where: { id: gymId, owner_id: ownerId } });
+  async findByIdAndOwner(gymId: number, adminId: number): Promise<GymEntity | null> {
+    return this.findOne({ where: { id: gymId, admin_id: adminId } });
   }
-  async validateGymOwnershipAndCoachGender(gymId: number, coachId: number, gender: Gender, userId: number): Promise<GymEntity | null> {
+  async validateGymOwnershipAndCoachGender(gymId: number, coachId: number, gender: Gender): Promise<GymEntity | null> {
     return await this.createQueryBuilder(EntityName.GYMS)
       .where('gyms.id = :gymId', { gymId })
-      .andWhere('gyms.owner_id = :ownerId', { ownerId: userId })
       .leftJoin('gyms.coaches', 'coaches')
       .andWhere('coaches.id = :coachId', { coachId })
       .andWhere(`FIND_IN_SET(:gender, gyms.genders)`, { gender: gender })
       .andWhere('coaches.gender = :gender', { gender })
       .getOne();
   }
-  async findByIdAndOwnerRelationCoaches(gymId: number, ownerId: number): Promise<GymEntity | null> {
-    return this.findOne({ where: { id: gymId, owner_id: ownerId }, relations: ['coaches'] });
+  async findByIdAndOwnerRelationCoaches(gymId: number, adminId: number): Promise<GymEntity | null> {
+    return this.findOne({ where: { id: gymId, admin_id: adminId }, relations: ['coaches'] });
   }
 
-  async findOwnedGymsByIds(gymIds: number[], ownerId: number): Promise<GymEntity[]> {
+  async findOwnedGymsByIds(gymIds: number[], adminId: number): Promise<GymEntity[]> {
     return this.find({
-      where: { owner_id: ownerId, id: In(gymIds) },
+      where: { admin_id: adminId, id: In(gymIds) },
     });
   }
 
-  async findByOwnerId(ownerId: number): Promise<GymEntity[]> {
-    return this.findBy({ owner_id: ownerId });
+  async findByOwnerId(adminId: number): Promise<GymEntity[]> {
+    return this.findBy({ admin_id: adminId });
   }
 
-  async setWalletDepletionByOwnerId(ownerId: number, isWalletDepleted: boolean): Promise<void> {
+  async setWalletDepletionByOwnerId(adminId: number, isWalletDepleted: boolean): Promise<void> {
     await this.createQueryBuilder()
       .update(GymEntity)
       .set({ is_wallet_depleted: isWalletDepleted })
-      .where('owner_id = :ownerId', { ownerId })
+      .where('admin_id = :adminId', { adminId })
       .execute();
   }
 }

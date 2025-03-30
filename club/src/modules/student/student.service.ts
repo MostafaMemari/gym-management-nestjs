@@ -38,7 +38,7 @@ export class StudentService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async create(userId: number, createStudentDto: IStudentCreateDto): Promise<ServiceResponse> {
+  async createByAdmin(adminId: number, createStudentDto: IStudentCreateDto): Promise<ServiceResponse> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -49,14 +49,52 @@ export class StudentService {
     let studentUserId: number | null = null;
 
     try {
-      if (national_code) await this.validateUniqueNationalCode(national_code, userId);
-      await this.validateStudentGymAndCoach(gym_id, coach_id, gender, userId);
+      if (national_code) await this.validateUniqueNationalCode(national_code);
+      await this.validateStudentGymAndCoach(gym_id, coach_id, gender);
 
       imageKey = image ? await this.updateImage(image) : null;
       studentUserId = await this.createUserStudent();
 
       const student = await this.studentRepository.createStudent(
-        { ...createStudentDto, image_url: imageKey, user_id: studentUserId, owner_id: userId },
+        { ...createStudentDto, image_url: imageKey, user_id: studentUserId },
+        queryRunner,
+      );
+
+      if (belt_id && belt_date) {
+        const belt = await this.beltService.validateByIdWithRelation(belt_id);
+        const nextBeltDate = this.beltService.calculateNextBeltDate(belt_date, belt.duration_month);
+        await this.studentBeltRepository.createStudentBelt(student, belt, belt_date, nextBeltDate, queryRunner);
+      }
+
+      await queryRunner.commitTransaction();
+      return ResponseUtil.success({ ...student, userId: studentUserId }, StudentMessages.CREATE_SUCCESS);
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      await this.removeStudentData(studentUserId, imageKey);
+      ResponseUtil.error(error?.message || StudentMessages.CREATE_FAILURE, error?.status);
+    } finally {
+      await queryRunner.release();
+    }
+  }
+  async createByCoach(coachId: number, createStudentDto: IStudentCreateDto): Promise<ServiceResponse> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    const { gym_id, belt_id, belt_date, national_code, gender, image } = createStudentDto;
+
+    let imageKey: string | null = null;
+    let studentUserId: number | null = null;
+
+    try {
+      if (national_code) await this.validateUniqueNationalCode(national_code);
+      await this.validateStudentGymAndCoach(gym_id, coachId, gender);
+
+      imageKey = image ? await this.updateImage(image) : null;
+      studentUserId = await this.createUserStudent();
+
+      const student = await this.studentRepository.createStudent(
+        { ...createStudentDto, image_url: imageKey, user_id: studentUserId },
         queryRunner,
       );
 
@@ -81,13 +119,13 @@ export class StudentService {
     let imageKey: string | null = null;
 
     try {
-      let student = national_code ? await this.validateUniqueNationalCode(national_code, userId) : null;
-      if (!student) student = await this.validateOwnershipById(studentId, userId);
+      let student = national_code ? await this.validateUniqueNationalCode(national_code) : null;
+      if (!student) student = await this.validateStudentByAdmin(studentId, userId);
 
       if (belt_id) await this.beltService.validateById(belt_id);
 
       if (gym_id || coach_id || gender) {
-        await this.validateStudentGymAndCoach(gym_id ?? student.gym_id, coach_id ?? student.coach_id, gender ?? student.gender, userId);
+        await this.validateStudentGymAndCoach(gym_id ?? student.gym_id, coach_id ?? student.coach_id, gender ?? student.gender);
       }
 
       const updateData = this.prepareUpdateData(updateStudentDto, student);
@@ -138,7 +176,7 @@ export class StudentService {
   }
   async findOneById(userId: number, studentId: number): Promise<ServiceResponse> {
     try {
-      const student = await this.validateOwnershipById(studentId, userId);
+      const student = await this.validateStudentByAdmin(studentId, userId);
 
       return ResponseUtil.success(student, StudentMessages.GET_SUCCESS);
     } catch (error) {
@@ -156,7 +194,7 @@ export class StudentService {
   }
   async removeById(userId: number, studentId: number): Promise<ServiceResponse> {
     try {
-      const student = await this.validateOwnershipById(studentId, userId);
+      const student = await this.validateStudentByAdmin(studentId, userId);
 
       const studentRemoved = await this.studentRepository.removeStudent(student);
 
@@ -178,7 +216,7 @@ export class StudentService {
     try {
       const belts = await this.beltService.getNamesAndIds();
 
-      await this.validateStudentGymAndCoach(gym_id, coach_id, gender, userId);
+      await this.validateStudentGymAndCoach(gym_id, coach_id, gender);
 
       const students: any = JSON.parse(Buffer.from(studentsJson.buffer).toString('utf-8'));
 
@@ -194,7 +232,7 @@ export class StudentService {
         const belt_id = belts.find((belt) => belt.name === student.belt)?.id;
         const beltDate = shmasiToMiladi(student.belt_date as any);
 
-        await this.validateUniqueNationalCode(student.national_code, userId);
+        await this.validateUniqueNationalCode(student.national_code);
 
         const studentCreate = await this.studentRepository.createStudent(
           {
@@ -291,8 +329,8 @@ export class StudentService {
     if (!imageKey) return;
     await this.awsService.deleteFile(imageKey);
   }
-  private async validateUniqueNationalCode(nationalCode: string, userId: number): Promise<StudentEntity> {
-    const student = await this.studentRepository.findStudentByNationalCode(nationalCode, userId);
+  private async validateUniqueNationalCode(nationalCode: string): Promise<StudentEntity> {
+    const student = await this.studentRepository.findStudentByNationalCode(nationalCode);
     if (student) throw new BadRequestException(StudentMessages.DUPLICATE_ENTRY);
     return student;
   }
@@ -303,14 +341,20 @@ export class StudentService {
     ]);
   }
 
-  private async validateOwnershipById(studentId: number, userId: number): Promise<StudentEntity> {
-    const student = await this.studentRepository.findByIdAndOwner(studentId, userId);
+  private async validateStudentByAdmin(studentId: number, adminId: number): Promise<StudentEntity> {
+    const student = await this.studentRepository.findByIdAndAdmin(studentId, adminId);
     if (!student) throw new NotFoundException(StudentMessages.NOT_FOUND);
     return student;
   }
 
-  async validateStudentGymAndCoach(gymId: number, coachId: number, gender: Gender, userId: number): Promise<void> {
-    const gym = await this.gymService.checkGymAndCoachEligibility(gymId, coachId, gender, userId);
+  private async validateStudentByCoach(studentId: number, coachId: number): Promise<StudentEntity> {
+    const student = await this.studentRepository.findByIdAndCoach(studentId, coachId);
+    if (!student) throw new NotFoundException(StudentMessages.NOT_FOUND);
+    return student;
+  }
+
+  async validateStudentGymAndCoach(gymId: number, coachId: number, gender: Gender): Promise<void> {
+    const gym = await this.gymService.checkGymAndCoachEligibility(gymId, coachId, gender);
 
     if (!gym) throw new BadRequestException(StudentMessages.INVALID_GYM_OR_COACH);
   }

@@ -150,12 +150,23 @@ export class StudentRepository extends Repository<StudentEntity> {
       .getManyAndCount();
   }
 
-  async findByIdAndOwner(studentId: number, ownerId: number): Promise<StudentEntity> {
-    return await this.findOne({ where: { id: studentId, owner_id: ownerId } });
+  async findByIdAndAdmin(studentId: number, adminId: number): Promise<StudentEntity> {
+    return this.createQueryBuilder(EntityName.STUDENTS)
+      .where('students.id = :studentId', { studentId })
+      .innerJoin('students.gym', 'gym')
+      .andWhere('gym.admin_id = :adminId', { adminId })
+      .getOne();
   }
 
-  async findStudentByNationalCode(nationalCode: string, ownerId: number): Promise<StudentEntity> {
-    return await this.findOneBy({ national_code: nationalCode, owner_id: ownerId });
+  async findByIdAndCoach(studentId: number, coachId: number): Promise<StudentEntity> {
+    return this.createQueryBuilder(EntityName.STUDENTS)
+      .where('students.id = :studentId', { studentId })
+      .andWhere('students.coach_id = :coachId', { coachId })
+      .getOne();
+  }
+
+  async findStudentByNationalCode(nationalCode: string): Promise<StudentEntity> {
+    return await this.findOneBy({ national_code: nationalCode });
   }
 
   async existsStudentsInGym(gym_id: number, coach_id: number): Promise<boolean> {

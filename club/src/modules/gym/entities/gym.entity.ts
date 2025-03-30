@@ -25,10 +25,14 @@ export class GymEntity extends AbstractEntity {
   address?: string;
 
   @Column({ type: 'integer', nullable: false })
-  owner_id: number;
+  admin_id: number;
 
   @ManyToMany(() => CoachEntity, (coach) => coach.gyms)
-  @JoinTable()
+  @JoinTable({
+    name: 'gym_coaches',
+    joinColumn: { name: 'gym_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'coach_id', referencedColumnName: 'id' },
+  })
   coaches: CoachEntity[];
 
   @OneToMany(() => StudentEntity, (student) => student.gym)

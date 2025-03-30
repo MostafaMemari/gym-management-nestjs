@@ -1,15 +1,17 @@
-import { Controller } from '@nestjs/common';
+import { Controller, UseInterceptors } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
+import { ClearCacheInterceptor } from './interceptors/clear-cache.Interceptor';
 import { IStudentBulkCreateDto, IStudentCreateDto, IStudentFilter, IStudentUpdateDto } from './interfaces/student.interface';
 import { StudentPatterns } from './patterns/student.pattern';
 import { StudentService } from './student.service';
 
+import { CacheKeys } from '../../common/enums/cache';
+import { Role } from '../../common/enums/role.enum';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { IUser } from '../../common/interfaces/user.interface';
 import { CacheService } from '../cache/cache.service';
-import { CacheKeys } from 'src/common/enums/cache';
 
 @Controller()
 export class StudentController {
@@ -21,15 +23,18 @@ export class StudentController {
   }
 
   @MessagePattern(StudentPatterns.CREATE)
-  async create(@Payload() data: { user: IUser; createStudentDto: IStudentCreateDto }): Promise<ServiceResponse> {
+  @UseInterceptors(ClearCacheInterceptor)
+  create(@Payload() data: { user: IUser; createStudentDto: IStudentCreateDto }): Promise<ServiceResponse> {
     const { user, createStudentDto } = data;
 
-    const result = await this.studentService.create(user.id, createStudentDto);
-    if (!result.error) void this.clearCache(user.id);
-
-    return result;
+    if (user.role === Role.ADMIN_CLUB) {
+      return this.studentService.createByAdmin(user.id, createStudentDto);
+    } else if (user.role === Role.COACH) {
+      return this.studentService.createByCoach(user.id, createStudentDto);
+    }
   }
   @MessagePattern(StudentPatterns.UPDATE)
+  @UseInterceptors(ClearCacheInterceptor)
   async update(@Payload() data: { user: IUser; studentId: number; updateStudentDto: IStudentUpdateDto }): Promise<ServiceResponse> {
     const { user, studentId, updateStudentDto } = data;
 
@@ -58,6 +63,7 @@ export class StudentController {
     return this.studentService.getAllSummary(user.id, { queryStudentDto, paginationDto });
   }
   @MessagePattern(StudentPatterns.REMOVE)
+  @UseInterceptors(ClearCacheInterceptor)
   async remove(@Payload() data: { user: IUser; studentId: number }): Promise<ServiceResponse> {
     const { user, studentId } = data;
 

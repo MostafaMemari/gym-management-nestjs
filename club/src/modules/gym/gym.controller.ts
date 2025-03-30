@@ -1,9 +1,10 @@
-import { Controller } from '@nestjs/common';
+import { Controller, UseInterceptors } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
 import { ICreateGym, IUpdateGym, ISearchGymQuery } from './interfaces/gym.interface';
 import { GymPatterns } from './patterns/gym.pattern';
 import { GymService } from './gym.service';
+import { ClearCacheInterceptor } from './interceptors/clear-cache.Interceptor';
 
 import { CacheService } from '../cache/cache.service';
 
@@ -22,6 +23,7 @@ export class GymController {
   }
 
   @MessagePattern(GymPatterns.CREATE)
+  @UseInterceptors(ClearCacheInterceptor)
   async create(@Payload() data: { user: IUser; createGymDto: ICreateGym }): Promise<ServiceResponse> {
     const { user, createGymDto } = data;
 
@@ -31,6 +33,7 @@ export class GymController {
     return result;
   }
   @MessagePattern(GymPatterns.UPDATE)
+  @UseInterceptors(ClearCacheInterceptor)
   async update(@Payload() data: { user: IUser; gymId: number; updateGymDto: IUpdateGym }): Promise<ServiceResponse> {
     const { user, gymId, updateGymDto } = data;
 
@@ -51,12 +54,17 @@ export class GymController {
 
     return this.gymService.findOneById(user, gymId);
   }
+
   @MessagePattern(GymPatterns.REMOVE)
+  @UseInterceptors(ClearCacheInterceptor)
   async remove(@Payload() data: { user: IUser; gymId: number }): Promise<ServiceResponse> {
     const { user, gymId } = data;
 
     const result = await this.gymService.removeById(user, gymId);
-    if (!result.error) void this.clearCache(user.id);
+    // if (!result.error) {
+    //   void this.clearCache(user.id);
+    //   void this.clearCache(result.data.coach_id);
+    // }
 
     return result;
   }

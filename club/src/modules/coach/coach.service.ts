@@ -45,7 +45,7 @@ export class CoachService {
     let ownedGyms: GymEntity[] | null;
 
     try {
-      if (national_code) await this.validateUniqueNationalCode(national_code, user.id);
+      if (national_code) await this.validateUniqueNationalCode(national_code);
 
       if (gym_ids) {
         ownedGyms = await this.gymService.validateOwnershipByIds(gym_ids, user.id);
@@ -60,7 +60,6 @@ export class CoachService {
         image_url: imageKey,
         gyms: ownedGyms,
         user_id: coachUserId,
-        owner_id: user.id,
       });
 
       return ResponseUtil.success({ ...coach, userId: coachUserId }, CoachMessages.CREATE_SUCCESS);
@@ -69,20 +68,19 @@ export class CoachService {
       ResponseUtil.error(error?.message || CoachMessages.CREATE_FAILURE, error?.status);
     }
   }
-  async update(user: IUser, coachId: number, updateCoachDto: ICoachUpdateDto): Promise<ServiceResponse> {
+  async update(adminId: number, coachId: number, updateCoachDto: ICoachUpdateDto): Promise<ServiceResponse> {
     const { gym_ids = [], national_code, gender, image } = updateCoachDto;
-    const userId: number = user.id;
 
     let imageKey: string | null = null;
 
     try {
-      let coach = national_code ? await this.validateUniqueNationalCode(national_code, userId) : null;
-      if (!coach) coach = await this.validateOwnershipById(coachId, userId);
+      let coach = national_code ? await this.validateUniqueNationalCode(national_code) : null;
+      if (!coach) coach = await this.validateByAdmin(coachId, adminId);
 
       const updateData = this.prepareUpdateData(updateCoachDto, coach);
 
       if (gym_ids.length) {
-        const ownedGyms = gym_ids?.length ? await this.gymService.validateOwnershipByIds(gym_ids, userId) : coach.gyms;
+        const ownedGyms = gym_ids?.length ? await this.gymService.validateOwnershipByIds(gym_ids, adminId) : coach.gyms;
         const removedGyms = coach.gyms.filter((gym) => !gym_ids.includes(gym.id));
         if (removedGyms.length) await this.studentService.validateRemovedGymsStudents(removedGyms, coachId);
         this.validateCoachGymGender(coach.gender, ownedGyms);
@@ -127,7 +125,7 @@ export class CoachService {
   }
   async findOneById(user: IUser, coachId: number): Promise<ServiceResponse> {
     try {
-      const coach = await this.validateOwnershipById(coachId, user.id);
+      const coach = await this.validateByAdmin(coachId, user.id);
 
       return ResponseUtil.success(coach, CoachMessages.GET_SUCCESS);
     } catch (error) {
@@ -137,7 +135,7 @@ export class CoachService {
   async removeById(user: IUser, coachId: number): Promise<ServiceResponse> {
     const userId = user.id;
     try {
-      const coach = await this.validateOwnershipById(coachId, userId);
+      const coach = await this.validateByAdmin(coachId, userId);
 
       const hasStudents = await this.studentService.hasStudentsAssignedToCoach(coachId);
       if (hasStudents) throw new BadRequestException(CoachMessages.COACH_HAS_STUDENTS.replace('{coachId}', coachId.toString()));
@@ -152,8 +150,8 @@ export class CoachService {
     }
   }
 
-  async validateOwnershipById(coachId: number, userId: number): Promise<CoachEntity> {
-    const coach = await this.coachRepository.findByIdAndOwner(coachId, userId);
+  async validateByAdmin(coachId: number, adminId: number): Promise<CoachEntity> {
+    const coach = await this.coachRepository.findByIdAndAdmin(coachId);
     if (!coach) throw new NotFoundException(CoachMessages.NOT_FOUND);
     return coach;
   }
@@ -190,8 +188,8 @@ export class CoachService {
     if (!imageKey) return;
     await this.awsService.deleteFile(imageKey);
   }
-  async validateUniqueNationalCode(nationalCode: string, userId: number): Promise<CoachEntity> {
-    const coach = await this.coachRepository.findCoachByNationalCode(nationalCode, userId);
+  async validateUniqueNationalCode(nationalCode: string): Promise<CoachEntity> {
+    const coach = await this.coachRepository.findCoachByNationalCode(nationalCode);
     if (coach) throw new BadRequestException(CoachMessages.DUPLICATE_ENTRY);
     return coach;
   }

@@ -99,12 +99,12 @@ export class CoachRepository extends Repository<CoachEntity> {
     }
   }
 
-  async findCoachByNationalCode(nationalCode: string, owner_id: number): Promise<CoachEntity | null> {
-    return this.findOne({ where: { national_code: nationalCode, owner_id }, relations: ['gyms'] });
+  async findCoachByNationalCode(nationalCode: string): Promise<CoachEntity | null> {
+    return this.findOne({ where: { national_code: nationalCode }, relations: ['gyms'] });
   }
 
-  async findByIdAndOwner(coachId: number, owner_id: number): Promise<CoachEntity | null> {
-    return this.findOne({ where: { id: coachId, owner_id }, relations: ['gyms'] });
+  async findByIdAndAdmin(coachId: number): Promise<CoachEntity | null> {
+    return this.findOne({ where: { id: coachId }, relations: ['gyms'] });
   }
 
   async existsCoachByGenderInGym(gym_id: number, gender: Gender): Promise<boolean> {
