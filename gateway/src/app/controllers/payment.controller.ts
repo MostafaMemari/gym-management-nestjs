@@ -3,7 +3,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { Services } from '../../common/enums/services.enum';
 import { AuthDecorator } from '../../common/decorators/auth.decorator';
-import { PaymentDto, QueryMyTransactionsDto, QueryTransactionsDto } from '../../common/dtos/payment.dto';
+import { PaymentDto, QueryMyTransactionsDto, QueryTransactionsDto, RefundPaymentDto } from '../../common/dtos/payment.dto';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 import { User } from '../../common/interfaces/user.interface';
 import { handleError, handleServiceResponse } from '../../common/utils/handleError.utils';
@@ -60,6 +60,24 @@ export class PaymentController {
       return handleServiceResponse(data);
     } catch (error) {
       handleError(error, 'Failed to verify payment', Services.PAYMENT);
+    }
+  }
+
+  @Post('refund/:transactionId')
+  @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
+  @Roles(Role.SUPER_ADMIN)
+  @AccessRole(Role.SUPER_ADMIN)
+  async refundPayment(@Param('transactionId', ParseIntPipe) transactionId: number, @Body() refundPaymentDto: RefundPaymentDto) {
+    try {
+      await checkConnection(Services.PAYMENT, this.paymentServiceClient);
+
+      const result = await lastValueFrom(
+        this.paymentServiceClient.send(PaymentPatterns.RefundPayment, { transactionId, ...refundPaymentDto }).pipe(timeout(this.timeout)),
+      );
+
+      return handleServiceResponse(result);
+    } catch (error) {
+      handleError(error, 'Failed to refund payment', Services.PAYMENT);
     }
   }
 

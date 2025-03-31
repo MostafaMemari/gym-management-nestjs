@@ -2,7 +2,7 @@ import { ApiProperty, OmitType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsPositive, IsString, MaxLength, Min, MinLength, Max, IsDate, IsEnum, IsOptional } from 'class-validator';
 import { PaginationDto } from './shared.dto';
-import { SortOrder, TransactionsSortBy, TransactionStatus } from '../enums/shared.enum';
+import { RefundPaymentReason, SortOrder, TransactionsSortBy, TransactionStatus } from '../enums/shared.enum';
 
 export class PaymentDto {
   @IsNotEmpty()
@@ -130,3 +130,26 @@ export class QueryTransactionsDto extends PaginationDto {
 }
 
 export class QueryMyTransactionsDto extends OmitType(QueryTransactionsDto, ['userId']) {}
+
+export class RefundPaymentDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  @MinLength(4)
+  @ApiProperty({
+    type: 'string',
+    required: false,
+    nullable: true,
+  })
+  description?: string;
+
+  @IsOptional()
+  @IsEnum(RefundPaymentReason)
+  @ApiProperty({
+    type: 'string',
+    enum: RefundPaymentReason,
+    nullable: true,
+    required: false,
+  })
+  reason?: RefundPaymentReason;
+}
