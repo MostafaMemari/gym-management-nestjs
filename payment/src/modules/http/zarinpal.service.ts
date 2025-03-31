@@ -65,7 +65,7 @@ export class ZarinpalService {
       const result = await zarinpal.refunds.create({
         amount,
         sessionId,
-        method: `PAYA`,
+        method: `CARD`,
         reason,
         description,
       });
@@ -74,7 +74,7 @@ export class ZarinpalService {
     } catch (error) {
       if (error?.message && typeof error.message == 'string') throw new RpcException({ message: `Zarinpal refund failed: ${error.message}` });
 
-      throw new RpcException({ message: 'Zarinpal refund failed !!!' });
+      throw new RpcException({ message: `Zarinpal refund failed: ${JSON.stringify(error)}` });
     }
   }
 
@@ -101,6 +101,6 @@ export class ZarinpalService {
         ),
     );
 
-    return { code: result.data.code, message: result.data.message };
+    return { code: result.data.code, sessionId: `${result.data.ref_id}`, message: result.data.message };
   }
 }

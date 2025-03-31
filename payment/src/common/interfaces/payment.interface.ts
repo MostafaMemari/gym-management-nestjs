@@ -13,6 +13,10 @@ export interface IRefund {
   reason?: 'CUSTOMER_REQUEST' | 'DUPLICATE_TRANSACTION' | 'SUSPICIOUS_TRANSACTION' | 'OTHER';
 }
 
+export interface IPaymentRefund extends Omit<IRefund, 'sessionId' | 'amount'> {
+  transactionId: number;
+}
+
 export interface IPagination {
   take?: number;
   page?: number;

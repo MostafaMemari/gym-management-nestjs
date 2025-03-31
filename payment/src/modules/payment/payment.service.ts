@@ -2,7 +2,7 @@ import { BadRequestException, HttpStatus, Injectable, Logger, NotFoundException 
 import { ZarinpalService } from '../http/zarinpal.service';
 import { RpcException } from '@nestjs/microservices';
 import { ISendRequest } from '../../common/interfaces/http.interface';
-import { IMyTransactionsFilers, ITransactionsFilters, IVerifyPayment } from '../../common/interfaces/payment.interface';
+import { IMyTransactionsFilers, IPaymentRefund, ITransactionsFilters, IVerifyPayment } from '../../common/interfaces/payment.interface';
 import { PaymentRepository } from './payment.repository';
 import { Prisma, Transaction, TransactionStatus } from '@prisma/client';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
@@ -22,7 +22,7 @@ export class PaymentService {
     private readonly zarinpalService: ZarinpalService,
     private readonly paymentRepository: PaymentRepository,
     private readonly cacheService: CacheService,
-  ) { }
+  ) {}
 
   @Cron(CronExpression.EVERY_12_HOURS)
   async handelStaleTransactions() {
@@ -76,13 +76,13 @@ export class PaymentService {
 
       const merchantId = process.env.ZARINPAL_MERCHANT_ID;
 
-      const { code } = await this.zarinpalService.verifyRequest({ authority, merchant_id: merchantId, amount: payment.amount });
+      const { code, sessionId } = await this.zarinpalService.verifyRequest({ authority, merchant_id: merchantId, amount: payment.amount });
 
       if (status !== 'OK' || code !== 100) {
         redirectUrl = `${data.frontendUrl}?status=failed`;
         payment = await this.paymentRepository.update(payment.id, { status: TransactionStatus.FAILED });
       } else {
-        payment = await this.paymentRepository.update(payment.id, { status: TransactionStatus.SUCCESS });
+        payment = await this.paymentRepository.update(payment.id, { status: TransactionStatus.SUCCESS, sessionId });
       }
 
       return ResponseUtil.success({ redirectUrl, payment }, PaymentMessages.VerifiedSuccess, HttpStatus.OK);
@@ -94,11 +94,33 @@ export class PaymentService {
     }
   }
 
+  async refund(refundPaymentDto: IPaymentRefund) {
+    try {
+      const { transactionId, description, reason } = refundPaymentDto;
+      const transaction = await this.findOneOrThrow({ id: transactionId, status: TransactionStatus.SUCCESS });
+
+      if (!transaction.sessionId) throw new BadRequestException(PaymentMessages.SessionIdNotFound);
+
+      const result = await this.zarinpalService.refund({
+        amount: transaction.amount,
+        sessionId: transaction.sessionId.slice(0, -2),
+        description,
+        reason,
+      });
+
+      await this.paymentRepository.update(transactionId, { status: TransactionStatus.REFUNDED });
+
+      return ResponseUtil.success(result, PaymentMessages.RefundedSuccess, HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
   async findUserTransactions(transactionsFilters: IMyTransactionsFilers & { userId: number }): Promise<ServiceResponse> {
     try {
-      if (!transactionsFilters.userId) throw new BadRequestException(PaymentMessages.RequiredUserId)
+      if (!transactionsFilters.userId) throw new BadRequestException(PaymentMessages.RequiredUserId);
 
-      return await this.findTransactions(transactionsFilters)
+      return await this.findTransactions(transactionsFilters);
     } catch (error) {
       throw new RpcException(error);
     }
