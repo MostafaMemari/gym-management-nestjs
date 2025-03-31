@@ -57,3 +57,14 @@ model WalletDeduction {
   remainingBalance Int      @db.Integer()
   createdAt        DateTime @default(now())
 }
+
+model ManualCredit {
+  id         Int      @id() @default(autoincrement()) @db.Integer()
+  walletId   Int      @db.Integer()
+  userId     Int      @db.Integer()
+  creditedBy Int      @db.Integer()
+  amount     Int      @db.Integer()
+  reason     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now())
+}
