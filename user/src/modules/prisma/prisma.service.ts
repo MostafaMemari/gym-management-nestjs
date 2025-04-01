@@ -1,7 +1,7 @@
 import { forwardRef, Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaClient, Role } from '@prisma/client';
 import { CacheService } from '../cache/cache.service';
-import { CachePatterns } from '../../common/enums/cache.enum';
+import { CacheKeys } from '../../common/enums/cache.enum';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
@@ -28,8 +28,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
       if (['create', 'update', 'delete'].includes(action)) {
         //* Clear user cache on create, update, or delete
-        await this.cacheService.delByPattern(CachePatterns.UsersList);
-        await this.cacheService.delByPattern(CachePatterns.SearchUsersList);
+        for (const key in CacheKeys) await this.cacheService.delByPattern(`${CacheKeys[key]}*`);
       }
 
       if (model == 'User' && action == 'update') {

@@ -44,4 +44,8 @@ export class WalletRepository {
   findAllDeductions(args: Prisma.WalletDeductionFindManyArgs = {}): Promise<WalletDeduction[]> {
     return this.prisma.walletDeduction.findMany(args);
   }
+
+  findAllManualCredits(args: Prisma.ManualCreditFindManyArgs = {}) {
+    return this.prisma.manualCredit.findMany(args);
+  }
 }

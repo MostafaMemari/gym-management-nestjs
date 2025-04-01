@@ -7,5 +7,6 @@ export enum WalletPatterns {
   ManualCreditWallet = 'manual_credit_wallet',
   GetWalletByUser = 'get_wallet_by_user',
   GetWalletsDeductions = 'get_wallets_deductions',
+  GetWalletsManualCredits = 'get_wallets_manual_credits',
   CheckConnection = 'check_connection',
 }

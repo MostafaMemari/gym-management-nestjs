@@ -1,5 +1,5 @@
 import { BadRequestException, HttpStatus, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { IChargeWallet, IManualCredit, IWalletDeductionFilter } from '../../common/interfaces/wallet.interface';
+import { IChargeWallet, IManualCredit, IWalletDeductionFilter, IWalletManualCreditFilter } from '../../common/interfaces/wallet.interface';
 import { WalletRepository } from './wallet.repository';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
@@ -11,7 +11,7 @@ import { lastValueFrom, timeout } from 'rxjs';
 import { ClubPatterns } from '../../common/enums/club.events';
 import { NotificationPatterns } from '../../common/enums/notification.events';
 import { UserRepository } from '../user/user.repository';
-import { Prisma, Role, Wallet, WalletDeduction, WalletStatus } from '@prisma/client';
+import { ManualCredit, Prisma, Role, Wallet, WalletDeduction, WalletStatus } from '@prisma/client';
 import { IPagination } from '../../common/interfaces/user.interface';
 import { CacheKeys } from '../../common/enums/cache.enum';
 import { CacheService } from '../cache/cache.service';
@@ -75,9 +75,10 @@ export class WalletService {
     }
   }
 
-  async findAllDeductions(deductionFilters: IWalletDeductionFilter) {
+  async findAllDeductions({ page, take, ...deductionFilters }: IWalletDeductionFilter) {
     try {
-      const paginationDto = { take: deductionFilters.take, page: deductionFilters.page };
+      const paginationDto = { take, page };
+      const { endDate, maxAmount, minAmount, sortBy, sortDirection, startDate, userId, walletId } = deductionFilters;
 
       const sortedDto = Object.keys(deductionFilters)
         .sort()
@@ -91,27 +92,72 @@ export class WalletService {
 
       const filters: Partial<Prisma.WalletDeductionWhereInput> = {};
 
-      if (deductionFilters.walletId) filters.walletId = deductionFilters.walletId;
-      if (deductionFilters.userId) filters.userId = deductionFilters.userId;
-      if (deductionFilters.minAmount || deductionFilters.maxAmount) {
+      if (walletId) filters.walletId = walletId;
+      if (userId) filters.userId = userId;
+      if (minAmount || maxAmount) {
         filters.deductionAmount = {};
-        if (deductionFilters.minAmount) filters.deductionAmount.gte = deductionFilters.minAmount;
-        if (deductionFilters.maxAmount) filters.deductionAmount.lte = deductionFilters.maxAmount;
+        if (minAmount) filters.deductionAmount.gte = minAmount;
+        if (maxAmount) filters.deductionAmount.lte = maxAmount;
       }
-      if (deductionFilters.startDate || deductionFilters.endDate) {
+      if (startDate || endDate) {
         filters.createdAt = {};
-        if (deductionFilters.startDate) filters.createdAt.gte = new Date(deductionFilters.startDate);
-        if (deductionFilters.endDate) filters.createdAt.lte = new Date(deductionFilters.endDate);
+        if (startDate) filters.createdAt.gte = new Date(startDate);
+        if (endDate) filters.createdAt.lte = new Date(endDate);
       }
 
       const deductionWallets = await this.walletRepository.findAllDeductions({
         where: filters,
-        orderBy: { [deductionFilters.sortBy || 'createdAt']: deductionFilters.sortDirection || 'desc' },
+        orderBy: { [sortBy || 'createdAt']: sortDirection || 'desc' },
       });
 
       await this.cache.set(cacheKey, deductionWallets, this.REDIS_EXPIRE_TIME);
 
       return ResponseUtil.success({ ...pagination(paginationDto, deductionWallets) }, '', HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
+  async findAllManualCredits({ take, page, ...manualCreditFilters }: IWalletManualCreditFilter) {
+    try {
+      const paginationDto = { take, page };
+      const { creditedBy, endDate, maxAmount, minAmount, reason, sortBy, sortDirection, startDate, userId, walletId } = manualCreditFilters;
+
+      const sortedDto = Object.keys(manualCreditFilters)
+        .sort()
+        .reduce((obj, key) => ({ ...obj, [key]: manualCreditFilters[key] }), {});
+
+      const cacheKey = `${CacheKeys.ManualCredit}_${JSON.stringify(sortedDto)}`;
+
+      const manualCreditsCache = await this.cache.get<null | ManualCredit[]>(cacheKey);
+
+      if (manualCreditsCache) return ResponseUtil.success({ ...pagination(paginationDto, manualCreditsCache) }, '', HttpStatus.OK);
+
+      const filters: Partial<Prisma.ManualCreditWhereInput> = {};
+
+      if (walletId) filters.walletId = walletId;
+      if (userId) filters.userId = userId;
+      if (creditedBy) filters.creditedBy = creditedBy;
+      if (reason) filters.reason = reason;
+      if (minAmount || maxAmount) {
+        filters.amount = {};
+        if (minAmount) filters.amount.gte = minAmount;
+        if (maxAmount) filters.amount.lte = maxAmount;
+      }
+      if (startDate || endDate) {
+        filters.createdAt = {};
+        if (startDate) filters.createdAt.gte = new Date(startDate);
+        if (endDate) filters.createdAt.lte = new Date(endDate);
+      }
+
+      const manualCredits = await this.walletRepository.findAllManualCredits({
+        where: filters,
+        orderBy: { [sortBy || 'createdAt']: sortDirection || 'desc' },
+      });
+
+      await this.cache.set(cacheKey, manualCredits, this.REDIS_EXPIRE_TIME);
+
+      return ResponseUtil.success({ ...pagination(paginationDto, manualCredits) }, '', HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }

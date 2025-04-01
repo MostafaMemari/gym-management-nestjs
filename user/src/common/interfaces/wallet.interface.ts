@@ -22,3 +22,16 @@ export interface IManualCredit {
   creditedBy: number;
   reason: string;
 }
+
+export interface IWalletManualCreditFilter extends IPagination {
+  walletId?: number;
+  userId?: number;
+  creditedBy?: number;
+  minAmount?: number;
+  maxAmount?: number;
+  startDate?: number;
+  endDate?: number;
+  reason?: string;
+  sortBy?: 'creditedBy' | 'amount' | 'createdAt' | 'updatedAt';
+  sortDirection?: 'asc' | 'desc';
+}
