@@ -14,6 +14,13 @@ export enum WalletDeductionSortBy {
   RemainingBalance = 'remainingBalance',
 }
 
+export enum WalletCreditSortBy {
+  CreatedAt = 'createdAt',
+  UpdatedAt = 'updatedAt',
+  Amount = 'amount',
+  CreditedBy = 'creditedBy',
+}
+
 export enum TransactionsSortBy {
   Amount = 'amount',
   CreatedAt = 'createdAt',

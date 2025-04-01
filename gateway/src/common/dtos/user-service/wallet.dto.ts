@@ -1,8 +1,8 @@
-import { IsDate, IsEnum, IsNumber, IsOptional, IsPositive, IsString, Max, MaxLength, min, Min, MinLength } from 'class-validator';
+import { IsDate, IsEnum, IsNumber, IsOptional, IsPositive, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
 import { PaginationDto } from '../shared.dto';
 import { Transform } from 'class-transformer';
-import { SortOrder, WalletDeductionSortBy } from '../../../common/enums/shared.enum';
-import { ApiProperty } from '@nestjs/swagger';
+import { SortOrder, WalletCreditSortBy, WalletDeductionSortBy } from '../../../common/enums/shared.enum';
+import { ApiProperty, OmitType } from '@nestjs/swagger';
 
 export class QueryWalletDeductionsDto extends PaginationDto {
   @IsOptional()
@@ -70,7 +70,7 @@ export class QueryWalletDeductionsDto extends PaginationDto {
     nullable: true,
     required: false,
   })
-  sortBy?: 'createdAt' | 'deductionAmount' | 'remainingBalance';
+  sortBy?: WalletDeductionSortBy;
 
   @IsOptional()
   @IsEnum(SortOrder)
@@ -105,4 +105,28 @@ export class ManualCreditDto {
     maximum: 100,
   })
   reason: string;
+}
+
+export class QueryManualCreditsDto extends OmitType(QueryWalletDeductionsDto, ['sortBy']) {
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
+  @Transform(({ value }) => +value)
+  @ApiProperty({
+    type: 'number',
+    nullable: true,
+    required: false,
+  })
+  creditedBy?: number;
+
+  @IsOptional()
+  @IsString()
+  @IsEnum(WalletCreditSortBy)
+  @ApiProperty({
+    type: 'string',
+    enum: WalletCreditSortBy,
+    nullable: true,
+    required: false,
+  })
+  sortBy?: WalletCreditSortBy;
 }
