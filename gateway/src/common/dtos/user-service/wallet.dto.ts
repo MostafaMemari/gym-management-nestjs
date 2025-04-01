@@ -1,4 +1,4 @@
-import { IsDate, IsEnum, IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
+import { IsDate, IsEnum, IsNumber, IsOptional, IsPositive, IsString, Max, MaxLength, min, Min, MinLength } from 'class-validator';
 import { PaginationDto } from '../shared.dto';
 import { Transform } from 'class-transformer';
 import { SortOrder, WalletDeductionSortBy } from '../../../common/enums/shared.enum';
@@ -81,4 +81,28 @@ export class QueryWalletDeductionsDto extends PaginationDto {
     required: false,
   })
   sortDirection?: 'asc' | 'desc';
+}
+
+export class ManualCreditDto {
+  @IsNumber()
+  @IsPositive()
+  @Min(1000)
+  @Max(200_000_000)
+  @Transform(({ value }) => +value)
+  @ApiProperty({
+    type: 'number',
+    minimum: 1000,
+    maximum: 200_000_000,
+  })
+  amount: number;
+
+  @IsString()
+  @MaxLength(100)
+  @MinLength(4)
+  @ApiProperty({
+    type: 'string',
+    minimum: 4,
+    maximum: 100,
+  })
+  reason: string;
 }

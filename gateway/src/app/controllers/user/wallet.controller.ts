@@ -2,22 +2,22 @@ import { Body, Controller, Get, Inject, Param, ParseIntPipe, Post, Put, Query } 
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { Roles } from '../../../common/decorators/role.decorator';
 import { Role } from '../../../common/enums/role.enum';
-import { handleError, handleServiceResponse } from 'src/common/utils/handleError.utils';
-import { Services } from 'src/common/enums/services.enum';
-import { checkConnection } from 'src/common/utils/checkConnection.utils';
+import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
+import { Services } from '../../../common/enums/services.enum';
+import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
-import { WalletPatterns } from 'src/common/enums/wallet.events';
+import { WalletPatterns } from '../../../common/enums/wallet.events';
 import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { PaymentDto } from 'src/common/dtos/payment.dto';
-import { SwaggerConsumes } from 'src/common/enums/swagger-consumes.enum';
-import { GetUser } from 'src/common/decorators/get-user.decorator';
-import { User } from 'src/common/interfaces/user.interface';
-import { PaymentPatterns } from 'src/common/enums/payment.events';
-import { ServiceResponse } from 'src/common/interfaces/serviceResponse.interface';
-import { PaginationDto } from 'src/common/dtos/shared.dto';
-import { QueryWalletDeductionsDto } from 'src/common/dtos/user-service/wallet.dto';
-import { AccessRole } from 'src/common/decorators/accessRole.decorator';
+import { PaymentDto } from '../../../common/dtos/payment.dto';
+import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
+import { GetUser } from '../../../common/decorators/get-user.decorator';
+import { User } from '../../../common/interfaces/user.interface';
+import { PaymentPatterns } from '../../../common/enums/payment.events';
+import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
+import { PaginationDto } from '../../../common/dtos/shared.dto';
+import { ManualCreditDto, QueryWalletDeductionsDto } from '../../../common/dtos/user-service/wallet.dto';
+import { AccessRole } from '../../../common/decorators/accessRole.decorator';
 
 @Controller('wallet')
 @ApiTags('wallet')
@@ -88,6 +88,25 @@ export class WalletController {
       return handleServiceResponse({ data: Object.assign(chargedWalletData, paymentData), ...responseMetadata });
     } catch (error) {
       handleError(error, 'Failed to verify pay', Services.USER);
+    }
+  }
+
+  @Post('manual-credit/:walletId')
+  @Roles(Role.SUPER_ADMIN)
+  @AccessRole(Role.SUPER_ADMIN)
+  @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
+  async manualCreditWallet(@Param('walletId', ParseIntPipe) walletId: number, @Body() manualCreditDto: ManualCreditDto, @GetUser() user: User) {
+    try {
+      await checkConnection(Services.USER, this.userServiceClient);
+
+      const manualCreditData = { walletId, creditedBy: user.id, ...manualCreditDto };
+      const result = await lastValueFrom(
+        this.userServiceClient.send(WalletPatterns.ManualCreditWallet, manualCreditData).pipe(timeout(this.timeout)),
+      );
+
+      return handleServiceResponse(result);
+    } catch (error) {
+      handleError(error, 'Failed to manual credit wallet', Services.USER);
     }
   }
 
