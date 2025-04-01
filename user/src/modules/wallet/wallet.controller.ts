@@ -2,7 +2,7 @@ import { Controller } from '@nestjs/common';
 import { WalletService } from './wallet.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { WalletPatterns } from '../../common/enums/wallet.events';
-import { IChargeWallet, IWalletDeductionFilter } from '../../common/interfaces/wallet.interface';
+import { IChargeWallet, IManualCredit, IWalletDeductionFilter } from '../../common/interfaces/wallet.interface';
 import { IPagination } from '../../common/interfaces/user.interface';
 
 @Controller()
@@ -42,5 +42,10 @@ export class WalletController {
   @MessagePattern(WalletPatterns.ChargeWallet)
   charge(@Payload() data: IChargeWallet) {
     return this.walletService.chargeWallet(data);
+  }
+
+  @MessagePattern(WalletPatterns.ManualCreditWallet)
+  manualCredit(@Payload() data: IManualCredit) {
+    return this.walletService.manualCredit(data);
   }
 }

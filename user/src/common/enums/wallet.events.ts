@@ -4,6 +4,7 @@ export enum WalletPatterns {
   BlockWallet = 'block_wallet',
   UnblockWallet = 'unblock_wallet',
   ChargeWallet = 'charge_wallet',
+  ManualCreditWallet = 'manual_credit_wallet',
   GetWalletByUser = 'get_wallet_by_user',
   GetWalletsDeductions = 'get_wallets_deductions',
   CheckConnection = 'check_connection',

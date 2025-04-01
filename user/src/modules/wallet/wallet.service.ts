@@ -1,5 +1,5 @@
 import { BadRequestException, HttpStatus, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { IChargeWallet, IWalletDeductionFilter } from '../../common/interfaces/wallet.interface';
+import { IChargeWallet, IManualCredit, IWalletDeductionFilter } from '../../common/interfaces/wallet.interface';
 import { WalletRepository } from './wallet.repository';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
@@ -166,6 +166,35 @@ export class WalletService {
     } catch (error) {
       throw new RpcException(error);
     }
+  }
+
+  async manualCredit(manualCreditDto: IManualCredit) {
+    try {
+      const { amount, creditedBy, reason, walletId } = manualCreditDto;
+      const wallet = await this.findOneByIdAndThrow(walletId);
+
+      const user = await this.userRepository.findByIdAndThrow(creditedBy);
+
+      await this.chargeWallet({ amount, userId: wallet.userId });
+
+      const manualCredit = await this.walletRepository.cerateManualCredit({ amount, creditedBy, reason, userId: user.id, walletId });
+
+      const notificationMessage = WalletMessages.CreditNotification.replace('${amount}', amount.toString()).replace('${reason}', reason);
+
+      await this.sendNotification(user.id, notificationMessage, 'PUSH');
+
+      return ResponseUtil.success({ manualCredit }, WalletMessages.ManualCreditSuccess, HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
+  private async findOneByIdAndThrow(walletId: number): Promise<Wallet | never> {
+    const wallet = await this.walletRepository.findOne(walletId);
+
+    if (!wallet) throw new NotFoundException(WalletMessages.NotFoundWallet);
+
+    return wallet;
   }
 
   @Cron(CronExpression.EVERY_30_MINUTES)

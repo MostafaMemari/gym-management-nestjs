@@ -10,4 +10,6 @@ export enum WalletMessages {
   CriticallyLowWalletBalance = 'Critically low wallet balance',
   HourlyWithdrawalFailed = 'Hourly withdrawal process failed',
   AmountMustBeGreaterThanZero = 'Amount must be greater than zero.',
+  ManualCreditSuccess = 'Manual credit processed successfully',
+  CreditNotification = '$${amount} has been credited to your wallet ${reason}',
 }

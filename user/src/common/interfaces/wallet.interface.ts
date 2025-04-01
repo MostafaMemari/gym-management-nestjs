@@ -15,3 +15,10 @@ export interface IWalletDeductionFilter extends IPagination {
   sortBy?: 'createdAt' | 'deductionAmount' | 'remainingBalance';
   sortDirection?: 'asc' | 'desc';
 }
+
+export interface IManualCredit {
+  walletId: number;
+  amount: number;
+  creditedBy: number;
+  reason: string;
+}
