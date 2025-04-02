@@ -5,14 +5,14 @@ import { lastValueFrom, timeout } from 'rxjs';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { UserPatterns } from '../../../common/enums/user.events';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
-import { PaginationDto, SearchDto } from '../../../common/dtos/shared.dto';
+import { SearchDto } from '../../../common/dtos/shared.dto';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { Roles } from '../../../common/decorators/role.decorator';
 import { Role } from '../../../common/enums/role.enum';
 import { GetUser } from '../../../common/decorators/get-user.decorator';
-import { UpdateUserDto } from '../../../common/dtos/user-service/user.dto';
+import { QueryUsersDto, UpdateUserDto } from '../../../common/dtos/user-service/user.dto';
 import { User } from '../../../common/interfaces/user.interface';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 
@@ -24,11 +24,11 @@ export class UserController {
 
   @Roles(Role.SUPER_ADMIN)
   @Get()
-  async getUsers(@Query() paginationDto: PaginationDto) {
+  async getUsers(@Query() usersFilters: QueryUsersDto) {
     try {
       await checkConnection(Services.USER, this.userServiceClient);
 
-      const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.GetUsers, { ...paginationDto }).pipe(timeout(5000)));
+      const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.GetUsers, usersFilters).pipe(timeout(5000)));
 
       return handleServiceResponse(data);
     } catch (error) {

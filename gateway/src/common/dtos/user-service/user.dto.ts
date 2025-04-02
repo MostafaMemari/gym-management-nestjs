@@ -1,5 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsPhoneNumber, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { IsDate, IsEnum, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { Role } from '../../../common/enums/role.enum';
+import { Transform } from 'class-transformer';
+import { SortOrder, UserSortBy } from '../../../common/enums/shared.enum';
 
 export class UpdateUserDto {
   @IsNotEmpty()
@@ -30,4 +33,74 @@ export class UpdateUserDto {
     required: false,
   })
   mobile?: string;
+}
+
+export class QueryUsersDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  @ApiProperty({
+    type: 'string',
+    required: false,
+    nullable: true,
+  })
+  username?: string;
+
+  @IsOptional()
+  @IsEnum(Role)
+  @ApiProperty({
+    type: 'string',
+    enum: Role,
+    nullable: true,
+    required: false,
+  })
+  role?: Role;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  @ApiProperty({
+    type: 'string',
+    required: false,
+    nullable: true,
+  })
+  mobile?: string;
+
+  @IsOptional()
+  @IsDate()
+  @Transform(({ value }) => new Date(value))
+  @ApiProperty({ type: 'string', format: 'date-time', nullable: true, required: false })
+  lastPasswordChange?: Date;
+
+  @IsOptional()
+  @IsDate()
+  @Transform(({ value }) => new Date(value))
+  @ApiProperty({ type: 'string', format: 'date-time', nullable: true, required: false })
+  startDate?: Date;
+
+  @IsOptional()
+  @IsDate()
+  @Transform(({ value }) => new Date(value))
+  @ApiProperty({ type: 'string', format: 'date-time', nullable: true, required: false })
+  endDate?: Date;
+
+  @IsOptional()
+  @IsEnum(UserSortBy)
+  @ApiProperty({
+    type: 'string',
+    enum: UserSortBy,
+    nullable: true,
+    required: false,
+  })
+  sortBy?: UserSortBy;
+
+  @IsOptional()
+  @IsEnum(SortOrder)
+  @ApiProperty({
+    type: 'string',
+    enum: SortOrder,
+    nullable: true,
+    required: false,
+  })
+  sortDirection?: SortOrder;
 }

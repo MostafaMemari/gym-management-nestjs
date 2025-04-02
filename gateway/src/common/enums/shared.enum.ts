@@ -28,6 +28,13 @@ export enum WalletSortBy {
   LastWithdrawalDate = 'lastWithdrawalDate',
 }
 
+export enum UserSortBy {
+  UpdatedAt = 'updatedAt',
+  CreatedAt = 'createdAt',
+  Username = 'username',
+  Mobile = 'mobile',
+}
+
 export enum WalletStatus {
   NONE = 'NONE',
   DEPLETED = 'DEPLETED',
