@@ -2,7 +2,7 @@ import { ConflictException, HttpStatus, Injectable, NotFoundException } from '@n
 import { Prisma, Role, User } from '@prisma/client';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { UserMessages } from '../../common/enums/user.messages';
-import { IChangeRole, IGetUserByArgs, IPagination, ISearchUser, IUpdateUser } from '../../common/interfaces/user.interface';
+import { IChangeRole, IGetUserByArgs, ISearchUser, IUpdateUser, IUsersFilter } from '../../common/interfaces/user.interface';
 import { pagination } from '../../common/utils/pagination.utils';
 import { RpcException } from '@nestjs/microservices';
 import { UserRepository } from './user.repository';
@@ -85,29 +85,40 @@ export class UserService {
     }
   }
 
-  async findAll(paginationDto?: IPagination): Promise<ServiceResponse> {
+  async findAll({ page, take, ...usersFilterDto }: IUsersFilter): Promise<ServiceResponse> {
     try {
-      const cacheKey = `${CacheKeys.Users}_${paginationDto.page || 1}_${paginationDto.take || 20}`;
-      const usersCache = await this.cache.get<User[] | null>(cacheKey);
+      const paginationDto = { take, page };
+      const { endDate, lastPasswordChange, mobile, role, startDate, username, sortBy, sortDirection } = usersFilterDto;
 
-      if (usersCache) {
-        return ResponseUtil.success({ ...pagination(paginationDto, usersCache) }, '', HttpStatus.OK);
+      const sortedDto = Object.keys(usersFilterDto)
+        .sort()
+        .reduce((obj, key) => ({ ...obj, [key]: usersFilterDto[key] }), {});
+
+      const cacheKey = `${CacheKeys.Users}_${JSON.stringify(sortedDto)}`;
+
+      const usersCache = await this.cache.get<null | User[]>(cacheKey);
+
+      if (usersCache) return ResponseUtil.success({ ...pagination(paginationDto, usersCache) }, '', HttpStatus.OK);
+
+      const filters: Partial<Prisma.UserWhereInput> = {};
+
+      if (lastPasswordChange) filters.lastPasswordChange = lastPasswordChange;
+      if (mobile) filters.mobile = { contains: mobile, mode: 'insensitive' };
+      if (role) filters.role = role;
+      if (username) filters.username = { contains: username, mode: 'insensitive' };
+      if (startDate || endDate) {
+        filters.createdAt = {};
+        if (startDate) filters.createdAt.gte = new Date(startDate);
+        if (endDate) filters.createdAt.lte = new Date(endDate);
       }
 
-      const userExtraQuery: Prisma.UserFindManyArgs = {
-        orderBy: { createdAt: `desc` },
+      const users = await this.userRepository.findAll({
+        where: filters,
         omit: { password: true },
-      };
+        orderBy: { [sortBy || 'createdAt']: sortDirection || 'desc' },
+      });
 
-      const users = await this.userRepository.findAll(userExtraQuery);
-
-      const redisKeys = {
-        key: cacheKey,
-        value: users,
-        expireTime: this.REDIS_EXPIRE_TIME,
-      };
-
-      await this.cache.set(redisKeys.key, redisKeys.value, redisKeys.expireTime);
+      await this.cache.set(cacheKey, users, this.REDIS_EXPIRE_TIME);
 
       return ResponseUtil.success({ ...pagination(paginationDto, users) }, '', HttpStatus.OK);
     } catch (error) {

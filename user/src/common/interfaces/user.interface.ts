@@ -43,3 +43,14 @@ export interface IGetUserByArgs {
   mobile?: string;
   username?: string;
 }
+
+export interface IUsersFilter extends IPagination {
+  username?: string;
+  role?: Role;
+  mobile?: string;
+  lastPasswordChange?: Date;
+  startDate?: Date;
+  endDate?: Date;
+  sortBy?: 'username' | 'createdAt' | 'mobile' | 'updateAt';
+  sortDirection?: 'asc' | 'desc';
+}
