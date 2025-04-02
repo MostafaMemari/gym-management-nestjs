@@ -1,5 +1,11 @@
 import { BadRequestException, HttpStatus, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { IChargeWallet, IManualCredit, IWalletDeductionFilter, IWalletManualCreditFilter } from '../../common/interfaces/wallet.interface';
+import {
+  IChargeWallet,
+  IManualCredit,
+  IWalletDeductionFilter,
+  IWalletManualCreditFilter,
+  IWalletsFilter,
+} from '../../common/interfaces/wallet.interface';
 import { WalletRepository } from './wallet.repository';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
@@ -12,7 +18,6 @@ import { ClubPatterns } from '../../common/enums/club.events';
 import { NotificationPatterns } from '../../common/enums/notification.events';
 import { UserRepository } from '../user/user.repository';
 import { ManualCredit, Prisma, Role, Wallet, WalletDeduction, WalletStatus } from '@prisma/client';
-import { IPagination } from '../../common/interfaces/user.interface';
 import { CacheKeys } from '../../common/enums/cache.enum';
 import { CacheService } from '../cache/cache.service';
 import { pagination } from '../../common/utils/pagination.utils';
@@ -32,14 +37,42 @@ export class WalletService {
     private readonly cache: CacheService,
   ) {}
 
-  async findAll(paginationDto: IPagination): Promise<ServiceResponse> {
+  async findAll({ take, page, ...walletFilters }: IWalletsFilter): Promise<ServiceResponse> {
     try {
-      const cacheKey = `${CacheKeys.Wallets}_${paginationDto.page || 1}_${paginationDto.take || 20}`;
-      const walletsCache = await this.cache.get<Wallet[] | null>(cacheKey);
+      const paginationDto = { take, page };
+      const { endDate, isBlocked, lastWithdrawalDate, maxBalance, minBalance, sortBy, sortDirection, startDate, status, userId } = walletFilters;
+
+      const sortedDto = Object.keys(walletFilters)
+        .sort()
+        .reduce((obj, key) => ({ ...obj, [key]: walletFilters[key] }), {});
+
+      const cacheKey = `${CacheKeys.Wallets}_${JSON.stringify(sortedDto)}`;
+
+      const walletsCache = await this.cache.get<null | Wallet[]>(cacheKey);
 
       if (walletsCache) return ResponseUtil.success({ ...pagination(paginationDto, walletsCache) }, '', HttpStatus.OK);
 
-      const wallets = await this.walletRepository.findAll();
+      const filters: Partial<Prisma.WalletWhereInput> = {};
+
+      if (userId) filters.userId = userId;
+      if (isBlocked) filters.isBlocked = isBlocked;
+      if (lastWithdrawalDate) filters.lastWithdrawalDate;
+      if (status) filters.status = status;
+      if (minBalance || maxBalance) {
+        filters.balance = {};
+        if (minBalance) filters.balance.gte = minBalance;
+        if (maxBalance) filters.balance.lte = maxBalance;
+      }
+      if (startDate || endDate) {
+        filters.createdAt = {};
+        if (startDate) filters.createdAt.gte = new Date(startDate);
+        if (endDate) filters.createdAt.lte = new Date(endDate);
+      }
+
+      const wallets = await this.walletRepository.findAll({
+        where: filters,
+        orderBy: { [sortBy || 'createdAt']: sortDirection || 'desc' },
+      });
 
       await this.cache.set(cacheKey, wallets, this.REDIS_EXPIRE_TIME);
 
@@ -138,7 +171,7 @@ export class WalletService {
       if (walletId) filters.walletId = walletId;
       if (userId) filters.userId = userId;
       if (creditedBy) filters.creditedBy = creditedBy;
-      if (reason) filters.reason = reason;
+      if (reason) filters.reason = { contains: reason, mode: 'insensitive' };
       if (minAmount || maxAmount) {
         filters.amount = {};
         if (minAmount) filters.amount.gte = minAmount;

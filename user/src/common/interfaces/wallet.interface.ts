@@ -1,3 +1,4 @@
+import { WalletStatus } from '@prisma/client';
 import { IPagination } from './user.interface';
 
 export interface IChargeWallet {
@@ -33,5 +34,18 @@ export interface IWalletManualCreditFilter extends IPagination {
   endDate?: number;
   reason?: string;
   sortBy?: 'creditedBy' | 'amount' | 'createdAt' | 'updatedAt';
+  sortDirection?: 'asc' | 'desc';
+}
+
+export interface IWalletsFilter extends IPagination {
+  userId?: number;
+  maxBalance?: number;
+  minBalance?: number;
+  startDate?: number;
+  endDate?: number;
+  isBlocked?: boolean;
+  status?: WalletStatus;
+  lastWithdrawalDate?: Date;
+  sortBy?: 'balance' | 'createdAt' | 'updatedAt' | 'lastWithdrawalDate';
   sortDirection?: 'asc' | 'desc';
 }
