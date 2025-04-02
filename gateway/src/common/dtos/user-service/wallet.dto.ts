@@ -1,7 +1,7 @@
-import { IsDate, IsEnum, IsNumber, IsOptional, IsPositive, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { IsBoolean, IsDate, IsEnum, IsNumber, IsOptional, IsPositive, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
 import { PaginationDto } from '../shared.dto';
 import { Transform } from 'class-transformer';
-import { SortOrder, WalletCreditSortBy, WalletDeductionSortBy } from '../../../common/enums/shared.enum';
+import { SortOrder, WalletCreditSortBy, WalletDeductionSortBy, WalletSortBy, WalletStatus } from '../../../common/enums/shared.enum';
 import { ApiProperty, OmitType } from '@nestjs/swagger';
 
 export class QueryWalletDeductionsDto extends PaginationDto {
@@ -80,7 +80,7 @@ export class QueryWalletDeductionsDto extends PaginationDto {
     nullable: true,
     required: false,
   })
-  sortDirection?: 'asc' | 'desc';
+  sortDirection?: SortOrder;
 }
 
 export class ManualCreditDto {
@@ -121,6 +121,16 @@ export class QueryManualCreditsDto extends OmitType(QueryWalletDeductionsDto, ['
 
   @IsOptional()
   @IsString()
+  @MaxLength(100)
+  @ApiProperty({
+    type: 'string',
+    required: false,
+    nullable: true,
+  })
+  reason?: string;
+
+  @IsOptional()
+  @IsString()
   @IsEnum(WalletCreditSortBy)
   @ApiProperty({
     type: 'string',
@@ -129,4 +139,107 @@ export class QueryManualCreditsDto extends OmitType(QueryWalletDeductionsDto, ['
     required: false,
   })
   sortBy?: WalletCreditSortBy;
+}
+
+export class QueryWalletsDto extends PaginationDto {
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
+  @Transform(({ value }) => +value)
+  @ApiProperty({
+    type: 'number',
+    nullable: true,
+    required: false,
+  })
+  userId?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
+  @Max(2_000_000_000)
+  @Transform(({ value }) => +value)
+  @ApiProperty({
+    type: 'number',
+    maximum: 2_000_000_000,
+    nullable: true,
+    required: false,
+  })
+  maxBalance?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
+  @Max(2_000_000_000)
+  @Transform(({ value }) => +value)
+  @ApiProperty({
+    type: 'number',
+    maximum: 2_000_000_000,
+    nullable: true,
+    required: false,
+  })
+  minBalance?: number;
+
+  @IsOptional()
+  @IsDate()
+  @Transform(({ value }) => new Date(value))
+  @ApiProperty({ type: 'string', format: 'date-time', nullable: true, required: false })
+  startDate?: Date;
+
+  @IsOptional()
+  @IsDate()
+  @Transform(({ value }) => new Date(value))
+  @ApiProperty({ type: 'string', format: 'date-time', nullable: true, required: false })
+  endDate?: Date;
+
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => {
+    if (typeof value == 'boolean') return value;
+    return value == 'true';
+  })
+  @ApiProperty({
+    type: 'boolean',
+    nullable: true,
+    required: false,
+  })
+  isBlocked?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @IsEnum(WalletStatus)
+  @ApiProperty({
+    type: 'string',
+    enum: WalletStatus,
+    nullable: true,
+    required: false,
+  })
+  status?: WalletStatus;
+
+  @IsOptional()
+  @IsDate()
+  @Transform(({ value }) => new Date(value))
+  @ApiProperty({ type: 'string', format: 'date-time', nullable: true, required: false })
+  lastWithdrawalDate?: Date;
+
+  @IsOptional()
+  @IsString()
+  @IsEnum(WalletSortBy)
+  @ApiProperty({
+    type: 'string',
+    enum: WalletSortBy,
+    nullable: true,
+    required: false,
+  })
+  sortBy?: WalletSortBy;
+
+  @IsOptional()
+  @IsString()
+  @IsEnum(SortOrder)
+  @ApiProperty({
+    type: 'string',
+    enum: SortOrder,
+    nullable: true,
+    required: false,
+  })
+  sortDirection?: SortOrder;
 }

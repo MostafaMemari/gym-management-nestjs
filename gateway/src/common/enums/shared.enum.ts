@@ -21,6 +21,20 @@ export enum WalletCreditSortBy {
   CreditedBy = 'creditedBy',
 }
 
+export enum WalletSortBy {
+  Balance = 'balance',
+  CreatedAt = 'createdAt',
+  UpdatedAt = 'updatedAt',
+  LastWithdrawalDate = 'lastWithdrawalDate',
+}
+
+export enum WalletStatus {
+  NONE = 'NONE',
+  DEPLETED = 'DEPLETED',
+  CRITICAL_BALANCE = 'CRITICAL_BALANCE',
+  LOW_BALANCE = 'LOW_BALANCE',
+}
+
 export enum TransactionsSortBy {
   Amount = 'amount',
   CreatedAt = 'createdAt',

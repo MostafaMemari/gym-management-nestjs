@@ -16,7 +16,7 @@ import { User } from '../../../common/interfaces/user.interface';
 import { PaymentPatterns } from '../../../common/enums/payment.events';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
 import { PaginationDto } from '../../../common/dtos/shared.dto';
-import { ManualCreditDto, QueryManualCreditsDto, QueryWalletDeductionsDto } from '../../../common/dtos/user-service/wallet.dto';
+import { ManualCreditDto, QueryManualCreditsDto, QueryWalletDeductionsDto, QueryWalletsDto } from '../../../common/dtos/user-service/wallet.dto';
 import { AccessRole } from '../../../common/decorators/accessRole.decorator';
 
 @Controller('wallet')
@@ -113,11 +113,11 @@ export class WalletController {
   @Get()
   @Roles(Role.SUPER_ADMIN)
   @AccessRole(Role.SUPER_ADMIN)
-  async findAll(@Query() paginationDto: PaginationDto) {
+  async findAll(@Query() walletFilters: QueryWalletsDto) {
     try {
       await checkConnection(Services.USER, this.userServiceClient);
 
-      const data = await lastValueFrom(this.userServiceClient.send(WalletPatterns.GetWallets, { ...paginationDto }).pipe(timeout(this.timeout)));
+      const data = await lastValueFrom(this.userServiceClient.send(WalletPatterns.GetWallets, walletFilters).pipe(timeout(this.timeout)));
 
       return handleServiceResponse(data);
     } catch (error) {
