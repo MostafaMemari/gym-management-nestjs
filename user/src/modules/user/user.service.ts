@@ -9,6 +9,7 @@ import { UserRepository } from './user.repository';
 import { CacheService } from '../cache/cache.service';
 import { CacheKeys } from '../../common/enums/cache.enum';
 import { ResponseUtil } from '../../common/utils/response.utils';
+import { sortObject } from '../../common/utils/functions.utils';
 
 @Injectable()
 export class UserService {
@@ -17,7 +18,7 @@ export class UserService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly cache: CacheService,
-  ) {}
+  ) { }
 
   async create(userDto: Prisma.UserCreateInput): Promise<ServiceResponse> {
     try {
@@ -90,9 +91,7 @@ export class UserService {
       const paginationDto = { take, page };
       const { endDate, lastPasswordChange, mobile, role, startDate, username, sortBy, sortDirection } = usersFilterDto;
 
-      const sortedDto = Object.keys(usersFilterDto)
-        .sort()
-        .reduce((obj, key) => ({ ...obj, [key]: usersFilterDto[key] }), {});
+      const sortedDto = sortObject(usersFilterDto)
 
       const cacheKey = `${CacheKeys.Users}_${JSON.stringify(sortedDto)}`;
 

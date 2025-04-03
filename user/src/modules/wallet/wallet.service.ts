@@ -21,6 +21,7 @@ import { ManualCredit, Prisma, Role, Wallet, WalletDeduction, WalletStatus } fro
 import { CacheKeys } from '../../common/enums/cache.enum';
 import { CacheService } from '../cache/cache.service';
 import { pagination } from '../../common/utils/pagination.utils';
+import { sortObject } from '../../common/utils/functions.utils';
 
 @Injectable()
 export class WalletService {
@@ -35,16 +36,14 @@ export class WalletService {
     @Inject(Services.CLUB) private readonly clubServiceClient: ClientProxy,
     @Inject(Services.NOTIFICATION) private readonly notificationServiceClient: ClientProxy,
     private readonly cache: CacheService,
-  ) {}
+  ) { }
 
   async findAll({ take, page, ...walletFilters }: IWalletsFilter): Promise<ServiceResponse> {
     try {
       const paginationDto = { take, page };
       const { endDate, isBlocked, lastWithdrawalDate, maxBalance, minBalance, sortBy, sortDirection, startDate, status, userId } = walletFilters;
 
-      const sortedDto = Object.keys(walletFilters)
-        .sort()
-        .reduce((obj, key) => ({ ...obj, [key]: walletFilters[key] }), {});
+      const sortedDto = sortObject(walletFilters)
 
       const cacheKey = `${CacheKeys.Wallets}_${JSON.stringify(sortedDto)}`;
 
@@ -113,9 +112,7 @@ export class WalletService {
       const paginationDto = { take, page };
       const { endDate, maxAmount, minAmount, sortBy, sortDirection, startDate, userId, walletId } = deductionFilters;
 
-      const sortedDto = Object.keys(deductionFilters)
-        .sort()
-        .reduce((obj, key) => ({ ...obj, [key]: deductionFilters[key] }), {});
+      const sortedDto = sortObject(deductionFilters)
 
       const cacheKey = `${CacheKeys.WalletDeduction}_${JSON.stringify(sortedDto)}`;
 
@@ -156,9 +153,7 @@ export class WalletService {
       const paginationDto = { take, page };
       const { creditedBy, endDate, maxAmount, minAmount, reason, sortBy, sortDirection, startDate, userId, walletId } = manualCreditFilters;
 
-      const sortedDto = Object.keys(manualCreditFilters)
-        .sort()
-        .reduce((obj, key) => ({ ...obj, [key]: manualCreditFilters[key] }), {});
+      const sortedDto = sortObject(manualCreditFilters)
 
       const cacheKey = `${CacheKeys.ManualCredit}_${JSON.stringify(sortedDto)}`;
 
