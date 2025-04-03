@@ -65,7 +65,7 @@ export class ZarinpalService {
       const result = await zarinpal.refunds.create({
         amount,
         sessionId,
-        method: `CARD`,
+        method: 'PAYA',
         reason,
         description,
       });

@@ -25,7 +25,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   useMiddleware() {
     this.$use(async (params, next) => {
       if (['create', 'update', 'delete'].includes(params.action)) {
-        await this.cacheService.delByPattern(CachePatterns.TransactionList);
+        for (const key in CachePatterns) await this.cacheService.delByPattern(CachePatterns[key]);
       }
 
       return await next(params);

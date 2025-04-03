@@ -1,7 +1,7 @@
 export enum CachePatterns {
-  TransactionList = 'transactions_*',
+  TransactionsList = 'transactions_*',
 }
 
 export enum CacheKeys {
-  Transaction = 'transactions',
+  Transactions = 'transactions',
 }

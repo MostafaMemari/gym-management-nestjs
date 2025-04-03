@@ -12,6 +12,7 @@ import { CacheService } from '../cache/cache.service';
 import { pagination } from '../../common/utils/pagination.utils';
 import { CacheKeys } from '../../common/enums/cache.enum';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { sortObject } from '../../common/utils/functions.utils';
 
 @Injectable()
 export class PaymentService {
@@ -22,7 +23,7 @@ export class PaymentService {
     private readonly zarinpalService: ZarinpalService,
     private readonly paymentRepository: PaymentRepository,
     private readonly cacheService: CacheService,
-  ) {}
+  ) { }
 
   @Cron(CronExpression.EVERY_12_HOURS)
   async handelStaleTransactions() {
@@ -141,11 +142,9 @@ export class PaymentService {
       const paginationDto = { page, take };
       const { authority, endDate, maxAmount, minAmount, sortBy, sortDirection, startDate, status, userId } = transactionsFiltersDto;
 
-      const sortedDto = Object.keys(transactionsFiltersDto)
-        .sort()
-        .reduce((obj, key) => ({ ...obj, [key]: transactionsFiltersDto[key] }), {});
+      const sortedDto = sortObject(transactionsFiltersDto)
 
-      const cacheKey = `${CacheKeys.Transaction}_${JSON.stringify(sortedDto)}`;
+      const cacheKey = `${CacheKeys.Transactions}_${JSON.stringify(sortedDto)}`;
 
       const cacheData = await this.cacheService.get<null | Transaction[]>(cacheKey);
 
