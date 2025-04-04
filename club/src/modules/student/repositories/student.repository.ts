@@ -1,13 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, In, QueryRunner, Repository } from 'typeorm';
 
-import { StudentEntity } from '../entities/student.entity';
 import { CacheKeys } from '../../../common/enums/cache';
+import { StudentEntity } from '../entities/student.entity';
 import { IStudentFilter } from '../interfaces/student.interface';
 
 import { CacheTTLMilliseconds } from '../../../common/enums/cache';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
+import { Role } from '../../../common/enums/role.enum';
+import { IUser } from '../../../common/interfaces/user.interface';
 import { AgeCategoryEntity } from '../../../modules/age-category/entities/age-category.entity';
 import { BeltExamEntity } from '../../../modules/belt-exam/entities/belt-exam.entity';
 
@@ -29,23 +31,29 @@ export class StudentRepository extends Repository<StudentEntity> {
     return await this.remove(student);
   }
 
-  async getStudentsWithFilters(ownerId: number, filters: IStudentFilter, page: number, take: number): Promise<[StudentEntity[], number]> {
-    const cacheKey = `${CacheKeys.STUDENTS}-${page}-${take}-${JSON.stringify(filters)}`.replace(':userId', ownerId.toString());
+  async getStudentsWithFilters(user: IUser, filters: IStudentFilter, page: number, take: number): Promise<[StudentEntity[], number]> {
+    const cacheKey = `${CacheKeys.STUDENTS}-${page}-${take}-${JSON.stringify(filters)}`.replace(':userId', user.id.toString());
+    const queryBuilder = this.createQueryBuilder(EntityName.STUDENTS);
 
-    const queryBuilder = this.createQueryBuilder(EntityName.STUDENTS)
-      .where('students.owner_id = :ownerId', { ownerId })
+    queryBuilder
+      .leftJoinAndSelect('students.beltInfo', 'beltInfo')
+      .leftJoinAndSelect('beltInfo.belt', 'belt')
       .leftJoin('students.gym', 'gym')
       .addSelect(['gym.id', 'gym.name'])
       .leftJoin('students.coach', 'coach')
-      .addSelect(['coach.id', 'coach.full_name'])
-      .leftJoinAndSelect('students.beltInfo', 'beltInfo')
-      .leftJoinAndSelect('beltInfo.belt', 'belt')
+      .addSelect(['coach.id', 'coach.full_name', 'coach.user_id'])
       .leftJoinAndMapMany(
         'students.age_categories',
         AgeCategoryEntity,
         'ageCategories',
         'students.birth_date BETWEEN ageCategories.start_date AND ageCategories.end_date',
       );
+
+    if (user.role === Role.ADMIN_CLUB) {
+      queryBuilder.where('gym.admin_id = :adminId', { adminId: user.id });
+    } else if (user.role === Role.COACH) {
+      queryBuilder.where('coach.user_id = :coachUserId', { coachUserId: user.id });
+    }
 
     if (filters?.search) {
       queryBuilder.andWhere('(students.full_name LIKE :search OR students.national_code LIKE :search)', { search: `%${filters.search}%` });

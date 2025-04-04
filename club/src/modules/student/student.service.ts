@@ -96,8 +96,8 @@ export class StudentService {
       }
 
       const updateData = this.prepareUpdateData(updateStudentDto, student);
-      if (gym_id !== undefined) updateData.gym_id = gym_id;
-      if (coach_id !== undefined) updateData.coach_id = coach_id;
+      if (gym_id) updateData.gym_id = gym_id;
+      if (coach_id) updateData.coach_id = coach_id;
 
       if (image) updateData.image_url = await this.updateImage(image);
 
@@ -113,11 +113,12 @@ export class StudentService {
       ResponseUtil.error(error?.message || StudentMessages.UPDATE_FAILURE, error?.status);
     }
   }
-  async getAll(userId: number, query: { queryStudentDto: IStudentFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
+
+  async getAll(user: IUser, query: { queryStudentDto: IStudentFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
     const { take, page } = query.paginationDto;
 
     try {
-      const [students, count] = await this.studentRepository.getStudentsWithFilters(userId, query.queryStudentDto, page, take);
+      const [students, count] = await this.studentRepository.getStudentsWithFilters(user, query.queryStudentDto, page, take);
 
       const pageMetaDto = new PageMetaDto(count, query.paginationDto);
       const result = new PageDto(students, pageMetaDto);

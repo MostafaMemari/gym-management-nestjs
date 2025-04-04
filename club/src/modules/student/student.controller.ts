@@ -48,7 +48,7 @@ export class StudentController {
   findAll(@Payload() data: { user: IUser; queryStudentDto: IStudentFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
     const { user, queryStudentDto, paginationDto } = data;
 
-    return this.studentService.getAll(user.id, { queryStudentDto, paginationDto });
+    return this.studentService.getAll(user, { queryStudentDto, paginationDto });
   }
   @MessagePattern(StudentPatterns.GET_ALL_SUMMARY)
   findAllSummary(@Payload() data: { user: IUser; queryStudentDto: IStudentFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
