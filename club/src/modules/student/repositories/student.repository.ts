@@ -1,13 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, In, QueryRunner, Repository } from 'typeorm';
 
+import { CacheKeys } from '../../../common/enums/cache';
 import { StudentEntity } from '../entities/student.entity';
-import { CacheKeys } from '../enums/cache.enum';
 import { IStudentFilter } from '../interfaces/student.interface';
 
-import { CacheTTLMilliseconds } from '../../../common/enums/cache-time';
+import { CacheTTLMilliseconds } from '../../../common/enums/cache';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
+import { Role } from '../../../common/enums/role.enum';
+import { IUser } from '../../../common/interfaces/user.interface';
 import { AgeCategoryEntity } from '../../../modules/age-category/entities/age-category.entity';
 import { BeltExamEntity } from '../../../modules/belt-exam/entities/belt-exam.entity';
 
@@ -17,56 +19,41 @@ export class StudentRepository extends Repository<StudentEntity> {
     super(StudentEntity, dataSource.createEntityManager());
   }
 
-  async createStudent(data: Partial<StudentEntity>, queryRunner?: QueryRunner): Promise<StudentEntity> {
+  async createAndSave(data: Partial<StudentEntity>, queryRunner?: QueryRunner): Promise<StudentEntity> {
     const student = this.create(data);
-
     return queryRunner ? await queryRunner.manager.save(student) : await this.save(student);
   }
-
-  async updateStudent(student: StudentEntity, updateData: Partial<StudentEntity>) {
-    const hasRelations = ['coach', 'club'].some((rel) => updateData.hasOwnProperty(rel));
-
-    if (hasRelations) {
-      const updatedStudent = this.merge(student, updateData);
-      return await this.save(updatedStudent);
-    } else {
-      return await this.update(student.id, updateData);
-    }
+  async updateMergeAndSave(student: StudentEntity, updateData: Partial<StudentEntity>) {
+    const updatedStudent = this.merge(student, updateData);
+    return await this.save(updatedStudent);
+  }
+  async removeStudent(student: StudentEntity): Promise<StudentEntity> {
+    return await this.remove(student);
   }
 
-  async removeStudentById(studentId: number): Promise<boolean> {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.startTransaction();
+  async getStudentsWithFilters(user: IUser, filters: IStudentFilter, page: number, take: number): Promise<[StudentEntity[], number]> {
+    const cacheKey = `${CacheKeys.STUDENTS}-${page}-${take}-${JSON.stringify(filters)}`.replace(':userId', user.id.toString());
+    const queryBuilder = this.createQueryBuilder(EntityName.STUDENTS);
 
-    try {
-      const removedStudent = await queryRunner.manager.delete(StudentEntity, studentId);
-      await queryRunner.commitTransaction();
-
-      return removedStudent.affected > 0;
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } finally {
-      await queryRunner.release();
-    }
-  }
-
-  async getStudentsWithFilters(userId: number, filters: IStudentFilter, page: number, take: number): Promise<[StudentEntity[], number]> {
-    const cacheKey = `${CacheKeys.STUDENTS}-userId:${userId}-${page}-${take}-${JSON.stringify(filters)}`;
-
-    const queryBuilder = this.createQueryBuilder(EntityName.STUDENTS)
-      .innerJoin('students.club', 'club', 'club.ownerId = :userId', { userId })
-      .addSelect(['club.id', 'club.name'])
-      .leftJoin('students.coach', 'coach')
-      .addSelect(['coach.id', 'coach.full_name'])
+    queryBuilder
       .leftJoinAndSelect('students.beltInfo', 'beltInfo')
       .leftJoinAndSelect('beltInfo.belt', 'belt')
+      .leftJoin('students.gym', 'gym')
+      .addSelect(['gym.id', 'gym.name'])
+      .leftJoin('students.coach', 'coach')
+      .addSelect(['coach.id', 'coach.full_name', 'coach.user_id'])
       .leftJoinAndMapMany(
         'students.age_categories',
         AgeCategoryEntity,
         'ageCategories',
         'students.birth_date BETWEEN ageCategories.start_date AND ageCategories.end_date',
       );
+
+    if (user.role === Role.ADMIN_CLUB) {
+      queryBuilder.where('gym.admin_id = :adminId', { adminId: user.id });
+    } else if (user.role === Role.COACH) {
+      queryBuilder.where('coach.user_id = :coachUserId', { coachUserId: user.id });
+    }
 
     if (filters?.search) {
       queryBuilder.andWhere('(students.full_name LIKE :search OR students.national_code LIKE :search)', { search: `%${filters.search}%` });
@@ -80,11 +67,11 @@ export class StudentRepository extends Repository<StudentEntity> {
     if (filters?.phone_number) {
       queryBuilder.andWhere('students.phone_number LIKE :phoneNumber', { phoneNumber: `%${filters?.phone_number}%` });
     }
-    if (filters?.club_id) {
-      queryBuilder.andWhere('students.clubId = :club', { club: filters?.club_id });
+    if (filters?.gym_id) {
+      queryBuilder.andWhere('students.gym_id = :gym', { gym: filters?.gym_id });
     }
     if (filters?.coach_id) {
-      queryBuilder.andWhere('students.coachId = :coach', { coach: filters?.coach_id });
+      queryBuilder.andWhere('students.coach_id = :coach', { coach: filters?.coach_id });
     }
 
     if (filters?.belt_ids?.length) {
@@ -125,16 +112,14 @@ export class StudentRepository extends Repository<StudentEntity> {
     return [mappedStudents, totalCount];
   }
   async getStudentsSummaryWithFilters(
-    userId: number,
+    ownerId: number,
     filters: IStudentFilter,
     page: number,
     take: number,
   ): Promise<[StudentEntity[], number]> {
-    const cacheKey = `${CacheKeys.STUDENTS_SUMMARY}:userId:${userId}-${page}-${take}-${JSON.stringify(filters)}`;
+    const cacheKey = `${CacheKeys.STUDENTS_SUMMARY}-${page}-${take}-${JSON.stringify(filters)}`.replace('{ownerId}', ownerId.toString());
 
-    const queryBuilder = this.createQueryBuilder(EntityName.STUDENTS).innerJoin('students.club', 'club', 'club.ownerId = :userId', {
-      userId,
-    });
+    const queryBuilder = this.createQueryBuilder(EntityName.STUDENTS).where('students.owner_id = :ownerId', { ownerId });
 
     if (filters?.search) {
       queryBuilder.andWhere('(students.full_name LIKE :search OR students.national_code LIKE :search)', { search: `%${filters.search}%` });
@@ -148,11 +133,11 @@ export class StudentRepository extends Repository<StudentEntity> {
     if (filters?.phone_number) {
       queryBuilder.andWhere('students.phone_number LIKE :phoneNumber', { phoneNumber: `%${filters?.phone_number}%` });
     }
-    if (filters?.club_id) {
-      queryBuilder.andWhere('students.clubId = :club', { club: filters?.club_id });
+    if (filters?.gym_id) {
+      queryBuilder.andWhere('students.gym_id = :gym', { gym: filters?.gym_id });
     }
     if (filters?.coach_id) {
-      queryBuilder.andWhere('students.coachId = :coach', { coach: filters?.coach_id });
+      queryBuilder.andWhere('students.coach_id = :coach', { coach: filters?.coach_id });
     }
     if (filters?.sort_by && validSortFields.includes(filters.sort_by)) {
       queryBuilder.orderBy(`students.${filters.sort_by}`, filters.sort_order === 'asc' ? 'ASC' : 'DESC');
@@ -173,48 +158,54 @@ export class StudentRepository extends Repository<StudentEntity> {
       .getManyAndCount();
   }
 
-  async findByIdAndOwner(studentId: number, userId: number): Promise<StudentEntity> {
-    const student = await this.createQueryBuilder(EntityName.STUDENTS)
+  async findByIdAndAdmin(studentId: number, adminId: number): Promise<StudentEntity> {
+    return this.createQueryBuilder(EntityName.STUDENTS)
       .where('students.id = :studentId', { studentId })
-      .leftJoinAndSelect('students.club', 'club')
-      .andWhere('club.ownerId = :userId', { userId })
+      .innerJoin('students.gym', 'gym')
+      .andWhere('gym.admin_id = :adminId', { adminId })
       .getOne();
-
-    return student;
+  }
+  async findByIdAndCoachUserId(studentId: number, coachUserId: number): Promise<StudentEntity> {
+    return this.createQueryBuilder(EntityName.STUDENTS)
+      .where('students.id = :studentId', { studentId })
+      .innerJoin('students.coach', 'coach')
+      .andWhere('coach.user_id = :coachUserId', { coachUserId })
+      .getOne();
   }
 
-  async findStudentByNationalCode(nationalCode: string, userId: number): Promise<StudentEntity> {
-    const student = await this.createQueryBuilder(EntityName.STUDENTS)
-      .where('students.national_code = :nationalCode', { nationalCode })
-      .leftJoinAndSelect('students.club', 'club')
-      .andWhere('club.ownerId = :userId', { userId })
+  async findByIdAndCoach(studentId: number, coachId: number): Promise<StudentEntity> {
+    return this.createQueryBuilder(EntityName.STUDENTS)
+      .where('students.id = :studentId', { studentId })
+      .andWhere('students.coach_id = :coachId', { coachId })
       .getOne();
-
-    return student;
   }
 
-  async existsStudentsInClub(clubId: number, coachId: number): Promise<boolean> {
-    const count = await this.count({ where: { club: { id: clubId }, coach: { id: coachId } } });
+  async findStudentByNationalCode(nationalCode: string): Promise<StudentEntity> {
+    return await this.findOneBy({ national_code: nationalCode });
+  }
+
+  async existsStudentsInGym(gym_id: number, coach_id: number): Promise<boolean> {
+    const count = await this.count({ where: { gym: { id: gym_id }, coach: { id: coach_id } } });
 
     return count > 0;
   }
 
-  async existsByCoachId(coachId: number): Promise<boolean> {
-    const count = await this.count({ where: { coach: { id: coachId } } });
+  async existsByCoachId(coach_id: number): Promise<boolean> {
+    const count = await this.count({ where: { coach: { id: coach_id } } });
     return count > 0;
   }
 
-  async existsByCoachIdAndCoachGender(coachId: number, gender: Gender): Promise<boolean> {
-    const studentExists = await this.findOne({ where: { coachId, gender } });
+  async existsByCoachIdAndCoachGender(coach_id: number, gender: Gender): Promise<boolean> {
+    const studentExists = await this.findOne({ where: { coach_id, gender } });
     return !!studentExists;
   }
 
   async findStudentWithRelations(studentId: number): Promise<StudentEntity> {
     const student = await this.createQueryBuilder(EntityName.STUDENTS)
       .where('students.id = :studentId', { studentId })
-      .leftJoin('students.club', 'club')
+      .leftJoin('students.gym', 'gym')
       .leftJoin('students.coach', 'coach')
-      .select(['students', 'club.id', 'club.name', 'coach.id', 'coach.full_name'])
+      .select(['students', 'gym.id', 'gym.name', 'coach.id', 'coach.full_name'])
       .leftJoinAndSelect('students.beltInfo', 'beltInfo')
       .leftJoinAndSelect('beltInfo.belt', 'belt')
       .leftJoinAndSelect(
@@ -254,10 +245,10 @@ export class StudentRepository extends Repository<StudentEntity> {
     return student;
   }
 
-  async countStudentsByOwner(ownerId: number): Promise<number> {
+  async countStudentsByOwner(owner_id: number): Promise<number> {
     return this.createQueryBuilder(EntityName.STUDENTS)
-      .leftJoin('students.club', 'club')
-      .where('club.ownerId = :ownerId', { ownerId })
+      .leftJoin('students.gym', 'gym')
+      .where('gym.owner_id = :owner_id', { owner_id })
       .getCount();
   }
 
@@ -265,11 +256,11 @@ export class StudentRepository extends Repository<StudentEntity> {
     return this.find({ where: { id: In(ids) } });
   }
 
-  async findByIdsAndCoachAndGender(ids: number[], coachId: number, gender: Gender): Promise<StudentEntity[]> {
-    return this.find({ where: { id: In(ids), gender, coachId } });
+  async findByIdsAndCoachAndGender(ids: number[], coach_id: number, gender: Gender): Promise<StudentEntity[]> {
+    return this.find({ where: { id: In(ids), gender, coach_id } });
   }
-  async findByIdsAndCoach(ids: number[], coachId: number): Promise<StudentEntity[]> {
-    return this.find({ where: { id: In(ids), coachId } });
+  async findByIdsAndCoach(ids: number[], coach_id: number): Promise<StudentEntity[]> {
+    return this.find({ where: { id: In(ids), coach_id } });
   }
 }
 

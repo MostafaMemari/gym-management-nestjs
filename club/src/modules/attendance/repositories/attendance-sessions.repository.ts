@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, In, QueryRunner, Repository } from 'typeorm';
 
 import { AttendanceSessionEntity } from '../entities/attendance-sessions.entity';
-import { CacheKeys } from '../enums/cache.enum';
+import { CacheKeys } from '../../../common/enums/cache';
 import { IAttendanceFilter } from '../interfaces/attendance.interface';
 
 import { EntityName } from '../../../common/enums/entity.enum';
-import { CacheTTLMilliseconds } from '../../../common/enums/cache-time';
+import { CacheTTLMilliseconds } from '../../../common/enums/cache';
 
 @Injectable()
 export class AttendanceSessionRepository extends Repository<AttendanceSessionEntity> {

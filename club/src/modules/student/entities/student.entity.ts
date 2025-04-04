@@ -5,16 +5,17 @@ import { CoachEntity } from '../../coach/entities/coach.entity';
 import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
-import { ClubEntity } from '../../../modules/club/entities/club.entity';
+import { GymEntity } from '../../gym/entities/gym.entity';
 import { StudentBeltEntity } from './student-belt.entity';
 import { SessionEntity } from '../../../modules/session/entities/session.entity';
 import { AttendanceEntity } from '../../../modules/attendance/entities/attendance.entity';
+import { Role } from 'src/common/enums/role.enum';
 
 @Entity(EntityName.STUDENTS)
 @Index(['full_name', 'national_code'])
 export class StudentEntity extends AbstractEntity {
-  @Column({ type: 'integer', unique: true, nullable: false })
-  userId: number;
+  @Column({ type: 'integer', unique: true })
+  user_id: number;
 
   @Column({ type: 'varchar', length: 80 })
   full_name: string;
@@ -25,14 +26,14 @@ export class StudentEntity extends AbstractEntity {
   @Column({ type: 'boolean', default: true })
   is_active: boolean;
 
+  @Column({ type: 'varchar', length: 10, unique: true })
+  national_code: string;
+
   @Column({ type: 'varchar', nullable: true })
   image_url?: string;
 
   @Column({ type: 'varchar', length: 80, nullable: true })
   father_name?: string;
-
-  @Column({ type: 'varchar', length: 10, unique: true })
-  national_code: string;
 
   @Column({ type: 'varchar', length: 15, nullable: true })
   phone_number?: string;
@@ -55,25 +56,32 @@ export class StudentEntity extends AbstractEntity {
   @Column({ type: 'date', nullable: true })
   expire_image_date?: Date;
 
-  @Column({ type: 'integer', nullable: true })
-  coachId: number;
+  @Column({ type: 'integer', nullable: false })
+  gym_id: number;
 
   @Column({ type: 'integer', nullable: true })
-  clubId: number;
+  coach_id: number;
 
-  @ManyToOne(() => CoachEntity, (coach) => coach.students, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn()
-  coach: CoachEntity;
+  @ManyToOne(() => GymEntity, (gym) => gym.students)
+  @JoinColumn({ name: 'gym_id' })
+  gym: GymEntity | null;
 
-  @ManyToOne(() => ClubEntity, (club) => club.students, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn()
-  club: ClubEntity;
+  @ManyToOne(() => CoachEntity, (coach) => coach.students)
+  @JoinColumn({ name: 'coach_id' })
+  coach: CoachEntity | null;
+
+  @Column({ type: 'integer', nullable: false })
+  created_by: number;
 
   @OneToOne(() => StudentBeltEntity, (beltInfo) => beltInfo.student, { nullable: true })
   beltInfo: StudentBeltEntity | null;
 
   @ManyToMany(() => SessionEntity, (session) => session.students)
-  @JoinTable()
+  @JoinTable({
+    name: 'student_sessions',
+    joinColumn: { name: 'student_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'coach_id', referencedColumnName: 'id' },
+  })
   sessions: SessionEntity[];
 
   @OneToMany(() => AttendanceEntity, (attendance) => attendance.student)

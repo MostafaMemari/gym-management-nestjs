@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 import { LessonEntity } from '../entities/lesson.entity';
-import { CacheKeys } from '../enums/cache.enum';
 import { ICreateLesson, ISearchLessonQuery, IUpdateLesson } from '../interfaces/lesson.interface';
 
 import { EntityName } from '../../../common/enums/entity.enum';
-import { CacheTTLMilliseconds } from 'src/common/enums/cache-time';
+import { CacheKeys, CacheTTLMilliseconds } from 'src/common/enums/cache';
 
 @Injectable()
 export class LessonRepository extends Repository<LessonEntity> {
@@ -14,15 +13,19 @@ export class LessonRepository extends Repository<LessonEntity> {
     super(LessonEntity, dataSource.createEntityManager());
   }
 
-  // async createAndSaveLesson(createLessonDto: ICreateLesson, ownerId: number): Promise<LessonEntity> {
-  //   const lesson = this.create({ ...createLessonDto });
-  //   return await this.save(lesson);
-  // }
+  async createAndSaveLesson(createLessonDto: ICreateLesson): Promise<LessonEntity> {
+    const lesson = this.create(createLessonDto);
+    return await this.save(lesson);
+  }
 
-  // async updateLesson(lesson: LessonEntity, updateLessonDto: IUpdateLesson): Promise<LessonEntity> {
-  //   const updatedLesson = this.merge(lesson, { ...updateLessonDto });
-  //   return await this.save(updatedLesson);
-  // }
+  async updateLesson(lesson: LessonEntity, updateLessonDto: IUpdateLesson): Promise<LessonEntity> {
+    const updatedLesson = this.merge(lesson, { ...updateLessonDto });
+    return await this.save(updatedLesson);
+  }
+
+  async getLessonsByChapter(chapterId: number): Promise<LessonEntity[]> {
+    return this.find({ where: { chapterId } });
+  }
 
   async getLessonsWithFilters(filters: ISearchLessonQuery, page: number, take: number): Promise<[LessonEntity[], number]> {
     const cacheKey = `${CacheKeys.LESSONS}-${page}-${take}-${JSON.stringify(filters)}`;

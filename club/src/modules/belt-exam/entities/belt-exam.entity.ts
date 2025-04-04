@@ -1,12 +1,12 @@
 import { Column, Entity, JoinTable, ManyToMany } from 'typeorm';
 
-import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
+import { BaseEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
 import { BeltEntity } from '../../../modules/belt/entities/belt.entity';
 
 @Entity(EntityName.BELT_EXAMS)
-export class BeltExamEntity extends AbstractEntity {
+export class BeltExamEntity extends BaseEntity {
   @Column({ type: 'varchar' })
   name: string;
 

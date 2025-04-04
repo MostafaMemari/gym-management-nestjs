@@ -17,10 +17,10 @@ export class ChapterController {
   }
 
   @MessagePattern(ChapterPatterns.CREATE)
-  create(@Payload() data: { createChapterDto: ICreateChapter }): Promise<ServiceResponse> {
-    const { createChapterDto } = data;
+  create(@Payload() data: { courseId: number; createChapterDto: ICreateChapter }): Promise<ServiceResponse> {
+    const { courseId, createChapterDto } = data;
 
-    return this.chapterService.create(createChapterDto);
+    return this.chapterService.create(courseId, createChapterDto);
   }
   @MessagePattern(ChapterPatterns.UPDATE)
   update(@Payload() data: { chapterId: number; updateChapterDto: IUpdateChapter }): Promise<ServiceResponse> {
@@ -44,6 +44,6 @@ export class ChapterController {
   remove(@Payload() data: { chapterId: number }): Promise<ServiceResponse> {
     const { chapterId } = data;
 
-    return this.chapterService.findOneById(chapterId);
+    return this.chapterService.removeById(chapterId);
   }
 }

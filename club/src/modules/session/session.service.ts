@@ -1,16 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { SessionEntity } from './entities/session.entity';
-import { CacheKeys } from './enums/cache.enum';
 import { SessionMessages } from './enums/session.message';
 import { ICreateSession, ISessionFilter, IUpdateSession } from './interfaces/session.interface';
 import { SessionRepository } from './repositories/session.repository';
 
 import { CacheService } from '../cache/cache.service';
-import { ClubService } from '../club/club.service';
+import { GymService } from '../gym/gym.service';
 import { StudentService } from '../student/student.service';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
+import { CacheKeys } from '../../common/enums/cache';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { IUser } from '../../common/interfaces/user.interface';
@@ -21,18 +21,17 @@ export class SessionService {
   constructor(
     private readonly sessionRepository: SessionRepository,
     private readonly cacheService: CacheService,
-    private readonly clubService: ClubService,
+    private readonly gymService: GymService,
     private readonly studentService: StudentService,
   ) {}
 
   async create(user: IUser, createSessionDto: ICreateSession): Promise<ServiceResponse> {
     try {
-      const { clubId, coachId, studentIds } = createSessionDto;
-      const userId = user.id;
+      const { gymId, coachId, studentIds } = createSessionDto;
 
-      const club = await this.clubService.validateOwnershipByIdWithCoaches(clubId, userId);
-      await this.clubService.validateCoachInClub(club, coachId);
-      const coach = club.coaches.find((coach) => coach.id === coachId);
+      const gym = await this.gymService.validateOwnershipByIdWithCoaches(gymId, user.id);
+      await this.gymService.validateCoachInGym(gym, coachId);
+      const coach = gym.coaches.find((coach) => coach.id === coachId);
 
       createSessionDto.students = studentIds.length
         ? await this.studentService.validateStudentsIdsByCoachAndGender(studentIds, coach.id, coach.gender)
@@ -40,7 +39,7 @@ export class SessionService {
 
       const session = await this.sessionRepository.createAndSaveSession(createSessionDto);
 
-      await this.clearSessionCacheByUser(userId);
+      await this.clearSessionCacheByUser(user.id);
       return ResponseUtil.success(
         {
           ...session,
@@ -57,20 +56,20 @@ export class SessionService {
   }
   async update(user: IUser, sessionId: number, updateSessionDto: IUpdateSession): Promise<ServiceResponse> {
     try {
-      const { clubId, coachId, studentIds } = updateSessionDto;
+      const { gymId, coachId, studentIds } = updateSessionDto;
       const userId = user.id;
-      let club = null;
+      let gym = null;
 
       const session = await this.validateOwnershipById(sessionId, userId);
 
-      if (clubId || coachId) {
-        club = await this.clubService.validateOwnershipByIdWithCoaches(clubId ?? session.clubId, userId);
-        await this.clubService.validateCoachInClub(club, coachId ?? session.coachId);
+      if (gymId || coachId) {
+        gym = await this.gymService.validateOwnershipByIdWithCoaches(gymId ?? session.gymId, userId);
+        await this.gymService.validateCoachInGym(gym, coachId ?? session.coachId);
       }
       if (studentIds?.length) {
-        club = club ? club : await this.clubService.validateOwnershipByIdWithCoaches(clubId ?? session.clubId, userId);
+        gym = gym ? gym : await this.gymService.validateOwnershipByIdWithCoaches(gymId ?? session.gymId, userId);
 
-        const coach = club.coaches.find((coach) => coach.id === coachId || session.coachId);
+        const coach = gym.coaches.find((coach) => coach.id === coachId || session.coachId);
         updateSessionDto.students = studentIds
           ? await this.studentService.validateStudentsIdsByCoachAndGender(studentIds, coach.id, coach.gender)
           : null;

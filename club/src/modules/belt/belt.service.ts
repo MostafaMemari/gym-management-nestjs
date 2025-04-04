@@ -5,18 +5,16 @@ import { BeltMessages } from './enums/belt.message';
 import { IBeltCreateDto, IBeltFilter, IBeltUpdateDto } from './interfaces/belt.interface';
 import { BeltRepository } from './repositories/belt.repository';
 
-import { CacheService } from '../cache/cache.service';
-
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
+import { addMonthsToDateShamsi } from '../../common/utils/date/addMonths';
+import { mildadiToShamsi, shmasiToMiladi } from '../../common/utils/date/convertDate';
 import { ResponseUtil } from '../../common/utils/response';
-import { mildadiToShamsi, shmasiToMiladi } from 'src/common/utils/date/convertDate';
-import { addMonthsToDateShamsi } from 'src/common/utils/date/addMonths';
 
 @Injectable()
 export class BeltService {
-  constructor(private readonly beltRepository: BeltRepository, private readonly cacheService: CacheService) {}
+  constructor(private readonly beltRepository: BeltRepository) {}
 
   async create(createBeltDto: IBeltCreateDto): Promise<ServiceResponse> {
     try {
@@ -26,7 +24,7 @@ export class BeltService {
         createBeltDto.nextBelt = nextBelt;
       }
 
-      const belt = await this.beltRepository.createAndSaveBelt(createBeltDto);
+      const belt = await this.beltRepository.createAndSave(createBeltDto);
 
       return ResponseUtil.success(belt, BeltMessages.CREATE_SUCCESS);
     } catch (error) {
@@ -43,7 +41,7 @@ export class BeltService {
         updateBeltDto.nextBelt = nextBelt;
       }
 
-      const updatedBelt = await this.beltRepository.updateBelt(belt, updateBeltDto);
+      const updatedBelt = await this.beltRepository.updateMergeAndSave(belt, updateBeltDto);
 
       return ResponseUtil.success({ ...updatedBelt }, BeltMessages.UPDATE_SUCCESS);
     } catch (error) {
@@ -77,13 +75,20 @@ export class BeltService {
     try {
       const belt = await this.validateById(beltId);
 
-      const removedBelt = await this.beltRepository.delete({ id: beltId });
-
-      if (!removedBelt.affected) ResponseUtil.error(BeltMessages.REMOVE_FAILURE);
+      await this.beltRepository.remove(belt);
 
       return ResponseUtil.success(belt, BeltMessages.REMOVE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || BeltMessages.REMOVE_FAILURE, error?.status);
+    }
+  }
+  async findByIds(beltIds: number[]): Promise<ServiceResponse> {
+    try {
+      const belts = await this.validateByIds(beltIds);
+
+      return ResponseUtil.success(belts, BeltMessages.GET_ALL_SUCCESS);
+    } catch (error) {
+      ResponseUtil.error(error?.message || BeltMessages.GET_FAILURE, error?.status);
     }
   }
 
@@ -92,6 +97,7 @@ export class BeltService {
     if (!belt) throw new NotFoundException(BeltMessages.NOT_FOUND);
     return belt;
   }
+
   async validateByIds(beltIds: number[]): Promise<BeltEntity[]> {
     const foundBelts = await this.beltRepository.findByIds(beltIds);
     const foundIds = foundBelts.map((belt) => belt.id);
@@ -103,6 +109,7 @@ export class BeltService {
 
     return foundBelts;
   }
+
   async validateByIdWithRelation(beltId: number): Promise<BeltEntity> {
     const belt = await this.beltRepository.findOne({ where: { id: beltId }, relations: ['nextBelt'] });
     if (!belt) throw new NotFoundException(BeltMessages.NOT_FOUND);

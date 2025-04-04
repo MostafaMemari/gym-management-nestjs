@@ -6,14 +6,14 @@ import { SessionEntity } from '../../../modules/session/entities/session.entity'
 import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
-import { ClubEntity } from '../../../modules/club/entities/club.entity';
+import { GymEntity } from '../../gym/entities/gym.entity';
 import { AttendanceSessionEntity } from 'src/modules/attendance/entities/attendance-sessions.entity';
 
 @Entity(EntityName.COACHES)
 @Index(['full_name', 'national_code'])
 export class CoachEntity extends AbstractEntity {
   @Column({ type: 'integer', unique: true, nullable: false })
-  userId: Number;
+  user_id: Number;
 
   @Column({ type: 'varchar', length: 80 })
   full_name: string;
@@ -39,14 +39,11 @@ export class CoachEntity extends AbstractEntity {
   @Column({ type: 'timestamp', nullable: true })
   birth_date: Date;
 
-  @Column({ type: 'integer', nullable: false })
-  ownerId: number;
-
   @OneToMany(() => StudentEntity, (student) => student.coach)
   students: StudentEntity[];
 
-  @ManyToMany(() => ClubEntity, (club) => club.coaches)
-  clubs: ClubEntity[];
+  @ManyToMany(() => GymEntity, (gym) => gym.coaches, { onDelete: 'CASCADE' })
+  gyms: GymEntity[];
 
   @OneToMany(() => SessionEntity, (session) => session.coach)
   sessions: SessionEntity;

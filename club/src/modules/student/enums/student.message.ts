@@ -27,4 +27,5 @@ export enum StudentMessages {
 
   MULTIPLE_NOT_FOUND = 'Students with IDs {ids} were not found',
   COACH_NOT_IN_CLUB = 'Coach with ID {coachId} is not associated with club ID {clubId}',
+  INVALID_GYM_OR_COACH = 'Invalid gym or coach selection. Please check ownership and gender compatibility',
 }

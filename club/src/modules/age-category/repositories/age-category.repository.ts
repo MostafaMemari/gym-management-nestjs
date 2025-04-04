@@ -2,11 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, In, Repository } from 'typeorm';
 
 import { AgeCategoryEntity } from '../entities/age-category.entity';
-import { CacheKeys } from '../enums/cache.enum';
 import { IAgeCategoryCreateDto, IAgeCategoryFilter, IAgeCategoryUpdateDto } from '../interfaces/age-category.interface';
 
 import { EntityName } from '../../../common/enums/entity.enum';
-import { CacheTTLMilliseconds } from 'src/common/enums/cache-time';
+import { CacheKeys, CacheTTLMilliseconds } from '../../../common/enums/cache';
 
 @Injectable()
 export class AgeCategoryRepository extends Repository<AgeCategoryEntity> {
@@ -14,12 +13,11 @@ export class AgeCategoryRepository extends Repository<AgeCategoryEntity> {
     super(AgeCategoryEntity, dataSource.createEntityManager());
   }
 
-  async createAndSaveAgeCategory(cateAgeCategoryDto: IAgeCategoryCreateDto): Promise<AgeCategoryEntity> {
+  async createAndSave(cateAgeCategoryDto: IAgeCategoryCreateDto): Promise<AgeCategoryEntity> {
     const ageCategory = this.create({ ...cateAgeCategoryDto });
     return await this.save(ageCategory);
   }
-
-  async updateAgeCategory(ageCategory: AgeCategoryEntity, updateAgeCategoryDto: IAgeCategoryUpdateDto): Promise<AgeCategoryEntity> {
+  async updateMergeAndSave(ageCategory: AgeCategoryEntity, updateAgeCategoryDto: IAgeCategoryUpdateDto): Promise<AgeCategoryEntity> {
     const updatedAgeCategory = this.merge(ageCategory, { ...updateAgeCategoryDto });
     return await this.save(updatedAgeCategory);
   }
@@ -50,10 +48,6 @@ export class AgeCategoryRepository extends Repository<AgeCategoryEntity> {
       .take(take)
       .cache(cacheKey, CacheTTLMilliseconds.GET_ALL_AGE_CATEGORIES)
       .getManyAndCount();
-  }
-
-  async findByIds(clubIds: number[]): Promise<AgeCategoryEntity[]> {
-    return this.find({ where: { id: In(clubIds) } });
   }
 }
 

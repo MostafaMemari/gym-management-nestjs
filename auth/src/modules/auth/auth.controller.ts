@@ -28,6 +28,11 @@ export class AuthController {
     return this.authService.signinStudent(data);
   }
 
+  @MessagePattern(AuthPatterns.SigninCoach)
+  signinCoach(@Payload() data: { nationalCode: string }) {
+    return this.authService.signinCoach(data);
+  }
+
   @MessagePattern(AuthPatterns.Signout)
   signout(@Payload() data: { refreshToken: string }) {
     return this.authService.signout(data);

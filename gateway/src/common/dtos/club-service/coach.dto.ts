@@ -75,7 +75,7 @@ export class CreateCoachDto {
   @ToArray()
   @IsInt({ each: true })
   @ApiPropertyOptional({ type: 'array' })
-  clubIds: number[];
+  gym_ids: number[];
 }
 
 export class UpdateCoachDto extends PartialType(CreateCoachDto) {}
@@ -105,7 +105,7 @@ export class QueryCoachDto {
   // @IsOptional()
   // @IsString()
   // @ApiPropertyOptional({ type: 'string', example: '' })
-  // club: string;
+  // gym: string;
 
   // @IsOptional()
   // @IsEnum(SortBy, { message: 'sort_by must be one of "birth_date", "sports_insurance_date", "expire_image_date", "created_at", or "updated_at"' })

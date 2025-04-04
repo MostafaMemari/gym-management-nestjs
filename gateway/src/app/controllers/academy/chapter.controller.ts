@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Post, Put, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiConsumes, ApiParam, ApiTags } from '@nestjs/swagger';
 import { lastValueFrom, timeout } from 'rxjs';
@@ -10,36 +10,32 @@ import { PaginationDto } from '../../../common/dtos/shared.dto';
 import { ChapterPatterns } from '../../../common/enums/academy-service/academy.event';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
-import { UploadFile } from '../../../common/interceptors/upload-file.interceptor';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
 import { User } from '../../../common/interfaces/user.interface';
-import { FileValidationPipe } from '../../../common/pipes/upload-file.pipe';
 import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
+import { AwsService } from '../../../modules/s3AWS/s3AWS.service';
 
 @Controller('chapters')
 @ApiTags('Chapters')
 @AuthDecorator()
 export class ChaptersController {
-  constructor(@Inject(Services.ACADEMY) private readonly chaptersServiceClient: ClientProxy) {}
+  constructor(
+    @Inject(Services.ACADEMY) private readonly academyServiceClient: ClientProxy,
+    private readonly awsService: AwsService,
+  ) {}
 
-  @Post()
-  @UseInterceptors(UploadFile('image'))
-  @ApiConsumes(SwaggerConsumes.MultipartData)
-  async create(
-    @GetUser() user: User,
-    @Body() createChaptersDto: CreateChaptersDto,
-    @UploadedFile(new FileValidationPipe(10 * 1024 * 1024, ['image/jpeg', 'image/png']))
-    image: Express.Multer.File,
-  ) {
+  @Post('/course/:courseId')
+  @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
+  async create(@Body() createChapterDto: CreateChaptersDto, @Param('courseId', ParseIntPipe) courseId: number) {
     try {
-      await checkConnection(Services.ACADEMY, this.chaptersServiceClient);
+      await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.chaptersServiceClient
+        this.academyServiceClient
           .send(ChapterPatterns.CREATE, {
-            user,
-            createChaptersDto: { ...createChaptersDto, image },
+            courseId,
+            createChapterDto: { ...createChapterDto },
           })
           .pipe(timeout(10000)),
       );
@@ -50,36 +46,16 @@ export class ChaptersController {
     }
   }
 
-  @Get('course/:courseId')
-  @ApiParam({ name: 'courseId', type: 'number' })
-  getByCourse(@Param('courseId') courseId: number) {
-    // return this.chapterService.getByCourse(courseId);
-  }
-
-  @Get(':id')
-  @ApiParam({ name: 'id', type: 'number' })
-  getOne(@Param('id') id: number) {
-    // return this.chapterService.getOne(id);
-  }
-
   @Put(':id')
-  @UseInterceptors(UploadFile('image'))
-  @ApiConsumes(SwaggerConsumes.MultipartData)
-  async update(
-    @GetUser() user: User,
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateChaptersDto: UpdateChaptersDto,
-    @UploadedFile(new FileValidationPipe(10 * 1024 * 1024, ['image/jpeg', 'image/png']))
-    image: Express.Multer.File,
-  ) {
+  @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
+  async update(@Param('id', ParseIntPipe) id: number, @Body() updateChapterDto: UpdateChaptersDto) {
     try {
-      await checkConnection(Services.ACADEMY, this.chaptersServiceClient);
+      await checkConnection(Services.ACADEMY, this.academyServiceClient);
       const data: ServiceResponse = await lastValueFrom(
-        this.chaptersServiceClient
+        this.academyServiceClient
           .send(ChapterPatterns.UPDATE, {
-            user,
             chapterId: id,
-            updateChaptersDto: { ...updateChaptersDto, image },
+            updateChapterDto: { ...updateChapterDto },
           })
           .pipe(timeout(5000)),
       );
@@ -93,10 +69,10 @@ export class ChaptersController {
   @Get()
   async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto, @Query() queryChaptersDto: QueryChaptersDto): Promise<any> {
     try {
-      await checkConnection(Services.ACADEMY, this.chaptersServiceClient);
+      await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.chaptersServiceClient.send(ChapterPatterns.GET_ALL, { user, queryChaptersDto, paginationDto }).pipe(timeout(5000)),
+        this.academyServiceClient.send(ChapterPatterns.GET_ALL, { user, queryChaptersDto, paginationDto }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -104,12 +80,12 @@ export class ChaptersController {
   }
 
   @Get(':id')
-  async findOne(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
+  async findOne(@Param('id', ParseIntPipe) id: number) {
     try {
-      await checkConnection(Services.ACADEMY, this.chaptersServiceClient);
+      await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.chaptersServiceClient.send(ChapterPatterns.GET_ONE, { user, chapterId: id }).pipe(timeout(5000)),
+        this.academyServiceClient.send(ChapterPatterns.GET_ONE, { chapterId: id }).pipe(timeout(5000)),
       );
 
       return handleServiceResponse(data);
@@ -119,13 +95,20 @@ export class ChaptersController {
   }
 
   @Delete(':id')
-  async remove(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
+  async remove(@Param('id', ParseIntPipe) id: number) {
     try {
-      await checkConnection(Services.ACADEMY, this.chaptersServiceClient);
+      await checkConnection(Services.ACADEMY, this.academyServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.chaptersServiceClient.send(ChapterPatterns.REMOVE, { user, chapterId: id }).pipe(timeout(5000)),
+        this.academyServiceClient.send(ChapterPatterns.REMOVE, { chapterId: id }).pipe(timeout(5000)),
       );
+
+      if (!data.error) {
+        const chapter = data.data;
+
+        const folderName = `academy/course/${chapter.courseId}/chapter/${chapter.id}`;
+        await this.awsService.removeFolder(folderName);
+      }
 
       return handleServiceResponse(data);
     } catch (error) {

@@ -3,15 +3,13 @@ import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 
 import { CoachEntity } from './entities/coach.entity';
-import { CacheKeys } from './enums/cache.enum';
 import { CoachMessages } from './enums/coach.message';
 import { ICoachCreateDto, ICoachFilter, ICoachUpdateDto } from './interfaces/coach.interface';
 import { CoachRepository } from './repositories/coach.repository';
 
-import { CacheService } from '../cache/cache.service';
-import { ClubService } from '../club/club.service';
-import { ClubEntity } from '../club/entities/club.entity';
-import { ICreateClub } from '../club/interfaces/club.interface';
+import { GymService } from '../gym/gym.service';
+import { GymEntity } from '../gym/entities/gym.entity';
+import { ICreateGym } from '../gym/interfaces/gym.interface';
 import { AwsService } from '../s3AWS/s3AWS.service';
 import { StudentService } from '../student/student.service';
 
@@ -35,72 +33,66 @@ export class CoachService {
     private readonly coachRepository: CoachRepository,
 
     private readonly awsService: AwsService,
-    private readonly cacheService: CacheService,
-    @Inject(forwardRef(() => ClubService)) private readonly clubService: ClubService,
-    @Inject(forwardRef(() => StudentService)) private readonly studentService: StudentService,
+    private readonly studentService: StudentService,
+    @Inject(forwardRef(() => GymService)) private readonly gymService: GymService,
   ) {}
 
   async create(user: IUser, createCoachDto: ICoachCreateDto): Promise<ServiceResponse> {
-    const { clubIds, national_code, gender, image } = createCoachDto;
-    const userId: number = user.id;
+    const { gym_ids, national_code, gender, image } = createCoachDto;
 
     let imageKey: string | null = null;
     let coachUserId: number | null = null;
-    let ownedClubs: ClubEntity[] | null;
+    let ownedGyms: GymEntity[] | null;
 
     try {
-      if (national_code) await this.validateUniqueNationalCode(national_code, userId);
+      if (national_code) await this.validateUniqueNationalCode(national_code);
 
-      if (clubIds) {
-        ownedClubs = await this.clubService.validateOwnershipByIds(clubIds, userId);
-        this.validateCoachClubGender(gender, ownedClubs);
+      if (gym_ids) {
+        ownedGyms = await this.gymService.validateOwnershipByIds(gym_ids, user.id);
+        this.validateCoachGymGender(gender, ownedGyms);
       }
 
       imageKey = image ? await this.updateImage(image) : null;
-
       coachUserId = await this.createUserCoach();
 
       const coach = await this.coachRepository.createCoachWithTransaction({
         ...createCoachDto,
         image_url: imageKey,
-        clubs: ownedClubs,
-        userId: coachUserId,
-        ownerId: userId,
+        gyms: ownedGyms,
+        user_id: coachUserId,
       });
 
-      await this.clearCoachCacheByUser(userId);
       return ResponseUtil.success({ ...coach, userId: coachUserId }, CoachMessages.CREATE_SUCCESS);
     } catch (error) {
       await this.removeCoachData(coachUserId, imageKey);
       ResponseUtil.error(error?.message || CoachMessages.CREATE_FAILURE, error?.status);
     }
   }
-  async update(user: IUser, coachId: number, updateCoachDto: ICoachUpdateDto): Promise<ServiceResponse> {
-    const { clubIds = [], national_code, gender, image } = updateCoachDto;
-    const userId: number = user.id;
+  async update(adminId: number, coachId: number, updateCoachDto: ICoachUpdateDto): Promise<ServiceResponse> {
+    const { gym_ids = [], national_code, gender, image } = updateCoachDto;
 
     let imageKey: string | null = null;
 
     try {
-      let coach = national_code ? await this.validateUniqueNationalCode(national_code, userId) : null;
-      if (!coach) coach = await this.validateOwnershipById(coachId, userId);
+      let coach = national_code ? await this.validateUniqueNationalCode(national_code) : null;
+      if (!coach) coach = await this.validateByAdmin(coachId, adminId);
 
       const updateData = this.prepareUpdateData(updateCoachDto, coach);
 
-      if (clubIds.length) {
-        const ownedClubs = clubIds?.length ? await this.clubService.validateOwnershipByIds(clubIds, userId) : coach.clubs;
-        const removedClubs = coach.clubs.filter((club) => !clubIds.includes(club.id));
-        if (removedClubs.length) await this.studentService.validateRemovedClubsStudents(removedClubs, coachId);
-        this.validateCoachClubGender(coach.gender, ownedClubs);
-        updateData.clubs = ownedClubs;
+      if (gym_ids.length) {
+        const ownedGyms = gym_ids?.length ? await this.gymService.validateOwnershipByIds(gym_ids, adminId) : coach.gyms;
+        const removedGyms = coach.gyms.filter((gym) => !gym_ids.includes(gym.id));
+        if (removedGyms.length) await this.studentService.validateRemovedGymsStudents(removedGyms, coachId);
+        this.validateCoachGymGender(coach.gender, ownedGyms);
+        updateData.gyms = ownedGyms;
       } else {
-        await this.studentService.validateRemovedClubsStudents(coach.clubs, coachId);
-        this.validateCoachClubGender(coach.gender, coach.clubs);
-        updateData.clubs = [];
+        await this.studentService.validateRemovedGymsStudents(coach.gyms, coachId);
+        this.validateCoachGymGender(coach.gender, coach.gyms);
+        updateData.gyms = [];
       }
 
       if (gender && gender !== coach.gender) {
-        this.validateCoachClubGender(gender, updateData.clubs ?? coach.clubs);
+        this.validateCoachGymGender(gender, updateData.gyms ?? coach.gyms);
         await this.validateCoachGenderChange(gender, coachId);
       }
 
@@ -110,7 +102,6 @@ export class CoachService {
 
       if (image && updateData.image_url && coach.image_url) await this.awsService.deleteFile(coach.image_url);
 
-      await this.clearCoachCacheByUser(userId);
       return ResponseUtil.success({ ...coach, ...updateData }, CoachMessages.UPDATE_SUCCESS);
     } catch (error) {
       await this.removeImage(imageKey);
@@ -134,7 +125,7 @@ export class CoachService {
   }
   async findOneById(user: IUser, coachId: number): Promise<ServiceResponse> {
     try {
-      const coach = await this.validateOwnershipById(coachId, user.id);
+      const coach = await this.validateByAdmin(coachId, user.id);
 
       return ResponseUtil.success(coach, CoachMessages.GET_SUCCESS);
     } catch (error) {
@@ -144,24 +135,32 @@ export class CoachService {
   async removeById(user: IUser, coachId: number): Promise<ServiceResponse> {
     const userId = user.id;
     try {
-      const coach = await this.validateOwnershipById(coachId, user.id);
+      const coach = await this.validateByAdmin(coachId, userId);
 
       const hasStudents = await this.studentService.hasStudentsAssignedToCoach(coachId);
       if (hasStudents) throw new BadRequestException(CoachMessages.COACH_HAS_STUDENTS.replace('{coachId}', coachId.toString()));
 
-      const isRemoved = await this.coachRepository.removeCoachById(coachId);
+      await this.coachRepository.removeCoach(coach);
 
-      if (isRemoved) await this.removeCoachData(Number(coach.userId), coach.image_url);
+      await this.removeCoachData(Number(coach.user_id), coach.image_url);
 
-      await this.clearCoachCacheByUser(userId);
       return ResponseUtil.success(coach, CoachMessages.REMOVE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || CoachMessages.REMOVE_FAILURE, error?.status);
     }
   }
+  async getOneByNationalCode(nationalCode: string): Promise<ServiceResponse> {
+    try {
+      const coach = await this.coachRepository.findOneBy({ national_code: nationalCode });
+      if (!coach) throw new NotFoundException(CoachMessages.NOT_FOUND);
+      return ResponseUtil.success(coach, CoachMessages.GET_SUCCESS);
+    } catch (error) {
+      ResponseUtil.error(error?.message || CoachMessages.UPDATE_FAILURE, error?.status);
+    }
+  }
 
-  async validateOwnershipById(coachId: number, userId: number): Promise<CoachEntity> {
-    const coach = await this.coachRepository.findByIdAndOwner(coachId, userId);
+  async validateByAdmin(coachId: number, adminId: number): Promise<CoachEntity> {
+    const coach = await this.coachRepository.findByIdAndAdmin(coachId);
     if (!coach) throw new NotFoundException(CoachMessages.NOT_FOUND);
     return coach;
   }
@@ -198,8 +197,8 @@ export class CoachService {
     if (!imageKey) return;
     await this.awsService.deleteFile(imageKey);
   }
-  async validateUniqueNationalCode(nationalCode: string, userId: number): Promise<CoachEntity> {
-    const coach = await this.coachRepository.findCoachByNationalCode(nationalCode, userId);
+  async validateUniqueNationalCode(nationalCode: string): Promise<CoachEntity> {
+    const coach = await this.coachRepository.findCoachByNationalCode(nationalCode);
     if (coach) throw new BadRequestException(CoachMessages.DUPLICATE_ENTRY);
     return coach;
   }
@@ -210,11 +209,11 @@ export class CoachService {
     ]);
   }
 
-  private validateCoachClubGender(coachGender: Gender, clubs: ICreateClub[]): void {
-    const invalidClubs = clubs.filter((club) => !isGenderAllowed(coachGender, club.genders)).map((club) => club.id);
+  private validateCoachGymGender(coachGender: Gender, gyms: ICreateGym[]): void {
+    const invalidGyms = gyms.filter((gym) => !isGenderAllowed(coachGender, gym.genders)).map((gym) => gym.id);
 
-    if (invalidClubs.length > 0) {
-      throw new BadRequestException(CoachMessages.COACH_GENDER_MISMATCH.replace('{ids}', invalidClubs.join(', ')));
+    if (invalidGyms.length > 0) {
+      throw new BadRequestException(CoachMessages.COACH_GENDER_MISMATCH.replace('{ids}', invalidGyms.join(', ')));
     }
   }
   private async validateCoachGenderChange(coachGender: Gender, coachId: number): Promise<void> {
@@ -228,18 +227,15 @@ export class CoachService {
   private prepareUpdateData(updateDto: ICoachUpdateDto, coach: CoachEntity): Partial<CoachEntity> {
     return Object.fromEntries(
       Object.entries(updateDto).filter(
-        ([key, value]) => key !== 'image' && key !== 'clubIds' && value !== undefined && value !== coach[key],
+        ([key, value]) => key !== 'image' && key !== 'gym_ids' && value !== undefined && value !== coach[key],
       ),
     );
   }
 
-  async hasCoachWithGenderInClub(clubId: number, coachGender: Gender): Promise<boolean> {
-    return this.coachRepository.existsCoachByGenderInClub(clubId, coachGender);
+  async hasCoachWithGenderInGym(gymId: number, coachGender: Gender): Promise<boolean> {
+    return this.coachRepository.existsCoachByGenderInGym(gymId, coachGender);
   }
-  async hasCoachByClubId(clubId: number): Promise<boolean> {
-    return this.coachRepository.existsCoachByClubId(clubId);
-  }
-  private async clearCoachCacheByUser(userId: number) {
-    await this.cacheService.delByPattern(`${CacheKeys.COACHES}-userId:${userId}*`);
+  async hasCoachByGymId(gymId: number): Promise<boolean> {
+    return this.coachRepository.existsCoachByGymId(gymId);
   }
 }

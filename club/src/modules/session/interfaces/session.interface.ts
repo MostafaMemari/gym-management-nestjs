@@ -7,7 +7,7 @@ export interface ICreateSession {
   description: string;
   start_time: string;
   end_time: string;
-  clubId: number;
+  gymId: number;
   coachId: number;
   studentIds?: number[];
   students: StudentEntity[];

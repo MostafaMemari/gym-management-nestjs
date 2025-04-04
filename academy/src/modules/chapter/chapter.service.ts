@@ -8,16 +8,18 @@ import { ChapterRepository } from './repositories/chapter.repository';
 import { ICreateChapter, ISearchChapterQuery, IUpdateChapter } from './interfaces/chapter.interface';
 import { ChapterEntity } from './entities/chapter.entity';
 import { ChapterMessages } from './enums/chapter.message';
+import { CourseService } from '../course/course.service';
 
 @Injectable()
 export class ChapterService {
-  constructor(private readonly chapterRepository: ChapterRepository) {}
+  constructor(private readonly chapterRepository: ChapterRepository, private readonly courseService: CourseService) {}
 
-  async create(createChapterDto: ICreateChapter): Promise<ServiceResponse> {
+  async create(courseId: number, createChapterDto: ICreateChapter): Promise<ServiceResponse> {
     try {
-      // const chapter = await this.chapterRepository.createAndSaveChapter(createChapterDto);
+      await this.courseService.validateById(courseId);
+      const chapter = await this.chapterRepository.createAndSaveChapter({ ...createChapterDto, courseId });
 
-      return ResponseUtil.success({}, ChapterMessages.CREATE_SUCCESS);
+      return ResponseUtil.success(chapter, ChapterMessages.CREATE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || ChapterMessages.CREATE_FAILURE, error?.status);
     }
@@ -26,7 +28,9 @@ export class ChapterService {
     try {
       const chapter = await this.validateById(chapterId);
 
-      return ResponseUtil.success({}, ChapterMessages.UPDATE_FAILURE);
+      const updatedChapter = await this.chapterRepository.updateChapter(chapter, updateChapterDto);
+
+      return ResponseUtil.success(updatedChapter, ChapterMessages.UPDATE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || ChapterMessages.UPDATE_FAILURE, error?.status);
     }
@@ -56,19 +60,17 @@ export class ChapterService {
   }
   async removeById(chapterId: number): Promise<ServiceResponse> {
     try {
-      await this.validateById(chapterId);
+      const chapter = await this.validateById(chapterId);
 
-      const removedChapter = await this.chapterRepository.delete({ id: chapterId });
+      await this.chapterRepository.remove(chapter);
 
-      if (!removedChapter.affected) ResponseUtil.error(ChapterMessages.REMOVE_FAILURE);
-
-      return ResponseUtil.success(removedChapter, ChapterMessages.REMOVE_SUCCESS);
+      return ResponseUtil.success(chapter, ChapterMessages.REMOVE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || ChapterMessages.REMOVE_FAILURE, error?.status);
     }
   }
 
-  private async validateById(chapterId: number): Promise<ChapterEntity> {
+  async validateById(chapterId: number): Promise<ChapterEntity> {
     const chapter = await this.chapterRepository.findOneBy({ id: chapterId });
     if (!chapter) throw new NotFoundException(ChapterMessages.NOT_FOUND);
     return chapter;

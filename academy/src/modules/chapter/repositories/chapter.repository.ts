@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, In, Repository } from 'typeorm';
 
 import { ChapterEntity } from '../entities/chapter.entity';
-import { CacheKeys } from '../enums/cache.enum';
+
 import { ICreateChapter, ISearchChapterQuery, IUpdateChapter } from '../interfaces/chapter.interface';
 
 import { EntityName } from '../../../common/enums/entity.enum';
-import { CacheTTLMilliseconds } from '../../../common/enums/cache-time';
+import { CacheKeys, CacheTTLMilliseconds } from '../../../common/enums/cache';
 
 @Injectable()
 export class ChapterRepository extends Repository<ChapterEntity> {
@@ -14,15 +14,15 @@ export class ChapterRepository extends Repository<ChapterEntity> {
     super(ChapterEntity, dataSource.createEntityManager());
   }
 
-  // async createAndSaveChapter(createChapterDto: ICreateChapter): Promise<ChapterEntity> {
-  //   const chapter.entity = this.create({ ...createChapterDto });
-  //   return await this.save(chapter.entity);
-  // }
+  async createAndSaveChapter(createChapterDto: ICreateChapter): Promise<ChapterEntity> {
+    const chapter = this.create({ ...createChapterDto });
+    return await this.save(chapter);
+  }
 
-  // async updateChapter(chapter.entity: ChapterEntity, updateChapterDto: IUpdateChapter): Promise<ChapterEntity> {
-  //   const updatedChapter = this.merge(chapter.entity, { ...updateChapterDto });
-  //   return await this.save(updatedChapter);
-  // }
+  async updateChapter(chapter: ChapterEntity, updateChapterDto: IUpdateChapter): Promise<ChapterEntity> {
+    const updatedChapter = this.merge(chapter, { ...updateChapterDto });
+    return await this.save(updatedChapter);
+  }
 
   async getChaptersWithFilters(filters: ISearchChapterQuery, page: number, take: number): Promise<[ChapterEntity[], number]> {
     const cacheKey = `${CacheKeys.CHAPTERS}-${page}-${take}-${JSON.stringify(filters)}`;
@@ -40,7 +40,7 @@ export class ChapterRepository extends Repository<ChapterEntity> {
     return queryBuilder
       .skip((page - 1) * take)
       .take(take)
-      .cache(cacheKey, CacheTTLMilliseconds.GET_ALL_COURSES)
+      .cache(cacheKey, CacheTTLMilliseconds.GET_ALL_CHAPTERS)
       .getManyAndCount();
   }
 }

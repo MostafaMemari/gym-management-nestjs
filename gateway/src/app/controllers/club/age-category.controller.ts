@@ -7,7 +7,7 @@ import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { Roles } from '../../../common/decorators/role.decorator';
 import { CreateAgeCategoryDto, QueryAgeCategoryDto, UpdateAgeCategoryDto } from '../../../common/dtos/club-service/age-category.dto';
 import { PaginationDto } from '../../../common/dtos/shared.dto';
-import { AgeCategoryPatterns } from '../../../common/enums/club-service/club.events';
+import { AgeCategoryPatterns } from '../../../common/enums/club-service/gym.events';
 import { Role } from '../../../common/enums/role.enum';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';

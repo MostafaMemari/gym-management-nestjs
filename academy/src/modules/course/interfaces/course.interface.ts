@@ -1,9 +1,9 @@
 export interface ICreateCourse {
   title: string;
   description?: string;
-  beltId: number;
-  cover_image?: Express.Multer.File;
-  intro_video?: Express.Multer.File;
+  beltIds: number[];
+  cover_image?: string;
+  intro_video?: string;
 }
 
 export type IUpdateCourse = Partial<ICreateCourse>;

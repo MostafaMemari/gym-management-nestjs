@@ -34,6 +34,12 @@ export class CourseController {
 
     return this.courseService.getAll({ queryCourseDto, paginationDto });
   }
+  @MessagePattern(CoursePatterns.GET_ONE_DETAILS)
+  findOneDetails(@Payload() data: { courseId: number }): Promise<ServiceResponse> {
+    const { courseId } = data;
+
+    return this.courseService.findOneDetail(courseId);
+  }
   @MessagePattern(CoursePatterns.GET_ONE)
   findOne(@Payload() data: { courseId: number }): Promise<ServiceResponse> {
     const { courseId } = data;
@@ -44,6 +50,6 @@ export class CourseController {
   remove(@Payload() data: { courseId: number }): Promise<ServiceResponse> {
     const { courseId } = data;
 
-    return this.courseService.findOneById(courseId);
+    return this.courseService.removeById(courseId);
   }
 }

@@ -1,23 +1,23 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from '../../common/utils/response';
-import { CourseRepository } from './repositories/course.repository';
-import { ICreateCourse, ISearchCourseQuery, IUpdateCourse } from './interfaces/course.interface';
 import { CourseEntity } from './entities/course.entity';
 import { CourseMessages } from './enums/course.message';
+import { ICreateCourse, ISearchCourseQuery, IUpdateCourse } from './interfaces/course.interface';
+import { CourseRepository } from './repositories/course.repository';
 
 @Injectable()
 export class CourseService {
   constructor(private readonly courseRepository: CourseRepository) {}
 
-  async create(createCourseDto: ICreateCourse): Promise<ServiceResponse> {
+  async create(createCourseDto: ICreateCourse) {
     try {
-      // const course = await this.courseRepository.createAndSaveCourse(createCourseDto);
+      const course = await this.courseRepository.createAndSaveCourse({ ...createCourseDto });
 
-      return ResponseUtil.success({}, CourseMessages.CREATE_SUCCESS);
+      return ResponseUtil.success(course, CourseMessages.CREATE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || CourseMessages.CREATE_FAILURE, error?.status);
     }
@@ -26,7 +26,9 @@ export class CourseService {
     try {
       const course = await this.validateById(courseId);
 
-      return ResponseUtil.success({}, CourseMessages.UPDATE_FAILURE);
+      const updatedCourse = await this.courseRepository.updateCourse(course, updateCourseDto);
+
+      return ResponseUtil.success(updatedCourse, CourseMessages.UPDATE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || CourseMessages.UPDATE_FAILURE, error?.status);
     }
@@ -45,6 +47,15 @@ export class CourseService {
       ResponseUtil.error(error?.message || CourseMessages.GET_ALL_FAILURE, error?.status);
     }
   }
+  async findOneDetail(courseId: number): Promise<ServiceResponse> {
+    try {
+      const course = await this.courseRepository.getCourseDetails(courseId);
+
+      return ResponseUtil.success(course, CourseMessages.GET_ALL_SUCCESS);
+    } catch (error) {
+      ResponseUtil.error(error?.message || CourseMessages.GET_ALL_FAILURE, error?.status);
+    }
+  }
   async findOneById(courseId: number): Promise<ServiceResponse> {
     try {
       const course = await this.validateById(courseId);
@@ -56,19 +67,17 @@ export class CourseService {
   }
   async removeById(courseId: number): Promise<ServiceResponse> {
     try {
-      await this.validateById(courseId);
+      const course = await this.validateById(courseId);
 
-      const removedCourse = await this.courseRepository.delete({ id: courseId });
+      await this.courseRepository.remove(course);
 
-      if (!removedCourse.affected) ResponseUtil.error(CourseMessages.REMOVE_FAILURE);
-
-      return ResponseUtil.success(removedCourse, CourseMessages.REMOVE_SUCCESS);
+      return ResponseUtil.success(course, CourseMessages.REMOVE_SUCCESS);
     } catch (error) {
       ResponseUtil.error(error?.message || CourseMessages.REMOVE_FAILURE, error?.status);
     }
   }
 
-  private async validateById(courseId: number): Promise<CourseEntity> {
+  async validateById(courseId: number): Promise<CourseEntity> {
     const course = await this.courseRepository.findOneBy({ id: courseId });
     if (!course) throw new NotFoundException(CourseMessages.NOT_FOUND);
     return course;

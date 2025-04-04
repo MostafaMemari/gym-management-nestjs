@@ -11,7 +11,7 @@ import { AuthController } from './controllers/auth/auth.controller';
 import { UserController } from './controllers/user/user.controller';
 import { StudentController } from './controllers/club/student.controller';
 import { CoachController } from './controllers/club/coach.controller';
-import { ClubController } from './controllers/club/club.controller';
+import { GymController } from './controllers/club/gym.controller';
 import { RbacController } from './controllers/auth/rbac.controller';
 import { NotificationController } from './controllers/notification.controller';
 import { BeltController } from './controllers/club/belt.controller';
@@ -24,10 +24,12 @@ import { AttendanceController } from './controllers/club/attendance.controller';
 import { LessonController } from './controllers/academy/lesson.controller';
 import { CoursesController } from './controllers/academy/course.controller';
 import { ChaptersController } from './controllers/academy/chapter.controller';
+import { AwsModule } from '../modules/s3AWS/s3AWS.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot(envConfig()),
+    AwsModule,
     ClientsModule.register([
       {
         name: Services.AUTH,
@@ -130,7 +132,7 @@ import { ChaptersController } from './controllers/academy/chapter.controller';
     NotificationController,
     StudentController,
     CoachController,
-    ClubController,
+    GymController,
     BeltController,
     AgeCategoryController,
     BeltExamController,

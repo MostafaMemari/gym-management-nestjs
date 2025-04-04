@@ -13,7 +13,10 @@ export class ChapterEntity extends AbstractEntity {
   @Column({ nullable: true })
   description?: string;
 
-  @ManyToOne(() => CourseEntity, (course) => course.chapters)
+  @Column()
+  courseId: number;
+
+  @ManyToOne(() => CourseEntity, (course) => course.chapters, { onDelete: 'CASCADE' })
   course: CourseEntity;
 
   @OneToMany(() => LessonEntity, (lesson) => lesson.chapter)

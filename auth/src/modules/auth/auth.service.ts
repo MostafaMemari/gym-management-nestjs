@@ -162,7 +162,27 @@ export class AuthService {
 
       if (!result.data) throw new NotFoundException(AuthMessages.NotFoundStudent);
 
-      const tokens = await this.generateTokens({ id: result.data?.userId });
+      const tokens = await this.generateTokens({ id: result.data?.user_id });
+
+      return ResponseUtil.success({ ...tokens }, AuthMessages.SigninSuccess, HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
+  async signinCoach({ nationalCode }: { nationalCode: string }) {
+    try {
+      await checkConnection(Services.CLUB, this.clubServiceClientProxy);
+
+      const result: ServiceResponse = await lastValueFrom(
+        this.clubServiceClientProxy.send(ClubPatterns.GetCoachByNationalCode, { nationalCode }).pipe(timeout(this.TIMEOUT_MS)),
+      );
+
+      if (result.error) throw result;
+
+      if (!result.data) throw new NotFoundException(AuthMessages.NotFoundCoach);
+
+      const tokens = await this.generateTokens({ id: result.data?.user_id });
 
       return ResponseUtil.success({ ...tokens }, AuthMessages.SigninSuccess, HttpStatus.OK);
     } catch (error) {

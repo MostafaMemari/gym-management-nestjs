@@ -47,4 +47,10 @@ export class BeltController {
 
     return this.beltService.removeById(beltId);
   }
+  @MessagePattern(BeltPatterns.GET_BELT_BY_IDS)
+  findByIds(@Payload() data: { beltIds: number[] }) {
+    const { beltIds } = data;
+
+    return this.beltService.findByIds(beltIds);
+  }
 }

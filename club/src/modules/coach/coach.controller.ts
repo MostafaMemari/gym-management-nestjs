@@ -8,10 +8,12 @@ import { CoachPatterns } from './patterns/coach.pattern';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { IUser } from '../../common/interfaces/user.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
+import { CacheService } from '../cache/cache.service';
+import { CacheKeys } from '../../common/enums/cache';
 
 @Controller()
 export class CoachController {
-  constructor(private readonly coachService: CoachService) {}
+  constructor(private readonly coachService: CoachService, private readonly cacheService: CacheService) {}
 
   @MessagePattern(CoachPatterns.CHECK_CONNECTION)
   checkConnection() {
@@ -19,16 +21,22 @@ export class CoachController {
   }
 
   @MessagePattern(CoachPatterns.CREATE)
-  create(@Payload() data: { user: IUser; createCoachDto: ICoachCreateDto }): Promise<ServiceResponse> {
+  async create(@Payload() data: { user: IUser; createCoachDto: ICoachCreateDto }): Promise<ServiceResponse> {
     const { user, createCoachDto } = data;
 
-    return this.coachService.create(user, createCoachDto);
+    const result = await this.coachService.create(user, createCoachDto);
+    if (!result.error) void this.clearCache(user.id);
+
+    return result;
   }
   @MessagePattern(CoachPatterns.UPDATE)
-  update(@Payload() data: { user: IUser; coachId: number; updateCoachDto: ICoachUpdateDto }): Promise<ServiceResponse> {
+  async update(@Payload() data: { user: IUser; coachId: number; updateCoachDto: ICoachUpdateDto }): Promise<ServiceResponse> {
     const { user, coachId, updateCoachDto } = data;
 
-    return this.coachService.update(user, coachId, updateCoachDto);
+    const result = await this.coachService.update(user.id, coachId, updateCoachDto);
+    if (!result.error) void this.clearCache(user.id);
+
+    return result;
   }
   @MessagePattern(CoachPatterns.GET_ALL)
   findAll(@Payload() data: { user: IUser; queryCoachDto: ICoachFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
@@ -43,9 +51,22 @@ export class CoachController {
     return this.coachService.findOneById(user, coachId);
   }
   @MessagePattern(CoachPatterns.REMOVE)
-  remove(@Payload() data: { user: IUser; coachId: number }): Promise<ServiceResponse> {
+  async remove(@Payload() data: { user: IUser; coachId: number }): Promise<ServiceResponse> {
     const { user, coachId } = data;
 
-    return this.coachService.removeById(user, coachId);
+    const result = await this.coachService.removeById(user, coachId);
+    if (!result.error) void this.clearCache(user.id);
+
+    return result;
+  }
+  @MessagePattern(CoachPatterns.GET_BY_NATIONAL_CODE)
+  getByNationalCode(@Payload() data: { nationalCode: string }): Promise<ServiceResponse> {
+    const { nationalCode } = data;
+
+    return this.coachService.getOneByNationalCode(nationalCode);
+  }
+
+  private async clearCache(ownerId: number) {
+    await this.cacheService.delByPattern(`${CacheKeys.COACHES}`.replace(':userId', ownerId.toString()) + '*');
   }
 }

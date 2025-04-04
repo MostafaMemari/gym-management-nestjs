@@ -4,6 +4,7 @@ export enum CoursePatterns {
   UPDATE = 'update_course',
   GET_ALL = 'get_courses',
   GET_ONE = 'get_course',
+  GET_ONE_DETAILS = 'get_course_details',
   REMOVE = 'remove_course',
 }
 
@@ -23,4 +24,6 @@ export enum LessonPatterns {
   GET_ALL = 'get_lessons',
   GET_ONE = 'get_lesson',
   REMOVE = 'remove_lesson',
+
+  MARK_LESSON_COMPLETED = 'mark_lesson_completed',
 }

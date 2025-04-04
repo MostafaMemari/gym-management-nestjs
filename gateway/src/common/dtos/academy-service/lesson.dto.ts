@@ -15,20 +15,13 @@ export class CreateLessonDto {
   @IsString()
   content?: string;
 
-  @IsNotEmpty()
-  @IsInt()
-  @IsPositive()
-  @Transform(({ value }) => parseInt(value, 10))
-  @ApiProperty({ type: 'integer', required: true, example: '' })
-  chapterId: number;
+  @IsOptional()
+  @ApiPropertyOptional({ type: 'string', format: 'binary' })
+  cover_image?: Express.Multer.File | string;
 
   @IsOptional()
   @ApiPropertyOptional({ type: 'string', format: 'binary' })
-  cover_image?: Express.Multer.File;
-
-  @IsOptional()
-  @ApiPropertyOptional({ type: 'string', format: 'binary' })
-  video?: Express.Multer.File;
+  video?: Express.Multer.File | string;
 }
 
 export class UpdateLessonDto extends PartialType(CreateLessonDto) {}

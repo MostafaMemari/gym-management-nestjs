@@ -20,7 +20,7 @@ import { ToArray, ToBoolean } from '../../../common/decorators/transformers.deco
 import { Gender, SortOrder } from '../../../common/enums/shared.enum';
 import { IsDependentOn } from '../../../common/decorators/dependent-fields.decorator';
 
-export class CreateStudentDto {
+export class CreateStudentByAdminDto {
   @IsNotEmpty()
   @IsString()
   @Length(5, 80)
@@ -31,6 +31,12 @@ export class CreateStudentDto {
   @IsEnum(Gender)
   @ApiProperty({ example: 'male', enum: Gender })
   gender: Gender;
+
+  @IsNotEmpty()
+  @IsString()
+  @MinLength(10)
+  @ApiProperty({ type: String, example: '', minLength: 10, maxLength: 10 })
+  national_code: string;
 
   @IsOptional()
   @ToBoolean()
@@ -47,12 +53,6 @@ export class CreateStudentDto {
   @Length(2, 80)
   @ApiPropertyOptional({ type: String, maxLength: 80, minLength: 2, required: true, example: '' })
   father_name?: string;
-
-  @IsNotEmpty()
-  @IsString()
-  @MinLength(10)
-  @ApiProperty({ type: String, example: '', minLength: 10, maxLength: 10 })
-  national_code: string;
 
   @IsOptional()
   @IsPhoneNumber('IR')
@@ -87,12 +87,6 @@ export class CreateStudentDto {
   expire_image_date?: Date;
 
   @IsOptional()
-  @IsDateString()
-  @IsDependentOn('beltId')
-  @ApiPropertyOptional({ type: String, example: '' })
-  belt_date?: Date;
-
-  @IsOptional()
   @IsInt()
   @Min(1371)
   @Max(1449)
@@ -105,14 +99,14 @@ export class CreateStudentDto {
   @IsPositive()
   @Transform(({ value }) => parseInt(value, 10))
   @ApiProperty({ type: 'integer', required: true, example: '' })
-  coachId: number;
+  coach_id: number;
 
   @IsNotEmpty()
   @IsInt()
   @IsPositive()
   @Transform(({ value }) => parseInt(value, 10))
   @ApiProperty({ type: 'integer', required: true, example: '' })
-  clubId: number;
+  gym_id: number;
 
   @IsOptional()
   @IsInt()
@@ -120,13 +114,21 @@ export class CreateStudentDto {
   @Transform(({ value }) => parseInt(value, 10))
   @IsDependentOn('belt_date')
   @ApiPropertyOptional({ type: 'integer', required: true, example: '' })
-  beltId?: number;
+  belt_id?: number;
+
+  @IsOptional()
+  @IsDateString()
+  @IsDependentOn('beltId')
+  @ApiPropertyOptional({ type: String, example: '' })
+  belt_date?: Date;
 }
 
-export class UpdateStudentDto extends PartialType(CreateStudentDto) {}
-// export class UpdateStudentDto extends PartialType(OmitType(CreateStudentDto, ['beltId', 'belt_date', 'expire_image_date'] as const)) {}
+export class CreateStudentByCoachDto extends OmitType(CreateStudentByAdminDto, ['coach_id']) {}
 
-export class BulkCreateStudentsDto extends PickType(CreateStudentDto, ['gender', 'coachId', 'clubId'] as const) {
+export class UpdateStudentByAdminDto extends PartialType(OmitType(CreateStudentByAdminDto, ['belt_id', 'belt_date'])) {}
+export class UpdateStudentByCoachDto extends PartialType(OmitType(CreateStudentByCoachDto, ['belt_id', 'belt_date'])) {}
+
+export class BulkCreateStudentsDto extends PickType(CreateStudentByAdminDto, ['gender', 'coach_id', 'gym_id']) {
   @IsOptional()
   @ApiPropertyOptional({ type: 'string', format: 'binary' })
   studentsFile?: string;
@@ -169,7 +171,7 @@ export class QueryStudentDto {
   @IsOptional()
   @IsString()
   @ApiPropertyOptional({ type: 'string', example: '' })
-  club_id: string;
+  gym_id: string;
 
   @IsOptional()
   @ToArray()

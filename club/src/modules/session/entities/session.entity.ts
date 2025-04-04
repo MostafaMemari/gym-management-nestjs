@@ -5,7 +5,7 @@ import { EntityName } from '../../../common/enums/entity.enum';
 import { CoachEntity } from '../../coach/entities/coach.entity';
 import { DayOfWeek } from '../enums/days-of-week.enum';
 import { StudentEntity } from '../../../modules/student/entities/student.entity';
-import { ClubEntity } from '../../../modules/club/entities/club.entity';
+import { GymEntity } from '../../gym/entities/gym.entity';
 import { AttendanceSessionEntity } from '../../../modules/attendance/entities/attendance-sessions.entity';
 
 @Entity(EntityName.SESSIONS)
@@ -29,7 +29,7 @@ export class SessionEntity extends AbstractEntity {
   coachId: number;
 
   @Column({ type: 'integer', nullable: false })
-  clubId: number;
+  gymId: number;
 
   @ManyToOne(() => CoachEntity, (coach) => coach.sessions, { nullable: false })
   @JoinColumn()
@@ -38,9 +38,9 @@ export class SessionEntity extends AbstractEntity {
   @ManyToMany(() => StudentEntity, (student) => student.sessions, { onDelete: 'CASCADE' })
   students: StudentEntity[];
 
-  @ManyToOne(() => ClubEntity, (club) => club.sessions, { nullable: false, onDelete: 'CASCADE' })
+  @ManyToOne(() => GymEntity, (gym) => gym.sessions, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn()
-  club: ClubEntity;
+  gym: GymEntity;
 
   @OneToMany(() => AttendanceSessionEntity, (attendanceSession) => attendanceSession.session)
   attendanceSessions: AttendanceSessionEntity[];

@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 
 import { SessionEntity } from '../entities/session.entity';
-import { CacheKeys } from '../enums/cache.enum';
+import { CacheKeys } from '../../../common/enums/cache';
 
 import { EntityName } from '../../../common/enums/entity.enum';
 import { ICreateSession, ISessionFilter, IUpdateSession } from '../interfaces/session.interface';
-import { CacheTTLMilliseconds } from '../../../common/enums/cache-time';
+import { CacheTTLMilliseconds } from '../../../common/enums/cache';
 
 @Injectable()
 export class SessionRepository extends Repository<SessionEntity> {

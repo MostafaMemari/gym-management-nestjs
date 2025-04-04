@@ -4,8 +4,8 @@ import { CoachEntity } from '../entities/coach.entity';
 import { ICoachFilter } from '../interfaces/coach.interface';
 import { EntityName } from '../../../common/enums/entity.enum';
 import { Gender } from '../../../common/enums/gender.enum';
-import { CacheKeys } from '../enums/cache.enum';
-import { CacheTTLMilliseconds } from '../../../common/enums/cache-time';
+import { CacheKeys } from '../../../common/enums/cache';
+import { CacheTTLMilliseconds } from '../../../common/enums/cache';
 
 @Injectable()
 export class CoachRepository extends Repository<CoachEntity> {
@@ -31,11 +31,11 @@ export class CoachRepository extends Repository<CoachEntity> {
   }
 
   async updateCoach(coach: CoachEntity, updateData: Partial<CoachEntity>) {
-    const hasRelations = ['clubs'].some((rel) => updateData.hasOwnProperty(rel));
+    const hasRelations = ['gyms'].some((rel) => updateData.hasOwnProperty(rel));
 
     if (hasRelations) {
-      if (updateData.clubs) {
-        coach.clubs = updateData.clubs;
+      if (updateData.gyms) {
+        coach.gyms = updateData.gyms;
       }
 
       const updatedCoach = this.merge(coach, updateData);
@@ -46,9 +46,9 @@ export class CoachRepository extends Repository<CoachEntity> {
   }
 
   async getCoachesWithFilters(userId: number, filters: ICoachFilter, page: number, take: number): Promise<[CoachEntity[], number]> {
-    const cacheKey = `${CacheKeys.COACHES}:userId:${userId}-${page}-${take}-${JSON.stringify(filters)}`;
+    const cacheKey = `${CacheKeys.COACHES}-${page}-${take}-${JSON.stringify(filters)}`.replace(':userId', userId.toString());
 
-    const queryBuilder = this.createQueryBuilder(EntityName.COACHES).where('coaches.ownerId = :userId', { userId });
+    const queryBuilder = this.createQueryBuilder(EntityName.COACHES).where('coaches.owner_id = :userId', { userId });
 
     if (filters?.search) {
       queryBuilder.andWhere('(coaches.full_name LIKE :search OR coaches.national_code LIKE :search)', { search: `%${filters.search}%` });
@@ -83,15 +83,14 @@ export class CoachRepository extends Repository<CoachEntity> {
       .getManyAndCount();
   }
 
-  async removeCoachById(coachId: number): Promise<boolean> {
+  async removeCoach(coach: CoachEntity): Promise<void> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.startTransaction();
 
     try {
-      const removedCoach = await queryRunner.manager.delete(CoachEntity, coachId);
-      await queryRunner.commitTransaction();
+      await queryRunner.manager.remove(coach);
 
-      return removedCoach.affected > 0;
+      await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;
@@ -100,25 +99,25 @@ export class CoachRepository extends Repository<CoachEntity> {
     }
   }
 
-  async findCoachByNationalCode(nationalCode: string, ownerId: number): Promise<CoachEntity | null> {
-    return this.findOne({ where: { national_code: nationalCode, ownerId }, relations: ['clubs'] });
+  async findCoachByNationalCode(nationalCode: string): Promise<CoachEntity | null> {
+    return this.findOne({ where: { national_code: nationalCode }, relations: ['gyms'] });
   }
 
-  async findByIdAndOwner(coachId: number, ownerId: number): Promise<CoachEntity | null> {
-    return this.findOne({ where: { id: coachId, ownerId }, relations: ['clubs'] });
+  async findByIdAndAdmin(coachId: number): Promise<CoachEntity | null> {
+    return this.findOne({ where: { id: coachId }, relations: ['gyms'] });
   }
 
-  async existsCoachByGenderInClub(clubId: number, gender: Gender): Promise<boolean> {
+  async existsCoachByGenderInGym(gym_id: number, gender: Gender): Promise<boolean> {
     const count = await this.createQueryBuilder(EntityName.COACHES)
-      .innerJoin('coaches.clubs', 'club')
-      .where('club.id = :clubId', { clubId })
+      .innerJoin('coaches.gyms', 'gym')
+      .where('gym.id = :gym_id', { gym_id })
       .andWhere('coaches.gender = :gender', { gender })
       .getCount();
 
     return count > 0;
   }
-  async existsCoachByClubId(clubId: number): Promise<boolean> {
-    const count = await this.count({ where: { clubs: { id: clubId } } });
+  async existsCoachByGymId(gym_id: number): Promise<boolean> {
+    const count = await this.count({ where: { gyms: { id: gym_id } } });
     return count > 0;
   }
 }

@@ -10,13 +10,6 @@ export class CreateChaptersDto {
   @ApiProperty({ example: '' })
   title: string;
 
-  @IsNotEmpty()
-  @IsInt()
-  @IsPositive()
-  @Transform(({ value }) => parseInt(value, 10))
-  @ApiProperty({ type: 'integer', required: true, example: '' })
-  courseId: number;
-
   @IsOptional()
   @IsString()
   @ApiPropertyOptional({ example: '' })

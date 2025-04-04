@@ -4,7 +4,6 @@ import { BeltExamEntity } from './entities/belt-exam.entity';
 import { BeltExamMessages } from './enums/belt-exam.message';
 import { IBeltExamCreateDto, IBeltExamUpdateDto, IBeltExamFilter } from './interfaces/belt-exam.interface';
 import { BeltExamRepository } from './repositories/belt-exam.repository';
-import { CacheKeys } from './enums/cache.enum';
 
 import { BeltService } from '../belt/belt.service';
 import { CacheService } from '../cache/cache.service';
@@ -13,7 +12,7 @@ import { PageDto, PageMetaDto } from '../../common/dtos/pagination.dto';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { ResponseUtil } from '../../common/utils/response';
-import { CacheTTLMilliseconds } from 'src/common/enums/cache-time';
+import { CacheKeys, CacheTTLSeconds } from '../../common/enums/cache';
 
 @Injectable()
 export class BeltExamService {
@@ -31,7 +30,7 @@ export class BeltExamService {
         createBeltExamDto.belts = belts;
       }
 
-      const beltExam = await this.beltExamRepository.createAndSaveBeltExam(createBeltExamDto);
+      const beltExam = await this.beltExamRepository.createAndSave(createBeltExamDto);
 
       return ResponseUtil.success(beltExam, BeltExamMessages.CREATE_SUCCESS);
     } catch (error) {
@@ -49,7 +48,7 @@ export class BeltExamService {
         updateBeltExamDto.belts = belts;
       }
 
-      const updatedBeltExam = await this.beltExamRepository.updateBeltExam(beltExam, updateBeltExamDto);
+      const updatedBeltExam = await this.beltExamRepository.updateMergeAndSave(beltExam, updateBeltExamDto);
 
       return ResponseUtil.success({ ...updatedBeltExam }, BeltExamMessages.UPDATE_SUCCESS);
     } catch (error) {
@@ -68,7 +67,7 @@ export class BeltExamService {
       const pageMetaDto = new PageMetaDto(count, query?.paginationDto);
       const result = new PageDto(beltExams, pageMetaDto);
 
-      await this.cacheService.set(cacheKey, result, CacheTTLMilliseconds.GET_ALL_BELT_EXAMS);
+      await this.cacheService.set(cacheKey, result, CacheTTLSeconds.GET_ALL_BELT_EXAMS);
 
       return ResponseUtil.success(result.data, BeltExamMessages.GET_ALL_SUCCESS);
     } catch (error) {
