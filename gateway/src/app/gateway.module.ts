@@ -1,4 +1,4 @@
-import { APP_PIPE } from '@nestjs/core';
+import { APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { Module, ValidationPipe } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigModule } from '@nestjs/config';
@@ -25,10 +25,14 @@ import { LessonController } from './controllers/academy/lesson.controller';
 import { CoursesController } from './controllers/academy/course.controller';
 import { ChaptersController } from './controllers/academy/chapter.controller';
 import { AwsModule } from '../modules/s3AWS/s3AWS.module';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
     ConfigModule.forRoot(envConfig()),
+    ThrottlerModule.forRoot({
+      throttlers: [{ ttl: +process.env.THROTTLER_TTL || 60000, limit: +process.env.THROTTLER_LIMIT || 10 }],
+    }),
     AwsModule,
     ClientsModule.register([
       {
@@ -146,6 +150,10 @@ import { AwsModule } from '../modules/s3AWS/s3AWS.module';
     {
       provide: APP_PIPE,
       useValue: new ValidationPipe({ whitelist: true }),
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
     AuthGuard,
     AuthController,
