@@ -36,14 +36,14 @@ export class WalletService {
     @Inject(Services.CLUB) private readonly clubServiceClient: ClientProxy,
     @Inject(Services.NOTIFICATION) private readonly notificationServiceClient: ClientProxy,
     private readonly cache: CacheService,
-  ) { }
+  ) {}
 
   async findAll({ take, page, ...walletFilters }: IWalletsFilter): Promise<ServiceResponse> {
     try {
       const paginationDto = { take, page };
       const { endDate, isBlocked, lastWithdrawalDate, maxBalance, minBalance, sortBy, sortDirection, startDate, status, userId } = walletFilters;
 
-      const sortedDto = sortObject(walletFilters)
+      const sortedDto = sortObject(walletFilters);
 
       const cacheKey = `${CacheKeys.Wallets}_${JSON.stringify(sortedDto)}`;
 
@@ -112,7 +112,7 @@ export class WalletService {
       const paginationDto = { take, page };
       const { endDate, maxAmount, minAmount, sortBy, sortDirection, startDate, userId, walletId } = deductionFilters;
 
-      const sortedDto = sortObject(deductionFilters)
+      const sortedDto = sortObject(deductionFilters);
 
       const cacheKey = `${CacheKeys.WalletDeduction}_${JSON.stringify(sortedDto)}`;
 
@@ -153,7 +153,7 @@ export class WalletService {
       const paginationDto = { take, page };
       const { creditedBy, endDate, maxAmount, minAmount, reason, sortBy, sortDirection, startDate, userId, walletId } = manualCreditFilters;
 
-      const sortedDto = sortObject(manualCreditFilters)
+      const sortedDto = sortObject(manualCreditFilters);
 
       const cacheKey = `${CacheKeys.ManualCredit}_${JSON.stringify(sortedDto)}`;
 

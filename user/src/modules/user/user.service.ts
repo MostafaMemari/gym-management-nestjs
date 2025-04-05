@@ -18,7 +18,7 @@ export class UserService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly cache: CacheService,
-  ) { }
+  ) {}
 
   async create(userDto: Prisma.UserCreateInput): Promise<ServiceResponse> {
     try {
@@ -91,7 +91,7 @@ export class UserService {
       const paginationDto = { take, page };
       const { endDate, lastPasswordChange, mobile, role, startDate, username, sortBy, sortDirection } = usersFilterDto;
 
-      const sortedDto = sortObject(usersFilterDto)
+      const sortedDto = sortObject(usersFilterDto);
 
       const cacheKey = `${CacheKeys.Users}_${JSON.stringify(sortedDto)}`;
 
