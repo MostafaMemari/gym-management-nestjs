@@ -26,6 +26,7 @@ import { CoursesController } from './controllers/academy/course.controller';
 import { ChaptersController } from './controllers/academy/chapter.controller';
 import { AwsModule } from '../modules/s3AWS/s3AWS.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { BackupController } from './controllers/backup.controller';
 
 @Module({
   imports: [
@@ -145,6 +146,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
     CoursesController,
     LessonController,
     ChaptersController,
+    BackupController,
   ],
   providers: [
     {

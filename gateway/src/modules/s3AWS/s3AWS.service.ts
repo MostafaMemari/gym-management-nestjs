@@ -28,18 +28,33 @@ export class AwsService {
   }
 
   async uploadSingleFile({
-    file,
+    fileMetadata,
     folderName = '',
     isPublic = true,
+    contentType,
   }: {
-    file: Partial<Express.Multer.File>;
+    fileMetadata: Partial<Express.Multer.File> | { file: Buffer; fileName: string };
     folderName?: string;
     isPublic?: boolean;
+    contentType?: string;
   }): Promise<any> {
-    const ext = path.extname(file.originalname);
-    const contentType = lookup(ext) || 'application/octet-stream';
-    const bufferFile = Buffer.from(file.buffer);
-    const key = `${folderName}/${Date.now()}${ext}`;
+    let ext: string;
+    let extractedContentType: string;
+    let bufferFile: Buffer;
+    let fileName: string;
+    let key: string;
+
+    if (`file` in fileMetadata) {
+      bufferFile = Buffer.from(fileMetadata.file);
+      fileName = fileMetadata.fileName;
+      key = `${folderName}/${fileName}`;
+    } else {
+      ext = path.extname(fileMetadata.originalname);
+      bufferFile = Buffer.from(fileMetadata.buffer);
+      key = `${folderName}/${Date.now()}${ext}`;
+    }
+
+    extractedContentType = contentType || lookup(ext) || 'application/octet-stream';
 
     const command = new PutObjectCommand({
       Bucket: this.bucketName,
@@ -52,7 +67,7 @@ export class AwsService {
 
     const uploadResult = await this.client.send(command);
 
-    if (uploadResult.$metadata.httpStatusCode !== 200) throw new BadRequestException('Image upload failed');
+    if (uploadResult.$metadata.httpStatusCode !== 200) throw new BadRequestException('File upload failed');
 
     return {
       url: (await this.getFileUrl(key)).url,
@@ -67,7 +82,7 @@ export class AwsService {
 
   async uploadTempFile(file: Partial<Express.Multer.File>, folderName: string) {
     // const folderName = `academy/course/temp`;
-    return await this.uploadSingleFile({ file, folderName, isPublic: true });
+    return await this.uploadSingleFile({ fileMetadata: file, folderName, isPublic: true });
   }
 
   async moveFileToCourseFolder(oldKey: string, id: string) {

@@ -236,7 +236,7 @@ export class CoursesController {
   private async uploadFile(file: Express.Multer.File, folderName: string): Promise<string | undefined> {
     if (!file) return;
 
-    const uploadedFile = await this.awsService.uploadSingleFile({ file, folderName });
+    const uploadedFile = await this.awsService.uploadSingleFile({ fileMetadata: file, folderName });
     return uploadedFile.key;
   }
   private async removeFile(fileKey: string): Promise<void> {

@@ -61,3 +61,7 @@ export enum RefundPaymentReason {
   SUSPICIOUS_TRANSACTION = 'SUSPICIOUS_TRANSACTION',
   OTHER = 'OTHER',
 }
+
+export enum BackupPatterns {
+  CreateBackup = 'create_backup',
+}
