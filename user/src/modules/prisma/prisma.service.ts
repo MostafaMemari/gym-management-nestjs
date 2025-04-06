@@ -4,6 +4,7 @@ import { CacheService } from '../cache/cache.service';
 import { CacheKeys } from '../../common/enums/cache.enum';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as fsPromise from 'fs/promises';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { RpcException } from '@nestjs/microservices';
@@ -59,19 +60,25 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     });
   }
 
+  private parseDbUrl(url: string) {
+    const parsedUrl = new URL(url);
+
+    return {
+      user: parsedUrl.username,
+      password: parsedUrl.password,
+      host: parsedUrl.hostname,
+      port: parsedUrl.port,
+      dbName: parsedUrl.pathname.slice(1),
+    };
+  }
+
   async createBackup(): Promise<ServiceResponse> {
     try {
-      const parsed = new URL(process.env.DATABASE_URL);
-
-      const user = parsed.username;
-      const password = parsed.password;
-      const host = parsed.hostname;
-      const port = parsed.port;
-      const dbName = parsed.pathname.slice(1);
+      const { dbName, host, password, port, user } = this.parseDbUrl(process.env.DATABASE_URL);
 
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const fileName = `backup-user-service-${timestamp}.sql`;
-      const filePath = `${process.cwd()}/asserts/${fileName}`;
+      const filePath = `${process.cwd()}/asserts/created-backups/${fileName}`;
 
       fs.mkdirSync(path.dirname(filePath), { recursive: true });
 
@@ -88,6 +95,30 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       fs.unlinkSync(filePath);
 
       return ResponseUtil.success(data, 'Backup created successfully', HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
+  async restoreBackup({ file, fileName }: { file: Buffer; fileName: string }): Promise<ServiceResponse> {
+    try {
+      const { dbName, host, password, port, user } = this.parseDbUrl(process.env.DATABASE_URL);
+
+      const filePath = `${process.cwd()}/asserts/restored-backups/${fileName}`;
+
+      fs.mkdirSync(path.dirname(filePath), { recursive: true });
+
+      const fileBuffer = Buffer.from(file);
+
+      await fsPromise.writeFile(filePath, fileBuffer);
+
+      const command = `PGPASSWORD=${password} pg_restore --clean -h ${host} -p ${port} -U ${user} -d ${dbName} ${filePath}`;
+
+      await execPromise(command);
+
+      fs.unlinkSync(filePath);
+
+      return ResponseUtil.success({}, 'Backup restored successfully', HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }

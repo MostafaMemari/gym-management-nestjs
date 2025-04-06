@@ -1,5 +1,5 @@
 import { Controller } from '@nestjs/common';
-import { MessagePattern } from '@nestjs/microservices';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 import { PrismaService } from './prisma.service';
 import { PrismaPatterns } from '../../common/enums/prisma.events';
 
@@ -10,5 +10,10 @@ export class PrismaController {
   @MessagePattern(PrismaPatterns.CreateBackup)
   createBackup() {
     return this.prismaService.createBackup();
+  }
+
+  @MessagePattern(PrismaPatterns.RestoreBackup)
+  restoreBackup(@Payload() data: { file: Buffer; fileName: string }) {
+    return this.prismaService.restoreBackup(data);
   }
 }
