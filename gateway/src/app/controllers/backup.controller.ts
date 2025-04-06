@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Param } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Inject, Param } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiTags } from '@nestjs/swagger';
 import { lastValueFrom, timeout } from 'rxjs';
@@ -8,11 +8,14 @@ import { checkConnection } from '../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../common/utils/handleError.utils';
 import { AwsService } from '../../modules/s3AWS/s3AWS.service';
 import { BackupPatterns } from '../../common/enums/shared.enum';
+import { Roles } from '../../common/decorators/role.decorator';
+import { Role } from '../../common/enums/role.enum';
+import { AccessRole } from '../../common/decorators/accessRole.decorator';
 
 @Controller('backup')
 @ApiTags('backup')
 export class BackupController {
-  private readonly timeout = 5000;
+  private readonly timeout = 10000;
 
   constructor(
     @Inject(Services.USER) private readonly userServiceClient: ClientProxy,
@@ -20,6 +23,8 @@ export class BackupController {
   ) {}
 
   @Get('user-service')
+  @Roles(Role.SUPER_ADMIN)
+  @AccessRole(Role.SUPER_ADMIN)
   async createUserServiceBackup() {
     try {
       await checkConnection(Services.USER, this.userServiceClient);
@@ -42,6 +47,8 @@ export class BackupController {
   }
 
   @Get('restore-user-service-backup/:key')
+  @Roles(Role.SUPER_ADMIN)
+  @AccessRole(Role.SUPER_ADMIN)
   async restoreUserServiceBackup(@Param('key') key: string) {
     try {
       const fileBuffer = await this.awsService.getFileBuffer(key);
@@ -51,13 +58,9 @@ export class BackupController {
         fileName: key.split('/').at(-1),
       };
 
-      const result: ServiceResponse = await lastValueFrom(
-        this.userServiceClient.send(BackupPatterns.RestoreBackup, restoreData).pipe(timeout(this.timeout)),
-      );
+      this.userServiceClient.emit(BackupPatterns.RestoreBackup, restoreData);
 
-      if (result.error) throw result;
-
-      return handleServiceResponse(result);
+      return handleServiceResponse({ data: {}, error: false, message: 'Backup will be applied shortly.', status: HttpStatus.OK });
     } catch (error) {
       handleError(error, 'Failed to restore user service backup', Services.USER);
     }
