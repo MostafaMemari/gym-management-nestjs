@@ -11,9 +11,9 @@ import { BackupPatterns } from '../../common/enums/shared.enum';
 import { Roles } from '../../common/decorators/role.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { AccessRole } from '../../common/decorators/accessRole.decorator';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { CreateBackupDto, RestoreBackupDto } from '../../common/dtos/backup.dto';
-import { SwaggerConsumes } from 'src/common/enums/swagger-consumes.enum';
+import { SwaggerConsumes } from '../../common/enums/swagger-consumes.enum';
 
 @Controller('backup')
 @ApiTags('backup')
@@ -59,37 +59,22 @@ export class BackupController {
     }
   }
 
-  @Cron(CronExpression.EVERY_HOUR)
+  @Cron('0 3 * * *')
   private async handleAllServiceBackups() {
     this.logger.log('Starting backup cron job for all services...');
 
     try {
       const services = this.getServicesForBackup();
 
-      for (const { client, folderName, name, pattern } of services) {
+      for (const service of services) {
         this.logger.log(`Starting backup for service: ${name}`);
 
         try {
-          await checkConnection(name, client);
-          this.logger.log(`Connection to ${name} verified.`);
+          const result = await this.createBackup({ serviceName: service.name });
 
-          const result: ServiceResponse = await lastValueFrom(client.send(pattern, {}).pipe(timeout(this.timeout)));
-
-          if (result.error) {
-            this.logger.error(`Backup failed for ${name}: ${JSON.stringify(result.error)}`);
-            continue;
-          }
-
-          const uploadedBackup = await this.awsService.uploadSingleFile({
-            fileMetadata: { file: result.data.file, fileName: result.data.fileName },
-            contentType: result.data?.contentType,
-            folderName,
-            isPublic: false,
-          });
-
-          this.logger.log(`Backup uploaded for ${name}: key=${uploadedBackup.key}`);
+          this.logger.log(`Backup uploaded for ${service.name}: key=${result.data.key}`);
         } catch (error) {
-          this.logger.error(`Error during backup for service ${name}: ${error?.message}`, error.stack);
+          this.logger.error(`Error during backup for service ${service.name}: ${error?.message}`, error.stack);
           continue;
         }
       }
@@ -122,7 +107,7 @@ export class BackupController {
 
       return handleServiceResponse({ ...result, data: { ...uploadedBackup } });
     } catch (error) {
-      handleError(error, 'Failed to create backup', service?.name);
+      handleError(error, 'Failed to create backup', service.name);
     }
   }
 
@@ -144,7 +129,7 @@ export class BackupController {
 
       return handleServiceResponse({ data: {}, error: false, message: 'Backup will be applied shortly.', status: HttpStatus.OK });
     } catch (error) {
-      handleError(error, 'Failed to restore backup', service?.name);
+      handleError(error, 'Failed to restore backup', service.name);
     }
   }
 }
