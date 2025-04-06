@@ -27,6 +27,7 @@ import { ChaptersController } from './controllers/academy/chapter.controller';
 import { AwsModule } from '../modules/s3AWS/s3AWS.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { BackupController } from './controllers/backup.controller';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { BackupController } from './controllers/backup.controller';
     ThrottlerModule.forRoot({
       throttlers: [{ ttl: +process.env.THROTTLER_TTL || 60000, limit: +process.env.THROTTLER_LIMIT || 10 }],
     }),
+    ScheduleModule.forRoot(),
     AwsModule,
     ClientsModule.register([
       {

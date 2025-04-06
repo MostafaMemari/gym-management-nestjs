@@ -45,7 +45,7 @@ export class AwsService {
     folderName?: string;
     isPublic?: boolean;
     contentType?: string;
-  }): Promise<any> {
+  }): Promise<{ key: string; url: string; isPublic: boolean }> {
     let ext: string;
     let extractedContentType: string;
     let bufferFile: Buffer;

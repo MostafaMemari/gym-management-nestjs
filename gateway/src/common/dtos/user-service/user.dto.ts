@@ -3,6 +3,7 @@ import { IsDate, IsEnum, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, Matche
 import { Role } from '../../../common/enums/role.enum';
 import { Transform } from 'class-transformer';
 import { SortOrder, UserSortBy } from '../../../common/enums/shared.enum';
+import { PaginationDto } from '../shared.dto';
 
 export class UpdateUserDto {
   @IsNotEmpty()
@@ -35,7 +36,7 @@ export class UpdateUserDto {
   mobile?: string;
 }
 
-export class QueryUsersDto {
+export class QueryUsersDto extends PaginationDto {
   @IsOptional()
   @IsString()
   @MaxLength(100)
