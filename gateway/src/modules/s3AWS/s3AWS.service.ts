@@ -1,6 +1,14 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, PutObjectCommand, DeleteObjectCommand, DeleteObjectsCommand, CopyObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  DeleteObjectsCommand,
+  CopyObjectCommand,
+  ListObjectsV2Command,
+  GetObjectCommand,
+} from '@aws-sdk/client-s3';
 import { lookup } from 'mime-types';
 import * as path from 'path';
 
@@ -78,6 +86,27 @@ export class AwsService {
 
   async getFileUrl(key: string) {
     return { url: `https://node-bucket.storage.c2.liara.space/${key}` };
+  }
+
+  async getFileBuffer(key: string, bucket: string = this.bucketName): Promise<Buffer> {
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: key,
+    });
+
+    const response = await this.client.send(command);
+
+    if (response.$metadata.httpStatusCode !== 200) throw new BadRequestException('Get file failed');
+
+    const stream = response.Body.transformToWebStream() as ReadableStream;
+
+    const chunks: Buffer[] = [];
+
+    for await (const chunk of stream) {
+      chunks.push(Buffer.from(chunk));
+    }
+
+    return Buffer.concat(chunks);
   }
 
   async uploadTempFile(file: Partial<Express.Multer.File>, folderName: string) {

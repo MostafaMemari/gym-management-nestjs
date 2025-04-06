@@ -1,4 +1,4 @@
-import { Controller, Get, Inject } from '@nestjs/common';
+import { Controller, Get, Inject, Param } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiTags } from '@nestjs/swagger';
 import { lastValueFrom, timeout } from 'rxjs';
@@ -38,6 +38,28 @@ export class BackupController {
       return handleServiceResponse({ ...result, data: { ...uploadedBackup } });
     } catch (error) {
       handleError(error, 'Failed to create backup for user service', Services.USER);
+    }
+  }
+
+  @Get('restore-user-service-backup/:key')
+  async restoreUserServiceBackup(@Param('key') key: string) {
+    try {
+      const fileBuffer = await this.awsService.getFileBuffer(key);
+
+      const restoreData = {
+        file: fileBuffer,
+        fileName: key.split('/').at(-1),
+      };
+
+      const result: ServiceResponse = await lastValueFrom(
+        this.userServiceClient.send(BackupPatterns.RestoreBackup, restoreData).pipe(timeout(this.timeout)),
+      );
+
+      if (result.error) throw result;
+
+      return handleServiceResponse(result);
+    } catch (error) {
+      handleError(error, 'Failed to restore user service backup', Services.USER);
     }
   }
 }
