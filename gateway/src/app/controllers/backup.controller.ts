@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, HttpStatus, Inject, Logger, Post } from '@nestjs/common';
+import { Body, Controller, HttpStatus, Inject, Logger, NotFoundException, Post } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { lastValueFrom, timeout } from 'rxjs';
@@ -14,9 +14,11 @@ import { AccessRole } from '../../common/decorators/accessRole.decorator';
 import { Cron } from '@nestjs/schedule';
 import { CreateBackupDto, RestoreBackupDto } from '../../common/dtos/backup.dto';
 import { SwaggerConsumes } from '../../common/enums/swagger-consumes.enum';
+import { AuthDecorator } from '../../common/decorators/auth.decorator';
 
 @Controller('backup')
 @ApiTags('backup')
+@AuthDecorator()
 export class BackupController {
   private readonly timeout = 10000;
   private readonly logger = new Logger(BackupController.name);
@@ -52,7 +54,7 @@ export class BackupController {
       const services = this.getServicesForBackup();
       const service = services.find((service) => service.name === serviceName);
 
-      if (!service) throw new BadRequestException('Service not found in backup list');
+      if (!service) throw new NotFoundException('Service not found in backup list');
 
       return service;
     } catch (error) {
