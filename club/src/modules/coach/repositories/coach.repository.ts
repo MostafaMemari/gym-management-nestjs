@@ -19,16 +19,15 @@ export class CoachRepository extends Repository<CoachEntity> {
   }
 
   async updateMergeAndSave(coach: CoachEntity, updateData: Partial<CoachEntity>) {
+    if (updateData.gyms) coach.gyms = updateData.gyms;
     const updatedCoach = this.merge(coach, updateData);
     return await this.save(updatedCoach);
   }
 
-  async getCoachesWithFilters(userId: number, filters: ICoachFilter, page: number, take: number): Promise<[CoachEntity[], number]> {
-    const cacheKey = `${CacheKeys.COACHES}-${page}-${take}-${JSON.stringify(filters)}`.replace(':userId', userId.toString());
+  async getCoachesWithFilters(adminId: number, filters: ICoachFilter, page: number, take: number): Promise<[CoachEntity[], number]> {
+    const cacheKey = `${CacheKeys.COACHES}-${page}-${take}-${JSON.stringify(filters)}`.replace(':userId', adminId.toString());
 
-    const queryBuilder = this.createQueryBuilder(EntityName.COACHES)
-      .leftJoin('coaches.gyms', 'gyms')
-      .where('gyms.admin_id = :admin_id', { admin_id: userId });
+    const queryBuilder = this.createQueryBuilder(EntityName.COACHES).where('coaches.admin_id = :admin_id', { admin_id: adminId });
 
     if (filters?.search) {
       queryBuilder.andWhere('(coaches.full_name LIKE :search OR coaches.national_code LIKE :search)', { search: `%${filters.search}%` });
@@ -83,8 +82,8 @@ export class CoachRepository extends Repository<CoachEntity> {
     return this.findOne({ where: { national_code: nationalCode }, relations: ['gyms'] });
   }
 
-  async findByIdAndAdmin(coachId: number): Promise<CoachEntity | null> {
-    return this.findOne({ where: { id: coachId }, relations: ['gyms'] });
+  async findByIdAndAdmin(coachId: number, adminId: number): Promise<CoachEntity | null> {
+    return this.findOne({ where: { id: coachId, admin_id: adminId }, relations: ['gyms'] });
   }
 
   async existsCoachByGenderInGym(gym_id: number, gender: Gender): Promise<boolean> {

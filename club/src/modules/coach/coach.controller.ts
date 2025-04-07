@@ -24,7 +24,7 @@ export class CoachController {
   async create(@Payload() data: { user: IUser; createCoachDto: ICoachCreateDto }): Promise<ServiceResponse> {
     const { user, createCoachDto } = data;
 
-    const result = await this.coachService.create(user, createCoachDto);
+    const result = await this.coachService.create(user.id, createCoachDto);
     if (!result.error) void this.clearCache(user.id);
 
     return result;
@@ -42,19 +42,19 @@ export class CoachController {
   findAll(@Payload() data: { user: IUser; queryCoachDto: ICoachFilter; paginationDto: IPagination }): Promise<ServiceResponse> {
     const { user, queryCoachDto, paginationDto } = data;
 
-    return this.coachService.getAll(user, { queryCoachDto, paginationDto });
+    return this.coachService.getAll(user.id, { queryCoachDto, paginationDto });
   }
   @MessagePattern(CoachPatterns.GET_ONE)
   findOne(@Payload() data: { user: IUser; coachId: number }): Promise<ServiceResponse> {
     const { user, coachId } = data;
 
-    return this.coachService.findOneById(user, coachId);
+    return this.coachService.findOneById(user.id, coachId);
   }
   @MessagePattern(CoachPatterns.REMOVE)
   async remove(@Payload() data: { user: IUser; coachId: number }): Promise<ServiceResponse> {
     const { user, coachId } = data;
 
-    const result = await this.coachService.removeById(user, coachId);
+    const result = await this.coachService.removeById(user.id, coachId);
     if (!result.error) void this.clearCache(user.id);
 
     return result;

@@ -39,6 +39,9 @@ export class CoachEntity extends AbstractEntity {
   @Column({ type: 'timestamp', nullable: true })
   birth_date: Date;
 
+  @Column({ type: 'integer', nullable: false })
+  admin_id: number;
+
   @OneToMany(() => StudentEntity, (student) => student.coach)
   students: StudentEntity[];
 
