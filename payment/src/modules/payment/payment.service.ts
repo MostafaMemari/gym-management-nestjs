@@ -23,7 +23,7 @@ export class PaymentService {
     private readonly zarinpalService: ZarinpalService,
     private readonly paymentRepository: PaymentRepository,
     private readonly cacheService: CacheService,
-  ) { }
+  ) {}
 
   @Cron(CronExpression.EVERY_12_HOURS)
   async handelStaleTransactions() {
@@ -142,7 +142,7 @@ export class PaymentService {
       const paginationDto = { page, take };
       const { authority, endDate, maxAmount, minAmount, sortBy, sortDirection, startDate, status, userId } = transactionsFiltersDto;
 
-      const sortedDto = sortObject(transactionsFiltersDto)
+      const sortedDto = sortObject(transactionsFiltersDto);
 
       const cacheKey = `${CacheKeys.Transactions}_${JSON.stringify(sortedDto)}`;
 

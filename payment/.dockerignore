@@ -2,7 +2,7 @@
 /dist
 /node_modules
 /build
-
+/asserts
 # Logs
 logs
 *.log
