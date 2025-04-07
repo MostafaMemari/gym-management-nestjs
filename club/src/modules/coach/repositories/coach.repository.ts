@@ -13,42 +13,22 @@ export class CoachRepository extends Repository<CoachEntity> {
     super(CoachEntity, dataSource.createEntityManager());
   }
 
-  async createCoachWithTransaction(coachData: Partial<CoachEntity>) {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.startTransaction();
-
-    try {
-      const coach = this.create(coachData);
-      await queryRunner.manager.save(coach);
-      await queryRunner.commitTransaction();
-      return coach;
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } finally {
-      await queryRunner.release();
-    }
+  async createAndSave(createCoachDto: Partial<CoachEntity>) {
+    const coach = this.create({ ...createCoachDto });
+    return await this.save(coach);
   }
 
-  async updateCoach(coach: CoachEntity, updateData: Partial<CoachEntity>) {
-    const hasRelations = ['gyms'].some((rel) => updateData.hasOwnProperty(rel));
-
-    if (hasRelations) {
-      if (updateData.gyms) {
-        coach.gyms = updateData.gyms;
-      }
-
-      const updatedCoach = this.merge(coach, updateData);
-      return await this.save(updatedCoach);
-    } else {
-      return await this.update(coach.id, updateData);
-    }
+  async updateMergeAndSave(coach: CoachEntity, updateData: Partial<CoachEntity>) {
+    const updatedCoach = this.merge(coach, updateData);
+    return await this.save(updatedCoach);
   }
 
   async getCoachesWithFilters(userId: number, filters: ICoachFilter, page: number, take: number): Promise<[CoachEntity[], number]> {
     const cacheKey = `${CacheKeys.COACHES}-${page}-${take}-${JSON.stringify(filters)}`.replace(':userId', userId.toString());
 
-    const queryBuilder = this.createQueryBuilder(EntityName.COACHES).where('coaches.owner_id = :userId', { userId });
+    const queryBuilder = this.createQueryBuilder(EntityName.COACHES)
+      .leftJoin('coaches.gyms', 'gyms')
+      .where('gyms.admin_id = :admin_id', { admin_id: userId });
 
     if (filters?.search) {
       queryBuilder.andWhere('(coaches.full_name LIKE :search OR coaches.national_code LIKE :search)', { search: `%${filters.search}%` });

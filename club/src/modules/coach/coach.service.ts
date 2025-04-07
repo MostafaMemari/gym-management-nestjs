@@ -55,7 +55,7 @@ export class CoachService {
       imageKey = image ? await this.updateImage(image) : null;
       coachUserId = await this.createUserCoach();
 
-      const coach = await this.coachRepository.createCoachWithTransaction({
+      const coach = await this.coachRepository.createAndSave({
         ...createCoachDto,
         image_url: imageKey,
         gyms: ownedGyms,
@@ -96,13 +96,14 @@ export class CoachService {
         await this.validateCoachGenderChange(gender, coachId);
       }
 
-      if (image) updateData.image_url = await this.updateImage(image);
+      if (image) {
+        updateData.image_url = await this.updateImage(image);
+        if (coach.image_url) await this.awsService.deleteFile(coach.image_url);
+      }
 
-      await this.coachRepository.updateCoach(coach, { ...updateData });
+      await this.coachRepository.updateMergeAndSave(coach, { ...updateData });
 
-      if (image && updateData.image_url && coach.image_url) await this.awsService.deleteFile(coach.image_url);
-
-      return ResponseUtil.success({ ...coach, ...updateData }, CoachMessages.UPDATE_SUCCESS);
+      return ResponseUtil.success({ ...coach }, CoachMessages.UPDATE_SUCCESS);
     } catch (error) {
       await this.removeImage(imageKey);
       ResponseUtil.error(error?.message || CoachMessages.UPDATE_FAILURE, error?.status);

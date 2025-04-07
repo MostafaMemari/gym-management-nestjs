@@ -64,11 +64,11 @@ export class StudentEntity extends AbstractEntity {
 
   @ManyToOne(() => GymEntity, (gym) => gym.students)
   @JoinColumn({ name: 'gym_id' })
-  gym: GymEntity | null;
+  gym: GymEntity;
 
   @ManyToOne(() => CoachEntity, (coach) => coach.students)
   @JoinColumn({ name: 'coach_id' })
-  coach: CoachEntity | null;
+  coach: CoachEntity;
 
   @Column({ type: 'integer', nullable: false })
   created_by: number;

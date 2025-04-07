@@ -6,6 +6,7 @@ import { Gender } from '../../../common/enums/gender.enum';
 import { CoachEntity } from '../../coach/entities/coach.entity';
 import { StudentEntity } from '../../student/entities/student.entity';
 import { SessionEntity } from '../../session/entities/session.entity';
+import { on } from 'events';
 
 @Entity(EntityName.GYMS)
 export class GymEntity extends AbstractEntity {
