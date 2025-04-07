@@ -23,3 +23,8 @@ export interface IUpdateNotification {
   notificationId: string;
   senderId: number;
 }
+
+export interface IPagination {
+  take?: number;
+  page?: number;
+}

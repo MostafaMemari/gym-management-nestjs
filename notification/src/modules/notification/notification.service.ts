@@ -3,7 +3,13 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Notification } from './notification.schema';
 import { isValidObjectId, Model, ObjectId } from 'mongoose';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { ICreateNotification, IMarkAsRead, IRemoveNotification, IUpdateNotification } from '../../common/interfaces/notification.interface';
+import {
+  ICreateNotification,
+  IMarkAsRead,
+  IPagination,
+  IRemoveNotification,
+  IUpdateNotification,
+} from '../../common/interfaces/notification.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { NotificationMessages } from '../../common/enums/notification.messages';
 import { ResponseUtil } from '../../common/utils/response.utils';
@@ -15,6 +21,7 @@ import { Services } from '../../common/enums/services.enum';
 import { checkConnection } from '../../common/utils/checkConnection.utils';
 import { lastValueFrom, timeout } from 'rxjs';
 import { UserPatterns } from '../../common/enums/user.events';
+import { pagination } from '../../common/utils/pagination.utils';
 
 @Injectable()
 export class NotificationService {
@@ -39,7 +46,7 @@ export class NotificationService {
     }
   }
 
-  async getUserNotifications({ userId }: { userId: string }) {
+  async getUserNotifications({ userId, ...paginationDto }: IPagination & { userId: string }): Promise<ServiceResponse> {
     try {
       const notifications = await this.notificationModel.aggregate([
         { $match: { recipients: userId, type: NotificationType.PUSH } },
@@ -59,13 +66,13 @@ export class NotificationService {
 
       const transformedNotifications = transformArrayIds(notifications);
 
-      return ResponseUtil.success({ notifications: transformedNotifications }, '', HttpStatus.OK);
+      return ResponseUtil.success({ notifications: pagination(paginationDto, transformedNotifications) }, '', HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }
   }
 
-  async getSentNotifications({ senderId }: { senderId: string }) {
+  async getSentNotifications({ senderId }: { senderId: string }): Promise<ServiceResponse> {
     try {
       const notifications = await this.notificationModel.find({ senderId }).sort({ createdAt: -1 }).lean();
 
@@ -77,7 +84,7 @@ export class NotificationService {
     }
   }
 
-  async markAsRead(notificationDto: IMarkAsRead) {
+  async markAsRead(notificationDto: IMarkAsRead): Promise<ServiceResponse> {
     try {
       const { notificationId, userId } = notificationDto;
 
@@ -108,7 +115,7 @@ export class NotificationService {
     }
   }
 
-  async remove(notificationDto: IRemoveNotification) {
+  async remove(notificationDto: IRemoveNotification): Promise<ServiceResponse> {
     try {
       const { notificationId, senderId } = notificationDto;
 
@@ -124,7 +131,7 @@ export class NotificationService {
     }
   }
 
-  async update(notificationDto: IUpdateNotification) {
+  async update(notificationDto: IUpdateNotification): Promise<ServiceResponse> {
     try {
       const { message, recipients, notificationId, senderId } = notificationDto;
 
