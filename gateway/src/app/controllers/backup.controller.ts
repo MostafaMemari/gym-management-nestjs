@@ -28,17 +28,18 @@ export class BackupController {
   ) {}
 
   private getServicesForBackup() {
+    const patterns = { createBackup: BackupPatterns.CreateBackup, restoreBackup: BackupPatterns.RestoreBackup };
     const SERVICES_TO_BACKUP = [
       {
         name: Services.USER,
         client: this.userServiceClient,
-        pattern: BackupPatterns.CreateBackup,
+        patterns,
         folderName: `user-service-backups`,
       },
       {
         name: Services.PAYMENT,
         client: this.paymentServiceClient,
-        pattern: BackupPatterns.CreateBackup,
+        patterns,
         folderName: `payment-service-backups`,
       },
     ];
@@ -67,7 +68,7 @@ export class BackupController {
       const services = this.getServicesForBackup();
 
       for (const service of services) {
-        this.logger.log(`Starting backup for service: ${name}`);
+        this.logger.log(`Starting backup for service: ${service.name}`);
 
         try {
           const result = await this.createBackup({ serviceName: service.name });
@@ -94,7 +95,7 @@ export class BackupController {
     try {
       await checkConnection(service.name, service.client);
 
-      const result: ServiceResponse = await lastValueFrom(service.client.send(service.pattern, {}).pipe(timeout(this.timeout)));
+      const result: ServiceResponse = await lastValueFrom(service.client.send(service.patterns.createBackup, {}).pipe(timeout(this.timeout)));
 
       if (result.error) throw result;
 
@@ -125,7 +126,7 @@ export class BackupController {
         fileName: key.split('/').at(-1),
       };
 
-      service.client.emit(service.pattern, restoreData);
+      service.client.emit(service.patterns.restoreBackup, restoreData);
 
       return handleServiceResponse({ data: {}, error: false, message: 'Backup will be applied shortly.', status: HttpStatus.OK });
     } catch (error) {
