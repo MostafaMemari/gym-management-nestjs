@@ -15,6 +15,9 @@ import { User } from '../../../common/interfaces/user.interface';
 import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
 import { AwsService } from '../../../modules/s3AWS/s3AWS.service';
+import { AccessRole } from '../../../common/decorators/accessRole.decorator';
+import { Role } from '../../../common/enums/role.enum';
+import { Roles } from '../../../common/decorators/role.decorator';
 
 @Controller('chapters')
 @ApiTags('Chapters')
@@ -26,6 +29,8 @@ export class ChaptersController {
   ) {}
 
   @Post('/course/:courseId')
+  @Roles(Role.SUPER_ADMIN)
+  @AccessRole(Role.SUPER_ADMIN)
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
   async create(@Body() createChapterDto: CreateChaptersDto, @Param('courseId', ParseIntPipe) courseId: number) {
     try {
@@ -47,6 +52,8 @@ export class ChaptersController {
   }
 
   @Put(':id')
+  @Roles(Role.SUPER_ADMIN)
+  @AccessRole(Role.SUPER_ADMIN)
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
   async update(@Param('id', ParseIntPipe) id: number, @Body() updateChapterDto: UpdateChaptersDto) {
     try {
@@ -67,6 +74,8 @@ export class ChaptersController {
   }
 
   @Get()
+  @Roles(Role.SUPER_ADMIN)
+  @AccessRole(Role.SUPER_ADMIN)
   async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto, @Query() queryChaptersDto: QueryChaptersDto): Promise<any> {
     try {
       await checkConnection(Services.ACADEMY, this.academyServiceClient);
@@ -80,6 +89,8 @@ export class ChaptersController {
   }
 
   @Get(':id')
+  @Roles(Role.SUPER_ADMIN)
+  @AccessRole(Role.SUPER_ADMIN)
   async findOne(@Param('id', ParseIntPipe) id: number) {
     try {
       await checkConnection(Services.ACADEMY, this.academyServiceClient);
@@ -95,6 +106,8 @@ export class ChaptersController {
   }
 
   @Delete(':id')
+  @Roles(Role.SUPER_ADMIN)
+  @AccessRole(Role.SUPER_ADMIN)
   async remove(@Param('id', ParseIntPipe) id: number) {
     try {
       await checkConnection(Services.ACADEMY, this.academyServiceClient);

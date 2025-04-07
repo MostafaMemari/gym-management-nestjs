@@ -31,6 +31,9 @@ import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
 import { AwsService } from '../../../modules/s3AWS/s3AWS.service';
 import { BeltPatterns, GymPatterns } from '../../../common/enums/club-service/gym.events';
+import { AccessRole } from '../../../common/decorators/accessRole.decorator';
+import { Role } from '../../../common/enums/role.enum';
+import { Roles } from '../../../common/decorators/role.decorator';
 
 @Controller('courses')
 @ApiTags('Courses')
@@ -43,6 +46,8 @@ export class CoursesController {
   ) {}
 
   @Post()
+  @Roles(Role.SUPER_ADMIN)
+  @AccessRole(Role.SUPER_ADMIN)
   @UseInterceptors(
     UploadFileFields([
       { name: 'cover_image', maxCount: 1 },
@@ -114,6 +119,8 @@ export class CoursesController {
   }
 
   @Put(':id')
+  @Roles(Role.SUPER_ADMIN)
+  @AccessRole(Role.SUPER_ADMIN)
   @UseInterceptors(
     UploadFileFields([
       { name: 'cover_image', maxCount: 1 },
@@ -168,6 +175,8 @@ export class CoursesController {
   }
 
   @Get()
+  @Roles(Role.SUPER_ADMIN)
+  @AccessRole(Role.SUPER_ADMIN)
   async findAll(@Query() paginationDto: PaginationDto, @Query() queryCourseDto: QueryCourseDto): Promise<any> {
     try {
       await checkConnection(Services.ACADEMY, this.academyServiceClient);
@@ -180,6 +189,7 @@ export class CoursesController {
     } catch (error) {}
   }
   @Get(':id/details')
+  @AccessRole(Role.SUPER_ADMIN)
   async findAllDetails(@Param('id', ParseIntPipe) id: number): Promise<any> {
     try {
       await checkConnection(Services.ACADEMY, this.academyServiceClient);
@@ -195,6 +205,8 @@ export class CoursesController {
   }
 
   @Get(':id')
+  @Roles(Role.SUPER_ADMIN)
+  @AccessRole(Role.SUPER_ADMIN)
   async findOne(@Param('id', ParseIntPipe) id: number) {
     try {
       await checkConnection(Services.ACADEMY, this.academyServiceClient);
@@ -208,6 +220,8 @@ export class CoursesController {
   }
 
   @Delete(':id')
+  @Roles(Role.SUPER_ADMIN)
+  @AccessRole(Role.SUPER_ADMIN)
   async remove(@Param('id', ParseIntPipe) id: number) {
     try {
       await checkConnection(Services.ACADEMY, this.academyServiceClient);
