@@ -16,10 +16,10 @@ import {
   SignupDto,
   VerifyOtpDto,
 } from '../../../common/dtos/auth-service/auth.dto';
-import { AuthGuard } from '../../../common/guards/auth.guard';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
-import { checkConnection } from 'src/common/utils/checkConnection.utils';
-import { handleError, handleServiceResponse } from 'src/common/utils/handleError.utils';
+import { checkConnection } from '../../../common/utils/checkConnection.utils';
+import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
+import { AuthDecorator } from 'src/common/decorators/auth.decorator';
 
 @Controller('auth')
 @ApiTags('Auth')
@@ -88,7 +88,7 @@ export class AuthController {
   }
 
   @Post('signout')
-  @UseGuards(AuthGuard)
+  @AuthDecorator()
   @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
   async signout(@Body() signoutDto: SignoutDto) {
     try {
@@ -102,6 +102,7 @@ export class AuthController {
   }
 
   @Post('refresh-token')
+  @AuthDecorator()
   @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
   async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
     try {

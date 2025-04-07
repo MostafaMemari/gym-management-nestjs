@@ -37,6 +37,11 @@ export class NotificationController {
       if (notificationData.recipients.length > 100 && notificationData.type == 'SMS')
         throw new BadRequestException(NotificationMessages.MaximumRecipients);
 
+      if (notificationData.type == `SMS` && notificationData.message.length > 300)
+        throw new BadRequestException(NotificationMessages.MaximumMessageLengthSms);
+
+      if (notificationData.recipients.includes(user.id)) throw new BadRequestException(NotificationMessages.CannotSendNotificationToYourself);
+
       const data: ServiceResponse = await lastValueFrom(
         this.notificationServiceClient.send(NotificationPatterns.CreateNotification, notificationData).pipe(timeout(this.timeout)),
       );
