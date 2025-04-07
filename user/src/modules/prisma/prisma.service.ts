@@ -73,12 +73,13 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   }
 
   async createBackup(): Promise<ServiceResponse> {
+    let filePath: null | string = null;
     try {
       const { dbName, host, password, port, user } = this.parseDbUrl(process.env.DATABASE_URL);
 
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const fileName = `backup-user-service-${timestamp}.sql`;
-      const filePath = `${process.cwd()}/asserts/created-backups/${fileName}`;
+      filePath = `${process.cwd()}/asserts/created-backups/${fileName}`;
 
       fs.mkdirSync(path.dirname(filePath), { recursive: true });
 
@@ -96,15 +97,16 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
       return ResponseUtil.success(data, 'Backup created successfully', HttpStatus.OK);
     } catch (error) {
+      filePath || fs.rmSync(filePath, { force: true });
       throw new RpcException(error);
     }
   }
 
   async restoreBackup({ file, fileName }: { file: Buffer; fileName: string }): Promise<ServiceResponse> {
+    const filePath = `${process.cwd()}/asserts/restored-backups/${fileName}`;
+
     try {
       const { dbName, host, password, port, user } = this.parseDbUrl(process.env.DATABASE_URL);
-
-      const filePath = `${process.cwd()}/asserts/restored-backups/${fileName}`;
 
       fs.mkdirSync(path.dirname(filePath), { recursive: true });
 
@@ -120,6 +122,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
       return ResponseUtil.success({}, 'Backup restored successfully', HttpStatus.OK);
     } catch (error) {
+      fs.rmSync(filePath, { force: true });
       throw new RpcException(error);
     }
   }
