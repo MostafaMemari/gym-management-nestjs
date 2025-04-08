@@ -14,6 +14,7 @@ import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
 import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
+import { AccessRole } from '../../../common/decorators/accessRole.decorator';
 
 @Controller('age-categories')
 @ApiTags('Age Categories')
@@ -23,6 +24,7 @@ export class AgeCategoryController {
 
   @Post()
   @Roles(Role.SUPER_ADMIN)
+  @AccessRole(Role.SUPER_ADMIN)
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
   async create(@Body() createAgeCategoryDto: CreateAgeCategoryDto) {
     try {
@@ -38,6 +40,7 @@ export class AgeCategoryController {
 
   @Put(':id')
   @Roles(Role.SUPER_ADMIN)
+  @AccessRole(Role.SUPER_ADMIN)
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
   async update(@Param('id', ParseIntPipe) id: number, @Body() updateAgeCategoryDto: UpdateAgeCategoryDto) {
     try {
@@ -56,6 +59,7 @@ export class AgeCategoryController {
 
   @Get()
   @Roles(Role.SUPER_ADMIN)
+  @AccessRole(Role.SUPER_ADMIN)
   async findAll(@Query() paginationDto: PaginationDto, @Query() queryAgeCategoryDto: QueryAgeCategoryDto): Promise<any> {
     try {
       await checkConnection(Services.CLUB, this.clubServiceClient);
@@ -69,6 +73,7 @@ export class AgeCategoryController {
 
   @Get(':id')
   @Roles(Role.SUPER_ADMIN)
+  @AccessRole(Role.SUPER_ADMIN)
   async findOne(@Param('id', ParseIntPipe) id: number) {
     try {
       await checkConnection(Services.CLUB, this.clubServiceClient);
@@ -84,6 +89,7 @@ export class AgeCategoryController {
   }
 
   @Delete(':id')
+  @AccessRole(Role.SUPER_ADMIN)
   @Roles(Role.SUPER_ADMIN)
   async remove(@Param('id', ParseIntPipe) id: number) {
     try {

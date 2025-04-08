@@ -1,18 +1,19 @@
 import { forwardRef, Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { Services } from '../../common/enums/services.enum';
-import { CacheModule } from '../cache/cache.module';
-import { AwsModule } from '../s3AWS/s3AWS.module';
 import { CoachController } from './coach.controller';
 import { CoachService } from './coach.service';
 import { CoachEntity } from './entities/coach.entity';
 import { CoachRepository } from './repositories/coach.repository';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+
+import { CacheModule } from '../cache/cache.module';
 import { GymModule } from '../gym/gym.module';
+import { AwsModule } from '../s3AWS/s3AWS.module';
 import { StudentModule } from '../student/student.module';
 
+import { Services } from '../../common/enums/services.enum';
 @Module({
   imports: [
     ClientsModule.registerAsync([

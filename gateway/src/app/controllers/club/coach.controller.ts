@@ -50,12 +50,7 @@ export class CoachController {
       await checkConnection(Services.CLUB, this.clubServiceClient);
 
       const data: ServiceResponse = await lastValueFrom(
-        this.clubServiceClient
-          .send(CoachPatterns.CREATE, {
-            user,
-            createCoachDto: { ...createCoachDto, image },
-          })
-          .pipe(timeout(10000)),
+        this.clubServiceClient.send(CoachPatterns.CREATE, { user, createCoachDto: { ...createCoachDto, image } }).pipe(timeout(10000)),
       );
 
       return handleServiceResponse(data);

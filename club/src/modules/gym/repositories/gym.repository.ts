@@ -50,7 +50,7 @@ export class GymRepository extends Repository<GymEntity> {
       .getManyAndCount();
   }
 
-  async findByIdAndOwner(gymId: number, adminId: number): Promise<GymEntity | null> {
+  async findByIdAndAdmin(gymId: number, adminId: number): Promise<GymEntity | null> {
     return this.findOne({ where: { id: gymId, admin_id: adminId } });
   }
   async validateGymAndCoachUserIdGender(gymId: number, coachUserId: number, gender: Gender): Promise<GymEntity | null> {

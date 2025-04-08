@@ -14,6 +14,7 @@ import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
 import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
+import { AccessRole } from 'src/common/decorators/accessRole.decorator';
 
 @Controller('belts')
 @ApiTags('Belts')
@@ -23,6 +24,7 @@ export class BeltController {
 
   @Post()
   @Roles(Role.SUPER_ADMIN)
+  @AccessRole(Role.SUPER_ADMIN)
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
   async create(@Body() createBeltDto: CreateBeltDto) {
     try {
@@ -38,6 +40,7 @@ export class BeltController {
 
   @Put(':id')
   @Roles(Role.SUPER_ADMIN)
+  @AccessRole(Role.SUPER_ADMIN)
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
   async update(@Param('id', ParseIntPipe) id: number, @Body() updateBeltDto: UpdateBeltDto) {
     try {
@@ -54,6 +57,7 @@ export class BeltController {
 
   @Get()
   @Roles(Role.SUPER_ADMIN)
+  @AccessRole(Role.SUPER_ADMIN)
   async findAll(@Query() paginationDto: PaginationDto, @Query() queryBeltDto: QueryBeltDto): Promise<any> {
     try {
       await checkConnection(Services.CLUB, this.clubServiceClient);
@@ -67,6 +71,7 @@ export class BeltController {
 
   @Get(':id')
   @Roles(Role.SUPER_ADMIN)
+  @AccessRole(Role.SUPER_ADMIN)
   async findOne(@Param('id', ParseIntPipe) id: number) {
     try {
       await checkConnection(Services.CLUB, this.clubServiceClient);
@@ -81,6 +86,7 @@ export class BeltController {
 
   @Delete(':id')
   @Roles(Role.SUPER_ADMIN)
+  @AccessRole(Role.SUPER_ADMIN)
   async remove(@Param('id', ParseIntPipe) id: number) {
     try {
       await checkConnection(Services.CLUB, this.clubServiceClient);

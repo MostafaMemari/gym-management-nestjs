@@ -34,7 +34,7 @@ export class GymService {
   async update(user: IUser, gymId: number, updateGymDto: IUpdateGym): Promise<ServiceResponse> {
     try {
       const { genders } = updateGymDto;
-      const gym = await this.validateOwnershipById(gymId, user.id);
+      const gym = await this.findGymByIdForAdmin(gymId, user.id);
 
       if (genders && genders !== gym.genders) {
         await this.validateGenderRemoval(genders, gymId, gym.genders);
@@ -63,7 +63,7 @@ export class GymService {
   }
   async findOneById(user: IUser, gymId: number): Promise<ServiceResponse> {
     try {
-      const gym = await this.validateOwnershipById(gymId, user.id);
+      const gym = await this.findGymByIdForAdmin(gymId, user.id);
 
       return ResponseUtil.success(gym, GymMessages.GET_SUCCESS);
     } catch (error) {
@@ -72,7 +72,7 @@ export class GymService {
   }
   async removeById(user: IUser, gymId: number): Promise<ServiceResponse> {
     try {
-      const gym = await this.validateOwnershipById(gymId, user.id);
+      const gym = await this.findGymByIdForAdmin(gymId, user.id);
 
       const isGymAssignedToCoaches = await this.coachService.hasCoachByGymId(gymId);
       if (isGymAssignedToCoaches) throw new BadRequestException(GymMessages.CANNOT_REMOVE_ASSIGNED_COACHES);
@@ -98,8 +98,8 @@ export class GymService {
     }
   }
 
-  async validateOwnershipById(gymId: number, userId: number): Promise<GymEntity> {
-    const gym = await this.gymRepository.findByIdAndOwner(gymId, userId);
+  async findGymByIdForAdmin(gymId: number, adminId: number): Promise<GymEntity> {
+    const gym = await this.gymRepository.findByIdAndAdmin(gymId, adminId);
     if (!gym) throw new NotFoundException(GymMessages.NOT_BELONG_TO_USER);
     return gym;
   }
@@ -109,8 +109,8 @@ export class GymService {
   async checkGymAndCoachEligibility(gymId: number, coachId: number, gender: Gender): Promise<GymEntity> {
     return await this.gymRepository.validateGymAndCoachGender(gymId, coachId, gender);
   }
-  async validateOwnershipByIdWithCoaches(gymId: number, userId: number): Promise<GymEntity> {
-    const gym = await this.gymRepository.findByIdAndOwnerRelationCoaches(gymId, userId);
+  async validateOwnershipByIdWithCoaches(gymId: number, adminId: number): Promise<GymEntity> {
+    const gym = await this.gymRepository.findByIdAndOwnerRelationCoaches(gymId, adminId);
     if (!gym) throw new NotFoundException(GymMessages.NOT_BELONG_TO_USER);
     return gym;
   }
@@ -127,8 +127,8 @@ export class GymService {
       if (femaleCoachExists) throw new BadRequestException(GymMessages.CANNOT_REMOVE_FEMALE_COACH);
     }
   }
-  async validateOwnershipByIds(gymIds: number[], userId: number): Promise<GymEntity[]> {
-    const ownedGyms = await this.gymRepository.findOwnedGymsByIds(gymIds, userId);
+  async findGymByIdsForAdmin(gymIds: number[], adminId: number): Promise<GymEntity[]> {
+    const ownedGyms = await this.gymRepository.findOwnedGymsByIds(gymIds, adminId);
 
     if (ownedGyms.length !== gymIds.length) {
       const notOwnedGymIds = gymIds.filter((id) => !ownedGyms.some((gym) => gym.id === id));
