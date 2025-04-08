@@ -4,17 +4,25 @@ import { NotificationService } from './notification.service';
 import { ConfigModule } from '@nestjs/config';
 import envConfig from '../../configs/env.config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Notification, NotificationSchema } from './notification.schema';
+import { Notification, NotificationSchemaFactory } from './notification.schema';
 import { TelegramBotModule } from '../telegram-bot/telegram-bot.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { Services } from '../../common/enums/services.enum';
 import { CacheModule } from '../cache/cache.module';
+import { CacheService } from '../cache/cache.service';
 
 @Module({
   imports: [
     ConfigModule.forRoot(envConfig()),
     MongooseModule.forRoot(process.env.DATABASE_URL),
-    MongooseModule.forFeature([{ name: Notification.name, schema: NotificationSchema }]),
+    MongooseModule.forFeatureAsync([
+      {
+        name: Notification.name,
+        imports: [CacheModule],
+        useFactory: (cacheService: CacheService) => NotificationSchemaFactory(cacheService),
+        inject: [CacheService],
+      },
+    ]),
     CacheModule,
     ClientsModule.register([
       {

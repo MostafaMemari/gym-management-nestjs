@@ -1,6 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { NotificationType } from '../../common/enums/notification.type';
+import { CacheService } from '../cache/cache.service';
+import { CacheKeys } from '../../common/enums/cache.enum';
 
 @Schema({ versionKey: false, timestamps: true })
 export class Notification extends Document<Notification> {
@@ -20,4 +22,14 @@ export class Notification extends Document<Notification> {
   isEdited: boolean;
 }
 
-export const NotificationSchema = SchemaFactory.createForClass(Notification);
+export const NotificationSchemaFactory = (cacheService: CacheService) => {
+  const schema = SchemaFactory.createForClass(Notification);
+
+  schema.pre(['save', 'updateOne', 'updateMany', 'deleteOne', 'deleteMany', 'findOneAndUpdate', 'findOneAndDelete'], async (next) => {
+    for (const key in CacheKeys) cacheService.delByPattern(`*${CacheKeys[key]}*`);
+
+    next();
+  });
+
+  return schema;
+};

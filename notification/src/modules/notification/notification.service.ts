@@ -14,7 +14,7 @@ import {
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { NotificationMessages } from '../../common/enums/notification.messages';
 import { ResponseUtil } from '../../common/utils/response.utils';
-import { transformArrayIds, transformId } from '../../common/utils/transformId.utils';
+import { sortObject, transformArrayIds, transformId } from '../../common/utils/functions.utils';
 import { RootFilterQuery } from 'mongoose';
 import { NotificationType } from '../../common/enums/notification.type';
 import { Smsir } from 'sms-typescript/lib';
@@ -23,14 +23,18 @@ import { checkConnection } from '../../common/utils/checkConnection.utils';
 import { lastValueFrom, timeout } from 'rxjs';
 import { UserPatterns } from '../../common/enums/user.events';
 import { pagination } from '../../common/utils/pagination.utils';
+import { CacheService } from '../cache/cache.service';
+import { CacheKeys } from '../../common/enums/cache.enum';
 
 @Injectable()
 export class NotificationService {
   private timeout: number = 4500;
+  private readonly REDIS_EXPIRE_TIME: number = 600; //* Seconds
 
   constructor(
     @InjectModel(Notification.name) private readonly notificationModel: Model<Notification>,
     @Inject(Services.USER) private readonly userServiceClient: ClientProxy,
+    private readonly cacheService: CacheService,
   ) {}
 
   async create(createNotificationDto: ICreateNotification): Promise<ServiceResponse> {
@@ -51,6 +55,14 @@ export class NotificationService {
     try {
       const paginationDto = { take, page };
       const { userId, endDate, isEdited, message, sortBy, sortDirection, startDate } = filtersDto;
+
+      const sortedDto = sortObject(filtersDto);
+
+      const cacheKey = `${CacheKeys.GetUserNotifications}_${JSON.stringify(sortedDto)}`;
+
+      const cacheNotifications = await this.cacheService.get<Notification[] | null>(cacheKey);
+
+      if (cacheNotifications) return ResponseUtil.success(pagination(paginationDto, cacheNotifications));
 
       const filters: mongoose.RootFilterQuery<Notification> = {};
 
@@ -81,6 +93,8 @@ export class NotificationService {
 
       const transformedNotifications = transformArrayIds(notifications);
 
+      await this.cacheService.set(cacheKey, transformedNotifications, this.REDIS_EXPIRE_TIME);
+
       return ResponseUtil.success({ ...pagination(paginationDto, transformedNotifications) }, '', HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
@@ -91,6 +105,14 @@ export class NotificationService {
     try {
       const paginationDto = { page, take };
       const { endDate, isEdited, message, readBy, recipients, senderId, sortBy, sortDirection, startDate, type } = filtersDto;
+
+      const sortedDto = sortObject(filtersDto);
+
+      const cacheKey = `${CacheKeys.GetSentNotifications}_${JSON.stringify(sortedDto)}`;
+
+      const notificationCache = await this.cacheService.get<Notification[] | null>(cacheKey);
+
+      if (notificationCache) return ResponseUtil.success(pagination(paginationDto, notificationCache), '', HttpStatus.OK);
 
       const filters: mongoose.RootFilterQuery<Notification> = {};
 
@@ -111,6 +133,8 @@ export class NotificationService {
         .lean();
 
       const transformedNotifications = transformArrayIds(notifications);
+
+      await this.cacheService.set(cacheKey, transformedNotifications);
 
       return ResponseUtil.success({ ...pagination(paginationDto, transformedNotifications) }, '', HttpStatus.OK);
     } catch (error) {
@@ -156,6 +180,8 @@ export class NotificationService {
       this.validateObjectId(notificationId);
 
       const notification = await this.findOneOrFail(notificationId, { senderId, type: NotificationType.PUSH });
+
+      await this.notificationModel.deleteOne({ _id: notification._id });
 
       const transformedId = transformId(notification);
 
