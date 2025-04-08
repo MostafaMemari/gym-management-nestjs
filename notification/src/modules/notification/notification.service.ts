@@ -7,9 +7,9 @@ import {
   ICreateNotification,
   IMarkAsRead,
   INotificationFilter,
-  IPagination,
   IRemoveNotification,
   IUpdateNotification,
+  IUserNotificationFilter,
 } from '../../common/interfaces/notification.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { NotificationMessages } from '../../common/enums/notification.messages';
@@ -47,11 +47,24 @@ export class NotificationService {
     }
   }
 
-  async getUserNotifications({ userId, ...paginationDto }: IPagination & { userId: string }): Promise<ServiceResponse> {
+  async getUserNotifications({ take, page, ...filtersDto }: IUserNotificationFilter): Promise<ServiceResponse> {
     try {
+      const paginationDto = { take, page };
+      const { userId, endDate, isEdited, message, sortBy, sortDirection, startDate } = filtersDto;
+
+      const filters: mongoose.RootFilterQuery<Notification> = {};
+
+      if (isEdited !== undefined) filters.isEdited = isEdited;
+      if (message) filters.message = { $regex: message };
+      if (startDate || endDate) {
+        filters.createdAt = {};
+        if (startDate) filters.createdAt.$gte = new Date(startDate);
+        if (endDate) filters.createdAt.$lte = new Date(endDate);
+      }
+
       const notifications = await this.notificationModel.aggregate([
-        { $match: { recipients: userId, type: NotificationType.PUSH } },
-        { $sort: { createdAt: -1 } },
+        { $match: { recipients: userId, type: NotificationType.PUSH, ...filters } },
+        { $sort: { [sortBy || 'createdAt']: sortDirection ? (sortDirection == 'desc' ? -1 : 1) : -1 } },
         {
           $project: {
             _id: 1,
@@ -60,6 +73,7 @@ export class NotificationService {
             updatedAt: 1,
             senderId: 1,
             type: 1,
+            isEdited: 1,
             isRead: { $in: [userId, '$readBy'] },
           },
         },
@@ -93,7 +107,7 @@ export class NotificationService {
 
       const notifications = await this.notificationModel
         .find({ ...filters, senderId })
-        .sort({ [sortBy || 'createdAt']: sortDirection || sortDirection == 'desc' ? -1 : 1 })
+        .sort({ [sortBy || 'createdAt']: sortDirection ? (sortDirection == 'desc' ? -1 : 1) : -1 })
         .lean();
 
       const transformedNotifications = transformArrayIds(notifications);

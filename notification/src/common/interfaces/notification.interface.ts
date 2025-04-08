@@ -41,3 +41,7 @@ export interface INotificationFilter extends IPagination {
   sortBy?: 'createdAt' | 'updatedAt' | 'isEdited';
   sortDirection?: 'asc' | 'desc';
 }
+
+export interface IUserNotificationFilter extends Omit<INotificationFilter, 'senderId' | 'recipients' | 'readBy' | 'type'> {
+  userId: number;
+}

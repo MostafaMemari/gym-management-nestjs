@@ -8,6 +8,7 @@ import {
   INotificationFilter,
   IRemoveNotification,
   IUpdateNotification,
+  IUserNotificationFilter,
 } from '../../common/interfaces/notification.interface';
 
 @Controller()
@@ -20,7 +21,7 @@ export class NotificationController {
   }
 
   @MessagePattern(NotificationPatterns.GetUserNotification)
-  getUserNotifications(@Payload() data: { userId: string }) {
+  getUserNotifications(@Payload() data: IUserNotificationFilter) {
     return this.notificationService.getUserNotifications(data);
   }
 
