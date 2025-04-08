@@ -50,8 +50,17 @@ export class GymRepository extends Repository<GymEntity> {
       .getManyAndCount();
   }
 
-  async findByIdAndAdmin(gymId: number, adminId: number): Promise<GymEntity | null> {
+  async findByIdAndAdmin(gymId: number, adminId: number, relations?: boolean): Promise<GymEntity | null> {
+    if (relations) {
+      return this.findOne({ where: { id: gymId, admin_id: adminId }, relations: ['coaches'] });
+    }
     return this.findOne({ where: { id: gymId, admin_id: adminId } });
+  }
+  async findById(gymId: number, relations?: boolean): Promise<GymEntity | null> {
+    if (relations) {
+      return this.findOne({ where: { id: gymId }, relations: ['coaches'] });
+    }
+    return this.findOne({ where: { id: gymId } });
   }
   async validateGymAndCoachUserIdGender(gymId: number, coachUserId: number, gender: Gender): Promise<GymEntity | null> {
     return await this.createQueryBuilder(EntityName.GYMS)

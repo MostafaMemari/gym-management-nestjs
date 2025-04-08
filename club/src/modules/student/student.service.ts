@@ -51,10 +51,10 @@ export class StudentService {
     let studentUserId: number | null = null;
 
     try {
-      if (national_code) await this.validateUniqueNationalCode(national_code);
+      await this.validateUniqueNationalCode(national_code);
 
-      if (user.role === Role.ADMIN_CLUB) await this.validateStudentGymAndCoach(gym_id, coach_id, gender);
-      if (user.role === Role.COACH) await this.validateStudentGymAndCoachUserId(gym_id, user.id, gender);
+      if (user.role === Role.ADMIN_CLUB) await this.validateStudentByAdminGymAndCoach(user.id, gender, gym_id, coach_id);
+      if (user.role === Role.COACH) await this.validateStudentByCoachUserAndGym(gym_id, user.id, gender);
 
       imageKey = image ? await this.updateImage(image) : null;
       studentUserId = await this.createUserStudent();
@@ -84,15 +84,26 @@ export class StudentService {
   async update(user: IUser, studentId: number, updateStudentDto: IStudentUpdateDto): Promise<ServiceResponse> {
     const { gym_id, coach_id, national_code, gender, image } = updateStudentDto;
     let imageKey: string | null = null;
-    let student: StudentEntity = null;
+    let student: StudentEntity | null = null;
 
     try {
-      await this.validateUniqueNationalCode(national_code);
+      if (national_code) await this.validateUniqueNationalCode(national_code);
+
       if (user.role === Role.ADMIN_CLUB) student = await this.validateStudentByAdmin(studentId, user.id);
       if (user.role === Role.COACH) student = await this.validateStudentByCoachUserId(studentId, user.id);
 
       if (gym_id || coach_id || gender) {
-        await this.validateStudentGymAndCoach(gym_id ?? student.gym_id, coach_id ?? student.coach_id, gender ?? student.gender);
+        if (user.role === Role.ADMIN_CLUB) {
+          await this.validateStudentByAdminGymAndCoach(
+            user.id,
+            gender ?? student.gender,
+            gym_id ?? student.gym_id,
+            coach_id ?? student.coach_id,
+          );
+        }
+        if (user.role === Role.COACH) {
+          await this.validateStudentByCoachUserAndGym(gym_id ?? student.gym_id, user.id, gender ?? student.gender);
+        }
       }
 
       const updateData = this.prepareUpdateData(updateStudentDto, student);
@@ -173,7 +184,7 @@ export class StudentService {
       ResponseUtil.error(error?.message || StudentMessages.REMOVE_FAILURE, error?.status);
     }
   }
-  async bulkCreate(userId: number, studentData: IStudentBulkCreateDto, studentsJson: Express.Multer.File): Promise<ServiceResponse> {
+  async bulkCreate(user: IUser, studentData: IStudentBulkCreateDto, studentsJson: Express.Multer.File): Promise<ServiceResponse> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -184,7 +195,8 @@ export class StudentService {
     try {
       const belts = await this.beltService.getNamesAndIds();
 
-      await this.validateStudentGymAndCoachUserId(gym_id, coach_id, gender);
+      if (user.role === Role.ADMIN_CLUB) await this.validateStudentByAdminGymAndCoach(user.id, gender, gym_id, coach_id);
+      if (user.role === Role.COACH) await this.validateStudentByCoachUserAndGym(gym_id, user.id, gender);
 
       const students: any = JSON.parse(Buffer.from(studentsJson.buffer).toString('utf-8'));
 
@@ -320,10 +332,29 @@ export class StudentService {
     return student;
   }
 
-  private async validateStudentByCoach(studentId: number, coachId: number): Promise<StudentEntity> {
-    const student = await this.studentRepository.findByIdAndCoach(studentId, coachId);
-    if (!student) throw new NotFoundException(StudentMessages.NOT_FOUND);
-    return student;
+  async validateStudentByAdminGymAndCoach(adminId: number, gender: Gender, gymId: number, coachId?: number): Promise<void> {
+    const gym = await this.gymService.findGymByIdForAdmin(gymId, adminId);
+
+    if (coachId) {
+      const coach = gym.coaches.find((coach) => coach.id === coachId);
+      if (!coach) {
+        throw new BadRequestException(
+          StudentMessages.COACH_CLUB_MISMATCH.replace('{coachId}', coachId.toString()).replace('{clubId}', gymId.toString()),
+        );
+      }
+      if (coach.gender !== gender) throw new BadRequestException(StudentMessages.COACH_GENDER_MISMATCH);
+    }
+
+    if (!gym.genders.includes(gender)) throw new BadRequestException(StudentMessages.CLUB_GENDER_MISMATCH);
+  }
+  async validateStudentByCoachUserAndGym(gymId: number, coachUserId: number, gender: Gender): Promise<void> {
+    const gym = await this.gymService.findGymById(gymId, true);
+
+    const coach = gym.coaches.find((coach) => coach.user_id === coachUserId);
+    if (!coach) throw new BadRequestException(StudentMessages.COACH_NOT_IN_CLUB);
+    if (coach.gender !== gender) throw new BadRequestException(StudentMessages.COACH_GENDER_MISMATCH);
+
+    if (!gym.genders.includes(gender)) throw new BadRequestException(StudentMessages.CLUB_GENDER_MISMATCH);
   }
 
   async validateStudentGymAndCoachUserId(gymId: number, coachUserId: number, gender: Gender): Promise<void> {

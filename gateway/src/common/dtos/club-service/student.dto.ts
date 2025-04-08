@@ -94,11 +94,11 @@ export class CreateStudentByAdminDto {
   @ApiPropertyOptional({ type: 'integer', required: false, example: 1402 })
   membership_year?: number;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsInt()
   @IsPositive()
   @Transform(({ value }) => parseInt(value, 10))
-  @ApiProperty({ type: 'integer', required: true, example: '' })
+  @ApiPropertyOptional({ type: 'integer', required: true, example: '' })
   coach_id: number;
 
   @IsNotEmpty()
