@@ -22,7 +22,7 @@ import { NotificationMessages } from '../../common/enums/shared.messages';
 export class NotificationController {
   private readonly timeout = 5000;
 
-  constructor(@Inject(Services.NOTIFICATION) private readonly notificationServiceClient: ClientProxy) { }
+  constructor(@Inject(Services.NOTIFICATION) private readonly notificationServiceClient: ClientProxy) {}
 
   @Post()
   @Roles(Role.SUPER_ADMIN)
@@ -57,7 +57,7 @@ export class NotificationController {
     try {
       await checkConnection(Services.NOTIFICATION, this.notificationServiceClient);
 
-      const userNotificationData = { ...notificationFilterDto, userId: user.id }
+      const userNotificationData = { ...notificationFilterDto, userId: user.id };
 
       const data: ServiceResponse = await lastValueFrom(
         this.notificationServiceClient.send(NotificationPatterns.GetUserNOtifications, userNotificationData).pipe(timeout(this.timeout)),

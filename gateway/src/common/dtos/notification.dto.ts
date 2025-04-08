@@ -40,7 +40,7 @@ export class CreateNotificationDto {
   recipients: number[];
 }
 
-export class UpdateNotificationDto extends PartialType(OmitType(CreateNotificationDto, ['type'] as const)) { }
+export class UpdateNotificationDto extends PartialType(OmitType(CreateNotificationDto, ['type'] as const)) {}
 
 export class QueryNotificationDto extends PaginationDto {
   @IsOptional()
@@ -83,8 +83,11 @@ export class QueryNotificationDto extends PaginationDto {
   readBy?: number[];
 
   @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value == 'string') return value == 'true';
+    return value;
+  })
   @IsBoolean()
-  @Transform(({ value }) => value == 'true')
   @ApiProperty({
     type: 'boolean',
     required: false,
@@ -136,4 +139,4 @@ export class QueryNotificationDto extends PaginationDto {
   sortDirection?: SortOrder;
 }
 
-export class QueryUserNotificationDto extends OmitType(QueryNotificationDto, ['recipients', 'readBy', 'type']) { }
+export class QueryUserNotificationDto extends OmitType(QueryNotificationDto, ['recipients', 'readBy', 'type']) {}
