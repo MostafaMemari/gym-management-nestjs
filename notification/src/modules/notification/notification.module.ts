@@ -10,6 +10,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { Services } from '../../common/enums/services.enum';
 import { CacheModule } from '../cache/cache.module';
 import { CacheService } from '../cache/cache.service';
+import { BackupModule } from '../backup/backup.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { CacheService } from '../cache/cache.service';
       },
     ]),
     CacheModule,
+    BackupModule,
     ClientsModule.register([
       {
         name: Services.USER,
