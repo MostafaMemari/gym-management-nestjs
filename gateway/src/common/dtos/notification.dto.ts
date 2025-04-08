@@ -40,7 +40,7 @@ export class CreateNotificationDto {
   recipients: number[];
 }
 
-export class UpdateNotificationDto extends PartialType(OmitType(CreateNotificationDto, ['type'] as const)) {}
+export class UpdateNotificationDto extends PartialType(OmitType(CreateNotificationDto, ['type'] as const)) { }
 
 export class QueryNotificationDto extends PaginationDto {
   @IsOptional()
@@ -135,3 +135,5 @@ export class QueryNotificationDto extends PaginationDto {
   })
   sortDirection?: SortOrder;
 }
+
+export class QueryUserNotificationDto extends OmitType(QueryNotificationDto, ['recipients', 'readBy', 'type']) { }

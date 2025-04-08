@@ -10,7 +10,7 @@ import { AuthDecorator } from '../../common/decorators/auth.decorator';
 import { Roles } from '../../common/decorators/role.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { SwaggerConsumes } from '../../common/enums/swagger-consumes.enum';
-import { CreateNotificationDto, QueryNotificationDto, UpdateNotificationDto } from '../../common/dtos/notification.dto';
+import { CreateNotificationDto, QueryNotificationDto, QueryUserNotificationDto, UpdateNotificationDto } from '../../common/dtos/notification.dto';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 import { User } from '../../common/interfaces/user.interface';
@@ -22,7 +22,7 @@ import { NotificationMessages } from '../../common/enums/shared.messages';
 export class NotificationController {
   private readonly timeout = 5000;
 
-  constructor(@Inject(Services.NOTIFICATION) private readonly notificationServiceClient: ClientProxy) {}
+  constructor(@Inject(Services.NOTIFICATION) private readonly notificationServiceClient: ClientProxy) { }
 
   @Post()
   @Roles(Role.SUPER_ADMIN)
@@ -53,17 +53,19 @@ export class NotificationController {
   }
 
   @Get('user-notifications')
-  async getUserNotifications(@GetUser() user: User) {
+  async getUserNotifications(@GetUser() user: User, @Query() notificationFilterDto: QueryUserNotificationDto) {
     try {
       await checkConnection(Services.NOTIFICATION, this.notificationServiceClient);
 
+      const userNotificationData = { ...notificationFilterDto, userId: user.id }
+
       const data: ServiceResponse = await lastValueFrom(
-        this.notificationServiceClient.send(NotificationPatterns.GetUserNOtifications, { userId: user.id }).pipe(timeout(this.timeout)),
+        this.notificationServiceClient.send(NotificationPatterns.GetUserNOtifications, userNotificationData).pipe(timeout(this.timeout)),
       );
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to get notifications', Services.NOTIFICATION);
+      handleError(error, 'Failed to get user notifications', Services.NOTIFICATION);
     }
   }
 
