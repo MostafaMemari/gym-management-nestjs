@@ -78,7 +78,7 @@ export class StudentEntity extends AbstractEntity {
 
   @ManyToMany(() => SessionEntity, (session) => session.students)
   @JoinTable({
-    name: 'student_sessions',
+    name: 'students_sessions',
     joinColumn: { name: 'student_id', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'coach_id', referencedColumnName: 'id' },
   })

@@ -30,7 +30,7 @@ export class GymEntity extends AbstractEntity {
 
   @ManyToMany(() => CoachEntity, (coach) => coach.gyms)
   @JoinTable({
-    name: 'gym_coaches',
+    name: 'gyms_coaches',
     joinColumn: { name: 'gym_id', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'coach_id', referencedColumnName: 'id' },
   })
