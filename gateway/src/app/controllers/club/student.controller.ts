@@ -20,7 +20,8 @@ import { lastValueFrom, timeout } from 'rxjs';
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { GetUser } from '../../../common/decorators/get-user.decorator';
 import {
-  BulkCreateStudentsDto,
+  BulkCreateStudentsByAdminDto,
+  BulkCreateStudentsByCoachDto,
   CreateStudentByAdminDto,
   CreateStudentByCoachDto,
   QueryStudentDto,
@@ -212,12 +213,40 @@ export class StudentController {
     }
   }
 
-  @Post('bulk')
+  @Post('bulk/admin')
   @ApiConsumes(SwaggerConsumes.MultipartData)
   @UseInterceptors(UploadFile('studentsFile'))
-  async bulkUpload(
+  async bulkUploadByAdmin(
     @GetUser() user: User,
-    @Body() bulkStudentsDto: BulkCreateStudentsDto,
+    @Body() bulkStudentsDto: BulkCreateStudentsByAdminDto,
+    @UploadedFile(new FileValidationPipe(10 * 1024 * 1024, ['application/json']))
+    studentsFile: Express.Multer.File,
+  ) {
+    try {
+      if (!studentsFile) throw new BadRequestException('student file required');
+      await checkConnection(Services.CLUB, this.clubServiceClient);
+
+      const data: ServiceResponse = await lastValueFrom(
+        this.clubServiceClient
+          .send(StudentPatterns.BULK_CREATE, {
+            user,
+            studentData: { ...bulkStudentsDto },
+            studentsJson: studentsFile,
+          })
+          .pipe(timeout(40000)),
+      );
+
+      return handleServiceResponse(data);
+    } catch (error) {
+      handleError(error, 'Failed to bulk upload students', 'StudentService');
+    }
+  }
+  @Post('bulk/coach')
+  @ApiConsumes(SwaggerConsumes.MultipartData)
+  @UseInterceptors(UploadFile('studentsFile'))
+  async bulkCreateByCoach(
+    @GetUser() user: User,
+    @Body() bulkStudentsDto: BulkCreateStudentsByCoachDto,
     @UploadedFile(new FileValidationPipe(10 * 1024 * 1024, ['application/json']))
     studentsFile: Express.Multer.File,
   ) {

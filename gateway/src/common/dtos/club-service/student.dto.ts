@@ -128,7 +128,12 @@ export class CreateStudentByCoachDto extends OmitType(CreateStudentByAdminDto, [
 export class UpdateStudentByAdminDto extends PartialType(OmitType(CreateStudentByAdminDto, ['belt_id', 'belt_date'])) {}
 export class UpdateStudentByCoachDto extends PartialType(OmitType(CreateStudentByCoachDto, ['belt_id', 'belt_date'])) {}
 
-export class BulkCreateStudentsDto extends PickType(CreateStudentByAdminDto, ['gender', 'coach_id', 'gym_id']) {
+export class BulkCreateStudentsByAdminDto extends PickType(CreateStudentByAdminDto, ['gender', 'coach_id', 'gym_id']) {
+  @IsOptional()
+  @ApiPropertyOptional({ type: 'string', format: 'binary' })
+  studentsFile?: string;
+}
+export class BulkCreateStudentsByCoachDto extends PickType(CreateStudentByAdminDto, ['gender', 'gym_id']) {
   @IsOptional()
   @ApiPropertyOptional({ type: 'string', format: 'binary' })
   studentsFile?: string;
