@@ -8,12 +8,14 @@ import { Notification, NotificationSchema } from './notification.schema';
 import { TelegramBotModule } from '../telegram-bot/telegram-bot.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { Services } from '../../common/enums/services.enum';
+import { CacheModule } from '../cache/cache.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot(envConfig()),
     MongooseModule.forRoot(process.env.DATABASE_URL),
     MongooseModule.forFeature([{ name: Notification.name, schema: NotificationSchema }]),
+    CacheModule,
     ClientsModule.register([
       {
         name: Services.USER,
