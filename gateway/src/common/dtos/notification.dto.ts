@@ -1,6 +1,9 @@
 import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { ArrayUnique, IsArray, IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { ArrayUnique, IsArray, IsBoolean, IsDate, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { PaginationDto } from './shared.dto';
+import { transformNumberArray } from '../utils/functions.utils';
+import { NotificationSortBy, NotificationType, SortOrder } from '../enums/shared.enum';
 
 export class CreateNotificationDto {
   @ApiProperty({
@@ -30,26 +33,7 @@ export class CreateNotificationDto {
     uniqueItems: true,
     items: { type: 'number', nullable: false },
   })
-  @Transform(({ value }) => {
-    try {
-      const uniqueItems = new Set();
-      const parsedValue = JSON.parse(value);
-      if (Array.isArray(parsedValue)) {
-        parsedValue
-          .flat(Infinity)
-          .map((item) => (item == null ? item : +item))
-          .filter((item) => typeof item == 'number')
-          .forEach((item) => uniqueItems.add(item));
-        value = [...uniqueItems];
-      }
-
-      if (typeof parsedValue == 'string' || typeof value == 'string') value = [+value];
-
-      return value;
-    } catch (error) {
-      return value;
-    }
-  })
+  @Transform(({ value }) => transformNumberArray(value))
   @IsArray()
   @ArrayUnique()
   @IsNotEmpty()
@@ -57,3 +41,97 @@ export class CreateNotificationDto {
 }
 
 export class UpdateNotificationDto extends PartialType(OmitType(CreateNotificationDto, ['type'] as const)) {}
+
+export class QueryNotificationDto extends PaginationDto {
+  @IsOptional()
+  @IsArray()
+  @ArrayUnique()
+  @IsNotEmpty()
+  @ApiProperty({
+    isArray: true,
+    type: 'array',
+    uniqueItems: true,
+    required: false,
+    nullable: true,
+    items: { type: 'number', nullable: false },
+  })
+  @Transform(({ value }) => transformNumberArray(value))
+  recipients?: number[];
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({
+    type: 'string',
+    required: false,
+    nullable: true,
+  })
+  message?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayUnique()
+  @IsNotEmpty()
+  @ApiProperty({
+    isArray: true,
+    type: 'array',
+    uniqueItems: true,
+    required: false,
+    nullable: true,
+    items: { type: 'number', nullable: false },
+  })
+  @Transform(({ value }) => transformNumberArray(value))
+  readBy?: number[];
+
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value == 'true')
+  @ApiProperty({
+    type: 'boolean',
+    required: false,
+    nullable: true,
+  })
+  isEdited?: boolean;
+
+  @IsOptional()
+  @IsDate()
+  @Transform(({ value }) => new Date(value))
+  @ApiProperty({ type: 'string', format: 'date-time', nullable: true, required: false })
+  startDate?: Date;
+
+  @IsOptional()
+  @IsDate()
+  @Transform(({ value }) => new Date(value))
+  @ApiProperty({ type: 'string', format: 'date-time', nullable: true, required: false })
+  endDate?: Date;
+
+  @IsOptional()
+  @IsEnum(NotificationType)
+  @ApiProperty({
+    type: 'string',
+    enum: NotificationType,
+    nullable: true,
+    required: false,
+  })
+  type?: NotificationType;
+
+  @IsOptional()
+  @IsString()
+  @IsEnum(NotificationSortBy)
+  @ApiProperty({
+    type: 'string',
+    enum: NotificationSortBy,
+    nullable: true,
+    required: false,
+  })
+  sortBy?: NotificationSortBy;
+
+  @IsOptional()
+  @IsEnum(SortOrder)
+  @ApiProperty({
+    type: 'string',
+    enum: SortOrder,
+    nullable: true,
+    required: false,
+  })
+  sortDirection?: SortOrder;
+}

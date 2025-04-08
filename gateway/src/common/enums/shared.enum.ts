@@ -45,7 +45,19 @@ export enum WalletStatus {
 export enum TransactionsSortBy {
   Amount = 'amount',
   CreatedAt = 'createdAt',
-  updatedAt = 'updatedAt',
+  UpdatedAt = 'updatedAt',
+}
+
+export enum NotificationSortBy {
+  CreatedAt = 'createdAt',
+  UpdatedAt = 'updatedAt',
+  IsEdited = 'isEdited',
+}
+
+export enum NotificationType {
+  PUSH = 'PUSH',
+  SMS = 'SMS',
+  EMAIL = 'EMAIL',
 }
 
 export enum TransactionStatus {

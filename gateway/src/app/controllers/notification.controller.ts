@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, Inject, Param, Post, Put } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Inject, Param, Post, Put, Query } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { Services } from '../../common/enums/services.enum';
@@ -10,7 +10,7 @@ import { AuthDecorator } from '../../common/decorators/auth.decorator';
 import { Roles } from '../../common/decorators/role.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { SwaggerConsumes } from '../../common/enums/swagger-consumes.enum';
-import { CreateNotificationDto, UpdateNotificationDto } from '../../common/dtos/notification.dto';
+import { CreateNotificationDto, QueryNotificationDto, UpdateNotificationDto } from '../../common/dtos/notification.dto';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 import { User } from '../../common/interfaces/user.interface';
@@ -68,15 +68,18 @@ export class NotificationController {
   }
 
   @Get('sent')
-  async getSentNotifications(@GetUser() user: User) {
+  @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
+  async getSentNotifications(@GetUser() user: User, @Query() notificationFilterDto: QueryNotificationDto) {
     try {
       await checkConnection(Services.NOTIFICATION, this.notificationServiceClient);
 
-      const data: ServiceResponse = await lastValueFrom(
-        this.notificationServiceClient.send(NotificationPatterns.GetSentNotifications, { senderId: user.id }).pipe(timeout(this.timeout)),
+      const data = { senderId: user.id, ...notificationFilterDto };
+
+      const result: ServiceResponse = await lastValueFrom(
+        this.notificationServiceClient.send(NotificationPatterns.GetSentNotifications, data).pipe(timeout(this.timeout)),
       );
 
-      return handleServiceResponse(data);
+      return handleServiceResponse(result);
     } catch (error) {
       handleError(error, 'Failed to get sent notifications', Services.NOTIFICATION);
     }
