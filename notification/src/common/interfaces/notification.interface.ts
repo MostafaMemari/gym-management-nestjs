@@ -28,3 +28,16 @@ export interface IPagination {
   take?: number;
   page?: number;
 }
+
+export interface INotificationFilter extends IPagination {
+  senderId: number;
+  recipients?: number[];
+  message?: string;
+  readBy?: number[];
+  isEdited?: boolean;
+  startDate?: Date;
+  endDate?: Date;
+  type?: NotificationType;
+  sortBy?: 'createdAt' | 'updatedAt' | 'isEdited';
+  sortDirection?: 'asc' | 'desc';
+}

@@ -1,11 +1,12 @@
 import { BadRequestException, HttpStatus, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Notification } from './notification.schema';
-import { isValidObjectId, Model, ObjectId } from 'mongoose';
+import mongoose, { isValidObjectId, Model, ObjectId } from 'mongoose';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import {
   ICreateNotification,
   IMarkAsRead,
+  INotificationFilter,
   IPagination,
   IRemoveNotification,
   IUpdateNotification,
@@ -66,19 +67,38 @@ export class NotificationService {
 
       const transformedNotifications = transformArrayIds(notifications);
 
-      return ResponseUtil.success({ notifications: pagination(paginationDto, transformedNotifications) }, '', HttpStatus.OK);
+      return ResponseUtil.success({ ...pagination(paginationDto, transformedNotifications) }, '', HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }
   }
 
-  async getSentNotifications({ senderId }: { senderId: string }): Promise<ServiceResponse> {
+  async getSentNotifications({ page, take, ...filtersDto }: INotificationFilter): Promise<ServiceResponse> {
     try {
-      const notifications = await this.notificationModel.find({ senderId }).sort({ createdAt: -1 }).lean();
+      const paginationDto = { page, take };
+      const { endDate, isEdited, message, readBy, recipients, senderId, sortBy, sortDirection, startDate, type } = filtersDto;
+
+      const filters: mongoose.RootFilterQuery<Notification> = {};
+
+      if (isEdited != undefined) filters.isEdited = isEdited;
+      if (message) filters.message = { $regex: message };
+      if (type) filters.type = type;
+      if (readBy) filters.readBy = { $all: readBy };
+      if (recipients) filters.recipients = { $all: recipients };
+      if (startDate || endDate) {
+        filters.createdAt = {};
+        if (startDate) filters.createdAt.$gte = new Date(startDate);
+        if (endDate) filters.createdAt.$lte = new Date(endDate);
+      }
+
+      const notifications = await this.notificationModel
+        .find({ ...filters, senderId })
+        .sort({ [sortBy || 'createdAt']: sortDirection || sortDirection == 'desc' ? -1 : 1 })
+        .lean();
 
       const transformedNotifications = transformArrayIds(notifications);
 
-      return ResponseUtil.success({ notifications: transformedNotifications }, '', HttpStatus.OK);
+      return ResponseUtil.success({ ...pagination(paginationDto, transformedNotifications) }, '', HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }
