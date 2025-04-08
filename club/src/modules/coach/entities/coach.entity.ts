@@ -1,4 +1,4 @@
-import { Column, Entity, Index, ManyToMany, OneToMany } from 'typeorm';
+import { AfterLoad, Column, Entity, Index, ManyToMany, OneToMany } from 'typeorm';
 
 import { StudentEntity } from '../../student/entities/student.entity';
 
@@ -53,4 +53,13 @@ export class CoachEntity extends AbstractEntity {
 
   @OneToMany(() => AttendanceSessionEntity, (attendanceSession) => attendanceSession.coach)
   attendanceSessions: AttendanceSessionEntity[];
+
+  @AfterLoad()
+  map() {
+    if (this.image_url) {
+      this.image_url = `https://node-bucket.storage.c2.liara.space/${this.image_url}`;
+    } else {
+      this.image_url = null;
+    }
+  }
 }

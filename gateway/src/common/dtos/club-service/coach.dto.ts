@@ -74,7 +74,7 @@ export class CreateCoachDto {
   @IsOptional()
   @ToArray()
   @IsInt({ each: true })
-  @ApiPropertyOptional({ type: 'array' })
+  @ApiPropertyOptional({ type: 'array', items: { type: 'number' }, description: 'Gym IDs. Use -1 to remove all gyms' })
   gym_ids: number[];
 }
 

@@ -7,8 +7,8 @@ import { CoachMessages } from './enums/coach.message';
 import { ICoachCreateDto, ICoachFilter, ICoachUpdateDto } from './interfaces/coach.interface';
 import { CoachRepository } from './repositories/coach.repository';
 
-import { GymService } from '../gym/gym.service';
 import { GymEntity } from '../gym/entities/gym.entity';
+import { GymService } from '../gym/gym.service';
 import { ICreateGym } from '../gym/interfaces/gym.interface';
 import { AwsService } from '../s3AWS/s3AWS.service';
 import { StudentService } from '../student/student.service';
@@ -19,7 +19,6 @@ import { UserPatterns } from '../../common/enums/patterns.events';
 import { Services } from '../../common/enums/services.enum';
 import { IPagination } from '../../common/interfaces/pagination.interface';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
-import { IUser } from '../../common/interfaces/user.interface';
 import { checkConnection } from '../../common/utils/checkConnection.utils';
 import { isGenderAllowed } from '../../common/utils/functions';
 import { ResponseUtil } from '../../common/utils/response';

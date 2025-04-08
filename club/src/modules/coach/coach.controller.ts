@@ -5,11 +5,12 @@ import { CoachService } from './coach.service';
 import { ICoachCreateDto, ICoachFilter, ICoachUpdateDto } from './interfaces/coach.interface';
 import { CoachPatterns } from './patterns/coach.pattern';
 
-import { IPagination } from '../../common/interfaces/pagination.interface';
-import { IUser } from '../../common/interfaces/user.interface';
-import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { CacheService } from '../cache/cache.service';
+
 import { CacheKeys } from '../../common/enums/cache';
+import { IPagination } from '../../common/interfaces/pagination.interface';
+import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
+import { IUser } from '../../common/interfaces/user.interface';
 
 @Controller()
 export class CoachController {
