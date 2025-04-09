@@ -52,8 +52,14 @@ export class GymRepository extends Repository<GymEntity> {
 
   async findByIdAndAdmin(gymId: number, adminId: number, relations?: boolean): Promise<GymEntity | null> {
     if (relations) {
-      return this.findOne({ where: { id: gymId, admin_id: adminId }, relations: ['coaches'] });
+      return this.createQueryBuilder(EntityName.GYMS)
+        .leftJoin('gyms.coaches', 'coach')
+        .addSelect(['coach.id', 'coach.user_id'])
+        .where('gyms.id = :gymId', { gymId })
+        .andWhere('gyms.admin_id = :adminId', { adminId })
+        .getOne();
     }
+
     return this.findOne({ where: { id: gymId, admin_id: adminId } });
   }
   async findById(gymId: number, relations?: boolean): Promise<GymEntity | null> {

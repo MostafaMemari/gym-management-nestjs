@@ -333,7 +333,7 @@ export class StudentService {
   }
 
   async validateStudentByAdminGymAndCoach(adminId: number, gender: Gender, gymId: number, coachId?: number): Promise<void> {
-    const gym = await this.gymService.findGymByIdForAdmin(gymId, adminId);
+    const gym = await this.gymService.findGymByIdForAdmin(gymId, adminId, true);
 
     if (coachId) {
       const coach = gym.coaches.find((coach) => coach.id === coachId);

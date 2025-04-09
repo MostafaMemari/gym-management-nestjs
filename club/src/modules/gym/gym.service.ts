@@ -98,7 +98,7 @@ export class GymService {
     }
   }
 
-  async findGymByIdForAdmin(gymId: number, adminId: number, relations?: boolean): Promise<GymEntity> {
+  async findGymByIdForAdmin(gymId: number, adminId: number, relations: boolean = false): Promise<GymEntity> {
     const gym = await this.gymRepository.findByIdAndAdmin(gymId, adminId, relations);
     if (!gym) throw new NotFoundException(GymMessages.NOT_BELONG_TO_USER);
     return gym;
