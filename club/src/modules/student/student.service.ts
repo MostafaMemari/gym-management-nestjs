@@ -309,6 +309,7 @@ export class StudentService {
     if (!imageKey) return;
     await this.awsService.deleteFile(imageKey);
   }
+
   private async validateUniqueNationalCode(nationalCode: string): Promise<StudentEntity> {
     const student = await this.studentRepository.findStudentByNationalCode(nationalCode);
     if (student) throw new BadRequestException(StudentMessages.DUPLICATE_ENTRY);
@@ -356,6 +357,8 @@ export class StudentService {
 
     if (!gym.genders.includes(gender)) throw new BadRequestException(StudentMessages.CLUB_GENDER_MISMATCH);
   }
+
+  
 
   async validateStudentGymAndCoachUserId(gymId: number, coachUserId: number, gender: Gender): Promise<void> {
     const gym = await this.gymService.checkGymAndCoachUserIdEligibility(gymId, coachUserId, gender);
