@@ -26,6 +26,7 @@ export class BackupController {
   constructor(
     @Inject(Services.USER) private readonly userServiceClient: ClientProxy,
     @Inject(Services.PAYMENT) private readonly paymentServiceClient: ClientProxy,
+    @Inject(Services.NOTIFICATION) private readonly notificationServiceClient: ClientProxy,
     private readonly awsService: AwsService,
   ) {}
 
@@ -43,6 +44,12 @@ export class BackupController {
         client: this.paymentServiceClient,
         patterns,
         folderName: `payment-service-backups`,
+      },
+      {
+        name: Services.NOTIFICATION,
+        client: this.notificationServiceClient,
+        patterns,
+        folderName: `notification-service-backups`,
       },
     ];
 
