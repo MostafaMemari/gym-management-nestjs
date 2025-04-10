@@ -5,7 +5,6 @@ import { lastValueFrom, timeout } from 'rxjs';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { UserPatterns } from '../../../common/enums/user.events';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
-import { SearchDto } from '../../../common/dtos/shared.dto';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { checkConnection } from '../../../common/utils/checkConnection.utils';
@@ -33,20 +32,6 @@ export class UserController {
       return handleServiceResponse(data);
     } catch (error) {
       handleError(error, 'Failed to getUsers', 'UserService');
-    }
-  }
-
-  @Roles(Role.SUPER_ADMIN)
-  @Get('search')
-  async searchUser(@Query() searchDto: SearchDto) {
-    try {
-      await checkConnection(Services.USER, this.userServiceClient);
-
-      const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.SearchUser, { ...searchDto }).pipe(timeout(5000)));
-
-      return handleServiceResponse(data);
-    } catch (error) {
-      handleError(error, 'Failed to search', 'UserService');
     }
   }
 

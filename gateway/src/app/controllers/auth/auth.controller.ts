@@ -1,4 +1,4 @@
-import { Body, Controller, Inject, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Inject, Post } from '@nestjs/common';
 import { Services } from '../../../common/enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
@@ -19,7 +19,7 @@ import {
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
-import { AuthDecorator } from 'src/common/decorators/auth.decorator';
+import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 
 @Controller('auth')
 @ApiTags('Auth')
@@ -102,7 +102,6 @@ export class AuthController {
   }
 
   @Post('refresh-token')
-  @AuthDecorator()
   @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
   async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
     try {
