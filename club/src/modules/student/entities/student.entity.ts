@@ -60,15 +60,15 @@ export class StudentEntity extends AbstractEntity {
   gym_id: number;
 
   @Column({ type: 'integer', nullable: true })
-  coach_id: number;
+  coach_id: number | null;
 
   @ManyToOne(() => GymEntity, (gym) => gym.students)
   @JoinColumn({ name: 'gym_id' })
   gym: GymEntity;
 
-  @ManyToOne(() => CoachEntity, (coach) => coach.students)
+  @ManyToOne(() => CoachEntity, (coach) => coach.students, { nullable: true })
   @JoinColumn({ name: 'coach_id' })
-  coach: CoachEntity;
+  coach: CoachEntity | null;
 
   @Column({ type: 'integer', nullable: false })
   created_by: number;
@@ -78,7 +78,7 @@ export class StudentEntity extends AbstractEntity {
 
   @ManyToMany(() => SessionEntity, (session) => session.students)
   @JoinTable({
-    name: 'student_sessions',
+    name: 'students_sessions',
     joinColumn: { name: 'student_id', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'coach_id', referencedColumnName: 'id' },
   })

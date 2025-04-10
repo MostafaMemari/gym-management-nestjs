@@ -45,6 +45,10 @@ export class CoachController {
 
     return this.coachService.getAll(user.id, { queryCoachDto, paginationDto });
   }
+
+  
+
+  
   @MessagePattern(CoachPatterns.GET_ONE)
   findOne(@Payload() data: { user: IUser; coachId: number }): Promise<ServiceResponse> {
     const { user, coachId } = data;

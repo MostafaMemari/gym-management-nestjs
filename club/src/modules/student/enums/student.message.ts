@@ -22,10 +22,13 @@ export enum StudentMessages {
   BULK_CREATE_FAILURE = 'Failed to create students. Try again later',
 
   DUPLICATE_ENTRY = 'This student is already registered',
+
   CLUB_GENDER_MISMATCH = 'Student gender does not match the club gender',
   COACH_GENDER_MISMATCH = 'Student gender does not match the coach gender',
+  COACH_NOT_IN_CLUB = 'The coach does not belong to this club',
 
   MULTIPLE_NOT_FOUND = 'Students with IDs {ids} were not found',
-  COACH_NOT_IN_CLUB = 'Coach with ID {coachId} is not associated with club ID {clubId}',
+  COACH_CLUB_MISMATCH = 'Coach with ID {coachId} is not associated with club ID {clubId}',
+
   INVALID_GYM_OR_COACH = 'Invalid gym or coach selection. Please check ownership and gender compatibility',
 }

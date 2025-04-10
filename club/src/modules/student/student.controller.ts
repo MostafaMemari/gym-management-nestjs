@@ -31,11 +31,11 @@ export class StudentController {
   }
 
   @MessagePattern(StudentPatterns.UPDATE)
-  @UseInterceptors(ClearCacheInterceptor)
+  // @UseInterceptors(ClearCacheInterceptor)
   async update(@Payload() data: { user: IUser; studentId: number; updateStudentDto: IStudentUpdateDto }): Promise<ServiceResponse> {
     const { user, studentId, updateStudentDto } = data;
 
-    return await this.studentService.update(user, studentId, updateStudentDto);
+    return this.studentService.update(user, studentId, updateStudentDto);
   }
   @MessagePattern(StudentPatterns.GET_ONE)
   findOne(@Payload() data: { user: IUser; studentId: number }): Promise<ServiceResponse> {
@@ -73,7 +73,7 @@ export class StudentController {
   ): Promise<ServiceResponse> {
     const { user, studentData, studentsJson } = data;
 
-    return this.studentService.bulkCreate(user.id, studentData, studentsJson);
+    return this.studentService.bulkCreate(user, studentData, studentsJson);
   }
   @MessagePattern(StudentPatterns.GET_BY_NATIONAL_CODE)
   getByNationalCode(@Payload() data: { nationalCode: string }): Promise<ServiceResponse> {
