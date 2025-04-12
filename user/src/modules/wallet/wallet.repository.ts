@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma, Wallet, WalletDeduction } from '@prisma/client';
-import { WalletMessages } from 'src/common/enums/wallet.messages';
+import { WalletMessages } from '../../common/enums/wallet.messages';
 
 @Injectable()
 export class WalletRepository {
@@ -12,7 +12,7 @@ export class WalletRepository {
   }
 
   findOne(walletId: number) {
-    return this.prisma.wallet.findFirst({ where: { id: walletId } });
+    return this.prisma.wallet.findFirst({ where: { id: walletId }, include: { user: true } });
   }
 
   findOneByUser(userId: number) {

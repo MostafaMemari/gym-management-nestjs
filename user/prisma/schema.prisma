@@ -36,11 +36,14 @@ model User {
   lastPasswordChange DateTime?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @default(now())
+  wallet             Wallet?   @relation(fields: [walletId], references: [id])
+  walletId           Int?      @unique()
 }
 
 model Wallet {
   id                 Int          @id() @default(autoincrement()) @db.Integer()
   userId             Int          @unique
+  user               User?        @relation
   balance            Int          @default(100000)
   isBlocked          Boolean      @default(false)
   lastWithdrawalDate DateTime     @default(now())
