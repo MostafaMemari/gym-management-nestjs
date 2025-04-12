@@ -13,13 +13,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  STUDENT
-  ADMIN_CLUB
-  COACH
-  SUPER_ADMIN
-}
-
 enum WalletStatus {
   NONE
   LOW_BALANCE
@@ -27,10 +20,28 @@ enum WalletStatus {
   DEPLETED
 }
 
+model Role {
+  id          Int          @id() @default(autoincrement())
+  name        String       @db.VarChar()
+  permissions Permission[]
+  users       User[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @default(now())
+}
+
+model Permission {
+  id        Int      @id() @default(autoincrement())
+  method    String   @db.VarChar()
+  endpoint  String   @db.VarChar()
+  roles     Role[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+}
+
 model User {
   id                 Int       @id() @default(autoincrement()) @db.Integer()
   username           String    @unique @db.VarChar(100)
-  role               Role      @default(STUDENT)
+  roles              Role[]
   mobile             String?
   password           String?
   lastPasswordChange DateTime?
