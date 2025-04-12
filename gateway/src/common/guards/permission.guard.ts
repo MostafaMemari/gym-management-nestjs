@@ -10,29 +10,31 @@ import { SKIP_AUTH } from '../decorators/skip-auth.decorator';
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
-    constructor(private readonly reflector: Reflector) { }
-    canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
-        try {
-            const isSkipped = this.reflector.get<boolean>(SKIP_AUTH, context.getHandler());
+  constructor(private readonly reflector: Reflector) {}
+  canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
+    try {
+      const isSkipped = this.reflector.get<boolean>(SKIP_AUTH, context.getHandler());
 
-            if (isSkipped) return true;
+      if (isSkipped) return true;
 
-            const req: Request = context.switchToHttp().getRequest();
-            const user = req.user as User;
+      const req: Request = context.switchToHttp().getRequest();
+      const user = req.user as User;
 
-            const isSuperAdmin = user && user.roles.some((role) => role.name == Role.SUPER_ADMIN)
+      const isSuperAdmin = user && user.roles.some((role) => role.name == Role.SUPER_ADMIN);
 
-            if (isSuperAdmin) return isSuperAdmin
+      if (isSuperAdmin) return isSuperAdmin;
 
-            const fullUrl = `${req.protocol}://${req.get(`host`)}${req.route.path}`;
+      const fullUrl = `${req.protocol}://${req.get(`host`)}${req.route.path}`;
 
-            const matcher = match(fullUrl.replace(process.env.BASE_URL, ''));
+      const matcher = match(fullUrl.replace(process.env.BASE_URL, ''));
 
-            const hasPermission = user.roles.some(role => role.permissions.some((p) => p.method.toLowerCase() == req.method.toLowerCase() && matcher(p.endpoint)));
+      const hasPermission = user.roles.some((role) =>
+        role.permissions.some((p) => p.method.toLowerCase() == req.method.toLowerCase() && matcher(p.endpoint)),
+      );
 
-            return hasPermission;
-        } catch (error) {
-            handleError(error, '', '');
-        }
+      return hasPermission;
+    } catch (error) {
+      handleError(error, '', '');
     }
+  }
 }
