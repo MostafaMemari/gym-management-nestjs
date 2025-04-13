@@ -19,4 +19,8 @@ export class RoleRepository {
   update(roleId: number, args: Omit<Prisma.RoleUpdateArgs, `where`>): Promise<Role> {
     return this.prisma.role.update({ where: { id: roleId }, ...args });
   }
+
+  delete(roleId: number, args: Omit<Prisma.RoleDeleteArgs, `where`> = {}): Promise<Role> {
+    return this.prisma.role.delete({ where: { id: roleId }, ...args });
+  }
 }

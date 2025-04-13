@@ -32,4 +32,9 @@ export class RoleController {
   getAll(@Payload() data: IRolesFilter) {
     return this.roleService.findAll(data);
   }
+
+  @MessagePattern(RolePatterns.RemoveRole)
+  remove(@Payload() data: { roleId: number }) {
+    return this.roleService.remove(data);
+  }
 }

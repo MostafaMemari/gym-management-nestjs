@@ -112,9 +112,21 @@ export class RoleService {
 
       await this.userRepository.findByIdAndThrow(userId);
 
-      const updatedUser = await this.userRepository.update(userId, { data: { roles: { set: { id: userId } } }, include: { roles: true } });
+      const updatedUser = await this.userRepository.update(userId, { data: { roles: { set: { id: roleId } } }, include: { roles: true } });
 
       return ResponseUtil.success({ user: updatedUser }, RoleMessages.AssignRoleToUserSuccess, HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
+  async remove({ roleId }: { roleId: number }): Promise<ServiceResponse> {
+    try {
+      await this.findRoleOrThrow(roleId);
+
+      const deletedRole = await this.roleRepository.delete(roleId, { include: { permissions: true, users: true } });
+
+      return ResponseUtil.success({ role: deletedRole }, RoleMessages.RemovedRoleSuccess, HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }
