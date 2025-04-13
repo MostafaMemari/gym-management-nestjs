@@ -11,4 +11,8 @@ export class RoleRepository {
   findOne(args: Prisma.RoleWhereInput, additionalArgs: Omit<Prisma.RoleFindFirstArgs, `where`> = {}): Promise<Role | null> {
     return this.prisma.role.findFirst({ where: args, ...additionalArgs });
   }
+
+  update(roleId: number, args: Omit<Prisma.RoleUpdateArgs, `where`>): Promise<Role> {
+    return this.prisma.role.update({ where: { id: roleId }, ...args });
+  }
 }

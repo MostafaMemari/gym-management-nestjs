@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { ICreateRole } from '../../common/interfaces/role.interface';
+import { IAssignPermission, ICreateRole } from '../../common/interfaces/role.interface';
 import { RpcException } from '@nestjs/microservices';
 import { RoleRepository } from './role.repository';
 import { ResponseUtil } from '../../common/utils/response.utils';
@@ -8,8 +8,6 @@ import { RoleMessages } from '../../common/enums/role.messages';
 @Injectable()
 export class RoleService {
   constructor(private readonly roleRepository: RoleRepository) {}
-
-  async onModuleInit() {}
 
   async create(createRoleDto: ICreateRole) {
     try {
@@ -35,6 +33,24 @@ export class RoleService {
       const role = await this.findRoleOrThrow(roleId);
 
       return ResponseUtil.success({ role }, '', HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
+  async assignPermission({ roleId, permissionId }: IAssignPermission) {
+    try {
+      // TODO: Check and validate permission id
+
+      await this.findRoleOrThrow(roleId);
+
+      const foundRole = await this.roleRepository.findOne({ id: roleId, permissions: { some: { id: permissionId } } });
+
+      if (foundRole) throw new ConflictException(RoleMessages.AlreadyExistsPermissionInRole);
+
+      const updatedRole = await this.roleRepository.update(roleId, { data: { permissions: { set: { id: permissionId } } } });
+
+      return ResponseUtil.success({ role: updatedRole }, RoleMessages.AssignPermissionSuccess, HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }

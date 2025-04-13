@@ -1,8 +1,8 @@
 import { Controller } from '@nestjs/common';
 import { RoleService } from './role.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { RolePatterns } from 'src/common/enums/role.events';
-import { ICreateRole } from 'src/common/interfaces/role.interface';
+import { RolePatterns } from '../../common/enums/role.events';
+import { IAssignPermission, ICreateRole } from '../../common/interfaces/role.interface';
 
 @Controller()
 export class RoleController {
@@ -13,8 +13,13 @@ export class RoleController {
     return this.roleService.create(data);
   }
 
-  @MessagePattern(RolePatterns.CreateRole)
+  @MessagePattern(RolePatterns.GetOneRole)
   getOne(@Payload() data: { roleId: number }) {
     return this.roleService.findOne(data);
+  }
+
+  @MessagePattern(RolePatterns.AssignPermissionToRole)
+  assignPermissionToRole(@Payload() data: IAssignPermission) {
+    return this.roleService.assignPermission(data);
   }
 }

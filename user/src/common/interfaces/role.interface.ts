@@ -3,6 +3,11 @@ export interface ICreateRole {
   permissions?: IPermission[];
 }
 
+export interface IAssignPermission {
+  roleId: number;
+  permissionId: number;
+}
+
 export interface IPermission {
   method: string;
   endpoint: string;
