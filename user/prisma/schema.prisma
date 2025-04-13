@@ -22,7 +22,7 @@ enum WalletStatus {
 
 model Role {
   id          Int          @id() @default(autoincrement())
-  name        String       @db.VarChar()
+  name        String       @unique() @db.VarChar()
   permissions Permission[]
   users       User[]
   createdAt   DateTime     @default(now())
@@ -36,6 +36,8 @@ model Permission {
   roles     Role[]
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
+
+  @@unique([method, endpoint])
 }
 
 model User {
