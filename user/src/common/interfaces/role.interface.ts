@@ -1,6 +1,6 @@
 export interface ICreateRole {
   name: string;
-  permissions: IPermission[];
+  permissions?: IPermission[];
 }
 
 export interface IPermission {

@@ -9,11 +9,13 @@ import { CacheModule } from '../cache/cache.module';
 import { WalletModule } from '../wallet/wallet.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { Services } from '../../common/enums/services.enum';
+import { RoleModule } from '../role/role.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot(envConfig()),
     forwardRef(() => WalletModule),
+    forwardRef(() => RoleModule),
     CacheModule,
     PrismaModule,
     ClientsModule.register([

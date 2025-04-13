@@ -71,12 +71,12 @@ export class UserRepository {
     });
   }
 
-  updateRole(userId: number, newRole: Role): Promise<Prisma.UserUpdateInput> {
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: { role: newRole },
-    });
-  }
+  // updateRole(userId: number, newRole: Role): Promise<Prisma.UserUpdateInput> {
+  //   return this.prisma.user.update({
+  //     where: { id: userId },
+  //     data: { role: newRole },
+  //   });
+  // }
 
   async findByIdAndThrow(userId: number): Promise<User> {
     const user = await this.prisma.user.findFirst({ where: { id: userId } });
@@ -92,9 +92,9 @@ export class UserRepository {
     return this.prisma.user.findFirst({ where: { OR: [{ username: data.username }, { mobile: data.mobile }] } });
   }
 
-  findOneByRole(role: Role): Promise<Omit<User, 'password'> | null> {
-    return this.prisma.user.findFirst({ where: { role }, omit: { password: true } });
-  }
+  // findOneByRole(role: Role): Promise<Omit<User, 'password'> | null> {
+  //   return this.prisma.user.findFirst({ where: { role }, omit: { password: true } });
+  // }
 
   deleteMany(ids: number[]): Promise<Prisma.BatchPayload> {
     return this.prisma.user.deleteMany({ where: { id: { in: ids } } });

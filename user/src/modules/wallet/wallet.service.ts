@@ -432,9 +432,9 @@ export class WalletService {
   }
 
   private async notifySuperAdmin(message: string): Promise<void> {
-    const superAdmin = await this.userRepository.findOneByRole(Role.SUPER_ADMIN);
-    if (superAdmin) {
-      await this.sendNotification(superAdmin.id, message, 'PUSH');
-    }
+    // const superAdmin = await this.userRepository.findOneByRole(Role.SUPER_ADMIN);
+    // if (superAdmin) {
+    //   await this.sendNotification(superAdmin.id, message, 'PUSH');
+    // }
   }
 }
