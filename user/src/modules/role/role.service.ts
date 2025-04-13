@@ -10,6 +10,7 @@ import { CacheService } from '../cache/cache.service';
 import { pagination } from '../../common/utils/pagination.utils';
 import { Prisma, Role } from '@prisma/client';
 import { UserRepository } from '../user/user.repository';
+import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 
 @Injectable()
 export class RoleService {
@@ -21,7 +22,7 @@ export class RoleService {
     private readonly userRepository: UserRepository,
   ) {}
 
-  async create(createRoleDto: ICreateRole) {
+  async create(createRoleDto: ICreateRole): Promise<ServiceResponse> {
     try {
       const role = await this.roleRepository.findOne({ name: createRoleDto.name });
 
@@ -40,7 +41,7 @@ export class RoleService {
     }
   }
 
-  async findOne({ roleId }: { roleId: number }) {
+  async findOne({ roleId }: { roleId: number }): Promise<ServiceResponse> {
     try {
       const role = await this.findRoleOrThrow(roleId);
 
@@ -50,7 +51,7 @@ export class RoleService {
     }
   }
 
-  async findAll({ page, take, ...filtersDto }: IRolesFilter) {
+  async findAll({ page, take, ...filtersDto }: IRolesFilter): Promise<ServiceResponse> {
     try {
       const paginationDto = { page, take };
       const { endDate, includePermissions, includeUsers, name, sortBy, sortDirection, startDate } = filtersDto;
@@ -84,7 +85,7 @@ export class RoleService {
     }
   }
 
-  async assignPermission({ roleId, permissionId }: IAssignPermission) {
+  async assignPermission({ roleId, permissionId }: IAssignPermission): Promise<ServiceResponse> {
     try {
       // TODO: Check and validate permission id
 
@@ -105,7 +106,7 @@ export class RoleService {
     }
   }
 
-  async assignRoleToUser({ roleId, userId }: IAssignRoleToUser) {
+  async assignRoleToUser({ roleId, userId }: IAssignRoleToUser): Promise<ServiceResponse> {
     try {
       await this.findRoleOrThrow(roleId);
 
@@ -113,13 +114,13 @@ export class RoleService {
 
       const updatedUser = await this.userRepository.update(userId, { data: { roles: { set: { id: userId } } }, include: { roles: true } });
 
-      return ResponseUtil.success({ user: updatedUser }, ``, HttpStatus.OK);
+      return ResponseUtil.success({ user: updatedUser }, RoleMessages.AssignRoleToUserSuccess, HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }
   }
 
-  private async findRoleOrThrow(identifier: string | number) {
+  private async findRoleOrThrow(identifier: string | number): Promise<Role | never> {
     const existingRole = await this.roleRepository.findOne({
       OR: [typeof identifier == 'string' ? { name: identifier } : undefined, typeof identifier == `number` ? { id: identifier } : undefined].filter(
         Boolean,

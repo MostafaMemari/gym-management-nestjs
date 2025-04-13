@@ -3,5 +3,6 @@ export enum RoleMessages {
   AlreadyExistsRole = 'Role with this name already exists.',
   NotFoundRole = 'Role not found.',
   AssignPermissionSuccess = 'Assigned role to permission successfully.',
+  AssignRoleToUserSuccess = 'Assigned role to user successfully.',
   AlreadyExistsPermissionInRole = 'Already exists permission in role.',
 }
