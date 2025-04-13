@@ -12,6 +12,10 @@ export class RoleRepository {
     return this.prisma.role.findFirst({ where: args, ...additionalArgs });
   }
 
+  findAll(args: Prisma.RoleFindManyArgs): Promise<Role[]> {
+    return this.prisma.role.findMany(args);
+  }
+
   update(roleId: number, args: Omit<Prisma.RoleUpdateArgs, `where`>): Promise<Role> {
     return this.prisma.role.update({ where: { id: roleId }, ...args });
   }
