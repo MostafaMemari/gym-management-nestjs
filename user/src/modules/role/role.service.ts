@@ -30,6 +30,16 @@ export class RoleService {
     }
   }
 
+  async findOne({ roleId }: { roleId: number }) {
+    try {
+      const role = await this.findRoleOrThrow(roleId);
+
+      return ResponseUtil.success({ role }, '', HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
   private async findRoleOrThrow(identifier: string | number) {
     const existingRole = await this.roleRepository.findOne({
       OR: [typeof identifier == 'string' ? { name: identifier } : undefined, typeof identifier == `number` ? { id: identifier } : undefined].filter(

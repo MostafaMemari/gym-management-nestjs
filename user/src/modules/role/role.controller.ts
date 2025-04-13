@@ -12,4 +12,9 @@ export class RoleController {
   create(@Payload() data: ICreateRole) {
     return this.roleService.create(data);
   }
+
+  @MessagePattern(RolePatterns.CreateRole)
+  getOne(@Payload() data: { roleId: number }) {
+    return this.roleService.findOne(data);
+  }
 }
