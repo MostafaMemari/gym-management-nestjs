@@ -10,6 +10,11 @@ export interface IAssignPermission {
   permissionId: number;
 }
 
+export interface IAssignRoleToUser {
+  userId: number;
+  roleId: number;
+}
+
 export interface IRolesFilter extends IPagination {
   name?: string;
   includePermissions?: boolean;

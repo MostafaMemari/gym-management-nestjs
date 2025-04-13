@@ -1,5 +1,5 @@
 import { ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { IAssignPermission, ICreateRole, IRolesFilter } from '../../common/interfaces/role.interface';
+import { IAssignPermission, IAssignRoleToUser, ICreateRole, IRolesFilter } from '../../common/interfaces/role.interface';
 import { RpcException } from '@nestjs/microservices';
 import { RoleRepository } from './role.repository';
 import { ResponseUtil } from '../../common/utils/response.utils';
@@ -9,6 +9,7 @@ import { CacheKeys } from '../../common/enums/cache.enum';
 import { CacheService } from '../cache/cache.service';
 import { pagination } from '../../common/utils/pagination.utils';
 import { Prisma, Role } from '@prisma/client';
+import { UserRepository } from '../user/user.repository';
 
 @Injectable()
 export class RoleService {
@@ -17,6 +18,7 @@ export class RoleService {
   constructor(
     private readonly roleRepository: RoleRepository,
     private readonly cacheService: CacheService,
+    private readonly userRepository: UserRepository,
   ) {}
 
   async create(createRoleDto: ICreateRole) {
@@ -98,6 +100,20 @@ export class RoleService {
       });
 
       return ResponseUtil.success({ role: updatedRole }, RoleMessages.AssignPermissionSuccess, HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
+  async assignRoleToUser({ roleId, userId }: IAssignRoleToUser) {
+    try {
+      await this.findRoleOrThrow(roleId);
+
+      await this.userRepository.findByIdAndThrow(userId);
+
+      const updatedUser = await this.userRepository.update(userId, { data: { roles: { set: { id: userId } } }, include: { roles: true } });
+
+      return ResponseUtil.success({ user: updatedUser }, ``, HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }

@@ -125,19 +125,19 @@ export class UserService {
   //   }
   // }
 
-  // async findById(userDto: { userId: number }): Promise<ServiceResponse> {
-  //   try {
-  //     const user = await this.userRepository.findById(userDto.userId, { omit: { password: true } });
+  async findById(userDto: { userId: number }): Promise<ServiceResponse> {
+    try {
+      const user = await this.userRepository.findById(userDto.userId, { omit: { password: true } });
 
-  //     if (!user) {
-  //       throw new NotFoundException(UserMessages.NotFoundUser);
-  //     }
+      if (!user) {
+        throw new NotFoundException(UserMessages.NotFoundUser);
+      }
 
-  //     return ResponseUtil.success({ user }, '', HttpStatus.OK);
-  //   } catch (error) {
-  //     throw new RpcException(error);
-  //   }
-  // }
+      return ResponseUtil.success({ user }, '', HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
 
   // async findByIdentifier({ identifier }: { identifier: string }): Promise<ServiceResponse> {
   //   try {
