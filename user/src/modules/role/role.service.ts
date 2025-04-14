@@ -19,6 +19,7 @@ import { pagination } from '../../common/utils/pagination.utils';
 import { Prisma, Role } from '@prisma/client';
 import { UserRepository } from '../user/user.repository';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
+import { PermissionRepository } from '../permission/permission.repository';
 
 @Injectable()
 export class RoleService {
@@ -28,6 +29,7 @@ export class RoleService {
     private readonly roleRepository: RoleRepository,
     private readonly cacheService: CacheService,
     private readonly userRepository: UserRepository,
+    private readonly permissionRepository: PermissionRepository,
   ) {}
 
   async create(createRoleDto: ICreateRole): Promise<ServiceResponse> {
@@ -95,7 +97,7 @@ export class RoleService {
 
   async assignPermission({ roleId, permissionId }: IAssignPermission): Promise<ServiceResponse> {
     try {
-      // TODO: Check and validate permission id
+      await this.permissionRepository.findOneOrThrow(permissionId);
 
       await this.findRoleOrThrow(roleId);
 
@@ -130,7 +132,7 @@ export class RoleService {
 
   async removePermissionFromRole({ permissionId, roleId }: IRemovePermissionFromRole): Promise<ServiceResponse> {
     try {
-      // TODO: Check and validate permission id
+      await this.permissionRepository.findOneOrThrow(permissionId);
 
       await this.findRoleOrThrow(roleId);
 

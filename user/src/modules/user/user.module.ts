@@ -43,4 +43,4 @@ import { PermissionModule } from '../permission/permission.module';
   providers: [UserService, UserRepository],
   exports: [ClientsModule],
 })
-export class UserModule { }
+export class UserModule {}
