@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma, Role, User } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 import { UserMessages } from '../../common/enums/user.messages';
 import { IGetUserByArgs } from '../../common/interfaces/user.interface';
 
@@ -71,13 +71,6 @@ export class UserRepository {
     });
   }
 
-  // updateRole(userId: number, newRole: Role): Promise<Prisma.UserUpdateInput> {
-  //   return this.prisma.user.update({
-  //     where: { id: userId },
-  //     data: { role: newRole },
-  //   });
-  // }
-
   async findByIdAndThrow(userId: number): Promise<User> {
     const user = await this.prisma.user.findFirst({ where: { id: userId } });
 
@@ -91,10 +84,6 @@ export class UserRepository {
   async findByArgs(data: IGetUserByArgs = {}): Promise<User> {
     return this.prisma.user.findFirst({ where: { OR: [{ username: data.username }, { mobile: data.mobile }] } });
   }
-
-  // findOneByRole(role: Role): Promise<Omit<User, 'password'> | null> {
-  //   return this.prisma.user.findFirst({ where: { role }, omit: { password: true } });
-  // }
 
   deleteMany(ids: number[]): Promise<Prisma.BatchPayload> {
     return this.prisma.user.deleteMany({ where: { id: { in: ids } } });

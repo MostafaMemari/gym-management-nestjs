@@ -1,5 +1,3 @@
-import { Role } from '@prisma/client';
-
 export interface ICreateUser {
   username: string;
 
@@ -10,11 +8,9 @@ export interface ICreateUser {
 
 export interface ICreateUserStudent {
   username: string;
-  role?: Role;
 }
 export interface ICreateUserCoach {
   username: string;
-  role?: Role;
 }
 
 export interface IPagination {
@@ -24,11 +20,6 @@ export interface IPagination {
 
 export interface ISearchUser extends IPagination {
   query: string;
-}
-
-export interface IChangeRole {
-  userId: number;
-  role: Role;
 }
 
 export interface IUpdateUser {
@@ -46,7 +37,6 @@ export interface IGetUserByArgs {
 
 export interface IUsersFilter extends IPagination {
   username?: string;
-  role?: Role;
   mobile?: string;
   lastPasswordChange?: Date;
   startDate?: Date;

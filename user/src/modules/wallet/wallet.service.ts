@@ -431,6 +431,7 @@ export class WalletService {
     }
   }
 
+  //TODO: Uncomment this code
   private async notifySuperAdmin(message: string): Promise<void> {
     // const superAdmin = await this.userRepository.findOneByRole(Role.SUPER_ADMIN);
     // if (superAdmin) {
