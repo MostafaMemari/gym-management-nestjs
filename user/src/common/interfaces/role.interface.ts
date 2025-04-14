@@ -29,3 +29,8 @@ export interface IPermission {
   method: string;
   endpoint: string;
 }
+
+export interface IUpdateRole {
+  roleId: number;
+  name: string;
+}

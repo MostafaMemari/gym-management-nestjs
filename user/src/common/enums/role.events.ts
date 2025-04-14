@@ -5,4 +5,5 @@ export enum RolePatterns {
   AssignRoleToUser = 'assign_role_to_user',
   GetRoles = 'get_roles',
   RemoveRole = 'remove_role',
+  UpdateRole = 'update_role',
 }

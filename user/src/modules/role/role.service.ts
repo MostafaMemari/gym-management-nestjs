@@ -1,5 +1,5 @@
 import { ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { IAssignPermission, IAssignRoleToUser, ICreateRole, IRolesFilter } from '../../common/interfaces/role.interface';
+import { IAssignPermission, IAssignRoleToUser, ICreateRole, IRolesFilter, IUpdateRole } from '../../common/interfaces/role.interface';
 import { RpcException } from '@nestjs/microservices';
 import { RoleRepository } from './role.repository';
 import { ResponseUtil } from '../../common/utils/response.utils';
@@ -127,6 +127,18 @@ export class RoleService {
       const deletedRole = await this.roleRepository.delete(roleId, { include: { permissions: true, users: true } });
 
       return ResponseUtil.success({ role: deletedRole }, RoleMessages.RemovedRoleSuccess, HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
+  async update({ roleId, name }: IUpdateRole): Promise<ServiceResponse> {
+    try {
+      await this.findRoleOrThrow(roleId);
+
+      const updatedRole = await this.roleRepository.update(roleId, { data: { name }, include: { permissions: true, users: true } });
+
+      return ResponseUtil.success({ role: updatedRole }, RoleMessages.UpdatedRoleSuccess, HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }
