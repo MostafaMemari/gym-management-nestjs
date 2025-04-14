@@ -2,7 +2,7 @@ import { Controller } from '@nestjs/common';
 import { PermissionService } from './permission.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { PermissionPatterns } from '../../common/enums/permission.events';
-import { ICreatePermission, IPermissionFilter } from '../../common/interfaces/permission.interface';
+import { ICreatePermission, IPermissionFilter, IUpdatePermission } from '../../common/interfaces/permission.interface';
 
 @Controller()
 export class PermissionController {
@@ -21,5 +21,10 @@ export class PermissionController {
   @MessagePattern(PermissionPatterns.GetPermissions)
   getAll(@Payload() data: IPermissionFilter) {
     return this.permissionService.findAll(data);
+  }
+
+  @MessagePattern(PermissionPatterns.UpdatePermission)
+  update(@Payload() data: IUpdatePermission) {
+    return this.permissionService.update(data);
   }
 }

@@ -1,6 +1,6 @@
 import { ConflictException, HttpStatus, Injectable } from '@nestjs/common';
 import { PermissionRepository } from './permission.repository';
-import { ICreatePermission, IPermissionFilter } from '../../common/interfaces/permission.interface';
+import { ICreatePermission, IPermissionFilter, IUpdatePermission } from '../../common/interfaces/permission.interface';
 import { RpcException } from '@nestjs/microservices';
 import { ResponseUtil } from '../../common/utils/response.utils';
 import { PermissionMessages } from '../../common/enums/permission.messages';
@@ -74,6 +74,18 @@ export class PermissionService {
       await this.cacheService.set(cacheKey, permissions, this.CACHE_EXPIRE_TIME);
 
       return ResponseUtil.success(pagination(paginationDto, permissions), ``, HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
+  async update({ endpoint, method, permissionId }: IUpdatePermission): Promise<ServiceResponse> {
+    try {
+      await this.permissionRepository.findOneOrThrow(permissionId);
+
+      const updatedRole = await this.permissionRepository.update(permissionId, { data: { endpoint, method }, include: { roles: true } });
+
+      return ResponseUtil.success({ role: updatedRole }, PermissionMessages.UpdatedPermissionSuccess, HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }

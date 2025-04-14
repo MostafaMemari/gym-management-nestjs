@@ -16,3 +16,7 @@ export interface IPermissionFilter extends IPagination {
   sortBy?: 'endpoint' | 'method' | 'createdAt' | 'updateAt';
   sortDirection?: 'asc' | 'desc';
 }
+
+export interface IUpdatePermission extends IPermission {
+  permissionId: number;
+}

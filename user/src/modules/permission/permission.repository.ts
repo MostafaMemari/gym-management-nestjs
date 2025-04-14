@@ -18,6 +18,14 @@ export class PermissionRepository {
     return this.prisma.permission.findMany(args);
   }
 
+  update(permissionId: number, args: Omit<Prisma.PermissionUpdateArgs, `where`>): Promise<Permission> {
+    return this.prisma.permission.update({ where: { id: permissionId }, ...args });
+  }
+
+  delete(permissionId: number, args: Omit<Prisma.PermissionDeleteArgs, `where`> = {}): Promise<Permission> {
+    return this.prisma.permission.delete({ where: { id: permissionId }, ...args });
+  }
+
   async findOneOrThrow(id: number) {
     const permission = await this.prisma.permission.findFirst({
       where: { id },
