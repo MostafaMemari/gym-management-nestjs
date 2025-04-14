@@ -90,4 +90,16 @@ export class PermissionService {
       throw new RpcException(error);
     }
   }
+
+  async remove({ permissionId }: { permissionId: number }): Promise<ServiceResponse> {
+    try {
+      await this.permissionRepository.findOneOrThrow(permissionId);
+
+      const deletedRole = await this.permissionRepository.delete(permissionId, { include: { roles: true } });
+
+      return ResponseUtil.success({ role: deletedRole }, PermissionMessages.RemovedPermissionSuccess, HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
 }

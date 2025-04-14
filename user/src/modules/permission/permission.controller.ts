@@ -27,4 +27,9 @@ export class PermissionController {
   update(@Payload() data: IUpdatePermission) {
     return this.permissionService.update(data);
   }
+
+  @MessagePattern(PermissionPatterns.RemovePermission)
+  remove(@Payload() data: { permissionId: number }) {
+    return this.permissionService.remove(data);
+  }
 }
