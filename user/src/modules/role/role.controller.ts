@@ -53,7 +53,7 @@ export class RoleController {
 
   @MessagePattern(RolePatterns.RemovedPermissionFromRole)
   removePermissionFromRole(@Payload() data: IRemovePermissionFromRole) {
-    return this.roleService.removeRoleFromPermission(data);
+    return this.roleService.removePermissionFromRole(data);
   }
 
   @MessagePattern(RolePatterns.RemoveRoleFromUser)

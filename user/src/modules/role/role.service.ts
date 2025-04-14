@@ -128,7 +128,7 @@ export class RoleService {
     }
   }
 
-  async removeRoleFromPermission({ permissionId, roleId }: IRemovePermissionFromRole): Promise<ServiceResponse> {
+  async removePermissionFromRole({ permissionId, roleId }: IRemovePermissionFromRole): Promise<ServiceResponse> {
     try {
       // TODO: Check and validate permission id
 
