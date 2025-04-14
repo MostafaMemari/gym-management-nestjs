@@ -36,3 +36,5 @@ export interface IUpdateRole {
 }
 
 export interface IRemovePermissionFromRole extends IAssignPermission {}
+
+export interface IRemoveRoleFromUser extends IAssignRoleToUser {}

@@ -7,6 +7,7 @@ import {
   IAssignRoleToUser,
   ICreateRole,
   IRemovePermissionFromRole,
+  IRemoveRoleFromUser,
   IRolesFilter,
   IUpdateRole,
 } from '../../common/interfaces/role.interface';
@@ -50,8 +51,13 @@ export class RoleController {
     return this.roleService.update(data);
   }
 
-  @MessagePattern(RolePatterns.UpdateRole)
+  @MessagePattern(RolePatterns.RemovedPermissionFromRole)
   removePermissionFromRole(@Payload() data: IRemovePermissionFromRole) {
     return this.roleService.removeRoleFromPermission(data);
+  }
+
+  @MessagePattern(RolePatterns.RemoveRoleFromUser)
+  removeRoleFromUser(@Payload() data: IRemoveRoleFromUser) {
+    return this.roleService.removeRoleFromUser(data);
   }
 }

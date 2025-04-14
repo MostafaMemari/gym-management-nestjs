@@ -4,6 +4,7 @@ import {
   IAssignRoleToUser,
   ICreateRole,
   IRemovePermissionFromRole,
+  IRemoveRoleFromUser,
   IRolesFilter,
   IUpdateRole,
 } from '../../common/interfaces/role.interface';
@@ -103,7 +104,7 @@ export class RoleService {
       if (foundRole) throw new ConflictException(RoleMessages.AlreadyExistsPermissionInRole);
 
       const updatedRole = await this.roleRepository.update(roleId, {
-        data: { permissions: { set: { id: permissionId } } },
+        data: { permissions: { connect: { id: permissionId } } },
         include: { permissions: true, users: true },
       });
 
@@ -119,7 +120,7 @@ export class RoleService {
 
       await this.userRepository.findByIdAndThrow(userId);
 
-      const updatedUser = await this.userRepository.update(userId, { data: { roles: { set: { id: roleId } } }, include: { roles: true } });
+      const updatedUser = await this.userRepository.update(userId, { data: { roles: { connect: { id: roleId } } }, include: { roles: true } });
 
       return ResponseUtil.success({ user: updatedUser }, RoleMessages.AssignRoleToUserSuccess, HttpStatus.OK);
     } catch (error) {
@@ -139,6 +140,23 @@ export class RoleService {
       });
 
       return ResponseUtil.success({ role: updatedRole }, RoleMessages.RemovedPermissionFromRoleSuccess, HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
+  async removeRoleFromUser({ roleId, userId }: IRemoveRoleFromUser) {
+    try {
+      await this.findRoleOrThrow(roleId);
+
+      await this.userRepository.findByIdAndThrow(userId);
+
+      const updatedUser = this.userRepository.update(userId, {
+        data: { roles: { disconnect: { id: roleId } } },
+        include: { roles: true },
+      });
+
+      return ResponseUtil.success({ user: updatedUser }, RoleMessages.RemovedRoleFromUserSuccess, HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }
