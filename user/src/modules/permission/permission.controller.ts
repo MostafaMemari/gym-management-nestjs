@@ -12,4 +12,9 @@ export class PermissionController {
   create(@Payload() data: ICreatePermission) {
     return this.permissionService.create(data);
   }
+
+  @MessagePattern(PermissionPatterns.GetOnePermission)
+  getOne(@Payload() data: { permissionId: number }) {
+    return this.permissionService.findOne(data);
+  }
 }

@@ -22,4 +22,14 @@ export class PermissionService {
       throw new RpcException(error);
     }
   }
+
+  async findOne({ permissionId }: { permissionId: number }) {
+    try {
+      const permission = await this.permissionRepository.findOneOrThrow(permissionId);
+
+      return ResponseUtil.success({ permission }, '', HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
 }
