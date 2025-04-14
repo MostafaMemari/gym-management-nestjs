@@ -14,6 +14,10 @@ export class PermissionRepository {
     return this.prisma.permission.findFirst({ where: args, ...additionalArgs });
   }
 
+  findAll(args: Prisma.PermissionFindManyArgs): Promise<Permission[]> {
+    return this.prisma.permission.findMany(args);
+  }
+
   async findOneOrThrow(id: number) {
     const permission = await this.prisma.permission.findFirst({
       where: { id },

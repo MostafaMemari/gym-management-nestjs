@@ -5,4 +5,5 @@ export enum CacheKeys {
   WalletDeduction = 'wallet_deduction',
   ManualCredit = 'manual_credit',
   Roles = 'roles',
+  Permissions = 'permissions',
 }
