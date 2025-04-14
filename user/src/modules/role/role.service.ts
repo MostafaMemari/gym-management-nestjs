@@ -1,5 +1,12 @@
 import { ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { IAssignPermission, IAssignRoleToUser, ICreateRole, IRolesFilter, IUpdateRole } from '../../common/interfaces/role.interface';
+import {
+  IAssignPermission,
+  IAssignRoleToUser,
+  ICreateRole,
+  IRemovePermissionFromRole,
+  IRolesFilter,
+  IUpdateRole,
+} from '../../common/interfaces/role.interface';
 import { RpcException } from '@nestjs/microservices';
 import { RoleRepository } from './role.repository';
 import { ResponseUtil } from '../../common/utils/response.utils';
@@ -115,6 +122,23 @@ export class RoleService {
       const updatedUser = await this.userRepository.update(userId, { data: { roles: { set: { id: roleId } } }, include: { roles: true } });
 
       return ResponseUtil.success({ user: updatedUser }, RoleMessages.AssignRoleToUserSuccess, HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
+  async removeRoleFromPermission({ permissionId, roleId }: IRemovePermissionFromRole): Promise<ServiceResponse> {
+    try {
+      // TODO: Check and validate permission id
+
+      await this.findRoleOrThrow(roleId);
+
+      const updatedRole = await this.roleRepository.update(roleId, {
+        data: { permissions: { disconnect: { id: permissionId } } },
+        include: { permissions: true, users: true },
+      });
+
+      return ResponseUtil.success({ role: updatedRole }, RoleMessages.RemovedPermissionFromRoleSuccess, HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }

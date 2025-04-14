@@ -7,4 +7,5 @@ export enum RoleMessages {
   AlreadyExistsPermissionInRole = 'Already exists permission in role.',
   RemovedRoleSuccess = 'Role removed successfully.',
   UpdatedRoleSuccess = 'Role updated successfully.',
+  RemovedPermissionFromRoleSuccess = 'Removed permission from role successfully.',
 }

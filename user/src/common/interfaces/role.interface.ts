@@ -34,3 +34,5 @@ export interface IUpdateRole {
   roleId: number;
   name: string;
 }
+
+export interface IRemovePermissionFromRole extends IAssignPermission {}
