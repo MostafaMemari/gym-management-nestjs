@@ -10,12 +10,14 @@ import { WalletModule } from '../wallet/wallet.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { Services } from '../../common/enums/services.enum';
 import { RoleModule } from '../role/role.module';
+import { PermissionModule } from '../permission/permission.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot(envConfig()),
     forwardRef(() => WalletModule),
     forwardRef(() => RoleModule),
+    forwardRef(() => PermissionModule),
     CacheModule,
     PrismaModule,
     ClientsModule.register([
@@ -41,4 +43,4 @@ import { RoleModule } from '../role/role.module';
   providers: [UserService, UserRepository],
   exports: [ClientsModule],
 })
-export class UserModule {}
+export class UserModule { }
