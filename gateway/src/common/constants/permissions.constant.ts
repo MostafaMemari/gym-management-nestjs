@@ -1,29 +1,38 @@
-type PermissionSeedGroup = {
-  name: string;
+import { RequestMethod } from '@nestjs/common';
+
+type PermissionGroup = {
+  name: ApiRoutes;
   permissions: {
-    method: string;
+    method: RequestMethod;
     endpoint: string;
+    roles: DefaultRole[];
   }[];
 };
 
-const ROLES = [{ name: 'SUPER_ADMIN' }, { name: 'ADMIN_CLUB' }, { name: 'COACH' }, { name: 'STUDENT' }];
+export enum DefaultRole {
+  SUPER_ADMIN = 'SUPER_ADMIN',
+  ADMIN_CLUB = 'ADMIN_CLUB',
+  COACH = 'COACH',
+  STUDENT = 'STUDENT',
+}
 
-const CLUB_PERMISSIONS: PermissionSeedGroup = {
-  name: 'CLUB',
-  permissions: [{ endpoint: '/clubs', method: 'GET' }],
-};
+export enum ApiRoutes {
+  CLUB = 'CLUB',
+  STUDENT = 'STUDENT',
+  COACH = 'COACH',
+}
 
-const STUDENT_PERMISSIONS: PermissionSeedGroup = {
-  name: 'STUDENT',
-  permissions: [{ endpoint: '/students', method: 'GET' }],
-};
-
-const COACH_PERMISSIONS: PermissionSeedGroup = {
-  name: 'COACH',
-  permissions: [{ endpoint: '/coaches', method: 'GET' }],
-};
-
-const SUPER_ADMIN_PERMISSIONS: PermissionSeedGroup = {
-  name: 'SUPER_ADMIN',
-  permissions: [{ endpoint: '/coaches', method: 'GET' }],
-};
+export const PERMISSION_GROUP: PermissionGroup[] = [
+  {
+    name: ApiRoutes.CLUB,
+    permissions: [{ endpoint: '/clubs', method: RequestMethod.GET, roles: [DefaultRole.ADMIN_CLUB] }],
+  },
+  {
+    name: ApiRoutes.STUDENT,
+    permissions: [{ endpoint: '/students', method: RequestMethod.GET, roles: [DefaultRole.STUDENT] }],
+  },
+  {
+    name: ApiRoutes.COACH,
+    permissions: [{ endpoint: '/coaches', method: RequestMethod.GET, roles: [DefaultRole.COACH] }],
+  },
+];
