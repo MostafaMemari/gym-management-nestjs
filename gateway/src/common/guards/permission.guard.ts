@@ -4,7 +4,6 @@ import { handleError } from '../utils/handleError.utils';
 import { Request } from 'express';
 import { match } from 'path-to-regexp';
 import { User } from '../interfaces/user.interface';
-import { Role } from '../enums/role.enum';
 import { Reflector } from '@nestjs/core';
 import { SKIP_AUTH } from '../decorators/skip-auth.decorator';
 
@@ -19,10 +18,6 @@ export class PermissionGuard implements CanActivate {
 
       const req: Request = context.switchToHttp().getRequest();
       const user = req.user as User;
-
-      const isSuperAdmin = user && user.roles.some((role) => role.name == Role.SUPER_ADMIN);
-
-      if (isSuperAdmin) return isSuperAdmin;
 
       const fullUrl = `${req.protocol}://${req.get(`host`)}${req.route.path}`;
 

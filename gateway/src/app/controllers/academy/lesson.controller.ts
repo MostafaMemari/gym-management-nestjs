@@ -31,9 +31,6 @@ import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
 import { FilesValidationPipe } from '../../../common/pipes/upload-files.pipe';
 import { AwsService } from '../../../modules/s3AWS/s3AWS.service';
-import { AccessRole } from '../../../common/decorators/accessRole.decorator';
-import { Role } from '../../../common/enums/role.enum';
-import { Roles } from '../../../common/decorators/role.decorator';
 
 @Controller('lessons')
 @ApiTags('Lessons')
@@ -57,8 +54,6 @@ export class LessonController {
       video: { types: ['video/mp4'], maxSize: 10 * 1024 * 1024 },
     }),
   )
-  @Roles(Role.SUPER_ADMIN)
-  @AccessRole(Role.SUPER_ADMIN)
   @ApiConsumes(SwaggerConsumes.MultipartData)
   async create(
     @Param('chapterId', ParseIntPipe) chapterId: number,
@@ -129,8 +124,6 @@ export class LessonController {
       video: { types: ['video/mp4'], maxSize: 10 * 1024 * 1024 },
     }),
   )
-  @Roles(Role.SUPER_ADMIN)
-  @AccessRole(Role.SUPER_ADMIN)
   @ApiConsumes(SwaggerConsumes.MultipartData)
   async update(
     @Param('id', ParseIntPipe) id: number,
@@ -174,8 +167,6 @@ export class LessonController {
   }
 
   @Get()
-  @Roles(Role.SUPER_ADMIN)
-  @AccessRole(Role.SUPER_ADMIN)
   async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto, @Query() queryLessonDto: QueryLessonDto): Promise<any> {
     try {
       await checkConnection(Services.ACADEMY, this.academyServiceClient);
@@ -191,7 +182,6 @@ export class LessonController {
   }
 
   @Get(':id')
-  @AccessRole(Role.SUPER_ADMIN)
   async findOne(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
       await checkConnection(Services.ACADEMY, this.academyServiceClient);
@@ -207,8 +197,6 @@ export class LessonController {
   }
 
   @Delete(':id')
-  @Roles(Role.SUPER_ADMIN)
-  @AccessRole(Role.SUPER_ADMIN)
   async remove(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
       await checkConnection(Services.ACADEMY, this.academyServiceClient);
@@ -230,8 +218,6 @@ export class LessonController {
   }
 
   @Post(':id/complete')
-  @Roles(Role.SUPER_ADMIN)
-  @AccessRole(Role.SUPER_ADMIN)
   async completeLesson(@GetUser() user: User, @Param('id') id: number) {
     try {
       await checkConnection(Services.ACADEMY, this.academyServiceClient);

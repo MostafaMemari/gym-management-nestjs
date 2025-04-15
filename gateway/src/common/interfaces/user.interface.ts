@@ -1,8 +1,8 @@
-import { Role } from '../enums/role.enum';
+import { DefaultRole } from '../constants/permissions.constant';
 import { SignupDto } from '../dtos/auth-service/auth.dto';
 
 interface IRole {
-  name: Role;
+  name: DefaultRole;
   permissions: IPermission[];
 }
 

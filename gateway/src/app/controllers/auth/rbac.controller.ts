@@ -1,8 +1,6 @@
 import { Body, ConflictException, Controller, Inject, Post } from '@nestjs/common';
 import { Services } from '../../../common/enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
-import { Roles } from '../../../common/decorators/role.decorator';
-import { Role } from '../../../common/enums/role.enum';
 import { lastValueFrom, timeout } from 'rxjs';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
 import { RbacPatterns } from '../../../common/enums/auth.events';
@@ -24,7 +22,6 @@ export class RbacController {
   private readonly timeout: number = 5000;
 
   @Post('assign-role')
-  @Roles(Role.SUPER_ADMIN)
   @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
   async assignRole(@Body() assignRoleDto: AssignRoleDto, @GetUser() user: User): Promise<ServiceResponse> {
     try {

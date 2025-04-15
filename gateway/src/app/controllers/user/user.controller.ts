@@ -8,8 +8,6 @@ import { ServiceResponse } from '../../../common/interfaces/serviceResponse.inte
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { checkConnection } from '../../../common/utils/checkConnection.utils';
-import { Roles } from '../../../common/decorators/role.decorator';
-import { Role } from '../../../common/enums/role.enum';
 import { GetUser } from '../../../common/decorators/get-user.decorator';
 import { QueryUsersDto, UpdateUserDto } from '../../../common/dtos/user-service/user.dto';
 import { User } from '../../../common/interfaces/user.interface';
@@ -21,7 +19,6 @@ import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 export class UserController {
   constructor(@Inject(Services.USER) private readonly userServiceClient: ClientProxy) {}
 
-  @Roles(Role.SUPER_ADMIN)
   @Get()
   async getUsers(@Query() usersFilters: QueryUsersDto) {
     try {
@@ -57,7 +54,6 @@ export class UserController {
   }
 
   @Delete(':id')
-  @Roles(Role.SUPER_ADMIN)
   @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
   async removeUser(@Param('id', ParseIntPipe) id: number, @GetUser() user: User) {
     try {
@@ -73,7 +69,6 @@ export class UserController {
     }
   }
 
-  @Roles(Role.SUPER_ADMIN)
   @Get(':id')
   async getUserById(@Param('id', ParseIntPipe) id: number) {
     try {

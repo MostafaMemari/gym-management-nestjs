@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, Matches, MaxLength, MinLength } from 'class-validator';
-import { Role } from '../../../common/enums/role.enum';
 import { Transform } from 'class-transformer';
 import { SortOrder, UserSortBy } from '../../../common/enums/shared.enum';
 import { PaginationDto } from '../shared.dto';
@@ -46,16 +45,6 @@ export class QueryUsersDto extends PaginationDto {
     nullable: true,
   })
   username?: string;
-
-  @IsOptional()
-  @IsEnum(Role)
-  @ApiProperty({
-    type: 'string',
-    enum: Role,
-    nullable: true,
-    required: false,
-  })
-  role?: Role;
 
   @IsOptional()
   @IsString()

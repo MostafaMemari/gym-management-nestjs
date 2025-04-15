@@ -7,8 +7,6 @@ import { checkConnection } from '../../common/utils/checkConnection.utils';
 import { NotificationPatterns } from '../../common/enums/notification.events';
 import { lastValueFrom, timeout } from 'rxjs';
 import { AuthDecorator } from '../../common/decorators/auth.decorator';
-import { Roles } from '../../common/decorators/role.decorator';
-import { Role } from '../../common/enums/role.enum';
 import { SwaggerConsumes } from '../../common/enums/swagger-consumes.enum';
 import { CreateNotificationDto, QueryNotificationDto, QueryUserNotificationDto, UpdateNotificationDto } from '../../common/dtos/notification.dto';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
@@ -25,7 +23,6 @@ export class NotificationController {
   constructor(@Inject(Services.NOTIFICATION) private readonly notificationServiceClient: ClientProxy) {}
 
   @Post()
-  @Roles(Role.SUPER_ADMIN)
   @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
   async create(@Body() notificationDto: CreateNotificationDto, @GetUser() user: User) {
     try {
