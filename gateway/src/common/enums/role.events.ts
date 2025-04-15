@@ -9,4 +9,6 @@ export enum RolePatterns {
   RemoveRoleFromUser = 'remove_role_from_user',
   RemovedPermissionFromRole = 'remove_permission_from_role',
   SyncStaticRoles = 'sync_static_roles',
+  GetOnePermission = 'get_one_permission',
+  GetPermissions = 'get_permissions',
 }

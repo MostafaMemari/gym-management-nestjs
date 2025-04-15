@@ -83,4 +83,19 @@ export class RoleController {
       handleError(error, 'Failed to get roles', Services.USER);
     }
   }
+
+  @Get('permission/:id')
+  async getOnePermission(@Param('id', ParseIntPipe) id: number) {
+    try {
+      await checkConnection(Services.USER, this.userServiceClient);
+
+      const result: ServiceResponse = await lastValueFrom(
+        this.userServiceClient.send(RolePatterns.GetOnePermission, { permissionId: id }).pipe(timeout(this.timeout)),
+      );
+
+      return handleServiceResponse(result);
+    } catch (error) {
+      handleError(error, 'Failed to get a permission', Services.USER);
+    }
+  }
 }

@@ -1,9 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsBoolean, IsDate, IsEnum, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { CreatePermissionDto } from './permission.dto';
-import { Transform, Type } from 'class-transformer';
-import { PaginationDto } from '../shared.dto';
+import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { RoleSortBy, SortOrder } from '../../../common/enums/shared.enum';
+import { PaginationDto } from '../shared.dto';
 
 export class CreateRoleDto {
   @IsString()
@@ -14,23 +13,6 @@ export class CreateRoleDto {
     required: true,
   })
   name: string;
-
-  @IsArray()
-  @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => CreatePermissionDto)
-  @ApiProperty({
-    type: CreatePermissionDto,
-    required: false,
-    nullable: true,
-    uniqueItems: true,
-    isArray: true,
-    examples: [
-      { method: 'GET', endpoint: '/users' },
-      { method: 'POST', endpoint: '/login' },
-    ],
-  })
-  permissions?: CreatePermissionDto[];
 }
 
 export class QueryRolesDto extends PaginationDto {
