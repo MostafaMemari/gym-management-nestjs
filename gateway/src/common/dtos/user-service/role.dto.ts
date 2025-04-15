@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { RoleSortBy, SortOrder } from '../../../common/enums/shared.enum';
+import { PermissionSortBy, RoleSortBy, SortOrder } from '../../../common/enums/shared.enum';
 import { PaginationDto } from '../shared.dto';
 
 export class CreateRoleDto {
@@ -75,6 +75,74 @@ export class QueryRolesDto extends PaginationDto {
     required: false,
   })
   sortBy?: RoleSortBy;
+
+  @IsOptional()
+  @IsEnum(SortOrder)
+  @ApiProperty({
+    type: 'string',
+    enum: SortOrder,
+    nullable: true,
+    required: false,
+  })
+  sortDirection?: SortOrder;
+}
+
+export class QueryPermissionDto extends PaginationDto {
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  @ApiProperty({
+    type: 'string',
+    nullable: true,
+    required: false,
+  })
+  method?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  @ApiProperty({
+    type: 'string',
+    nullable: true,
+    required: false,
+  })
+  endpoint?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  @ApiProperty({
+    type: 'boolean',
+    nullable: true,
+    required: false,
+  })
+  @Transform(({ value }) => {
+    if (typeof value == 'string') return value == 'true';
+
+    return value;
+  })
+  includeRoles?: boolean;
+
+  @IsOptional()
+  @IsDate()
+  @Transform(({ value }) => new Date(value))
+  @ApiProperty({ type: 'string', format: 'date-time', nullable: true, required: false })
+  startDate?: Date;
+
+  @IsOptional()
+  @IsDate()
+  @Transform(({ value }) => new Date(value))
+  @ApiProperty({ type: 'string', format: 'date-time', nullable: true, required: false })
+  endDate?: Date;
+
+  @IsOptional()
+  @IsEnum(PermissionSortBy)
+  @ApiProperty({
+    type: 'string',
+    enum: PermissionSortBy,
+    nullable: true,
+    required: false,
+  })
+  sortBy?: PermissionSortBy;
 
   @IsOptional()
   @IsEnum(SortOrder)

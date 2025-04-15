@@ -60,6 +60,13 @@ export enum RoleSortBy {
   Name = 'name',
 }
 
+export enum PermissionSortBy {
+  CreatedAt = 'createdAt',
+  UpdatedAt = 'updatedAt',
+  Endpoint = 'endpoint',
+  Method = 'method',
+}
+
 export enum NotificationType {
   PUSH = 'PUSH',
   SMS = 'SMS',
