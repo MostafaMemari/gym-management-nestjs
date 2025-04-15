@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Post } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, ParseIntPipe, Post } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiTags } from '@nestjs/swagger';
 import { Services } from '../../../common/enums/services.enum';
@@ -14,7 +14,6 @@ import { CreateRoleDto } from '../../../common/dtos/user-service/role.dto';
 
 @Controller('role')
 @ApiTags('role')
-@AuthDecorator()
 export class RoleController {
   private readonly timeout: number = 5000;
 
@@ -50,6 +49,21 @@ export class RoleController {
       return handleServiceResponse(result);
     } catch (error) {
       handleError(error, 'Failed to create role', Services.USER);
+    }
+  }
+
+  @Get(':id')
+  async getOne(@Param('id', ParseIntPipe) id: number) {
+    try {
+      await checkConnection(Services.USER, this.userServiceClient);
+
+      const result: ServiceResponse = await lastValueFrom(
+        this.userServiceClient.send(RolePatterns.GetOneRole, { roleId: id }).pipe(timeout(this.timeout)),
+      );
+
+      return handleServiceResponse(result);
+    } catch (error) {
+      handleError(error, 'Failed to find a role', Services.USER);
     }
   }
 }
