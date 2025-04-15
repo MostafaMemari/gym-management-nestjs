@@ -21,7 +21,6 @@ import { Prisma, Role } from '@prisma/client';
 import { UserRepository } from '../user/user.repository';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { PermissionRepository } from '../permission/permission.repository';
-import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class RoleService {
@@ -32,7 +31,6 @@ export class RoleService {
     private readonly cacheService: CacheService,
     private readonly userRepository: UserRepository,
     private readonly permissionRepository: PermissionRepository,
-    private readonly prismaService: PrismaService,
   ) {}
 
   async create(createRoleDto: ICreateRole): Promise<ServiceResponse> {
@@ -57,7 +55,7 @@ export class RoleService {
   async syncStaticPermissions({ staticRoles }: IStaticRoles) {
     try {
       for (const { role, permissions } of staticRoles) {
-        await this.prismaService.role.upsert({
+        await this.roleRepository.upsert({
           create: { name: role, permissions: { connectOrCreate: permissions.map((p) => ({ create: p, where: { method_endpoint: p } })) } },
           update: { name: role, permissions: { connectOrCreate: permissions.map((p) => ({ create: p, where: { method_endpoint: p } })) } },
           where: { name: role },

@@ -1,8 +1,9 @@
-import { NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Permission, Prisma } from '@prisma/client';
 import { PermissionMessages } from '../../common/enums/permission.messages';
 
+@Injectable()
 export class PermissionRepository {
   constructor(private readonly prisma: PrismaService) {}
 

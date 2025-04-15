@@ -1,6 +1,8 @@
 import { Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class RoleRepository {
   constructor(private readonly prisma: PrismaService) {}
 
@@ -22,5 +24,9 @@ export class RoleRepository {
 
   delete(roleId: number, args: Omit<Prisma.RoleDeleteArgs, `where`> = {}): Promise<Role> {
     return this.prisma.role.delete({ where: { id: roleId }, ...args });
+  }
+
+  upsert(args: Prisma.RoleUpsertArgs): Promise<Role> {
+    return this.prisma.role.upsert(args);
   }
 }
