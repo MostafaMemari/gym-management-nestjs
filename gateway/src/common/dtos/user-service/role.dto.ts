@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { PermissionSortBy, RoleSortBy, SortOrder } from '../../../common/enums/shared.enum';
 import { PaginationDto } from '../shared.dto';
@@ -153,4 +153,26 @@ export class QueryPermissionDto extends PaginationDto {
     required: false,
   })
   sortDirection?: SortOrder;
+}
+
+export class AssignPermissionDto {
+  @IsNumber()
+  @IsNotEmpty()
+  @IsPositive()
+  @ApiProperty({
+    type: 'number',
+    nullable: false,
+    required: true,
+  })
+  roleId: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  @IsPositive()
+  @ApiProperty({
+    type: 'number',
+    nullable: false,
+    required: true,
+  })
+  permissionId: number;
 }
