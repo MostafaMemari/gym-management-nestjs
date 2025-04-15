@@ -9,4 +9,5 @@ export enum RoleMessages {
   UpdatedRoleSuccess = 'Role updated successfully.',
   RemovedPermissionFromRoleSuccess = 'Removed permission from role successfully.',
   RemovedRoleFromUserSuccess = 'Removed role from user successfully.',
+  SyncedStaticRolesSuccess = 'Static roles synced successfully.',
 }

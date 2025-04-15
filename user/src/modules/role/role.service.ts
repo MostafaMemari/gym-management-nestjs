@@ -6,6 +6,7 @@ import {
   IRemovePermissionFromRole,
   IRemoveRoleFromUser,
   IRolesFilter,
+  IStaticRoles,
   IUpdateRole,
 } from '../../common/interfaces/role.interface';
 import { RpcException } from '@nestjs/microservices';
@@ -20,6 +21,7 @@ import { Prisma, Role } from '@prisma/client';
 import { UserRepository } from '../user/user.repository';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { PermissionRepository } from '../permission/permission.repository';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class RoleService {
@@ -30,6 +32,7 @@ export class RoleService {
     private readonly cacheService: CacheService,
     private readonly userRepository: UserRepository,
     private readonly permissionRepository: PermissionRepository,
+    private readonly prismaService: PrismaService,
   ) {}
 
   async create(createRoleDto: ICreateRole): Promise<ServiceResponse> {
@@ -46,6 +49,22 @@ export class RoleService {
       });
 
       return ResponseUtil.success({ role: newRole }, RoleMessages.CreatedRoleSuccess, HttpStatus.CREATED);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
+  async syncStaticPermissions({ staticRoles }: IStaticRoles) {
+    try {
+      for (const { role, permissions } of staticRoles) {
+        await this.prismaService.role.upsert({
+          create: { name: role, permissions: { connectOrCreate: permissions.map((p) => ({ create: p, where: { method_endpoint: p } })) } },
+          update: { name: role, permissions: { connectOrCreate: permissions.map((p) => ({ create: p, where: { method_endpoint: p } })) } },
+          where: { name: role },
+        });
+      }
+
+      return ResponseUtil.success({}, RoleMessages.SyncedStaticRolesSuccess, HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }

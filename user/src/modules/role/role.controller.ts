@@ -9,6 +9,7 @@ import {
   IRemovePermissionFromRole,
   IRemoveRoleFromUser,
   IRolesFilter,
+  IStaticRoles,
   IUpdateRole,
 } from '../../common/interfaces/role.interface';
 
@@ -19,6 +20,11 @@ export class RoleController {
   @MessagePattern(RolePatterns.CreateRole)
   create(@Payload() data: ICreateRole) {
     return this.roleService.create(data);
+  }
+
+  @MessagePattern(RolePatterns.SyncStaticRoles)
+  syncStaticPermissions(@Payload() data: IStaticRoles) {
+    return this.roleService.syncStaticPermissions(data);
   }
 
   @MessagePattern(RolePatterns.GetOneRole)

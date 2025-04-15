@@ -1,3 +1,4 @@
+import { DefaultRole } from '../enums/shared.enum';
 import { IPermission } from './permission.interface';
 import { IPagination } from './user.interface';
 
@@ -34,3 +35,10 @@ export interface IUpdateRole {
 export interface IRemovePermissionFromRole extends IAssignPermission {}
 
 export interface IRemoveRoleFromUser extends IAssignRoleToUser {}
+
+export interface IStaticRoles {
+  staticRoles: {
+    role: DefaultRole;
+    permissions: { method: string; endpoint: string }[];
+  }[];
+}
