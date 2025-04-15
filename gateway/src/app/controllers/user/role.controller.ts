@@ -16,6 +16,7 @@ import {
   CreateRoleDto,
   QueryPermissionDto,
   QueryRolesDto,
+  UnassignPermissionDto,
   UnassignRoleDto,
   UpdateRoleDto,
 } from '../../../common/dtos/user-service/role.dto';
@@ -168,6 +169,22 @@ export class RoleController {
       return handleServiceResponse(result);
     } catch (error) {
       handleError(error, 'Failed to unassign role', Services.USER);
+    }
+  }
+
+  @Put('unassign-permission')
+  @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
+  async unassignPermission(@Body() unassignPermissionDto: UnassignPermissionDto) {
+    try {
+      await checkConnection(Services.USER, this.userServiceClient);
+
+      const result: ServiceResponse = await lastValueFrom(
+        this.userServiceClient.send(RolePatterns.RemovedPermissionFromRole, unassignPermissionDto).pipe(timeout(this.timeout)),
+      );
+
+      return handleServiceResponse(result);
+    } catch (error) {
+      handleError(error, 'Failed to unassign permission', Services.USER);
     }
   }
 

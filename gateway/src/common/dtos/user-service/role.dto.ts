@@ -217,4 +217,4 @@ export class UpdateRoleDto {
 
 export class UnassignRoleDto extends AssignRoleDto {}
 
-export class UnassignPermission extends AssignPermissionDto {}
+export class UnassignPermissionDto extends AssignPermissionDto {}
