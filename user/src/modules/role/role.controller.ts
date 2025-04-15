@@ -6,6 +6,7 @@ import {
   IAssignPermission,
   IAssignRoleToUser,
   ICreateRole,
+  IPermissionFilter,
   IRemovePermissionFromRole,
   IRemoveRoleFromUser,
   IRolesFilter,
@@ -45,6 +46,16 @@ export class RoleController {
   @MessagePattern(RolePatterns.GetRoles)
   getAll(@Payload() data: IRolesFilter) {
     return this.roleService.findAll(data);
+  }
+
+  @MessagePattern(RolePatterns.GetOnePermission)
+  getOnePermission(@Payload() data: { permissionId: number }) {
+    return this.roleService.findOnePermission(data);
+  }
+
+  @MessagePattern(RolePatterns.GetPermissions)
+  getAllPermissions(@Payload() data: IPermissionFilter) {
+    return this.roleService.findAllPermissions(data);
   }
 
   @MessagePattern(RolePatterns.RemoveRole)

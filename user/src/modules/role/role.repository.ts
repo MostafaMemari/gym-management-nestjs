@@ -1,4 +1,4 @@
-import { Prisma, Role } from '@prisma/client';
+import { Permission, Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { RoleMessages } from '../../common/enums/role.messages';
@@ -29,6 +29,28 @@ export class RoleRepository {
 
   upsert(args: Prisma.RoleUpsertArgs): Promise<Role> {
     return this.prisma.role.upsert(args);
+  }
+
+  findOnePermission(
+    args: Prisma.PermissionWhereInput,
+    additionalArgs: Omit<Prisma.PermissionFindFirstArgs, `where`> = {},
+  ): Promise<Permission | null> {
+    return this.prisma.permission.findFirst({ where: args, ...additionalArgs });
+  }
+
+  findAllPermissions(args: Prisma.PermissionFindManyArgs): Promise<Permission[]> {
+    return this.prisma.permission.findMany(args);
+  }
+
+  async findOnePermissionByIdOrThrow(id: number) {
+    const permission = await this.prisma.permission.findFirst({
+      where: { id },
+      include: { roles: true },
+    });
+
+    if (!permission) throw new NotFoundException(RoleMessages.NotFoundPermission);
+
+    return permission;
   }
 
   async findOneByIdOrThrow(roleId: number): Promise<Role | never> {

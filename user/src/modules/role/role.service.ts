@@ -3,6 +3,7 @@ import {
   IAssignPermission,
   IAssignRoleToUser,
   ICreateRole,
+  IPermissionFilter,
   IRemovePermissionFromRole,
   IRemoveRoleFromUser,
   IRolesFilter,
@@ -17,10 +18,9 @@ import { sortObject } from '../../common/utils/functions.utils';
 import { CacheKeys } from '../../common/enums/cache.enum';
 import { CacheService } from '../cache/cache.service';
 import { pagination } from '../../common/utils/pagination.utils';
-import { Prisma, Role } from '@prisma/client';
+import { Permission, Prisma, Role } from '@prisma/client';
 import { UserRepository } from '../user/user.repository';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
-import { PermissionRepository } from '../permission/permission.repository';
 
 @Injectable()
 export class RoleService {
@@ -30,7 +30,6 @@ export class RoleService {
     private readonly roleRepository: RoleRepository,
     private readonly cacheService: CacheService,
     private readonly userRepository: UserRepository,
-    private readonly permissionRepository: PermissionRepository,
   ) {}
 
   async create(createRoleDto: ICreateRole): Promise<ServiceResponse> {
@@ -112,9 +111,54 @@ export class RoleService {
     }
   }
 
+  async findOnePermission({ permissionId }: { permissionId: number }): Promise<ServiceResponse> {
+    try {
+      const permission = await this.roleRepository.findOnePermissionByIdOrThrow(permissionId);
+
+      return ResponseUtil.success({ permission }, '', HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
+  async findAllPermissions({ page, take, ...filtersDto }: IPermissionFilter): Promise<ServiceResponse> {
+    try {
+      const paginationDto = { page, take };
+      const { endDate, sortBy, sortDirection, startDate, endpoint, includeRoles, method } = filtersDto;
+      const sortedDto = sortObject(filtersDto);
+      const cacheKey = `${CacheKeys.Permissions}_${JSON.stringify(sortedDto)}`;
+
+      const permissionsCache = await this.cacheService.get<Permission[] | null>(cacheKey);
+
+      if (permissionsCache) return ResponseUtil.success(pagination(paginationDto, permissionsCache), ``, HttpStatus.OK);
+
+      const filters: Prisma.PermissionWhereInput = {};
+
+      if (endpoint) filters.endpoint = { contains: endpoint };
+      if (method) filters.method = { contains: method };
+      if (startDate || endDate) {
+        filters.createdAt = {};
+        if (startDate) filters.createdAt.gte = new Date(startDate);
+        if (endDate) filters.createdAt.lte = new Date(endDate);
+      }
+
+      const permissions = await this.roleRepository.findAllPermissions({
+        where: filters,
+        orderBy: { [sortBy || 'createdAt']: sortDirection || 'desc' },
+        include: { roles: includeRoles },
+      });
+
+      await this.cacheService.set(cacheKey, permissions, this.CACHE_EXPIRE_TIME);
+
+      return ResponseUtil.success(pagination(paginationDto, permissions), ``, HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
   async assignPermission({ roleId, permissionId }: IAssignPermission): Promise<ServiceResponse> {
     try {
-      await this.permissionRepository.findOneOrThrow(permissionId);
+      await this.roleRepository.findOnePermissionByIdOrThrow(permissionId);
 
       await this.roleRepository.findOneByIdOrThrow(roleId);
 
@@ -149,7 +193,7 @@ export class RoleService {
 
   async removePermissionFromRole({ permissionId, roleId }: IRemovePermissionFromRole): Promise<ServiceResponse> {
     try {
-      await this.permissionRepository.findOneOrThrow(permissionId);
+      await this.roleRepository.findOnePermissionByIdOrThrow(permissionId);
 
       await this.roleRepository.findOneByIdOrThrow(roleId);
 
