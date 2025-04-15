@@ -16,6 +16,7 @@ import {
   CreateRoleDto,
   QueryPermissionDto,
   QueryRolesDto,
+  UnassignRoleDto,
   UpdateRoleDto,
 } from '../../../common/dtos/user-service/role.dto';
 import { SwaggerConsumes } from 'src/common/enums/swagger-consumes.enum';
@@ -151,6 +152,22 @@ export class RoleController {
       return handleServiceResponse(result);
     } catch (error) {
       handleError(error, 'Failed to assign role to user', Services.USER);
+    }
+  }
+
+  @Put('unassign-role')
+  @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
+  async unassignRole(@Body() unassignRoleDto: UnassignRoleDto) {
+    try {
+      await checkConnection(Services.USER, this.userServiceClient);
+
+      const result: ServiceResponse = await lastValueFrom(
+        this.userServiceClient.send(RolePatterns.RemoveRoleFromUser, unassignRoleDto).pipe(timeout(this.timeout)),
+      );
+
+      return handleServiceResponse(result);
+    } catch (error) {
+      handleError(error, 'Failed to unassign role', Services.USER);
     }
   }
 

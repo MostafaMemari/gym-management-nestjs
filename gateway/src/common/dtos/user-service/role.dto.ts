@@ -214,3 +214,7 @@ export class UpdateRoleDto {
   })
   name: string;
 }
+
+export class UnassignRoleDto extends AssignRoleDto {}
+
+export class UnassignPermission extends AssignPermissionDto {}
