@@ -1,9 +1,7 @@
-import { RequestMethod } from '@nestjs/common';
-
 type PermissionGroup = {
   name: ApiRoutes;
   permissions: {
-    method: RequestMethod;
+    method: string;
     endpoint: string;
     roles: DefaultRole[];
   }[];
@@ -22,17 +20,47 @@ export enum ApiRoutes {
   COACH = 'COACH',
 }
 
-export const PERMISSION_GROUP: PermissionGroup[] = [
+const PERMISSION_GROUP: PermissionGroup[] = [
   {
     name: ApiRoutes.CLUB,
-    permissions: [{ endpoint: '/clubs', method: RequestMethod.GET, roles: [DefaultRole.ADMIN_CLUB] }],
+    permissions: [
+      { endpoint: '/clubs', method: `GET`, roles: [DefaultRole.ADMIN_CLUB, DefaultRole.SUPER_ADMIN] },
+      { endpoint: '/clubs/:id', method: `PUT`, roles: [DefaultRole.ADMIN_CLUB, DefaultRole.SUPER_ADMIN] },
+    ],
   },
   {
     name: ApiRoutes.STUDENT,
-    permissions: [{ endpoint: '/students', method: RequestMethod.GET, roles: [DefaultRole.STUDENT] }],
+    permissions: [{ endpoint: '/students', method: `GET`, roles: [DefaultRole.STUDENT, DefaultRole.SUPER_ADMIN] }],
   },
   {
     name: ApiRoutes.COACH,
-    permissions: [{ endpoint: '/coaches', method: RequestMethod.GET, roles: [DefaultRole.COACH] }],
+    permissions: [{ endpoint: '/coaches', method: `GET`, roles: [DefaultRole.COACH, DefaultRole.SUPER_ADMIN] }],
   },
 ];
+
+type RolePermissionMap = {
+  role: DefaultRole;
+  permissions: { method: string; endpoint: string }[];
+};
+
+const roleMap = new Map<DefaultRole, { method: string; endpoint: string }[]>();
+
+for (const group of PERMISSION_GROUP) {
+  for (const permission of group.permissions) {
+    for (const role of permission.roles) {
+      const currentPermissions = roleMap.get(role) || [];
+      currentPermissions.push({
+        method: permission.method,
+        endpoint: permission.endpoint,
+      });
+      roleMap.set(role, currentPermissions);
+    }
+  }
+}
+
+export const staticRoles: RolePermissionMap[] = Array.from(roleMap.entries()).map(([role, permissions]) => {
+  return {
+    role,
+    permissions,
+  };
+});

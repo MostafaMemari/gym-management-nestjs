@@ -4,6 +4,7 @@ import { Logger } from '@nestjs/common';
 import { swaggerConfigInit } from './configs/swagger.config';
 import { BasicAuthMiddleware } from './common/middlewares/basicAuth.middleware';
 import * as express from 'express';
+import { RoleController } from './app/controllers/user/role.controller';
 
 async function bootstrap() {
   const app = await NestFactory.create(GatewayModule, {
@@ -13,6 +14,11 @@ async function bootstrap() {
   const logger = new Logger('NestApplication');
 
   const { PORT = 4000 } = process.env;
+
+  if (process.env.NODE_ENV == 'production') {
+    const syncService = app.get(RoleController);
+    await syncService.syncStaticRoles();
+  }
 
   app.use(new BasicAuthMiddleware().use);
 

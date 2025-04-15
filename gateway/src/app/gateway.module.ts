@@ -28,6 +28,8 @@ import { AwsModule } from '../modules/s3AWS/s3AWS.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { BackupController } from './controllers/backup.controller';
 import { ScheduleModule } from '@nestjs/schedule';
+import { PermissionController } from './controllers/user/permission.controller';
+import { RoleController } from './controllers/user/role.controller';
 
 @Module({
   imports: [
@@ -134,6 +136,8 @@ import { ScheduleModule } from '@nestjs/schedule';
     AuthController,
     RbacController,
     UserController,
+    RoleController,
+    PermissionController,
     WalletController,
     PaymentController,
     NotificationController,
