@@ -1,6 +1,7 @@
 import { Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { RoleMessages } from '../../common/enums/role.messages';
 
 @Injectable()
 export class RoleRepository {
@@ -28,5 +29,13 @@ export class RoleRepository {
 
   upsert(args: Prisma.RoleUpsertArgs): Promise<Role> {
     return this.prisma.role.upsert(args);
+  }
+
+  async findOneByIdOrThrow(roleId: number): Promise<Role | never> {
+    const existingRole = await this.findOne({ id: roleId }, { include: { permissions: true, users: { omit: { password: true } } } });
+
+    if (!existingRole) throw new NotFoundException(RoleMessages.NotFoundRole);
+
+    return existingRole;
   }
 }

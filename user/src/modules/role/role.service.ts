@@ -1,4 +1,4 @@
-import { ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, HttpStatus, Injectable } from '@nestjs/common';
 import {
   IAssignPermission,
   IAssignRoleToUser,
@@ -70,7 +70,7 @@ export class RoleService {
 
   async findOne({ roleId }: { roleId: number }): Promise<ServiceResponse> {
     try {
-      const role = await this.findRoleOrThrow(roleId);
+      const role = await this.roleRepository.findOneByIdOrThrow(roleId);
 
       return ResponseUtil.success({ role }, '', HttpStatus.OK);
     } catch (error) {
@@ -116,7 +116,7 @@ export class RoleService {
     try {
       await this.permissionRepository.findOneOrThrow(permissionId);
 
-      await this.findRoleOrThrow(roleId);
+      await this.roleRepository.findOneByIdOrThrow(roleId);
 
       const foundRole = await this.roleRepository.findOne({ id: roleId, permissions: { some: { id: permissionId } } });
 
@@ -135,7 +135,7 @@ export class RoleService {
 
   async assignRoleToUser({ roleId, userId }: IAssignRoleToUser): Promise<ServiceResponse> {
     try {
-      await this.findRoleOrThrow(roleId);
+      await this.roleRepository.findOneByIdOrThrow(roleId);
 
       await this.userRepository.findByIdAndThrow(userId);
 
@@ -151,7 +151,7 @@ export class RoleService {
     try {
       await this.permissionRepository.findOneOrThrow(permissionId);
 
-      await this.findRoleOrThrow(roleId);
+      await this.roleRepository.findOneByIdOrThrow(roleId);
 
       const updatedRole = await this.roleRepository.update(roleId, {
         data: { permissions: { disconnect: { id: permissionId } } },
@@ -166,7 +166,7 @@ export class RoleService {
 
   async removeRoleFromUser({ roleId, userId }: IRemoveRoleFromUser) {
     try {
-      await this.findRoleOrThrow(roleId);
+      await this.roleRepository.findOneByIdOrThrow(roleId);
 
       await this.userRepository.findByIdAndThrow(userId);
 
@@ -183,7 +183,7 @@ export class RoleService {
 
   async remove({ roleId }: { roleId: number }): Promise<ServiceResponse> {
     try {
-      await this.findRoleOrThrow(roleId);
+      await this.roleRepository.findOneByIdOrThrow(roleId);
 
       const deletedRole = await this.roleRepository.delete(roleId, { include: { permissions: true, users: true } });
 
@@ -195,7 +195,7 @@ export class RoleService {
 
   async update({ roleId, name }: IUpdateRole): Promise<ServiceResponse> {
     try {
-      await this.findRoleOrThrow(roleId);
+      await this.roleRepository.findOneByIdOrThrow(roleId);
 
       const updatedRole = await this.roleRepository.update(roleId, { data: { name }, include: { permissions: true, users: true } });
 
@@ -203,17 +203,5 @@ export class RoleService {
     } catch (error) {
       throw new RpcException(error);
     }
-  }
-
-  private async findRoleOrThrow(identifier: string | number): Promise<Role | never> {
-    const existingRole = await this.roleRepository.findOne({
-      OR: [typeof identifier == 'string' ? { name: identifier } : undefined, typeof identifier == `number` ? { id: identifier } : undefined].filter(
-        Boolean,
-      ),
-    });
-
-    if (!existingRole) throw new NotFoundException(RoleMessages.NotFoundRole);
-
-    return existingRole;
   }
 }
