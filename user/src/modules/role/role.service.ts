@@ -1,4 +1,4 @@
-import { ConflictException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import {
   IAssignPermission,
   IAssignRoleToUser,
@@ -21,6 +21,7 @@ import { pagination } from '../../common/utils/pagination.utils';
 import { Permission, Prisma, Role } from '@prisma/client';
 import { UserRepository } from '../user/user.repository';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
+import { DefaultRole } from 'src/common/enums/shared.enum';
 
 @Injectable()
 export class RoleService {
@@ -38,12 +39,7 @@ export class RoleService {
 
       if (role) throw new ConflictException(RoleMessages.AlreadyExistsRole);
 
-      const newRole = await this.roleRepository.create({
-        name: createRoleDto.name,
-        permissions: {
-          connectOrCreate: createRoleDto.permissions?.map((p) => ({ create: p, where: { method_endpoint: p } })),
-        },
-      });
+      const newRole = await this.roleRepository.create({ name: createRoleDto.name });
 
       return ResponseUtil.success({ role: newRole }, RoleMessages.CreatedRoleSuccess, HttpStatus.CREATED);
     } catch (error) {
@@ -90,7 +86,7 @@ export class RoleService {
 
       const filters: Prisma.RoleWhereInput = {};
 
-      if (name) filters.name = { contains: name };
+      if (name) filters.name = { mode: 'insensitive', contains: name };
       if (startDate || endDate) {
         filters.createdAt = {};
         if (startDate) filters.createdAt.gte = new Date(startDate);
@@ -134,8 +130,8 @@ export class RoleService {
 
       const filters: Prisma.PermissionWhereInput = {};
 
-      if (endpoint) filters.endpoint = { contains: endpoint };
-      if (method) filters.method = { contains: method };
+      if (endpoint) filters.endpoint = { mode: 'insensitive', contains: endpoint };
+      if (method) filters.method = { mode: 'insensitive', contains: method };
       if (startDate || endDate) {
         filters.createdAt = {};
         if (startDate) filters.createdAt.gte = new Date(startDate);
@@ -183,7 +179,15 @@ export class RoleService {
 
       await this.userRepository.findByIdAndThrow(userId);
 
-      const updatedUser = await this.userRepository.update(userId, { data: { roles: { connect: { id: roleId } } }, include: { roles: true } });
+      const foundedRole = await this.userRepository.findOne({ where: { id: userId, roles: { some: { id: roleId } } } });
+
+      if (foundedRole) throw new ConflictException(RoleMessages.AlreadyAssignedRoleToUser);
+
+      const updatedUser = await this.userRepository.update(userId, {
+        data: { roles: { connect: { id: roleId } } },
+        include: { roles: true },
+        omit: { password: true },
+      });
 
       return ResponseUtil.success({ user: updatedUser }, RoleMessages.AssignRoleToUserSuccess, HttpStatus.OK);
     } catch (error) {
@@ -196,6 +200,10 @@ export class RoleService {
       await this.roleRepository.findOnePermissionByIdOrThrow(permissionId);
 
       await this.roleRepository.findOneByIdOrThrow(roleId);
+
+      const fundedRole = await this.roleRepository.findOne({ id: roleId, permissions: { some: { id: permissionId } } });
+
+      if (!fundedRole) throw new NotFoundException(RoleMessages.NotFoundPermissionInRole);
 
       const updatedRole = await this.roleRepository.update(roleId, {
         data: { permissions: { disconnect: { id: permissionId } } },
@@ -214,9 +222,14 @@ export class RoleService {
 
       await this.userRepository.findByIdAndThrow(userId);
 
-      const updatedUser = this.userRepository.update(userId, {
+      const foundedUser = await this.userRepository.findOne({ where: { id: userId, roles: { some: { id: roleId } } }, omit: { password: true } });
+
+      if (!foundedUser) throw new NotFoundException(RoleMessages.NotFoundRoleInUser);
+
+      const updatedUser = await this.userRepository.update(userId, {
         data: { roles: { disconnect: { id: roleId } } },
         include: { roles: true },
+        omit: { password: true },
       });
 
       return ResponseUtil.success({ user: updatedUser }, RoleMessages.RemovedRoleFromUserSuccess, HttpStatus.OK);
@@ -227,7 +240,9 @@ export class RoleService {
 
   async remove({ roleId }: { roleId: number }): Promise<ServiceResponse> {
     try {
-      await this.roleRepository.findOneByIdOrThrow(roleId);
+      const fundedRole = await this.roleRepository.findOneByIdOrThrow(roleId);
+
+      if (DefaultRole[fundedRole.name]) throw new BadRequestException(RoleMessages.CannotRemoveDefaultRole);
 
       const deletedRole = await this.roleRepository.delete(roleId, { include: { permissions: true, users: true } });
 
@@ -239,7 +254,9 @@ export class RoleService {
 
   async update({ roleId, name }: IUpdateRole): Promise<ServiceResponse> {
     try {
-      await this.roleRepository.findOneByIdOrThrow(roleId);
+      const fundedRole = await this.roleRepository.findOneByIdOrThrow(roleId);
+
+      if (DefaultRole[fundedRole.name]) throw new BadRequestException(RoleMessages.CannotUpdateDefaultRole);
 
       const updatedRole = await this.roleRepository.update(roleId, { data: { name }, include: { permissions: true, users: true } });
 

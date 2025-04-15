@@ -16,6 +16,10 @@ export class UserRepository {
     return this.prisma.user.findFirst({ where: { id }, ...args });
   }
 
+  findOne(args: Prisma.UserFindFirstArgs): Promise<User | null> {
+    return this.prisma.user.findFirst({ ...args });
+  }
+
   create(args: Prisma.UserCreateArgs): Promise<User> {
     return this.prisma.user.create(args);
   }

@@ -11,4 +11,9 @@ export enum RoleMessages {
   RemovedRoleFromUserSuccess = 'Removed role from user successfully.',
   SyncedStaticRolesSuccess = 'Static roles synced successfully.',
   NotFoundPermission = 'Permission not found.',
+  AlreadyAssignedRoleToUser = 'Role already assigned to user.',
+  CannotRemoveDefaultRole = 'You cannot remove default role.',
+  CannotUpdateDefaultRole = 'You cannot update default role.',
+  NotFoundPermissionInRole = 'Permission not found in role.',
+  NotFoundRoleInUser = 'Role not found in user.',
 }

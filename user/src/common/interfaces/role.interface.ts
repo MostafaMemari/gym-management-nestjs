@@ -3,7 +3,6 @@ import { IPagination } from './user.interface';
 
 export interface ICreateRole {
   name: string;
-  permissions?: IPermission[];
 }
 
 export interface IAssignPermission {
