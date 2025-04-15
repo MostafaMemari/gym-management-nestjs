@@ -10,7 +10,7 @@ import { handleError, handleServiceResponse } from '../../../common/utils/handle
 import { staticRoles } from '../../../common/constants/permissions.constant';
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { SkipAuth } from '../../../common/decorators/skip-auth.decorator';
-import { AssignPermissionDto, CreateRoleDto, QueryPermissionDto, QueryRolesDto } from '../../../common/dtos/user-service/role.dto';
+import { AssignPermissionDto, AssignRoleDto, CreateRoleDto, QueryPermissionDto, QueryRolesDto } from '../../../common/dtos/user-service/role.dto';
 import { SwaggerConsumes } from 'src/common/enums/swagger-consumes.enum';
 
 @Controller('role')
@@ -117,17 +117,33 @@ export class RoleController {
 
   @Put('assign-permission')
   @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
-  async assignPermission(@Body() assignROleDto: AssignPermissionDto) {
+  async assignPermission(@Body() assignPermissionDto: AssignPermissionDto) {
     try {
       await checkConnection(Services.USER, this.userServiceClient);
 
       const result: ServiceResponse = await lastValueFrom(
-        this.userServiceClient.send(RolePatterns.AssignPermissionToRole, assignROleDto).pipe(timeout(this.timeout)),
+        this.userServiceClient.send(RolePatterns.AssignPermissionToRole, assignPermissionDto).pipe(timeout(this.timeout)),
       );
 
       return handleServiceResponse(result);
     } catch (error) {
       handleError(error, 'Failed to assign permission', Services.USER);
+    }
+  }
+
+  @Put('assign-role')
+  @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
+  async assignRoleToUser(@Body() assignRoleDto: AssignRoleDto) {
+    try {
+      await checkConnection(Services.USER, this.userServiceClient);
+
+      const result: ServiceResponse = await lastValueFrom(
+        this.userServiceClient.send(RolePatterns.AssignRoleToUser, assignRoleDto).pipe(timeout(this.timeout)),
+      );
+
+      return handleServiceResponse(result);
+    } catch (error) {
+      handleError(error, 'Failed to assign role to user', Services.USER);
     }
   }
 }

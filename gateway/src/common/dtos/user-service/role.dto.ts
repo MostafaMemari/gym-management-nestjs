@@ -159,6 +159,7 @@ export class AssignPermissionDto {
   @IsNumber()
   @IsNotEmpty()
   @IsPositive()
+  @Transform(({ value }) => +value)
   @ApiProperty({
     type: 'number',
     nullable: false,
@@ -169,10 +170,35 @@ export class AssignPermissionDto {
   @IsNumber()
   @IsNotEmpty()
   @IsPositive()
+  @Transform(({ value }) => +value)
   @ApiProperty({
     type: 'number',
     nullable: false,
     required: true,
   })
   permissionId: number;
+}
+
+export class AssignRoleDto {
+  @IsNumber()
+  @IsNotEmpty()
+  @IsPositive()
+  @Transform(({ value }) => +value)
+  @ApiProperty({
+    type: 'number',
+    nullable: false,
+    required: true,
+  })
+  roleId: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  @IsPositive()
+  @Transform(({ value }) => +value)
+  @ApiProperty({
+    type: 'number',
+    nullable: false,
+    required: true,
+  })
+  userId: number;
 }
