@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Post } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Post } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiTags } from '@nestjs/swagger';
 import { Services } from '../../../common/enums/services.enum';
@@ -8,8 +8,9 @@ import { lastValueFrom, timeout } from 'rxjs';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
 import { staticRoles } from '../../../common/constants/permissions.constant';
-import { AuthDecorator } from 'src/common/decorators/auth.decorator';
-import { SkipAuth } from 'src/common/decorators/skip-auth.decorator';
+import { AuthDecorator } from '../../../common/decorators/auth.decorator';
+import { SkipAuth } from '../../../common/decorators/skip-auth.decorator';
+import { CreateRoleDto } from '../../../common/dtos/user-service/role.dto';
 
 @Controller('role')
 @ApiTags('role')
@@ -32,10 +33,23 @@ export class RoleController {
       return handleServiceResponse(result);
     } catch (error) {
       console.log(error);
-      handleError(error, `Failed to sync static roles`, Services.USER);
+      handleError(error, 'Failed to sync static roles', Services.USER);
     }
   }
 
   @Post()
-  async create() {}
+  @SkipAuth()
+  async create(@Body() createRoleDto: CreateRoleDto) {
+    try {
+      await checkConnection(Services.USER, this.userServiceClient);
+
+      const result: ServiceResponse = await lastValueFrom(
+        this.userServiceClient.send(RolePatterns.CreateRole, createRoleDto).pipe(timeout(this.timeout)),
+      );
+
+      return handleServiceResponse(result);
+    } catch (error) {
+      handleError(error, 'Failed to create role', Services.USER);
+    }
+  }
 }
