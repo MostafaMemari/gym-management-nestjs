@@ -54,6 +54,12 @@ export enum NotificationSortBy {
   IsEdited = 'isEdited',
 }
 
+export enum RoleSortBy {
+  CreatedAt = 'createdAt',
+  UpdatedAt = 'updatedAt',
+  Name = 'name',
+}
+
 export enum NotificationType {
   PUSH = 'PUSH',
   SMS = 'SMS',
