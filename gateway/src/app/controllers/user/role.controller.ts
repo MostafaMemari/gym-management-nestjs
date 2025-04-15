@@ -10,7 +10,14 @@ import { handleError, handleServiceResponse } from '../../../common/utils/handle
 import { staticRoles } from '../../../common/constants/permissions.constant';
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { SkipAuth } from '../../../common/decorators/skip-auth.decorator';
-import { AssignPermissionDto, AssignRoleDto, CreateRoleDto, QueryPermissionDto, QueryRolesDto } from '../../../common/dtos/user-service/role.dto';
+import {
+  AssignPermissionDto,
+  AssignRoleDto,
+  CreateRoleDto,
+  QueryPermissionDto,
+  QueryRolesDto,
+  UpdateRoleDto,
+} from '../../../common/dtos/user-service/role.dto';
 import { SwaggerConsumes } from 'src/common/enums/swagger-consumes.enum';
 
 @Controller('role')
@@ -144,6 +151,22 @@ export class RoleController {
       return handleServiceResponse(result);
     } catch (error) {
       handleError(error, 'Failed to assign role to user', Services.USER);
+    }
+  }
+
+  @Put(':id')
+  @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
+  async update(@Param('id', ParseIntPipe) id: number, @Body() updateRoleDto: UpdateRoleDto) {
+    try {
+      await checkConnection(Services.USER, this.userServiceClient);
+
+      const result: ServiceResponse = await lastValueFrom(
+        this.userServiceClient.send(RolePatterns.UpdateRole, { roleId: id, ...updateRoleDto }).pipe(timeout(this.timeout)),
+      );
+
+      return handleServiceResponse(result);
+    } catch (error) {
+      handleError(error, 'Failed to update role', Services.USER);
     }
   }
 
