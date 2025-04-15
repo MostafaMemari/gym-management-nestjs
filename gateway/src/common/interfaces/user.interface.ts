@@ -1,5 +1,5 @@
 import { DefaultRole } from '../constants/permissions.constant';
-import { SignupDto } from '../dtos/auth-service/auth.dto';
+import { SignupDto } from '../dtos/auth.dto';
 
 interface IRole {
   name: DefaultRole;

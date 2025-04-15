@@ -10,7 +10,3 @@ export enum AuthPatterns {
   ForgetPassword = 'forget_password',
   ResetPassword = 'reset_password',
 }
-
-export enum RbacPatterns {
-  AssignRole = 'assign_role',
-}

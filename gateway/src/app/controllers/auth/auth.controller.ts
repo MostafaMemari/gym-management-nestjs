@@ -15,7 +15,7 @@ import {
   SignoutDto,
   SignupDto,
   VerifyOtpDto,
-} from '../../../common/dtos/auth-service/auth.dto';
+} from '../../../common/dtos/auth.dto';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';

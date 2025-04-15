@@ -12,7 +12,6 @@ import { UserController } from './controllers/user/user.controller';
 import { StudentController } from './controllers/club/student.controller';
 import { CoachController } from './controllers/club/coach.controller';
 import { GymController } from './controllers/club/gym.controller';
-import { RbacController } from './controllers/auth/rbac.controller';
 import { NotificationController } from './controllers/notification.controller';
 import { BeltController } from './controllers/club/belt.controller';
 import { AgeCategoryController } from './controllers/club/age-category.controller';
@@ -133,7 +132,6 @@ import { RoleController } from './controllers/user/role.controller';
   ],
   controllers: [
     AuthController,
-    RbacController,
     UserController,
     RoleController,
     WalletController,

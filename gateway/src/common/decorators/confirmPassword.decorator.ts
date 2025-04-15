@@ -1,5 +1,5 @@
 import { registerDecorator, ValidationArguments } from 'class-validator';
-import { SignupDto } from '../dtos/auth-service/auth.dto';
+import { SignupDto } from '../dtos/auth.dto';
 
 interface ValidateArguments extends ValidationArguments {
   object: SignupDto;
