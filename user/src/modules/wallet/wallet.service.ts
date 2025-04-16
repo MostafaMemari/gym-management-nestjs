@@ -17,11 +17,13 @@ import { lastValueFrom, timeout } from 'rxjs';
 import { ClubPatterns } from '../../common/enums/club.events';
 import { NotificationPatterns } from '../../common/enums/notification.events';
 import { UserRepository } from '../user/user.repository';
-import { ManualCredit, Prisma, Role, Wallet, WalletDeduction, WalletStatus } from '@prisma/client';
+import { ManualCredit, Prisma, Wallet, WalletDeduction, WalletStatus } from '@prisma/client';
 import { CacheKeys } from '../../common/enums/cache.enum';
 import { CacheService } from '../cache/cache.service';
 import { pagination } from '../../common/utils/pagination.utils';
 import { sortObject } from '../../common/utils/functions.utils';
+import { DefaultRole } from '../../common/enums/shared.enum';
+import { RoleRepository } from '../role/role.repository';
 
 @Injectable()
 export class WalletService {
@@ -36,6 +38,7 @@ export class WalletService {
     @Inject(Services.CLUB) private readonly clubServiceClient: ClientProxy,
     @Inject(Services.NOTIFICATION) private readonly notificationServiceClient: ClientProxy,
     private readonly cache: CacheService,
+    private readonly roleRepository: RoleRepository,
   ) {}
 
   async findAll({ take, page, ...walletFilters }: IWalletsFilter): Promise<ServiceResponse> {
@@ -389,8 +392,6 @@ export class WalletService {
         return 0;
       }
 
-      //TODO: Remove make student count
-      result.data.count = 300;
       return result?.data?.count || 0;
     } catch (error) {
       this.logger.error(`Failed to fetch student count for user ${userId}: ${error.message}`);
@@ -431,11 +432,10 @@ export class WalletService {
     }
   }
 
-  //TODO: Uncomment this code
   private async notifySuperAdmin(message: string): Promise<void> {
-    // const superAdmin = await this.userRepository.findOneByRole(Role.SUPER_ADMIN);
-    // if (superAdmin) {
-    //   await this.sendNotification(superAdmin.id, message, 'PUSH');
-    // }
+    const superAdmin = await this.roleRepository.findOne({ name: DefaultRole.SUPER_ADMIN });
+    if (superAdmin) {
+      await this.sendNotification(superAdmin.id, message, 'PUSH');
+    }
   }
 }
