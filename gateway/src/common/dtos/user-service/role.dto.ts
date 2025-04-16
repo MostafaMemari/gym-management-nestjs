@@ -203,17 +203,7 @@ export class AssignRoleDto {
   userId: number;
 }
 
-export class UpdateRoleDto {
-  @IsString()
-  @IsNotEmpty()
-  @IsOptional()
-  @ApiProperty({
-    type: 'string',
-    nullable: true,
-    required: false,
-  })
-  name: string;
-}
+export class UpdateRoleDto extends CreateRoleDto {}
 
 export class UnassignRoleDto extends AssignRoleDto {}
 

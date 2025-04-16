@@ -24,6 +24,7 @@ import { SwaggerConsumes } from 'src/common/enums/swagger-consumes.enum';
 
 @Controller('role')
 @ApiTags('role')
+@AuthDecorator()
 export class RoleController {
   private readonly timeout: number = 5000;
 
