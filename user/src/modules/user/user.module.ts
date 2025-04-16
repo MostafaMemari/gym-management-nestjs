@@ -10,6 +10,7 @@ import { WalletModule } from '../wallet/wallet.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { Services } from '../../common/enums/services.enum';
 import { RoleModule } from '../role/role.module';
+import { RoleRepository } from '../role/role.repository';
 
 @Module({
   imports: [
@@ -38,7 +39,7 @@ import { RoleModule } from '../role/role.module';
     ]),
   ],
   controllers: [UserController],
-  providers: [UserService, UserRepository],
+  providers: [UserService, UserRepository, RoleRepository],
   exports: [ClientsModule],
 })
 export class UserModule {}

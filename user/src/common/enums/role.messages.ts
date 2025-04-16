@@ -16,4 +16,5 @@ export enum RoleMessages {
   CannotUpdateDefaultRole = 'You cannot update default role.',
   NotFoundPermissionInRole = 'Permission not found in role.',
   NotFoundRoleInUser = 'Role not found in user.',
+  NotSyncedRoles = 'Please synchronize the roles so that you can continue.',
 }

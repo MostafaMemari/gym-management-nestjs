@@ -13,7 +13,7 @@ export class UserRepository {
   }
 
   findById(id: number, args: Prisma.UserFindFirstArgs = {}): Promise<User | null> {
-    return this.prisma.user.findFirst({ where: { id }, ...args });
+    return this.prisma.user.findFirst({ where: { id }, ...args, include: { roles: { include: { permissions: true } } } });
   }
 
   findOne(args: Prisma.UserFindFirstArgs): Promise<User | null> {
@@ -25,11 +25,11 @@ export class UserRepository {
   }
 
   update(id: number, args: Omit<Prisma.UserUpdateArgs, 'where'>): Promise<User> {
-    return this.prisma.user.update({ where: { id }, ...args });
+    return this.prisma.user.update({ where: { id }, ...args, include: { roles: { include: { permissions: true } } } });
   }
 
   delete(id: number, args: Omit<Prisma.UserDeleteArgs, 'where'> = {}): Promise<User | null> {
-    return this.prisma.user.delete({ where: { id }, ...args });
+    return this.prisma.user.delete({ where: { id }, ...args, include: { roles: { include: { permissions: true } } } });
   }
 
   async isExistingUser(userDto: Prisma.UserCreateInput): Promise<User | boolean> {
@@ -44,6 +44,7 @@ export class UserRepository {
           },
         ],
       },
+      include: { roles: { include: { permissions: true } } },
     });
 
     if (user) return user;
@@ -56,7 +57,7 @@ export class UserRepository {
   }
 
   findOneByUsername(username: string, args: Prisma.UserFindFirstArgs = {}): Promise<User | null> {
-    return this.prisma.user.findFirst({ where: { username }, ...args });
+    return this.prisma.user.findFirst({ where: { username }, ...args, include: { roles: { include: { permissions: true } } } });
   }
 
   findOneByIdentifier(identifier: string, args: Prisma.UserFindFirstArgs = {}): Promise<User | null> {
@@ -72,11 +73,12 @@ export class UserRepository {
         ],
       },
       ...args,
+      include: { roles: { include: { permissions: true } } },
     });
   }
 
   async findByIdAndThrow(userId: number): Promise<User> {
-    const user = await this.prisma.user.findFirst({ where: { id: userId } });
+    const user = await this.prisma.user.findFirst({ where: { id: userId }, include: { roles: { include: { permissions: true } } } });
 
     if (!user) {
       throw new NotFoundException(UserMessages.NotFoundUser);
@@ -86,7 +88,10 @@ export class UserRepository {
   }
 
   async findByArgs(data: IGetUserByArgs = {}): Promise<User> {
-    return this.prisma.user.findFirst({ where: { OR: [{ username: data.username }, { mobile: data.mobile }] } });
+    return this.prisma.user.findFirst({
+      where: { OR: [{ username: data.username }, { mobile: data.mobile }] },
+      include: { roles: { include: { permissions: true } } },
+    });
   }
 
   deleteMany(ids: number[]): Promise<Prisma.BatchPayload> {

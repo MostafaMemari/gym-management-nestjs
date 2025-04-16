@@ -1,5 +1,5 @@
-import { ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, User } from '@prisma/client';
+import { BadRequestException, ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma, Role, User } from '@prisma/client';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { UserMessages } from '../../common/enums/user.messages';
 import { IGetUserByArgs, ISearchUser, IUpdateUser, IUsersFilter } from '../../common/interfaces/user.interface';
@@ -10,6 +10,9 @@ import { CacheService } from '../cache/cache.service';
 import { CacheKeys } from '../../common/enums/cache.enum';
 import { ResponseUtil } from '../../common/utils/response.utils';
 import { sortObject } from '../../common/utils/functions.utils';
+import { RoleRepository } from '../role/role.repository';
+import { DefaultRole } from '../../common/enums/shared.enum';
+import { RoleMessages } from '../../common/enums/role.messages';
 
 @Injectable()
 export class UserService {
@@ -17,6 +20,7 @@ export class UserService {
 
   constructor(
     private readonly userRepository: UserRepository,
+    private readonly roleRepository: RoleRepository,
     private readonly cache: CacheService,
   ) {}
 
@@ -28,8 +32,19 @@ export class UserService {
         throw new ConflictException(UserMessages.AlreadyExistsUser);
       }
 
+      const countUsers = await this.userRepository.count();
+      let role: null | Role = null;
+
+      if (countUsers == 0) {
+        role = await this.roleRepository.findOne({ name: DefaultRole.SUPER_ADMIN });
+      } else {
+        role = await this.roleRepository.findOne({ name: DefaultRole.STUDENT });
+      }
+
+      if (!role) throw new BadRequestException(RoleMessages.NotSyncedRoles);
+
       const user = await this.userRepository.create({
-        data: userDto,
+        data: { ...userDto, roles: { connect: role } },
         omit: { password: true },
       });
 
