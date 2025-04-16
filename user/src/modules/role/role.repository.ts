@@ -31,6 +31,10 @@ export class RoleRepository {
     return this.prisma.role.upsert(args);
   }
 
+  createPermission(args: Prisma.PermissionCreateInput): Promise<Permission> {
+    return this.prisma.permission.create({ data: args });
+  }
+
   findOnePermission(
     args: Prisma.PermissionWhereInput,
     additionalArgs: Omit<Prisma.PermissionFindFirstArgs, `where`> = {},

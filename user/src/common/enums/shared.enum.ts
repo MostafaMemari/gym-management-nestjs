@@ -3,4 +3,5 @@ export enum DefaultRole {
   ADMIN_CLUB = 'ADMIN_CLUB',
   COACH = 'COACH',
   STUDENT = 'STUDENT',
+  NONE_ROLE = 'NONE_ROLE',
 }
