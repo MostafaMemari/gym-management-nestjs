@@ -12,6 +12,7 @@ import { GetUser } from '../../../common/decorators/get-user.decorator';
 import { QueryUsersDto, UpdateUserDto } from '../../../common/dtos/user-service/user.dto';
 import { User } from '../../../common/interfaces/user.interface';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
+import { SkipPermission } from 'src/common/decorators/skip-permission.decorator';
 
 @Controller('user')
 @ApiTags('User')
@@ -33,11 +34,13 @@ export class UserController {
   }
 
   @Get('profile')
+  @SkipPermission()
   getProfile(@GetUser() user: User) {
     return handleServiceResponse({ data: { ...user }, error: false, message: '', status: HttpStatus.OK });
   }
 
   @Put('profile')
+  @SkipPermission()
   @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
   async updateProfile(@Body() updateUserDto: UpdateUserDto, @GetUser() user: User) {
     try {

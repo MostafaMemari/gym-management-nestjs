@@ -6,15 +6,17 @@ import { match } from 'path-to-regexp';
 import { User } from '../interfaces/user.interface';
 import { Reflector } from '@nestjs/core';
 import { SKIP_AUTH } from '../decorators/skip-auth.decorator';
+import { SKIP_PERMISSION } from '../decorators/skip-permission.decorator';
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
   canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
     try {
-      const isSkipped = this.reflector.get<boolean>(SKIP_AUTH, context.getHandler());
+      const isSkippedAuth = this.reflector.get<boolean>(SKIP_AUTH, context.getHandler());
+      const isSkippedPermission = this.reflector.get<boolean>(SKIP_PERMISSION, context.getHandler());
 
-      if (isSkipped) return true;
+      if (isSkippedAuth || isSkippedPermission) return true;
 
       const req: Request = context.switchToHttp().getRequest();
       const user = req.user as User;
