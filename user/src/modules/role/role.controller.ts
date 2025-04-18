@@ -24,8 +24,8 @@ export class RoleController {
   }
 
   @MessagePattern(RolePatterns.SyncStaticRoles)
-  syncStaticPermissions(@Payload() data: IStaticRoles) {
-    return this.roleService.syncStaticPermissions(data);
+  syncStaticRoles(@Payload() data: IStaticRoles) {
+    return this.roleService.syncStaticRoles(data);
   }
 
   @MessagePattern(RolePatterns.GetOneRole)
