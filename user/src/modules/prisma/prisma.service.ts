@@ -1,5 +1,5 @@
 import { forwardRef, HttpStatus, Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { PrismaClient, Role } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { CacheService } from '../cache/cache.service';
 import { CacheKeys } from '../../common/enums/cache.enum';
 import * as path from 'path';
@@ -10,6 +10,7 @@ import { promisify } from 'util';
 import { RpcException } from '@nestjs/microservices';
 import { ResponseUtil } from '../../common/utils/response.utils';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
+import { DefaultRole } from '../../common/enums/shared.enum';
 
 const execPromise = promisify(exec);
 
@@ -45,15 +46,15 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         const beforeUser = await this.user.findFirst({ where: { id: params.args.where.id } });
         const wallet = await this.wallet.findFirst({ where: { userId: params.args.where.id } });
 
-        const result = await next(params);
+        const user = await next(params);
 
-        if (wallet) return result;
+        if (wallet) return user;
 
-        // if (beforeUser && result.role == Role.ADMIN_CLUB) {
-        //   await this.wallet.create({ data: { userId: beforeUser.id, lastWithdrawalDate: new Date() } });
-        // }
+        if (beforeUser && user.roles.some((r) => r.name == DefaultRole.ADMIN_CLUB)) {
+          await this.wallet.create({ data: { userId: beforeUser.id, lastWithdrawalDate: new Date() } });
+        }
 
-        return result;
+        return user;
       }
 
       return next(params);
