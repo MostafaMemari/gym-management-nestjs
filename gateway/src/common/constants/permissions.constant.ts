@@ -11,8 +11,8 @@ export enum DefaultRole {
   SUPER_ADMIN = 'SUPER_ADMIN',
   ADMIN_CLUB = 'ADMIN_CLUB',
   COACH = 'COACH',
+  GUEST = 'GUEST',
   STUDENT = 'STUDENT',
-  NONE_ROLE = 'NONE_ROLE',
 }
 
 export enum ApiRoutes {
@@ -30,6 +30,15 @@ export enum AllowHttpMethods {
   PATCH = 'PATCH',
   DELETE = 'DELETE',
 }
+
+const getAllDefaultRoles = (): DefaultRole[] => {
+  const roles = [];
+  for (const role in DefaultRole) {
+    roles.push(role);
+  }
+
+  return roles;
+};
 
 const PERMISSION_GROUP: PermissionGroup[] = [
   {
@@ -63,12 +72,12 @@ const PERMISSION_GROUP: PermissionGroup[] = [
       {
         endpoint: '/user/profile',
         method: AllowHttpMethods.GET,
-        roles: [DefaultRole.NONE_ROLE],
+        roles: getAllDefaultRoles(),
       },
       {
         endpoint: '/user/profile',
         method: AllowHttpMethods.PUT,
-        roles: [DefaultRole.NONE_ROLE],
+        roles: getAllDefaultRoles(),
       },
       {
         endpoint: '/user/:id',
@@ -83,7 +92,7 @@ const PERMISSION_GROUP: PermissionGroup[] = [
       {
         method: AllowHttpMethods.GET,
         endpoint: '/role/sync',
-        roles: [DefaultRole.NONE_ROLE],
+        roles: getAllDefaultRoles(),
       },
       {
         method: AllowHttpMethods.POST,
