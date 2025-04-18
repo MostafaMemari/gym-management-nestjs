@@ -38,7 +38,7 @@ export class UserService {
       if (countUsers == 0) {
         role = await this.roleRepository.findOne({ name: DefaultRole.SUPER_ADMIN });
       } else {
-        role = await this.roleRepository.findOne({ name: DefaultRole.STUDENT });
+        role = await this.roleRepository.findOne({ name: DefaultRole.GUEST });
       }
 
       if (!role) throw new BadRequestException(RoleMessages.NotSyncedRoles);
@@ -111,7 +111,7 @@ export class UserService {
 
       const filters: Partial<Prisma.UserWhereInput> = {};
 
-      if (lastPasswordChange) filters.lastPasswordChange = lastPasswordChange;
+      if (lastPasswordChange) filters.lastPasswordChange = new Date(lastPasswordChange);
       if (mobile) filters.mobile = { contains: mobile, mode: 'insensitive' };
       if (username) filters.username = { contains: username, mode: 'insensitive' };
       if (startDate || endDate) {

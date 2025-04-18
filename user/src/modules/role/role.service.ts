@@ -47,18 +47,9 @@ export class RoleService {
     }
   }
 
-  async syncStaticPermissions({ staticRoles }: IStaticRoles) {
+  async syncStaticRoles({ staticRoles }: IStaticRoles) {
     try {
       for (const { role, permissions } of staticRoles) {
-        if (DefaultRole[role] == DefaultRole.NONE_ROLE) {
-          permissions.forEach(async (p) => {
-            if (await this.roleRepository.findOnePermission({ ...p })) return;
-            await this.roleRepository.createPermission({ ...p });
-          });
-
-          continue;
-        }
-
         await this.roleRepository.upsert({
           create: { name: role, permissions: { connectOrCreate: permissions.map((p) => ({ create: p, where: { method_endpoint: p } })) } },
           update: { name: role, permissions: { connectOrCreate: permissions.map((p) => ({ create: p, where: { method_endpoint: p } })) } },
