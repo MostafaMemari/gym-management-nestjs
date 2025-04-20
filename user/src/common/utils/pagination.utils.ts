@@ -11,7 +11,9 @@ interface OutputPagination<T> {
   };
 }
 
-export const pagination = <T>(paginationParams: IPagination, data: T[]): OutputPagination<T> => {
+type Pagination = <T extends object>(paginationParams: IPagination, data: T[]) => OutputPagination<T>;
+
+export const pagination: Pagination = (paginationParams, data) => {
   const { take = 20, page = 1 } = paginationParams;
 
   const skip = (page - 1) * take;
