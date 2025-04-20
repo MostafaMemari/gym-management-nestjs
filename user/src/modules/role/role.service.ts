@@ -96,7 +96,7 @@ export class RoleService {
       const roles = await this.roleRepository.findAll({
         where: filters,
         orderBy: { [sortBy || 'createdAt']: sortDirection || 'desc' },
-        include: { permissions: includePermissions, users: includeUsers },
+        include: { permissions: includePermissions, users: includeUsers ? { omit: { password: true } } : false },
       });
 
       await this.cacheService.set(cacheKey, roles, this.CACHE_EXPIRE_TIME);
