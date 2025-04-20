@@ -91,3 +91,11 @@ export enum BackupPatterns {
   CreateBackup = 'create_backup',
   RestoreBackup = 'restore_backup',
 }
+
+export enum RequestHttpMethod {
+  GET = 'GET',
+  POST = 'POST',
+  PUT = 'PUT',
+  PATCH = 'PATCH',
+  DELETE = 'DELETE',
+}

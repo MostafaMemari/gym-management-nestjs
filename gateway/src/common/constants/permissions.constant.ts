@@ -1,3 +1,5 @@
+import { RequestHttpMethod } from '../enums/shared.enum';
+
 type PermissionGroup = {
   name: ApiRoutes;
   permissions: {
@@ -23,18 +25,10 @@ export enum ApiRoutes {
   ROLE = 'ROLE',
 }
 
-export enum AllowHttpMethods {
-  GET = 'GET',
-  POST = 'POST',
-  PUT = 'PUT',
-  PATCH = 'PATCH',
-  DELETE = 'DELETE',
-}
-
 const getAllDefaultRoles = (): DefaultRole[] => {
   const roles = [];
   for (const role in DefaultRole) {
-    roles.push(role);
+    roles.push(DefaultRole[role]);
   }
 
   return roles;
@@ -44,44 +38,44 @@ const PERMISSION_GROUP: PermissionGroup[] = [
   {
     name: ApiRoutes.CLUB,
     permissions: [
-      { endpoint: '/clubs', method: AllowHttpMethods.GET, roles: [DefaultRole.ADMIN_CLUB, DefaultRole.SUPER_ADMIN] },
-      { endpoint: '/clubs/:id', method: AllowHttpMethods.PUT, roles: [DefaultRole.ADMIN_CLUB, DefaultRole.SUPER_ADMIN] },
+      { endpoint: '/clubs', method: RequestHttpMethod.GET, roles: [DefaultRole.ADMIN_CLUB, DefaultRole.SUPER_ADMIN] },
+      { endpoint: '/clubs/:id', method: RequestHttpMethod.PUT, roles: [DefaultRole.ADMIN_CLUB, DefaultRole.SUPER_ADMIN] },
     ],
   },
   {
     name: ApiRoutes.STUDENT,
-    permissions: [{ endpoint: '/students', method: AllowHttpMethods.GET, roles: [DefaultRole.STUDENT, DefaultRole.SUPER_ADMIN] }],
+    permissions: [{ endpoint: '/students', method: RequestHttpMethod.GET, roles: [DefaultRole.STUDENT, DefaultRole.SUPER_ADMIN] }],
   },
   {
     name: ApiRoutes.COACH,
-    permissions: [{ endpoint: '/coaches', method: AllowHttpMethods.GET, roles: [DefaultRole.COACH, DefaultRole.SUPER_ADMIN] }],
+    permissions: [{ endpoint: '/coaches', method: RequestHttpMethod.GET, roles: [DefaultRole.COACH, DefaultRole.SUPER_ADMIN] }],
   },
   {
     name: ApiRoutes.USER,
     permissions: [
       {
         endpoint: '/user',
-        method: AllowHttpMethods.GET,
+        method: RequestHttpMethod.GET,
         roles: [DefaultRole.SUPER_ADMIN],
       },
       {
         endpoint: '/user:id',
-        method: AllowHttpMethods.GET,
+        method: RequestHttpMethod.GET,
         roles: [DefaultRole.SUPER_ADMIN],
       },
       {
         endpoint: '/user/profile',
-        method: AllowHttpMethods.GET,
+        method: RequestHttpMethod.GET,
         roles: getAllDefaultRoles(),
       },
       {
         endpoint: '/user/profile',
-        method: AllowHttpMethods.PUT,
+        method: RequestHttpMethod.PUT,
         roles: getAllDefaultRoles(),
       },
       {
         endpoint: '/user/:id',
-        method: AllowHttpMethods.DELETE,
+        method: RequestHttpMethod.DELETE,
         roles: [DefaultRole.SUPER_ADMIN],
       },
     ],
@@ -90,62 +84,62 @@ const PERMISSION_GROUP: PermissionGroup[] = [
     name: ApiRoutes.ROLE,
     permissions: [
       {
-        method: AllowHttpMethods.GET,
+        method: RequestHttpMethod.GET,
         endpoint: '/role/sync',
         roles: getAllDefaultRoles(),
       },
       {
-        method: AllowHttpMethods.POST,
+        method: RequestHttpMethod.POST,
         endpoint: '/role',
         roles: [DefaultRole.SUPER_ADMIN],
       },
       {
-        method: AllowHttpMethods.GET,
+        method: RequestHttpMethod.GET,
         endpoint: '/role',
         roles: [DefaultRole.SUPER_ADMIN],
       },
       {
-        method: AllowHttpMethods.GET,
+        method: RequestHttpMethod.GET,
         endpoint: '/role/permissions',
         roles: [DefaultRole.SUPER_ADMIN],
       },
       {
-        method: AllowHttpMethods.GET,
+        method: RequestHttpMethod.GET,
         endpoint: '/role/:id',
         roles: [DefaultRole.SUPER_ADMIN],
       },
       {
-        method: AllowHttpMethods.PUT,
+        method: RequestHttpMethod.PUT,
         endpoint: '/role/:id',
         roles: [DefaultRole.SUPER_ADMIN],
       },
       {
-        method: AllowHttpMethods.DELETE,
+        method: RequestHttpMethod.DELETE,
         endpoint: '/role/:id',
         roles: [DefaultRole.SUPER_ADMIN],
       },
       {
-        method: AllowHttpMethods.GET,
+        method: RequestHttpMethod.GET,
         endpoint: '/role/permission/:id',
         roles: [DefaultRole.SUPER_ADMIN],
       },
       {
-        method: AllowHttpMethods.PUT,
+        method: RequestHttpMethod.PUT,
         endpoint: '/role/assign-permission',
         roles: [DefaultRole.SUPER_ADMIN],
       },
       {
-        method: AllowHttpMethods.PUT,
+        method: RequestHttpMethod.PUT,
         endpoint: '/role/assign-role',
         roles: [DefaultRole.SUPER_ADMIN],
       },
       {
-        method: AllowHttpMethods.PUT,
+        method: RequestHttpMethod.PUT,
         endpoint: '/role/unassign-role',
         roles: [DefaultRole.SUPER_ADMIN],
       },
       {
-        method: AllowHttpMethods.PUT,
+        method: RequestHttpMethod.PUT,
         endpoint: '/role/unassign-permission',
         roles: [DefaultRole.SUPER_ADMIN],
       },
