@@ -46,6 +46,7 @@ export class UserService {
       const user = await this.userRepository.create({
         data: { ...userDto, roles: { connect: role } },
         omit: { password: true },
+        include: { roles: true },
       });
 
       return ResponseUtil.success({ user }, UserMessages.CreatedUser, HttpStatus.CREATED);
@@ -67,6 +68,7 @@ export class UserService {
       const newUser = await this.userRepository.create({
         data: { username },
         omit: { password: true },
+        include: { roles: true },
       });
 
       return ResponseUtil.success({ user: newUser }, UserMessages.CreatedUser, HttpStatus.CREATED);
@@ -88,6 +90,7 @@ export class UserService {
       const newUser = await this.userRepository.create({
         data: { username },
         omit: { password: true },
+        include: { roles: true },
       });
 
       return ResponseUtil.success({ user: newUser }, UserMessages.CreatedUser, HttpStatus.CREATED);
@@ -99,7 +102,7 @@ export class UserService {
   async findAll({ page, take, ...usersFilterDto }: IUsersFilter): Promise<ServiceResponse> {
     try {
       const paginationDto = { take, page };
-      const { endDate, lastPasswordChange, mobile, startDate, username, sortBy, sortDirection } = usersFilterDto;
+      const { endDate, lastPasswordChange, mobile, startDate, username, sortBy, sortDirection, includeRoles } = usersFilterDto;
 
       const sortedDto = sortObject(usersFilterDto);
 
@@ -124,6 +127,7 @@ export class UserService {
         where: filters,
         omit: { password: true },
         orderBy: { [sortBy || 'createdAt']: sortDirection || 'desc' },
+        include: { roles: includeRoles },
       });
 
       await this.cache.set(cacheKey, users, this.REDIS_EXPIRE_TIME);

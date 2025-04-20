@@ -39,6 +39,7 @@ export interface IUsersFilter extends IPagination {
   username?: string;
   mobile?: string;
   lastPasswordChange?: Date;
+  includeRoles?: boolean;
   startDate?: Date;
   endDate?: Date;
   sortBy?: 'username' | 'createdAt' | 'mobile' | 'updateAt';
