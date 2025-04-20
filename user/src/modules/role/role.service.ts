@@ -21,7 +21,7 @@ import { pagination } from '../../common/utils/pagination.utils';
 import { Permission, Prisma, Role } from '@prisma/client';
 import { UserRepository } from '../user/user.repository';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
-import { DefaultRole } from 'src/common/enums/shared.enum';
+import { DefaultRole } from '../../common/enums/shared.enum';
 
 @Injectable()
 export class RoleService {
@@ -96,7 +96,7 @@ export class RoleService {
       const roles = await this.roleRepository.findAll({
         where: filters,
         orderBy: { [sortBy || 'createdAt']: sortDirection || 'desc' },
-        include: { permissions: includePermissions, users: includeUsers },
+        include: { permissions: includePermissions, users: includeUsers ? { omit: { password: true } } : false },
       });
 
       await this.cacheService.set(cacheKey, roles, this.CACHE_EXPIRE_TIME);
