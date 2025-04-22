@@ -139,7 +139,7 @@ export class AuthService {
       await this.enforceOtpRequestLimit(`${OtpKeys.RequestsOtp}${mobile}`);
       await this.validateOtp(`${OtpKeys.SignupOtp}${mobile}`, otp);
       const userData = await this.getPendingUser(mobile);
-      const result = await this.createUser(userData);
+      const result = await this.createUser({ ...userData, isVerifiedMobile: true });
 
       const tokens = await this.generateTokens(result.data?.user);
       await this.clearOtpData(mobile);
@@ -316,7 +316,7 @@ export class AuthService {
     ]);
   }
 
-  private async createUser(userData: ISignup): Promise<ServiceResponse> {
+  private async createUser(userData: ISignup & { isVerifiedMobile?: boolean }): Promise<ServiceResponse> {
     return await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.CreateUser, userData).pipe(timeout(this.TIMEOUT_MS)));
   }
 
