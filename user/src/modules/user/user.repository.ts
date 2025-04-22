@@ -13,7 +13,7 @@ export class UserRepository {
   }
 
   findById(id: number, args: Prisma.UserFindFirstArgs = {}): Promise<User | null> {
-    return this.prisma.user.findFirst({ where: { id }, ...args, include: { roles: true } });
+    return this.prisma.user.findFirst({ where: { id }, ...args, include: { roles: { include: { permissions: true } } } });
   }
 
   findOne(args: Prisma.UserFindFirstArgs): Promise<User | null> {

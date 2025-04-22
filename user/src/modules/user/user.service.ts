@@ -66,7 +66,7 @@ export class UserService {
       }
 
       const newUser = await this.userRepository.create({
-        data: { username },
+        data: { username, isVerifiedMobile: true },
         omit: { password: true },
         include: { roles: true },
       });
@@ -88,7 +88,7 @@ export class UserService {
       }
 
       const newUser = await this.userRepository.create({
-        data: { username },
+        data: { username, isVerifiedMobile: true },
         omit: { password: true },
         include: { roles: true },
       });

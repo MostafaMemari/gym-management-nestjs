@@ -4,6 +4,8 @@ export interface ICreateUser {
   password?: string;
 
   mobile?: string;
+
+  isVerifiedMobile?: boolean;
 }
 
 export interface ICreateUserStudent {
