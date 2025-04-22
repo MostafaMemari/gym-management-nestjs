@@ -12,13 +12,16 @@ import { GetUser } from '../../../common/decorators/get-user.decorator';
 import { QueryUsersDto, UpdateUserDto } from '../../../common/dtos/user-service/user.dto';
 import { User } from '../../../common/interfaces/user.interface';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
-import { SkipPermission } from 'src/common/decorators/skip-permission.decorator';
+import { SkipPermission } from '../../../common/decorators/skip-permission.decorator';
 
 @Controller('user')
 @ApiTags('User')
 @AuthDecorator()
 export class UserController {
-  constructor(@Inject(Services.USER) private readonly userServiceClient: ClientProxy) {}
+  constructor(
+    @Inject(Services.USER) private readonly userServiceClient: ClientProxy,
+    @Inject(Services.AUTH) private readonly authServiceClient: ClientProxy,
+  ) {}
 
   @Get()
   async getUsers(@Query() usersFilters: QueryUsersDto) {
@@ -45,8 +48,13 @@ export class UserController {
   async updateProfile(@Body() updateUserDto: UpdateUserDto, @GetUser() user: User) {
     try {
       await checkConnection(Services.USER, this.userServiceClient);
+      await checkConnection(Services.AUTH, this.authServiceClient);
 
-      const updateUserData = { ...updateUserDto, userId: user.id };
+      const updateUserData: UpdateUserDto & { isVerifiedMobile?: boolean; userId: number } = { ...updateUserDto, userId: user.id };
+
+      if (updateUserDto.mobile && user.mobile !== updateUserDto.mobile) {
+        updateUserData.isVerifiedMobile = false;
+      }
 
       const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.UpdateUser, updateUserData).pipe(timeout(5000)));
 
