@@ -24,7 +24,7 @@ export class UserController {
   constructor(
     @Inject(Services.USER) private readonly userServiceClient: ClientProxy,
     @Inject(Services.AUTH) private readonly authServiceClient: ClientProxy,
-  ) { }
+  ) {}
 
   @Get()
   async getUsers(@Query() usersFilters: QueryUsersDto) {
@@ -56,9 +56,11 @@ export class UserController {
       const updateUserData: UpdateUserDto & { isVerifiedMobile?: boolean; userId: number } = { ...updateUserDto, userId: user.id };
 
       if (updateUserDto.mobile && user.mobile !== updateUserDto.mobile) {
-        const sendOtpResult: ServiceResponse = await lastValueFrom(this.authServiceClient.send(AuthPatterns.SendOtp, { mobile: updateUserData.mobile }));
-        handleServiceResponse(sendOtpResult)
-        
+        const sendOtpResult: ServiceResponse = await lastValueFrom(
+          this.authServiceClient.send(AuthPatterns.SendOtp, { mobile: updateUserData.mobile }),
+        );
+        handleServiceResponse(sendOtpResult);
+
         updateUserData.isVerifiedMobile = false;
       }
 

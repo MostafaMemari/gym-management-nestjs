@@ -7,7 +7,7 @@ import envConfig from '../configs/env.config';
 import { Services } from '../common/enums/services.enum';
 import { AuthGuard } from '../common/guards/auth.guard';
 
-import { AuthController } from './controllers/auth/auth.controller';
+import { AuthController } from './controllers/auth.controller';
 import { UserController } from './controllers/user/user.controller';
 import { StudentController } from './controllers/club/student.controller';
 import { CoachController } from './controllers/club/coach.controller';

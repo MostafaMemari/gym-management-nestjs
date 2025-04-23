@@ -5,4 +5,5 @@ export enum UserPatterns {
   SearchUser = 'search_user',
   UpdateUser = 'update_user',
   RemoveUser = 'remove_user',
+  VerifyMobile = 'verify_mobile',
 }

@@ -118,7 +118,7 @@ export class RestPasswordDto {
   newPassword: string;
 }
 
-export class VerifyOtpDto {
+export class VerifySignupOtpDto {
   @IsString()
   @IsNotEmpty()
   @ApiProperty({
@@ -161,3 +161,5 @@ export class SigninCoachDto {
   })
   nationalCode: string;
 }
+
+export class VerifyMobileDto extends VerifySignupOtpDto {}
