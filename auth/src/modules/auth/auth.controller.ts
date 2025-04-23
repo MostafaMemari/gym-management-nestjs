@@ -62,4 +62,9 @@ export class AuthController {
   verifyOtp(@Payload() data: IVerifyOtp) {
     return this.authService.verifyOtp(data);
   }
+
+  @MessagePattern(AuthPatterns.SendOtp)
+  sendOtp(@Payload() { mobile }: { mobile: string }) {
+    return this.authService.sendOtp(mobile);
+  }
 }

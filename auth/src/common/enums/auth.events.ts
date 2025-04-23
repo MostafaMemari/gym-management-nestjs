@@ -11,4 +11,5 @@ export enum AuthPatterns {
   RequestNewOtp = 'request_new_otp',
   SigninStudent = 'signin_student',
   SigninCoach = 'signin_coach',
+  SendOtp = 'send_otp',
 }

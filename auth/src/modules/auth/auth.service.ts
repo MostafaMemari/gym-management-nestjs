@@ -124,7 +124,15 @@ export class AuthService {
       const otpCode = this.generateOtp();
       await this.storeOtp(`${OtpKeys.SignupOtp}${signupDto.mobile}`, otpCode);
 
-      await this.sendSms(signupDto.mobile, otpCode);
+      return this.sendOtp(signupDto.mobile, otpCode);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
+  async sendOtp(mobile: string, otpCode: string = this.generateOtp()): Promise<ServiceResponse> {
+    try {
+      await this.sendSms(mobile, otpCode);
 
       return ResponseUtil.success({}, AuthMessages.OtpSentSuccessfully, HttpStatus.OK);
     } catch (error) {
@@ -299,7 +307,7 @@ export class AuthService {
     }
   }
 
-  async sendSms(mobile: string, verifyCode: string): Promise<void | never> {
+  private async sendSms(mobile: string, verifyCode: string): Promise<void | never> {
     const { SMS_API_KEY, SMS_LINE_NUMBER, SMS_TEMPLATE_ID, SMS_NAME } = process.env;
     const sms = new Smsir(SMS_API_KEY, Number(SMS_LINE_NUMBER));
 
