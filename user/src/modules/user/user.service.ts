@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Role, User } from '@prisma/client';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { UserMessages } from '../../common/enums/user.messages';
@@ -276,7 +276,24 @@ export class UserService {
         throw new ConflictException(UserMessages.AlreadyExistsUser);
       }
 
-      const updatedUser = await this.userRepository.update(userId, { data: { ...updateUserData }, omit: { password: true } });
+      const isMobileChanged = mobile !== existingUser.mobile;
+      const HOURS_LIMIT = 24;
+      const timeSinceLastMobileChange = Date.now() - new Date(existingUser.lastMobileChange).getTime();
+
+      //* Allow mobile number change only if 24 hours have passed since the last change
+      if (isMobileChanged && existingUser.lastMobileChange) {
+        if (timeSinceLastMobileChange < HOURS_LIMIT * 60 * 60 * 1000) {
+          throw new ForbiddenException(UserMessages.MobileChangeLimit);
+        }
+      }
+
+      const updatedUser = await this.userRepository.update(userId, {
+        data: {
+          ...updateUserData,
+          lastMobileChange: isMobileChanged ? new Date() : undefined,
+        },
+        omit: { password: true },
+      });
 
       return ResponseUtil.success({ updatedUser }, UserMessages.UpdatedUser, HttpStatus.OK);
     } catch (error) {

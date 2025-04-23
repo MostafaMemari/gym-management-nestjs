@@ -6,4 +6,5 @@ export enum UserMessages {
   RemovedUserSuccess = 'User removed successfully',
   AlreadyAssignedRole = 'This role is already assigned to the user.',
   UpdatedUser = 'User Updated successfully.',
+  MobileChangeLimit = 'You can only change your mobile number once every 24 hours.',
 }
