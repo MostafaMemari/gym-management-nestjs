@@ -6,11 +6,18 @@ import {
   HttpStatus,
   Inject,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { GenerateTokens, IForgetPassword, IResetPassword, ISignin, ISignup, IVerifyOtp } from '../../common/interfaces/auth.interface';
+import {
+  GenerateTokens,
+  IForgetPassword,
+  IResetPassword,
+  ISignin,
+  ISignup,
+  IVerifyOtp,
+  IVerifySignupOtp,
+} from '../../common/interfaces/auth.interface';
 import { Services } from '../../common/enums/services.enum';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { UserPatterns } from '../../common/enums/user.events';
@@ -134,6 +141,9 @@ export class AuthService {
     try {
       await this.sendSms(mobile, otpCode);
 
+      await this.enforceOtpRequestLimit(`${OtpKeys.RequestsOtp}${mobile}`);
+      await this.storeOtp(`${OtpKeys.StoreOtp}${mobile}`, otpCode);
+
       return ResponseUtil.success({}, AuthMessages.OtpSentSuccessfully, HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
@@ -141,6 +151,22 @@ export class AuthService {
   }
 
   async verifyOtp(verifyOtpDto: IVerifyOtp) {
+    try {
+      const { mobile, otp } = verifyOtpDto;
+
+      await this.enforceOtpRequestLimit(`${OtpKeys.RequestsOtp}${mobile}`);
+
+      await this.validateOtp(`${OtpKeys.StoreOtp}${mobile}`, otp);
+
+      await this.clearOtpData(mobile);
+
+      return ResponseUtil.success({}, AuthMessages.VerifiedOtpSuccess, HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
+  async verifySignupOtp(verifyOtpDto: IVerifySignupOtp) {
     try {
       const { mobile, otp } = verifyOtpDto;
 
@@ -310,10 +336,10 @@ export class AuthService {
   private async sendSms(mobile: string, verifyCode: string): Promise<void | never> {
     const { SMS_API_KEY, SMS_LINE_NUMBER, SMS_TEMPLATE_ID, SMS_NAME } = process.env;
     const sms = new Smsir(SMS_API_KEY, Number(SMS_LINE_NUMBER));
+    console.log(mobile, verifyCode);
+    // const result = await sms.SendVerifyCode(mobile, Number(SMS_TEMPLATE_ID), [{ name: SMS_NAME, value: verifyCode }]);
 
-    const result = await sms.SendVerifyCode(mobile, Number(SMS_TEMPLATE_ID), [{ name: SMS_NAME, value: verifyCode }]);
-
-    if (result.data?.status !== 1) throw new InternalServerErrorException(AuthMessages.ProblemSendingSms);
+    // if (result.data?.status !== 1) throw new InternalServerErrorException(AuthMessages.ProblemSendingSms);
   }
 
   private async clearOtpData(mobile: string): Promise<void | never> {

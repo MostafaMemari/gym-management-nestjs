@@ -26,7 +26,9 @@ export interface IResetPassword {
   newPassword: string;
 }
 
-export interface IVerifyOtp {
+export interface IVerifySignupOtp {
   otp: string;
   mobile: string;
 }
+
+export interface IVerifyOtp extends IVerifySignupOtp {}

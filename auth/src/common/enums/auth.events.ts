@@ -7,9 +7,10 @@ export enum AuthPatterns {
   RefreshToken = 'refresh_token',
   ForgetPassword = 'forget_password',
   ResetPassword = 'reset_password',
-  VerifyOtp = 'verify_otp',
+  VerifySignupOtp = 'verify_signup_otp',
   RequestNewOtp = 'request_new_otp',
   SigninStudent = 'signin_student',
   SigninCoach = 'signin_coach',
   SendOtp = 'send_otp',
+  VerifyOtp = 'verify_otp',
 }

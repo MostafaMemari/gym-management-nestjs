@@ -3,4 +3,5 @@ export enum OtpKeys {
   RequestsOtp = 'otp:requests:',
   PendingUser = 'pending_user:',
   ResetPasswordOtp = 'reset:otp:',
+  StoreOtp = 'store:otp:',
 }
