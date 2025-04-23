@@ -9,4 +9,6 @@ export enum AuthPatterns {
   RefreshToken = 'refresh_token',
   ForgetPassword = 'forget_password',
   ResetPassword = 'reset_password',
+  SendOtp = 'send_otp',
+  VerifyOtp = 'verify_otp',
 }

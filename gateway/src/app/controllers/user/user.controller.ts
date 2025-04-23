@@ -13,22 +13,25 @@ import { QueryUsersDto, UpdateUserDto } from '../../../common/dtos/user-service/
 import { User } from '../../../common/interfaces/user.interface';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { SkipPermission } from '../../../common/decorators/skip-permission.decorator';
+import { AuthPatterns } from '../../../common/enums/auth.events';
 
 @Controller('user')
 @ApiTags('User')
 @AuthDecorator()
 export class UserController {
+  private readonly timeout: number = 5000;
+
   constructor(
     @Inject(Services.USER) private readonly userServiceClient: ClientProxy,
     @Inject(Services.AUTH) private readonly authServiceClient: ClientProxy,
-  ) {}
+  ) { }
 
   @Get()
   async getUsers(@Query() usersFilters: QueryUsersDto) {
     try {
       await checkConnection(Services.USER, this.userServiceClient);
 
-      const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.GetUsers, usersFilters).pipe(timeout(5000)));
+      const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.GetUsers, usersFilters).pipe(timeout(this.timeout)));
 
       return handleServiceResponse(data);
     } catch (error) {
@@ -53,12 +56,17 @@ export class UserController {
       const updateUserData: UpdateUserDto & { isVerifiedMobile?: boolean; userId: number } = { ...updateUserDto, userId: user.id };
 
       if (updateUserDto.mobile && user.mobile !== updateUserDto.mobile) {
+        const sendOtpResult: ServiceResponse = await lastValueFrom(this.authServiceClient.send(AuthPatterns.SendOtp, { mobile: updateUserData.mobile }));
+        handleServiceResponse(sendOtpResult)
+        
         updateUserData.isVerifiedMobile = false;
       }
 
-      const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.UpdateUser, updateUserData).pipe(timeout(5000)));
+      const updatedUserResult: ServiceResponse = await lastValueFrom(
+        this.userServiceClient.send(UserPatterns.UpdateUser, updateUserData).pipe(timeout(this.timeout)),
+      );
 
-      return handleServiceResponse(data);
+      return handleServiceResponse(updatedUserResult);
     } catch (error) {
       handleError(error, 'Failed to update profile', 'UserService');
     }
@@ -72,7 +80,9 @@ export class UserController {
 
       if (id == user.id) throw new BadRequestException('You cannot delete your account.');
 
-      const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.RemoveUser, { userId: id }).pipe(timeout(5000)));
+      const data: ServiceResponse = await lastValueFrom(
+        this.userServiceClient.send(UserPatterns.RemoveUser, { userId: id }).pipe(timeout(this.timeout)),
+      );
 
       return handleServiceResponse(data);
     } catch (error) {
@@ -85,7 +95,9 @@ export class UserController {
     try {
       await checkConnection(Services.USER, this.userServiceClient);
 
-      const data: ServiceResponse = await lastValueFrom(this.userServiceClient.send(UserPatterns.GetUserById, { userId: id }).pipe(timeout(5000)));
+      const data: ServiceResponse = await lastValueFrom(
+        this.userServiceClient.send(UserPatterns.GetUserById, { userId: id }).pipe(timeout(this.timeout)),
+      );
 
       return handleServiceResponse(data);
     } catch (error) {
