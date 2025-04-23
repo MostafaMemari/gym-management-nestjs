@@ -29,6 +29,7 @@ export interface IUpdateUser {
   username?: string;
   mobile?: string;
   lastPasswordChange?: Date;
+  isVerifiedMobile?: boolean;
   password?: string;
 }
 
@@ -46,4 +47,8 @@ export interface IUsersFilter extends IPagination {
   endDate?: Date;
   sortBy?: 'username' | 'createdAt' | 'mobile' | 'updateAt';
   sortDirection?: 'asc' | 'desc';
+}
+
+export interface IVerifyMobile {
+  mobile: string;
 }

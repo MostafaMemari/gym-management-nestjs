@@ -7,4 +7,6 @@ export enum UserMessages {
   AlreadyAssignedRole = 'This role is already assigned to the user.',
   UpdatedUser = 'User Updated successfully.',
   MobileChangeLimit = 'You can only change your mobile number once every 24 hours.',
+  VerifiedMobileSuccess = 'Mobile verified successfully.',
+  AlreadyVerifiedMobile = 'Mobile already verified.',
 }

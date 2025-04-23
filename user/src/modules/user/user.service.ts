@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, ForbiddenException, HttpStatus,
 import { Prisma, Role, User } from '@prisma/client';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import { UserMessages } from '../../common/enums/user.messages';
-import { IGetUserByArgs, ISearchUser, IUpdateUser, IUsersFilter } from '../../common/interfaces/user.interface';
+import { IGetUserByArgs, ISearchUser, IUpdateUser, IUsersFilter, IVerifyMobile } from '../../common/interfaces/user.interface';
 import { pagination } from '../../common/utils/pagination.utils';
 import { RpcException } from '@nestjs/microservices';
 import { UserRepository } from './user.repository';
@@ -276,12 +276,14 @@ export class UserService {
         throw new ConflictException(UserMessages.AlreadyExistsUser);
       }
 
-      const isMobileChanged = mobile !== existingUser.mobile;
+      const currentUser = await this.userRepository.findByIdAndThrow(userId);
+
+      const isMobileChanged = mobile !== currentUser.mobile;
       const HOURS_LIMIT = 24;
-      const timeSinceLastMobileChange = Date.now() - new Date(existingUser.lastMobileChange).getTime();
+      const timeSinceLastMobileChange = Date.now() - new Date(currentUser.lastMobileChange).getTime();
 
       //* Allow mobile number change only if 24 hours have passed since the last change
-      if (isMobileChanged && existingUser.lastMobileChange) {
+      if (isMobileChanged && currentUser.lastMobileChange) {
         if (timeSinceLastMobileChange < HOURS_LIMIT * 60 * 60 * 1000) {
           throw new ForbiddenException(UserMessages.MobileChangeLimit);
         }
@@ -310,6 +312,22 @@ export class UserService {
       }
 
       return ResponseUtil.success({ user }, '', HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
+  async verifyMobile({ mobile }: IVerifyMobile) {
+    try {
+      const user = await this.userRepository.findByArgs({ mobile });
+
+      if (!user) throw new NotFoundException(UserMessages.NotFoundUser);
+
+      if (user.isVerifiedMobile) throw new ConflictException(UserMessages.AlreadyVerifiedMobile);
+
+      await this.userRepository.update(user.id, { data: { isVerifiedMobile: true } });
+
+      return ResponseUtil.success({ user }, UserMessages.VerifiedMobileSuccess, HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }

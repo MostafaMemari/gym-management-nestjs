@@ -10,6 +10,7 @@ import {
   IPagination,
   ISearchUser,
   IUpdateUser,
+  IVerifyMobile,
 } from '../../common/interfaces/user.interface';
 
 @Controller()
@@ -84,6 +85,11 @@ export class UserController {
   @MessagePattern(UserPatterns.GetUserByArgs)
   getOneByArgs(@Payload() data: IGetUserByArgs) {
     return this.userService.findByArgs(data);
+  }
+
+  @MessagePattern(UserPatterns.VerifyMobile)
+  verifyMobile(@Payload() data: IVerifyMobile) {
+    return this.userService.verifyMobile(data);
   }
 
   @MessagePattern(UserPatterns.RemoveUsers)
