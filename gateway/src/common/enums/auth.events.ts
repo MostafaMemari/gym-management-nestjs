@@ -9,8 +9,7 @@ export enum AuthPatterns {
   RefreshToken = 'refresh_token',
   ForgetPassword = 'forget_password',
   ResetPassword = 'reset_password',
-}
-
-export enum RbacPatterns {
-  AssignRole = 'assign_role',
+  SendOtp = 'send_otp',
+  VerifyOtp = 'verify_otp',
+  VerifySignupOtp = 'verify_signup_otp',
 }

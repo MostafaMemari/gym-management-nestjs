@@ -4,17 +4,14 @@ import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { lastValueFrom, timeout } from 'rxjs';
 
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
-import { Roles } from '../../../common/decorators/role.decorator';
 import { CreateAgeCategoryDto, QueryAgeCategoryDto, UpdateAgeCategoryDto } from '../../../common/dtos/club-service/age-category.dto';
 import { PaginationDto } from '../../../common/dtos/shared.dto';
 import { AgeCategoryPatterns } from '../../../common/enums/club-service/gym.events';
-import { Role } from '../../../common/enums/role.enum';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
 import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
-import { AccessRole } from '../../../common/decorators/accessRole.decorator';
 
 @Controller('age-categories')
 @ApiTags('Age Categories')
@@ -23,8 +20,6 @@ export class AgeCategoryController {
   constructor(@Inject(Services.CLUB) private readonly clubServiceClient: ClientProxy) {}
 
   @Post()
-  @Roles(Role.SUPER_ADMIN)
-  @AccessRole(Role.SUPER_ADMIN)
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
   async create(@Body() createAgeCategoryDto: CreateAgeCategoryDto) {
     try {
@@ -39,8 +34,6 @@ export class AgeCategoryController {
   }
 
   @Put(':id')
-  @Roles(Role.SUPER_ADMIN)
-  @AccessRole(Role.SUPER_ADMIN)
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
   async update(@Param('id', ParseIntPipe) id: number, @Body() updateAgeCategoryDto: UpdateAgeCategoryDto) {
     try {
@@ -58,8 +51,6 @@ export class AgeCategoryController {
   }
 
   @Get()
-  @Roles(Role.SUPER_ADMIN)
-  @AccessRole(Role.SUPER_ADMIN)
   async findAll(@Query() paginationDto: PaginationDto, @Query() queryAgeCategoryDto: QueryAgeCategoryDto): Promise<any> {
     try {
       await checkConnection(Services.CLUB, this.clubServiceClient);
@@ -72,8 +63,6 @@ export class AgeCategoryController {
   }
 
   @Get(':id')
-  @Roles(Role.SUPER_ADMIN)
-  @AccessRole(Role.SUPER_ADMIN)
   async findOne(@Param('id', ParseIntPipe) id: number) {
     try {
       await checkConnection(Services.CLUB, this.clubServiceClient);
@@ -89,8 +78,6 @@ export class AgeCategoryController {
   }
 
   @Delete(':id')
-  @AccessRole(Role.SUPER_ADMIN)
-  @Roles(Role.SUPER_ADMIN)
   async remove(@Param('id', ParseIntPipe) id: number) {
     try {
       await checkConnection(Services.CLUB, this.clubServiceClient);

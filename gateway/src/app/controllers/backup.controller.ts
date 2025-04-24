@@ -8,9 +8,6 @@ import { checkConnection } from '../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../common/utils/handleError.utils';
 import { AwsService } from '../../modules/s3AWS/s3AWS.service';
 import { BackupPatterns } from '../../common/enums/shared.enum';
-import { Roles } from '../../common/decorators/role.decorator';
-import { Role } from '../../common/enums/role.enum';
-import { AccessRole } from '../../common/decorators/accessRole.decorator';
 import { Cron } from '@nestjs/schedule';
 import { CreateBackupDto, RestoreBackupDto } from '../../common/dtos/backup.dto';
 import { SwaggerConsumes } from '../../common/enums/swagger-consumes.enum';
@@ -96,8 +93,6 @@ export class BackupController {
   }
 
   @Post('create-backup')
-  @Roles(Role.SUPER_ADMIN)
-  @AccessRole(Role.SUPER_ADMIN)
   @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
   async createBackup(@Body() createBackupDto: CreateBackupDto) {
     const service = this.findServiceOrFail(createBackupDto.serviceName);
@@ -122,8 +117,6 @@ export class BackupController {
   }
 
   @Post('restore-backup')
-  @Roles(Role.SUPER_ADMIN)
-  @AccessRole(Role.SUPER_ADMIN)
   @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
   async restoreBackup(@Body() { key, serviceName }: RestoreBackupDto) {
     const service = this.findServiceOrFail(serviceName);

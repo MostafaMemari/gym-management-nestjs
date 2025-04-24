@@ -11,9 +11,6 @@ import { SwaggerConsumes } from '../../common/enums/swagger-consumes.enum';
 import { lastValueFrom, timeout } from 'rxjs';
 import { checkConnection } from '../../common/utils/checkConnection.utils';
 import { PaymentPatterns } from '../../common/enums/payment.events';
-import { Roles } from '../../common/decorators/role.decorator';
-import { Role } from '../../common/enums/role.enum';
-import { AccessRole } from '../../common/decorators/accessRole.decorator';
 
 @Controller('payment')
 @ApiTags('payment')
@@ -65,8 +62,6 @@ export class PaymentController {
 
   @Post('refund/:transactionId')
   @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
-  @Roles(Role.SUPER_ADMIN)
-  @AccessRole(Role.SUPER_ADMIN)
   async refundPayment(@Param('transactionId', ParseIntPipe) transactionId: number, @Body() refundPaymentDto: RefundPaymentDto) {
     try {
       await checkConnection(Services.PAYMENT, this.paymentServiceClient);
@@ -99,8 +94,6 @@ export class PaymentController {
   }
 
   @Get('transactions')
-  @Roles(Role.SUPER_ADMIN)
-  @AccessRole(Role.SUPER_ADMIN)
   async getTransactions(@Query() transactionFilterDto: QueryTransactionsDto) {
     try {
       await checkConnection(Services.PAYMENT, this.paymentServiceClient);
@@ -116,8 +109,6 @@ export class PaymentController {
   }
 
   @Get('transaction/:id')
-  @Roles(Role.SUPER_ADMIN)
-  @AccessRole(Role.SUPER_ADMIN)
   async getOneTransaction(@Param('id', ParseIntPipe) id: number) {
     try {
       await checkConnection(Services.PAYMENT, this.paymentServiceClient);

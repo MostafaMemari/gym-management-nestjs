@@ -54,6 +54,19 @@ export enum NotificationSortBy {
   IsEdited = 'isEdited',
 }
 
+export enum RoleSortBy {
+  CreatedAt = 'createdAt',
+  UpdatedAt = 'updatedAt',
+  Name = 'name',
+}
+
+export enum PermissionSortBy {
+  CreatedAt = 'createdAt',
+  UpdatedAt = 'updatedAt',
+  Endpoint = 'endpoint',
+  Method = 'method',
+}
+
 export enum NotificationType {
   PUSH = 'PUSH',
   SMS = 'SMS',
@@ -77,4 +90,12 @@ export enum RefundPaymentReason {
 export enum BackupPatterns {
   CreateBackup = 'create_backup',
   RestoreBackup = 'restore_backup',
+}
+
+export enum RequestHttpMethod {
+  GET = 'GET',
+  POST = 'POST',
+  PUT = 'PUT',
+  PATCH = 'PATCH',
+  DELETE = 'DELETE',
 }

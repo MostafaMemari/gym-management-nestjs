@@ -22,4 +22,5 @@ export enum AuthMessages {
   ProblemSendingSms = 'There was a problem sending sms. Please try again later',
   NotFoundStudent = 'Student not found',
   NotFoundCoach = 'Coach not found',
+  VerifiedOtpSuccess = 'Otp verified successfully.',
 }

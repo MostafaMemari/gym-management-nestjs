@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsJWT, IsNotEmpty, IsPhoneNumber, IsString, Matches, MaxLength, MinLength } from 'class-validator';
-import { ConfirmPassword } from '../../decorators/confirmPassword.decorator';
+import { ConfirmPassword } from '../decorators/confirmPassword.decorator';
 
 export class SignupDto {
   @IsNotEmpty()
@@ -118,7 +118,7 @@ export class RestPasswordDto {
   newPassword: string;
 }
 
-export class VerifyOtpDto {
+export class VerifySignupOtpDto {
   @IsString()
   @IsNotEmpty()
   @ApiProperty({
@@ -161,3 +161,5 @@ export class SigninCoachDto {
   })
   nationalCode: string;
 }
+
+export class VerifyMobileDto extends VerifySignupOtpDto {}

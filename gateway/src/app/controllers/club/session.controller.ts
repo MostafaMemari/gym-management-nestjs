@@ -5,11 +5,9 @@ import { lastValueFrom, timeout } from 'rxjs';
 
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { GetUser } from '../../../common/decorators/get-user.decorator';
-import { Roles } from '../../../common/decorators/role.decorator';
 import { CreateSessionDto, QuerySessionDto, UpdateSessionDto } from '../../../common/dtos/club-service/session.dto';
 import { PaginationDto } from '../../../common/dtos/shared.dto';
 import { SessionPatterns } from '../../../common/enums/club-service/gym.events';
-import { Role } from '../../../common/enums/role.enum';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
@@ -24,7 +22,6 @@ export class SessionController {
   constructor(@Inject(Services.CLUB) private readonly clubServiceClient: ClientProxy) {}
 
   @Post()
-  @Roles(Role.ADMIN_CLUB)
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
   async create(@GetUser() user: User, @Body() createSessionDto: CreateSessionDto) {
     try {
@@ -40,7 +37,6 @@ export class SessionController {
   }
 
   @Put(':id')
-  @Roles(Role.ADMIN_CLUB)
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
   async update(@GetUser() user: User, @Param('id', ParseIntPipe) id: number, @Body() updateSessionDto: UpdateSessionDto) {
     try {
@@ -56,7 +52,6 @@ export class SessionController {
   }
 
   @Get()
-  @Roles(Role.ADMIN_CLUB)
   async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto, @Query() querySessionDto: QuerySessionDto): Promise<any> {
     try {
       await checkConnection(Services.CLUB, this.clubServiceClient);
@@ -69,7 +64,6 @@ export class SessionController {
   }
 
   @Get(':id')
-  @Roles(Role.ADMIN_CLUB)
   async findOne(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
       await checkConnection(Services.CLUB, this.clubServiceClient);
@@ -85,7 +79,6 @@ export class SessionController {
   }
 
   @Delete(':id')
-  @Roles(Role.ADMIN_CLUB)
   async remove(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
       await checkConnection(Services.CLUB, this.clubServiceClient);

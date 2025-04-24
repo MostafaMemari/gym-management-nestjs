@@ -7,10 +7,11 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { UserModule } from '../user/user.module';
 import { UserRepository } from '../user/user.repository';
 import { CacheService } from '../cache/cache.service';
+import { RoleRepository } from '../role/role.repository';
 
 @Module({
   imports: [ScheduleModule.forRoot(), forwardRef(() => UserModule)],
   controllers: [WalletController, PrismaModule],
-  providers: [WalletService, WalletRepository, UserRepository, CacheService],
+  providers: [WalletService, WalletRepository, UserRepository, CacheService, RoleRepository],
 })
 export class WalletModule {}

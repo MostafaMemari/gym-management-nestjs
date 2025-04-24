@@ -1,10 +1,10 @@
 import { Body, Controller, Inject, Post } from '@nestjs/common';
-import { Services } from '../../../common/enums/services.enum';
+import { Services } from '../../common/enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
-import { AuthPatterns } from '../../../common/enums/auth.events';
-import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
+import { AuthPatterns } from '../../common/enums/auth.events';
+import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';
 import {
   ForgetPasswordDto,
   RefreshTokenDto,
@@ -14,19 +14,25 @@ import {
   SigninStudentDto,
   SignoutDto,
   SignupDto,
-  VerifyOtpDto,
-} from '../../../common/dtos/auth-service/auth.dto';
-import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
-import { checkConnection } from '../../../common/utils/checkConnection.utils';
-import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
-import { AuthDecorator } from '../../../common/decorators/auth.decorator';
+  VerifyMobileDto,
+  VerifySignupOtpDto,
+} from '../../common/dtos/auth.dto';
+import { SwaggerConsumes } from '../../common/enums/swagger-consumes.enum';
+import { checkConnection } from '../../common/utils/checkConnection.utils';
+import { handleError, handleServiceResponse } from '../../common/utils/handleError.utils';
+import { AuthDecorator } from '../../common/decorators/auth.decorator';
+import { UserPatterns } from '../../common/enums/user.events';
+import { SkipPermission } from '../../common/decorators/skip-permission.decorator';
 
 @Controller('auth')
 @ApiTags('Auth')
 export class AuthController {
   private readonly timeout = 5000;
 
-  constructor(@Inject(Services.AUTH) private readonly authServiceClient: ClientProxy) {}
+  constructor(
+    @Inject(Services.AUTH) private readonly authServiceClient: ClientProxy,
+    @Inject(Services.USER) private readonly userServiceClient: ClientProxy,
+  ) {}
 
   @Post('signup')
   @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
@@ -38,7 +44,7 @@ export class AuthController {
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to signup', 'AuthService');
+      handleError(error, 'Failed to signup', Services.AUTH);
     }
   }
 
@@ -52,7 +58,7 @@ export class AuthController {
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to signin', 'AuthService');
+      handleError(error, 'Failed to signin', Services.AUTH);
     }
   }
 
@@ -68,7 +74,7 @@ export class AuthController {
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to signin student', 'AuthService');
+      handleError(error, 'Failed to signin student', Services.AUTH);
     }
   }
 
@@ -83,12 +89,13 @@ export class AuthController {
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to signin coach', 'AuthService');
+      handleError(error, 'Failed to signin coach', Services.AUTH);
     }
   }
 
   @Post('signout')
   @AuthDecorator()
+  @SkipPermission()
   @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
   async signout(@Body() signoutDto: SignoutDto) {
     try {
@@ -97,7 +104,7 @@ export class AuthController {
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to signout', 'AuthService');
+      handleError(error, 'Failed to signout', Services.AUTH);
     }
   }
 
@@ -113,7 +120,7 @@ export class AuthController {
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to refreshToken', 'AuthService');
+      handleError(error, 'Failed to refreshToken', Services.AUTH);
     }
   }
 
@@ -129,7 +136,7 @@ export class AuthController {
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to forget-password', 'AuthService');
+      handleError(error, 'Failed to forget-password', Services.AUTH);
     }
   }
 
@@ -145,21 +152,48 @@ export class AuthController {
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to reset-password', 'AuthService');
+      handleError(error, 'Failed to reset-password', Services.AUTH);
     }
   }
 
-  @Post('verify-otp')
+  @Post('verify-signup-otp')
   @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
-  async verifyOtp(@Body() verifyOtpDto: VerifyOtpDto) {
+  async verifyOtp(@Body() verifyOtpDto: VerifySignupOtpDto) {
     try {
       await checkConnection(Services.AUTH, this.authServiceClient);
 
-      const data: ServiceResponse = await lastValueFrom(this.authServiceClient.send('verify_otp', verifyOtpDto).pipe(timeout(this.timeout)));
+      const data: ServiceResponse = await lastValueFrom(
+        this.authServiceClient.send(AuthPatterns.VerifySignupOtp, verifyOtpDto).pipe(timeout(this.timeout)),
+      );
 
       return handleServiceResponse(data);
     } catch (error) {
-      handleError(error, 'Failed to verify-otp', 'AuthService');
+      handleError(error, 'Failed to verify signup otp', Services.AUTH);
+    }
+  }
+
+  @Post('verify-mobile')
+  @ApiConsumes(SwaggerConsumes.Json, SwaggerConsumes.UrlEncoded)
+  async verifyMobile(@Body() verifyMobileDto: VerifyMobileDto) {
+    try {
+      await checkConnection(Services.AUTH, this.authServiceClient);
+      await checkConnection(Services.USER, this.userServiceClient);
+
+      const verifiedMobileResult: ServiceResponse = await lastValueFrom(
+        this.authServiceClient.send(AuthPatterns.VerifyOtp, verifyMobileDto).pipe(timeout(this.timeout)),
+      );
+
+      const handledResponse = handleServiceResponse(verifiedMobileResult);
+
+      const updatedUserResult: ServiceResponse = await lastValueFrom(
+        this.userServiceClient.send(UserPatterns.VerifyMobile, { mobile: verifyMobileDto.mobile }).pipe(timeout(this.timeout)),
+      );
+
+      handleServiceResponse(updatedUserResult);
+
+      return handledResponse;
+    } catch (error) {
+      handleError(error, 'Failed to verify mobile', Services.AUTH);
     }
   }
 }

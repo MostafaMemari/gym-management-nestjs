@@ -1,6 +1,6 @@
-export interface ServiceResponse {
+export interface ServiceResponse<DataType extends object = any> {
   message: string;
   status: number;
   error: boolean;
-  data: any;
+  data: DataType;
 }

@@ -1,9 +1,22 @@
-import { Role } from '../enums/role.enum';
-import { SignupDto } from '../dtos/auth-service/auth.dto';
+import { DefaultRole } from '../constants/permissions.constant';
+import { SignupDto } from '../dtos/auth.dto';
+
+interface IRole {
+  name: DefaultRole;
+  permissions: IPermission[];
+}
+
+interface IPermission {
+  method: string;
+  endpoint: string;
+}
 
 export interface User extends Omit<SignupDto, 'password' | 'confirmPassword'> {
   id: number;
-  role: Role;
+  roles: IRole[];
+  username: string;
+  mobile: string;
+  isVerifiedMobile: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

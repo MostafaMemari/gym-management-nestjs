@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Services } from '../enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
 import { Request } from 'express';
@@ -11,6 +11,7 @@ import { Reflector } from '@nestjs/core';
 import { SKIP_AUTH } from '../decorators/skip-auth.decorator';
 import { checkConnection } from '../utils/checkConnection.utils';
 import { handleError } from '../utils/handleError.utils';
+import { SKIP_VERIFY_MOBILE } from '../decorators/skip-verify-mobile.decorator';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -22,9 +23,10 @@ export class AuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     try {
-      const isSkipped = this.reflector.get<boolean>(SKIP_AUTH, context.getHandler());
+      const isSkippedAuth = this.reflector.get<boolean>(SKIP_AUTH, context.getHandler());
+      const isSkippedVerifyMobile = this.reflector.get(SKIP_VERIFY_MOBILE, context.getHandler());
 
-      if (isSkipped) return true;
+      if (isSkippedAuth) return true;
 
       await checkConnection(Services.AUTH, this.authServiceClientProxy);
       await checkConnection(Services.USER, this.userServiceClientProxy);
@@ -61,13 +63,15 @@ export class AuthGuard implements CanActivate {
 
       const { userId } = verifyTokenRes.data;
 
-      const userRes: ServiceResponse = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.GetUserById, { userId }));
+      const userRes: ServiceResponse<{ user: User }> = await lastValueFrom(this.userServiceClientProxy.send(UserPatterns.GetUserById, { userId }));
 
       if (userRes.error) {
         throw new UnauthorizedException(userRes.message);
       }
 
-      req.user = userRes.data?.user as User;
+      if (!isSkippedVerifyMobile && !userRes.data.user.isVerifiedMobile) throw new ForbiddenException('Mobile is not verified.');
+
+      req.user = userRes.data?.user;
 
       return true;
     } catch (error) {

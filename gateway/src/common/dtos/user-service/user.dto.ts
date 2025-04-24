@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsEnum, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, Matches, MaxLength, MinLength } from 'class-validator';
-import { Role } from '../../../common/enums/role.enum';
+import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { SortOrder, UserSortBy } from '../../../common/enums/shared.enum';
 import { PaginationDto } from '../shared.dto';
@@ -48,16 +47,6 @@ export class QueryUsersDto extends PaginationDto {
   username?: string;
 
   @IsOptional()
-  @IsEnum(Role)
-  @ApiProperty({
-    type: 'string',
-    enum: Role,
-    nullable: true,
-    required: false,
-  })
-  role?: Role;
-
-  @IsOptional()
   @IsString()
   @MaxLength(100)
   @ApiProperty({
@@ -72,6 +61,20 @@ export class QueryUsersDto extends PaginationDto {
   @Transform(({ value }) => new Date(value))
   @ApiProperty({ type: 'string', format: 'date-time', nullable: true, required: false })
   lastPasswordChange?: Date;
+
+  @IsBoolean()
+  @IsOptional()
+  @IsNotEmpty()
+  @Transform(({ value }) => {
+    if (typeof value == 'string') return value == 'true';
+    return value;
+  })
+  @ApiProperty({
+    type: 'boolean',
+    required: false,
+    nullable: true,
+  })
+  includeRoles?: boolean;
 
   @IsOptional()
   @IsDate()

@@ -3,7 +3,6 @@ import { UserService } from './user.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { UserPatterns } from '../../common/enums/user.events';
 import {
-  IChangeRole,
   ICreateUser,
   ICreateUserCoach,
   ICreateUserStudent,
@@ -11,6 +10,7 @@ import {
   IPagination,
   ISearchUser,
   IUpdateUser,
+  IVerifyMobile,
 } from '../../common/interfaces/user.interface';
 
 @Controller()
@@ -77,11 +77,6 @@ export class UserController {
     return this.userService.search(data);
   }
 
-  @MessagePattern(UserPatterns.ChangeUserRole)
-  changeRole(@Payload() data: IChangeRole) {
-    return this.userService.changeRole(data);
-  }
-
   @MessagePattern(UserPatterns.UpdateUser)
   update(@Payload() data: IUpdateUser) {
     return this.userService.update(data);
@@ -90,6 +85,16 @@ export class UserController {
   @MessagePattern(UserPatterns.GetUserByArgs)
   getOneByArgs(@Payload() data: IGetUserByArgs) {
     return this.userService.findByArgs(data);
+  }
+
+  @MessagePattern(UserPatterns.VerifyMobile)
+  verifyMobile(@Payload() data: IVerifyMobile) {
+    return this.userService.verifyMobile(data);
+  }
+
+  @MessagePattern(UserPatterns.RevertMobile)
+  revertMobile(@Payload() data: { userId: number }) {
+    return this.userService.revertMobile(data);
   }
 
   @MessagePattern(UserPatterns.RemoveUsers)

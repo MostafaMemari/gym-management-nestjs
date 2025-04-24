@@ -1,20 +1,18 @@
-import { Role } from '@prisma/client';
-
 export interface ICreateUser {
   username: string;
 
   password?: string;
 
   mobile?: string;
+
+  isVerifiedMobile?: boolean;
 }
 
 export interface ICreateUserStudent {
   username: string;
-  role?: Role;
 }
 export interface ICreateUserCoach {
   username: string;
-  role?: Role;
 }
 
 export interface IPagination {
@@ -26,16 +24,12 @@ export interface ISearchUser extends IPagination {
   query: string;
 }
 
-export interface IChangeRole {
-  userId: number;
-  role: Role;
-}
-
 export interface IUpdateUser {
   userId: number;
   username?: string;
   mobile?: string;
   lastPasswordChange?: Date;
+  isVerifiedMobile?: boolean;
   password?: string;
 }
 
@@ -46,11 +40,15 @@ export interface IGetUserByArgs {
 
 export interface IUsersFilter extends IPagination {
   username?: string;
-  role?: Role;
   mobile?: string;
   lastPasswordChange?: Date;
+  includeRoles?: boolean;
   startDate?: Date;
   endDate?: Date;
   sortBy?: 'username' | 'createdAt' | 'mobile' | 'updateAt';
   sortDirection?: 'asc' | 'desc';
+}
+
+export interface IVerifyMobile {
+  mobile: string;
 }

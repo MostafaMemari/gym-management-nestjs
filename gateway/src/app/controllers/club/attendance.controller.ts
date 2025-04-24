@@ -5,10 +5,8 @@ import { lastValueFrom, timeout } from 'rxjs';
 
 import { AuthDecorator } from '../../../common/decorators/auth.decorator';
 import { GetUser } from '../../../common/decorators/get-user.decorator';
-import { Roles } from '../../../common/decorators/role.decorator';
 import { QueryAttendanceDto, RecordAttendanceDto, UpdateAttendanceDto } from '../../../common/dtos/club-service/attendance.dto';
 import { AttendancePatterns } from '../../../common/enums/club-service/gym.events';
-import { Role } from '../../../common/enums/role.enum';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';
@@ -24,7 +22,6 @@ export class AttendanceController {
   constructor(@Inject(Services.CLUB) private readonly clubServiceClient: ClientProxy) {}
 
   @Post()
-  @Roles(Role.ADMIN_CLUB)
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
   async create(@GetUser() user: User, @Body() createAttendanceDto: RecordAttendanceDto) {
     try {
@@ -39,7 +36,6 @@ export class AttendanceController {
   }
 
   @Put(':id')
-  @Roles(Role.ADMIN_CLUB)
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
   async update(@GetUser() user: User, @Param('id', ParseIntPipe) id: number, @Body() updateAttendanceDto: UpdateAttendanceDto) {
     try {
@@ -57,7 +53,6 @@ export class AttendanceController {
   }
 
   @Get()
-  @Roles(Role.ADMIN_CLUB)
   async findAll(@GetUser() user: User, @Query() paginationDto: PaginationDto, @Query() queryAttendanceDto: QueryAttendanceDto): Promise<any> {
     try {
       await checkConnection(Services.CLUB, this.clubServiceClient);
@@ -70,7 +65,6 @@ export class AttendanceController {
   }
 
   @Get(':id')
-  @Roles(Role.ADMIN_CLUB)
   async findOne(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
       await checkConnection(Services.CLUB, this.clubServiceClient);
@@ -86,7 +80,6 @@ export class AttendanceController {
   }
 
   @Delete(':id')
-  @Roles(Role.ADMIN_CLUB)
   async remove(@GetUser() user: User, @Param('id', ParseIntPipe) id: number) {
     try {
       await checkConnection(Services.CLUB, this.clubServiceClient);
