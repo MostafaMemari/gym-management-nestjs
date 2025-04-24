@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, HttpStatus, Inject, Param, ParseIntPipe, Put, Query } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, HttpStatus, Inject, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
 import { Services } from '../../../common/enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom, timeout } from 'rxjs';
@@ -14,6 +14,7 @@ import { User } from '../../../common/interfaces/user.interface';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { SkipPermission } from '../../../common/decorators/skip-permission.decorator';
 import { AuthPatterns } from '../../../common/enums/auth.events';
+import { SkipVerifyMobile } from '../../../common/decorators/skip-verify-mobile.decorator';
 
 @Controller('user')
 @ApiTags('User')
@@ -59,6 +60,7 @@ export class UserController {
         const sendOtpResult: ServiceResponse = await lastValueFrom(
           this.authServiceClient.send(AuthPatterns.SendOtp, { mobile: updateUserData.mobile }),
         );
+
         handleServiceResponse(sendOtpResult);
 
         updateUserData.isVerifiedMobile = false;
@@ -89,6 +91,21 @@ export class UserController {
       return handleServiceResponse(data);
     } catch (error) {
       handleError(error, 'Failed to remove user', 'UserService');
+    }
+  }
+
+  @Post('revert-mobile')
+  @SkipVerifyMobile()
+  @SkipPermission()
+  async revertMobile(@GetUser() user: User) {
+    try {
+      await checkConnection(Services.USER, this.userServiceClient);
+
+      const result = await lastValueFrom(this.userServiceClient.send(UserPatterns.RevertMobile, { userId: user.id }).pipe(timeout(this.timeout)));
+
+      return handleServiceResponse(result);
+    } catch (error) {
+      handleError(error, 'Failed to revert mobile', Services.USER);
     }
   }
 

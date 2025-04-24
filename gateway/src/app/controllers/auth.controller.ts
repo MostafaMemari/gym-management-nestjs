@@ -22,8 +22,6 @@ import { checkConnection } from '../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../common/utils/handleError.utils';
 import { AuthDecorator } from '../../common/decorators/auth.decorator';
 import { UserPatterns } from '../../common/enums/user.events';
-import { GetUser } from '../../common/decorators/get-user.decorator';
-import { User } from '../../common/interfaces/user.interface';
 import { SkipPermission } from '../../common/decorators/skip-permission.decorator';
 
 @Controller('auth')
