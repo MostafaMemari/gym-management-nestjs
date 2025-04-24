@@ -15,4 +15,5 @@ export enum UserPatterns {
   RemoveUsers = 'remove_users',
   GetUsersByIds = 'get_users_by_ids',
   VerifyMobile = 'verify_mobile',
+  RevertMobile = 'revert_mobile',
 }

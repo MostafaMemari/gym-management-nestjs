@@ -45,6 +45,7 @@ model User {
   username           String    @unique @db.VarChar(100)
   roles              Role[]
   mobile             String?
+  perviousMobile     String?
   password           String?
   lastPasswordChange DateTime?
   lastMobileChange   DateTime?

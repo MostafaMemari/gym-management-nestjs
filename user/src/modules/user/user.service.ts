@@ -293,11 +293,31 @@ export class UserService {
         data: {
           ...updateUserData,
           lastMobileChange: isMobileChanged ? new Date() : undefined,
+          perviousMobile: isMobileChanged ? currentUser.mobile : undefined,
         },
         omit: { password: true },
       });
 
       return ResponseUtil.success({ updatedUser }, UserMessages.UpdatedUser, HttpStatus.OK);
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
+  async revertMobile({ userId }: { userId: number }) {
+    try {
+      const user = await this.userRepository.findByIdAndThrow(userId);
+
+      if (user.isVerifiedMobile || !user.perviousMobile) {
+        throw new BadRequestException(UserMessages.MobileVerifiedOrPrevNotFound);
+      }
+
+      const updatedUser = await this.userRepository.update(userId, {
+        data: { perviousMobile: null, mobile: user.perviousMobile, isVerifiedMobile: true, lastMobileChange: null },
+        omit: { password: true },
+      });
+
+      return ResponseUtil.success<{ user: User }>({ user: updatedUser }, UserMessages.RevertedMobileSuccess, HttpStatus.OK);
     } catch (error) {
       throw new RpcException(error);
     }
@@ -325,7 +345,7 @@ export class UserService {
 
       if (user.isVerifiedMobile) throw new ConflictException(UserMessages.AlreadyVerifiedMobile);
 
-      await this.userRepository.update(user.id, { data: { isVerifiedMobile: true } });
+      await this.userRepository.update(user.id, { data: { perviousMobile: null, isVerifiedMobile: true } });
 
       return ResponseUtil.success({ user }, UserMessages.VerifiedMobileSuccess, HttpStatus.OK);
     } catch (error) {

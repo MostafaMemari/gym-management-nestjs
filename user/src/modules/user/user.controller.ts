@@ -92,6 +92,11 @@ export class UserController {
     return this.userService.verifyMobile(data);
   }
 
+  @MessagePattern(UserPatterns.RevertMobile)
+  revertMobile(@Payload() data: { userId: number }) {
+    return this.userService.revertMobile(data);
+  }
+
   @MessagePattern(UserPatterns.RemoveUsers)
   removeUsers(@Payload() data: { userIds: number[] }) {
     return this.userService.removeUsers(data);

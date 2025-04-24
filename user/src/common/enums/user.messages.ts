@@ -9,4 +9,6 @@ export enum UserMessages {
   MobileChangeLimit = 'You can only change your mobile number once every 24 hours.',
   VerifiedMobileSuccess = 'Mobile verified successfully.',
   AlreadyVerifiedMobile = 'Mobile already verified.',
+  RevertedMobileSuccess = 'Reverted mobile successfully.',
+  MobileVerifiedOrPrevNotFound = 'Mobile is verified or previous mobile not found.',
 }
