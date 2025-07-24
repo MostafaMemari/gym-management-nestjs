@@ -3,7 +3,7 @@ import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
 import { AbstractEntity } from '../../../common/abstracts/abstract.entity';
 import { LessonEntity } from '../../../modules/lesson/entities/lesson.entity';
 import { CourseEntity } from '../../course/entities/course.entity';
-import { EntityName } from 'src/common/enums/entity.enum';
+import { EntityName } from '../../../common/enums/entity.enum';
 
 @Entity(EntityName.CHAPTERS)
 export class ChapterEntity extends AbstractEntity {

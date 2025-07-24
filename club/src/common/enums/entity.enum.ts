@@ -9,4 +9,11 @@ export enum EntityName {
   AGE_CATEGORIES = 'age_categories',
   ATTENDANCES = 'attendances',
   ATTENDANCES_SESSIONS = 'attendance_sessions',
+
+  LESSONS = 'lessons',
+  LESSON_FILES = 'lesson_files',
+  USER_LESSON_PROGRESS = 'user_lesson_progress',
+
+  COURSES = 'courses',
+  CHAPTERS = 'chapters',
 }
