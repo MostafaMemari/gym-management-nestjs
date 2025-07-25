@@ -7,7 +7,7 @@ export class SignupDto {
   @IsString()
   @MaxLength(100)
   @MinLength(3)
-  @Matches(/^(?![0-9])[a-zA-Z0-9_-]{3,20}$/, {
+  @Matches(/^09\d{9}$/, {
     message: 'username is invalid',
   })
   @ApiProperty({
