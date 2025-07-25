@@ -124,7 +124,9 @@ export class AuthService {
       const otpCode = this.generateOtp();
       await this.storeOtp(`${OtpKeys.SignupOtp}${signupDto.mobile}`, otpCode);
 
-      await this.sendSms(signupDto.mobile, otpCode);
+      //   await this.sendSms(signupDto.mobile, otpCode);
+
+      console.log('Otp sent to mobile:', signupDto.mobile, 'with code:', otpCode);
 
       return ResponseUtil.success({}, AuthMessages.OtpSentSuccessfully, HttpStatus.OK);
     } catch (error) {
@@ -137,7 +139,9 @@ export class AuthService {
       const { mobile, otp } = verifyOtpDto;
 
       await this.enforceOtpRequestLimit(`${OtpKeys.RequestsOtp}${mobile}`);
+
       await this.validateOtp(`${OtpKeys.SignupOtp}${mobile}`, otp);
+
       const userData = await this.getPendingUser(mobile);
       const result = await this.createUser(userData);
 

@@ -121,20 +121,20 @@ export class RestPasswordDto {
 export class VerifyOtpDto {
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({
-    type: 'string',
-    nullable: false,
-  })
-  otp: string;
-
-  @IsString()
-  @IsNotEmpty()
   @IsPhoneNumber('IR')
   @ApiProperty({
     type: 'string',
     nullable: false,
   })
   mobile: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    type: 'string',
+    nullable: false,
+  })
+  otp: string;
 }
 
 export class SigninStudentDto {
