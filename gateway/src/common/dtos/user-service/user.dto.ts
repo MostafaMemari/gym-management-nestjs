@@ -10,7 +10,7 @@ export class UpdateUserDto {
   @MaxLength(100)
   @MinLength(3)
   @IsOptional()
-  @Matches(/^09\d{9}$/, {
+  @Matches(/^(?![0-9])[a-zA-Z0-9_-]{3,20}$/, {
     message: 'username is invalid',
   })
   @ApiProperty({
