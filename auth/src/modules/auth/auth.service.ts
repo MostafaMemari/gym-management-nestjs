@@ -124,9 +124,7 @@ export class AuthService {
       const otpCode = this.generateOtp();
       await this.storeOtp(`${OtpKeys.SignupOtp}${signupDto.mobile}`, otpCode);
 
-      //   await this.sendSms(signupDto.mobile, otpCode);
-
-      console.log('Otp sent to mobile:', signupDto.mobile, 'with code:', otpCode);
+      await this.sendSms(signupDto.mobile, otpCode);
 
       return ResponseUtil.success({}, AuthMessages.OtpSentSuccessfully, HttpStatus.OK);
     } catch (error) {
@@ -304,12 +302,14 @@ export class AuthService {
   }
 
   async sendSms(mobile: string, verifyCode: string): Promise<void | never> {
-    const { SMS_API_KEY, SMS_LINE_NUMBER, SMS_TEMPLATE_ID, SMS_NAME } = process.env;
-    const sms = new Smsir(SMS_API_KEY, Number(SMS_LINE_NUMBER));
+    // const { SMS_API_KEY, SMS_LINE_NUMBER, SMS_TEMPLATE_ID, SMS_NAME } = process.env;
+    // const sms = new Smsir(SMS_API_KEY, Number(SMS_LINE_NUMBER));
 
-    const result = await sms.SendVerifyCode(mobile, Number(SMS_TEMPLATE_ID), [{ name: SMS_NAME, value: verifyCode }]);
+    // const result = await sms.SendVerifyCode(mobile, Number(SMS_TEMPLATE_ID), [{ name: SMS_NAME, value: verifyCode }]);
 
-    if (result.data?.status !== 1) throw new InternalServerErrorException(AuthMessages.ProblemSendingSms);
+    // if (result.data?.status !== 1) throw new InternalServerErrorException(AuthMessages.ProblemSendingSms);
+
+    console.log('Otp sent to mobile:', mobile, 'with code:', verifyCode);
   }
 
   private async clearOtpData(mobile: string): Promise<void | never> {
