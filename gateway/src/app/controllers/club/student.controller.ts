@@ -38,7 +38,7 @@ import { User } from '../../../common/interfaces/user.interface';
 import { FileValidationPipe } from '../../../common/pipes/upload-file.pipe';
 import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
-import { Role } from '../../../common/enums/role.enum';
+import { Role } from '../../../common/enums/auth-user-service/role.enum';
 import { Roles } from '../../../common/decorators/role.decorator';
 
 @Controller('students')

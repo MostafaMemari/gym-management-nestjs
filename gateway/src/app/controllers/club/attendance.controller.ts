@@ -8,7 +8,7 @@ import { GetUser } from '../../../common/decorators/get-user.decorator';
 import { Roles } from '../../../common/decorators/role.decorator';
 import { QueryAttendanceDto, RecordAttendanceDto, UpdateAttendanceDto } from '../../../common/dtos/club-service/attendance.dto';
 import { AttendancePatterns } from '../../../common/enums/club-service/gym.events';
-import { Role } from '../../../common/enums/role.enum';
+import { Role } from '../../../common/enums/auth-user-service/role.enum';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';

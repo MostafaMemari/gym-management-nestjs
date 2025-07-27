@@ -8,7 +8,7 @@ import { NotificationPatterns } from '../../common/enums/notification.events';
 import { lastValueFrom, timeout } from 'rxjs';
 import { AuthDecorator } from '../../common/decorators/auth.decorator';
 import { Roles } from '../../common/decorators/role.decorator';
-import { Role } from '../../common/enums/role.enum';
+import { Role } from '../../common/enums/auth-user-service/role.enum';
 import { SwaggerConsumes } from '../../common/enums/swagger-consumes.enum';
 import { CreateNotificationDto, UpdateNotificationDto } from '../../common/dtos/notification.dto';
 import { ServiceResponse } from '../../common/interfaces/serviceResponse.interface';

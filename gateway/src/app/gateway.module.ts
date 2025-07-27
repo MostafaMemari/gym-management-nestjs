@@ -7,18 +7,18 @@ import envConfig from '../configs/env.config';
 import { Services } from '../common/enums/services.enum';
 import { AuthGuard } from '../common/guards/auth.guard';
 
-import { AuthController } from './controllers/auth/auth.controller';
-import { UserController } from './controllers/user/user.controller';
+import { AuthController } from './controllers/auth-user/auth/auth.controller';
+import { UserController } from './controllers/auth-user/user/user.controller';
 import { StudentController } from './controllers/club/student.controller';
 import { CoachController } from './controllers/club/coach.controller';
 import { GymController } from './controllers/club/gym.controller';
-import { RbacController } from './controllers/auth/rbac.controller';
+import { RbacController } from './controllers/auth-user/auth/rbac.controller';
 import { NotificationController } from './controllers/notification.controller';
 import { BeltController } from './controllers/club/belt.controller';
 import { AgeCategoryController } from './controllers/club/age-category.controller';
 import { PaymentController } from './controllers/payment.controller';
 import { BeltExamController } from './controllers/club/belt-exams.controller';
-import { WalletController } from './controllers/user/wallet.controller';
+import { WalletController } from './controllers/auth-user/user/wallet.controller';
 import { SessionController } from './controllers/club/session.controller';
 import { AttendanceController } from './controllers/club/attendance.controller';
 import { LessonController } from './controllers/academy/lesson.controller';
@@ -32,26 +32,11 @@ import { AwsModule } from '../modules/s3AWS/s3AWS.module';
     AwsModule,
     ClientsModule.register([
       {
-        name: Services.AUTH,
+        name: Services.AUTH_USER,
         transport: Transport.RMQ,
         options: {
           urls: [process.env.RABBITMQ_URL],
-          queue: process.env.RABBITMQ_AUTH_SERVICE_QUEUE,
-          prefetchCount: 2,
-          isGlobalPrefetchCount: true,
-          noAck: true,
-          persistent: false,
-          queueOptions: {
-            // durable: process.env.NODE_ENV == 'production',
-          },
-        },
-      },
-      {
-        name: Services.USER,
-        transport: Transport.RMQ,
-        options: {
-          urls: [process.env.RABBITMQ_URL],
-          queue: process.env.RABBITMQ_USER_SERVICE_QUEUE,
+          queue: process.env.RABBITMQ_AUTH_USER_SERVICE_QUEUE,
           prefetchCount: 2,
           isGlobalPrefetchCount: true,
           noAck: true,

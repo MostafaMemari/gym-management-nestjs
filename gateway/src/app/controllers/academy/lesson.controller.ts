@@ -32,7 +32,7 @@ import { handleError, handleServiceResponse } from '../../../common/utils/handle
 import { FilesValidationPipe } from '../../../common/pipes/upload-files.pipe';
 import { AwsService } from '../../../modules/s3AWS/s3AWS.service';
 import { AccessRole } from '../../../common/decorators/accessRole.decorator';
-import { Role } from '../../../common/enums/role.enum';
+import { Role } from '../../../common/enums/auth-user-service/role.enum';
 import { Roles } from '../../../common/decorators/role.decorator';
 
 @Controller('lessons')

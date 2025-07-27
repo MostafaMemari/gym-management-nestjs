@@ -12,7 +12,7 @@ import { lastValueFrom, timeout } from 'rxjs';
 import { checkConnection } from '../../common/utils/checkConnection.utils';
 import { PaymentPatterns } from '../../common/enums/payment.events';
 import { Roles } from '../../common/decorators/role.decorator';
-import { Role } from '../../common/enums/role.enum';
+import { Role } from '../../common/enums/auth-user-service/role.enum';
 import { AccessRole } from '../../common/decorators/accessRole.decorator';
 
 @Controller('payment')

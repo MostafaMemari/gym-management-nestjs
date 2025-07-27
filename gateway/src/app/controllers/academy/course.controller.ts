@@ -32,7 +32,7 @@ import { handleError, handleServiceResponse } from '../../../common/utils/handle
 import { AwsService } from '../../../modules/s3AWS/s3AWS.service';
 import { BeltPatterns, GymPatterns } from '../../../common/enums/club-service/gym.events';
 import { AccessRole } from '../../../common/decorators/accessRole.decorator';
-import { Role } from '../../../common/enums/role.enum';
+import { Role } from '../../../common/enums/auth-user-service/role.enum';
 import { Roles } from '../../../common/decorators/role.decorator';
 
 @Controller('courses')

@@ -16,7 +16,7 @@ import { checkConnection } from '../../../common/utils/checkConnection.utils';
 import { handleError, handleServiceResponse } from '../../../common/utils/handleError.utils';
 import { AwsService } from '../../../modules/s3AWS/s3AWS.service';
 import { AccessRole } from '../../../common/decorators/accessRole.decorator';
-import { Role } from '../../../common/enums/role.enum';
+import { Role } from '../../../common/enums/auth-user-service/role.enum';
 import { Roles } from '../../../common/decorators/role.decorator';
 
 @Controller('chapters')

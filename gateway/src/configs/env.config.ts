@@ -9,7 +9,6 @@ export default (): ConfigModuleOptions => {
       const schema = Joi.object({
         PORT: Joi.string().required(),
         RABBITMQ_URL: Joi.string().required(),
-        RABBITMQ_AUTH_SERVICE_QUEUE: Joi.string().required(),
         RABBITMQ_CLUB_SERVICE_QUEUE: Joi.string().required(),
       }).unknown(true);
 

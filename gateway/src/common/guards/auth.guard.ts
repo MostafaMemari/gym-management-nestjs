@@ -3,9 +3,9 @@ import { Services } from '../enums/services.enum';
 import { ClientProxy } from '@nestjs/microservices';
 import { Request } from 'express';
 import { lastValueFrom } from 'rxjs';
-import { AuthPatterns } from '../enums/auth.events';
+import { AuthPatterns } from '../enums/auth-user-service/auth.events';
 import { ServiceResponse } from '../interfaces/serviceResponse.interface';
-import { UserPatterns } from '../enums/user.events';
+import { UserPatterns } from '../enums/auth-user-service/user.events';
 import { User } from '../interfaces/user.interface';
 import { Reflector } from '@nestjs/core';
 import { SKIP_AUTH } from '../decorators/skip-auth.decorator';
@@ -15,8 +15,8 @@ import { handleError } from '../utils/handleError.utils';
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
-    @Inject(Services.AUTH) private readonly authServiceClientProxy: ClientProxy,
-    @Inject(Services.USER) private readonly userServiceClientProxy: ClientProxy,
+    @Inject(Services.AUTH_USER) private readonly authServiceClientProxy: ClientProxy,
+    @Inject(Services.AUTH_USER) private readonly userServiceClientProxy: ClientProxy,
     private readonly reflector: Reflector,
   ) {}
 
@@ -26,8 +26,8 @@ export class AuthGuard implements CanActivate {
 
       if (isSkipped) return true;
 
-      await checkConnection(Services.AUTH, this.authServiceClientProxy);
-      await checkConnection(Services.USER, this.userServiceClientProxy);
+      await checkConnection(Services.AUTH_USER, this.authServiceClientProxy);
+      await checkConnection(Services.AUTH_USER, this.userServiceClientProxy);
 
       const req: Request = context.switchToHttp().getRequest();
 

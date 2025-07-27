@@ -9,7 +9,7 @@ import { Roles } from '../../../common/decorators/role.decorator';
 import { CreateGymDto, QueryGymDto, UpdateGymDto } from '../../../common/dtos/club-service/gym.dto';
 import { PaginationDto } from '../../../common/dtos/shared.dto';
 import { GymPatterns } from '../../../common/enums/club-service/gym.events';
-import { Role } from '../../../common/enums/role.enum';
+import { Role } from '../../../common/enums/auth-user-service/role.enum';
 import { Services } from '../../../common/enums/services.enum';
 import { SwaggerConsumes } from '../../../common/enums/swagger-consumes.enum';
 import { ServiceResponse } from '../../../common/interfaces/serviceResponse.interface';

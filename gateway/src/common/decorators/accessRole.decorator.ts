@@ -1,5 +1,5 @@
 import { ApiOperation } from '@nestjs/swagger';
-import { Role } from '../enums/role.enum';
+import { Role } from '../enums/auth-user-service/role.enum';
 
 export function AccessRole(roles: Role | Role[]) {
   const message = 'Access roles granted: ';
